@@ -85,7 +85,8 @@ public sealed partial class GameSimulation
         Unlock(TownNpcKind.StationAi);
         if (Player.Inventory.Count(ItemId.Credits) >= 50)
             Unlock(TownNpcKind.Quartermaster);
-        if (Player.MaximumHitPoints > 120f || _colonists.Any(agent => agent.IsAlive && agent.Health.NeedsTending))
+        // Terraria's Nurse: the player's own progress (more than the starting health), not the crew's injuries.
+        if (Player.MaximumHitPoints > 120f)
             Unlock(TownNpcKind.Medic);
         if (Player.Inventory.Slots.Any(stack => !stack.IsEmpty && Items[stack.ItemId].EffectiveClass == DamageClass.Ranged &&
                                                 Items[stack.ItemId].UseKind == ItemUseKind.Ranged && stack.ItemId != ItemId.CopperBow))

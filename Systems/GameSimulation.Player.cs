@@ -78,7 +78,7 @@ public sealed partial class GameSimulation
     public const float SafeFallTiles = 25f;
     public const float FallDamagePerTile = 7f;
     /// <summary>Upward speed (tiles/s) given when swimming up out of a liquid with jump held.</summary>
-    public const float LiquidExitBoost = 10.5f;
+    public const float LiquidExitBoost = 11.5f;
     public const float PotionSicknessSeconds = 45f;
     public const float PhaseStrainSeconds = 6f;
     public const int LoadoutCount = 3;

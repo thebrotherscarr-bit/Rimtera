@@ -215,7 +215,7 @@ public sealed partial class GameSimulation : IStoryHost
         var startX = Math.Clamp(Features?.SpawnColumn ?? width / 2, 2, width - 3);
         SpawnColumn = startX;
         var surfaceY = FindSurface(startX);
-        var playerMotion = new PawnMotionState(new Vector2(startX, surfaceY - 1.8f), new Vector2(0.72f, 1.8f));
+        var playerMotion = new PawnMotionState(new Vector2(startX, surfaceY - HumanoidBody.Size.Y), HumanoidBody.Size);
         Player = new PlayerCharacter(playerMotion, inventory, PlayerProfile, healthSeed: unchecked(seed ^ 0x4EA1F00D));
         AttachGrowth(); // character growth: sixth slot gate, lifebloom and upgrade stat bonuses
         Guide = new GuideNpc(new Vector2(startX + 2.5f, surfaceY - 0.8f));
@@ -225,7 +225,7 @@ public sealed partial class GameSimulation : IStoryHost
         {
             var x = Math.Clamp(startX + (index == 0 ? 5 : -4), 2, width - 3);
             var y = FindSurface(x);
-            var agent = new ColonistAgent(_nextEntityId++, crew[index], new Vector2(x, y - 1.8f),
+            var agent = new ColonistAgent(_nextEntityId++, crew[index], new Vector2(x, y - HumanoidBody.Size.Y),
                 healthSeed: unchecked(seed * 31 + 7 * (index + 1)));
             agent.HomePosition = agent.Motion.Position;
             agent.WanderTarget = agent.Motion.Position;
@@ -608,6 +608,9 @@ public sealed partial class GameSimulation : IStoryHost
         game.PlayerAmbientTemperature = game.AmbientAt(game.PlayerCenter, game.CurrentBiome);
         game.PlayerComfort = TemperatureModel.Evaluate(game.PlayerAmbientTemperature, game.Player.Stats.ImmunityTags);
         game.RestoreBatchB(snapshot);
+        // People grew to Terraria's body size (HumanoidBody); an older save can leave feet in the ground, so lift them clear.
+        foreach (var body in game.TownNpcs.Select(npc => npc.Motion).Concat(game._colonists.Select(agent => agent.Motion)).Prepend(game.Player.Motion))
+            game.LiftClear(body);
         return game;
     }
 
@@ -1580,10 +1583,17 @@ public sealed partial class GameSimulation : IStoryHost
         ColonySocialSystem.NotifyDeath(agent, ColonyPawns);
     }
 
+    /// <summary>Raises a body a quarter tile at a time (up to two tiles) until it no longer overlaps solid ground.</summary>
+    private void LiftClear(PawnMotionState motion)
+    {
+        for (var step = 0; step < 8 && PawnMovementSystem.OverlapsSolid(motion.Position, motion.Size, World, Tiles); step++)
+            motion.Position -= new Vector2(0f, 0.25f);
+    }
+
     private bool IsBlockedAhead(ColonistAgent agent, float horizontal)
     {
         var motion = agent.Motion;
-        var x = (int)MathF.Floor(motion.Position.X + motion.Size.X / 2f + MathF.Sign(horizontal) * 0.72f);
+        var x = (int)MathF.Floor(motion.Position.X + motion.Size.X / 2f + MathF.Sign(horizontal) * motion.Size.X);
         var y = (int)MathF.Floor(motion.Position.Y + motion.Size.Y - 0.30f);
         if (x < 0 || y < 0 || x >= World.Width || y >= World.Height)
             return true;
@@ -2290,7 +2300,7 @@ public sealed partial class GameSimulation : IStoryHost
         var crew = ColonistCatalog.GenerateCrew(unchecked(Seed + 7919 * (wandererIndex + 1)), 4, PlayerProfile.Name);
         var profile = crew.FirstOrDefault(candidate => !taken.Contains(candidate.Name)) ?? crew[0];
         var x = Math.Clamp((int)MathF.Floor(near.X) + (wandererIndex % 2 == 0 ? 3 : -3), 2, World.Width - 3);
-        var agent = new ColonistAgent(_nextEntityId++, profile, new Vector2(x, FindSurface(x) - 1.8f),
+        var agent = new ColonistAgent(_nextEntityId++, profile, new Vector2(x, FindSurface(x) - HumanoidBody.Size.Y),
             healthSeed: unchecked(Seed * 31 + 7919 * (wandererIndex + 1)));
         agent.SocialKey = _colonists.Count + 1;
         _colonists.Add(agent);
@@ -2554,7 +2564,7 @@ public sealed partial class GameSimulation : IStoryHost
         }
 
         var column = Math.Clamp(SpawnColumn == 0 ? World.Width / 2 : SpawnColumn, 2, World.Width - 3);
-        Player.Respawn(new Vector2(column, FindSurface(column) - 1.8f));
+        Player.Respawn(new Vector2(column, FindSurface(column) - Player.Motion.Size.Y));
         var message = lost > 0
             ? $"{Player.Colonist.Name} wakes at the landing site. {lost} materials were lost."
             : $"{Player.Colonist.Name} wakes at the landing site.";

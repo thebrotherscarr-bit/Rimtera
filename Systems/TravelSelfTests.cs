@@ -34,7 +34,7 @@ public static class TravelSelfTests
             data.LiquidKind = LiquidKind.None;
             game.World.SetCell(cell, data);
         }
-        Place(game, new Vector2(x, floorY - 1.81f));
+        Place(game, new Vector2(x, floorY - game.Player.Motion.Size.Y - 0.01f));
     }
 
     private static void Place(GameSimulation game, Vector2 position)

@@ -1951,7 +1951,7 @@ public static partial class GraphicalSandbox
                 var hit = _menu.Preferences.FlashyEffects && _animator.IsFlashing(enemy.Id, now);
                 DrawSpriteActor(g, SpriteCatalog.EnemyFrame(enemy, now), enemy.Motion.Position, enemy.Motion.Size,
                     SpriteCatalog.EnemyDrawScale(enemy), flip, startX, startY, bob: _animator.EnemyBob(enemy, now),
-                    flash: telegraph || hit, flashWhite: hit);
+                    flash: telegraph || hit, flashWhite: hit, reference: SpriteCatalog.ForEnemy(enemy));
                 if ((enemy.HitPoints < enemy.MaximumHitPoints || enemy.IsBoss) && _menu.Preferences.EnemyHealthBars != HealthBarPlacement.Off)
                     DrawHealthBar(g, enemy.Motion.Position, enemy.Motion.Size, enemy.HitPoints / enemy.MaximumHitPoints,
                         enemy.IsBoss, startX, startY);
@@ -1975,8 +1975,8 @@ public static partial class GraphicalSandbox
             {
                 var npcFlip = npc.Motion.Velocity.X < -0.05f;
                 DrawSpriteActor(g, SpriteCatalog.AnimatedFrame(npc.SpriteName, MathF.Abs(npc.Motion.Velocity.X) > 0.3f, false, now, npc.Id),
-                    npc.Motion.Position, npc.Motion.Size, 1.3f, npcFlip, startX, startY,
-                    MathF.Abs(npc.Motion.Velocity.X) > 0.3f ? (float)Math.Abs(Math.Sin(now * 9 + npc.Id)) * -2f : 0f);
+                    npc.Motion.Position, npc.Motion.Size, 1f, npcFlip, startX, startY,
+                    MathF.Abs(npc.Motion.Velocity.X) > 0.3f ? (float)Math.Abs(Math.Sin(now * 9 + npc.Id)) * -2f : 0f, reference: npc.SpriteName);
                 DrawNameTag(g, npc.IsBound ? $"{npc.Name} (bound)" : npc.Name, npc.Motion.Position, npc.Motion.Size, startX, startY);
             }
             foreach (var minion in game.Minions)
@@ -2157,14 +2157,28 @@ public static partial class GraphicalSandbox
             }
         }
 
+        /// <summary>
+        /// Draws an actor with its feet on the bottom of its collision box. With a <paramref name="reference"/> frame (an
+        /// actor's idle pose or base sprite) the scale comes from that frame alone and every animation frame keeps it, so a
+        /// body never grows or shrinks between frames; without one, the sprite is fitted to the box.
+        /// </summary>
         private void DrawSpriteActor(Graphics g, string sprite, Vector2 position, Vector2 size, float scale, bool flip,
-            int startX, int startY, float bob = 0f, bool flash = false, bool flashWhite = false, float scaleX = 1f, float scaleY = 1f)
+            int startX, int startY, float bob = 0f, bool flash = false, bool flashWhite = false, float scaleX = 1f, float scaleY = 1f,
+            string? reference = null)
         {
             var boxW = size.X * TileSize;
             var boxH = size.Y * TileSize;
             var maxW = (int)MathF.Max(6f, boxW * scale * 1.6f);
             var maxH = (int)MathF.Max(6f, boxH * scale);
-            if (_sprites.GetFitted(sprite, maxW, maxH, flip) is not { } bitmap)
+            Bitmap? bitmap;
+            if (reference is not null && _sprites.Get(reference) is { } model && _sprites.Get(sprite) is { } frame)
+            {
+                var fit = MathF.Min(maxW / (float)model.Width, maxH / (float)model.Height);
+                bitmap = _sprites.GetScaled(sprite, Math.Max(1, (int)MathF.Round(frame.Width * fit)), Math.Max(1, (int)MathF.Round(frame.Height * fit)), flip);
+            }
+            else
+                bitmap = _sprites.GetFitted(sprite, maxW, maxH, flip);
+            if (bitmap is null)
             {
                 g.FillRectangle(_enemyBrush, (position.X - startX) * TileSize, (position.Y - startY) * TileSize,
                     Math.Max(3f, boxW), Math.Max(3f, boxH));
@@ -2206,8 +2220,10 @@ public static partial class GraphicalSandbox
             var motion = game.Player.Motion;
             var pose = _animator.PlayerPose(game, now);
             var look = DyedLook(game, CharacterLook.Body(_sprites, pose.Frame, game.Player.Colonist.AppearanceValue.Normalized()));
-            DrawSpriteActor(g, look, motion.Position, motion.Size, pose.Frame.StartsWith("anim_", StringComparison.Ordinal) ? 1.35f : 1.25f,
-                pose.Flip, startX, startY, pose.Bob, flash: pose.Flash, flashWhite: true, scaleX: pose.ScaleX, scaleY: pose.ScaleY);
+            // The idle frame fills the collision box's height; every other frame is drawn at that same scale.
+            var reference = pose.Frame.StartsWith("anim_", StringComparison.Ordinal) ? "anim_idle" : "colonist_front";
+            DrawSpriteActor(g, look, motion.Position, motion.Size, 1f, pose.Flip, startX, startY, pose.Bob, flash: pose.Flash, flashWhite: true,
+                scaleX: pose.ScaleX, scaleY: pose.ScaleY, reference: reference);
             if (!pose.ShowsTool && !StyleDrawsWeapon(game))
                 DrawHeldItem(g, game, startX, startY, now);
             DrawNameTag(g, game.Player.Colonist.Name, motion.Position, motion.Size, startX, startY);
@@ -2223,7 +2239,8 @@ public static partial class GraphicalSandbox
                 return;
             if (item.UseKind is not (ItemUseKind.Melee or ItemUseKind.Pickaxe or ItemUseKind.Ranged))
                 return;
-            var length = (int)(TileSize * (item.UseKind == ItemUseKind.Ranged ? 1.6f : 1.4f));
+            // In proportion to the Terraria-sized body: a held item runs about two thirds of the body's height.
+            var length = (int)(TileSize * (item.UseKind == ItemUseKind.Ranged ? 1.9f : 1.75f));
             if (_sprites.GetFitted(SpriteCatalog.ForItem(item.Id), length, length) is not { } bitmap)
                 return;
 
@@ -2273,7 +2290,7 @@ public static partial class GraphicalSandbox
             var flip = motion.Velocity.X < -0.05f;
             var bob = MathF.Abs(motion.Velocity.X) > 0.3f ? (float)Math.Abs(Math.Sin(now * 9 + agent.Id)) * -2f : 0f;
             var crewSprite = SpriteCatalog.AnimatedFrame(SpriteCatalog.ForCrew(agent.Id), MathF.Abs(motion.Velocity.X) > 0.3f, false, now, agent.Id);
-            DrawSpriteActor(g, crewSprite, motion.Position, motion.Size, 1.3f, flip, startX, startY, bob);
+            DrawSpriteActor(g, crewSprite, motion.Position, motion.Size, 1f, flip, startX, startY, bob, reference: SpriteCatalog.ForCrew(agent.Id));
             DrawNameTag(g, agent.Profile.Name, motion.Position, motion.Size, startX, startY);
         }
 
@@ -2471,11 +2488,16 @@ public static partial class GraphicalSandbox
         }
 
         /// <summary>Outline on the tile under the cursor: amber within reach, red beyond it.</summary>
+        /// <summary>
+        /// The one in-world indicator under the cursor, as in Terraria: with smart cursor on, its target (brackets on a tile,
+        /// or on a creature for guns and blades); otherwise a tile outline only while the held item works on tiles (blocks,
+        /// walls, drills, cutters, hammers). Weapons and empty hands show nothing but the cursor itself.
+        /// </summary>
         private void DrawCursorHighlight(Graphics g, GameSimulation game, int startX, int startY)
         {
             if (CursorTile() is not { } tile)
                 return;
-            if (Smart.Resolve(game, tile, useHeld: false) is { } target)
+            if (Smart.Enabled && Smart.Resolve(game, tile, useHeld: false) is { } target)
             {
                 var pulse = 0.6f + 0.4f * MathF.Sin((float)(Environment.TickCount64 / 160.0));
                 using var smartPen = new Pen(Color.FromArgb((int)(255 * pulse), 90, 230, 255), 2f);
@@ -2489,6 +2511,10 @@ public static partial class GraphicalSandbox
                     DrawBrackets(g, smartPen, new RectangleF((target.Tile.X - startX) * TileSize - 2, (target.Tile.Y - startY) * TileSize - 2, TileSize + 4, TileSize + 4));
                 return;
             }
+            if (Smart.Enabled || game.Player.Inventory.SelectedItem is not { } held ||
+                !(held.UseKind is ItemUseKind.PlaceTile or ItemUseKind.PlaceWall or ItemUseKind.Pickaxe or ItemUseKind.Cutter or ItemUseKind.Demolisher ||
+                  held.PlacedTile != TileId.Air))
+                return;
             var inReach = game.IsInToolReach(tile);
             using var pen = new Pen(inReach ? Color.FromArgb(220, 242, 176, 64) : Color.FromArgb(160, 220, 70, 70), 2f);
             g.DrawRectangle(pen, (tile.X - startX) * TileSize, (tile.Y - startY) * TileSize, TileSize, TileSize);

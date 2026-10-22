@@ -75,7 +75,7 @@ public sealed class TownNpc
         Id = id;
         Definition = definition;
         Name = name;
-        Motion = new PawnMotionState(position, new Vector2(0.7f, 1.8f));
+        Motion = new PawnMotionState(position, HumanoidBody.Size);
         WanderTarget = position;
     }
 

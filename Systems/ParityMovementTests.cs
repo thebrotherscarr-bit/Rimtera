@@ -51,7 +51,7 @@ public static class ParityMovementTests
             data.Shape = TileShape.Full;
             game.World.SetCell(cell, data);
         }
-        Place(game, new Vector2(x, Floor - 1.81f));
+        Place(game, new Vector2(x, Floor - game.Player.Motion.Size.Y - 0.01f));
     }
 
     private static void Place(GameSimulation game, Vector2 position)
@@ -171,9 +171,9 @@ public static class ParityMovementTests
         var jumper = NewGame(7105);
         Arena(jumper);
         var tapApex = JumpApex(jumper, 1);
-        Place(jumper, new Vector2(20f, Floor - 1.81f));
+        Place(jumper, new Vector2(20f, Floor - jumper.Player.Motion.Size.Y - 0.01f));
         var holdApex = JumpApex(jumper, 60);
-        Place(jumper, new Vector2(20f, Floor - 1.81f));
+        Place(jumper, new Vector2(20f, Floor - jumper.Player.Motion.Size.Y - 0.01f));
         var midApex = JumpApex(jumper, 6);
         check(holdApex > tapApex + 0.8f && midApex > tapApex && midApex < holdApex && holdApex < 8f,
             $"A3 holding jump lifts higher up to a cap; releasing early is shorter (tap {tapApex:0.00}, mid {midApex:0.00}, hold {holdApex:0.00} tiles)");
@@ -182,7 +182,7 @@ public static class ParityMovementTests
         Tick(jumper, 1, new MovementInput(0f, JumpPressed: true, JumpHeld: true));
         check(!jumper.Player.Motion.Grounded && jumper.Player.Motion.Velocity.Y > 0f,
             "A3 no jumping in mid-air without a double jump or wings");
-        Place(jumper, new Vector2(20f, Floor - 4.8f));
+        Place(jumper, new Vector2(20f, Floor - jumper.Player.Motion.Size.Y - 3f));
         var pressedAt = -1;
         var bufferedJump = false;
         for (var i = 0; i < 120; i++)
@@ -226,7 +226,7 @@ public static class ParityMovementTests
             }
             game.Player.Heal(1e6f);
             var hp = game.Player.HitPoints;
-            Place(game, new Vector2(20f, Floor - 1.8f - height));
+            Place(game, new Vector2(20f, Floor - game.Player.Motion.Size.Y - height));
             Tick(game, 240);
             return hp - game.Player.HitPoints;
         }
@@ -308,7 +308,7 @@ public static class ParityMovementTests
         Arena(plat);
         for (var x = 10; x < 30; x++)
             Set(plat, x, Floor - 3, TileId.PlankPlatform);
-        Place(plat, new Vector2(20f, Floor - 3 - 1.81f));
+        Place(plat, new Vector2(20f, Floor - 3 - plat.Player.Motion.Size.Y - 0.01f));
         Tick(plat, 20);
         var stands = plat.Player.Motion.Grounded && Math.Abs(Feet(plat) - (Floor - 3)) < 0.05f;
         Tick(plat, 30, new MovementInput(0f, Vertical: 1f));
@@ -326,7 +326,7 @@ public static class ParityMovementTests
         Arena(climber);
         for (var y = Floor - 16; y < Floor; y++)
             Set(climber, 20, y, TileId.Rope);
-        Place(climber, new Vector2(19.64f, Floor - 1.81f));
+        Place(climber, new Vector2(19.64f, Floor - climber.Player.Motion.Size.Y - 0.01f));
         var startY = climber.Player.Motion.Position.Y;
         Tick(climber, 40, new MovementInput(0f, Vertical: -1f));
         var climbedUp = climber.Player.Motion.Climbing && climber.Player.Motion.Position.Y < startY - 2f;
@@ -345,7 +345,7 @@ public static class ParityMovementTests
         var wader = NewGame(7114);
         Arena(wader, x: 10f);
         var dryTop = TopSpeed(wader);
-        Place(wader, new Vector2(10f, Floor - 1.81f));
+        Place(wader, new Vector2(10f, Floor - wader.Player.Motion.Size.Y - 0.01f));
         Fill(wader, 2, Floor - 2, 90, Floor - 1, LiquidKind.Water);
         Tick(wader, 1);
         var wetTop = TopSpeed(wader);
@@ -358,7 +358,7 @@ public static class ParityMovementTests
             Set(breather, 24, y, TileId.Rock);
         }
         Fill(breather, 17, Floor - 1, 23, Floor - 1, LiquidKind.Water);
-        Place(breather, new Vector2(19.6f, Floor - 1.81f));
+        Place(breather, new Vector2(19.6f, Floor - breather.Player.Motion.Size.Y - 0.01f));
         Tick(breather, 120);
         var waistDeep = breather.IsSwimming || !breather.HeadSubmerged;
         var breathKept = !breather.HeadSubmerged && breather.Breath >= breather.MaximumBreath - 0.01f;
@@ -374,7 +374,7 @@ public static class ParityMovementTests
             Set(swim, 24, y, TileId.Rock);
         }
         Fill(swim, 17, Floor - 12, 23, Floor - 1, LiquidKind.Water);
-        Place(swim, new Vector2(19.6f, Floor - 1.81f));
+        Place(swim, new Vector2(19.6f, Floor - swim.Player.Motion.Size.Y - 0.01f));
         var swimStart = swim.Player.Motion.Position.Y;
         Tick(swim, 40, new MovementInput(0f, JumpHeld: true));
         check(swim.Player.Motion.Position.Y < swimStart - 1.5f, "A8 holding jump swims upward");
@@ -389,7 +389,7 @@ public static class ParityMovementTests
         for (var y = Floor - 9; y < Floor; y++)
             Set(exit, x, y, TileId.Rock);
         Fill(exit, 17, Floor - 8, 23, Floor - 1, LiquidKind.Water);
-        Place(exit, new Vector2(21.5f, Floor - 1.81f));
+        Place(exit, new Vector2(21.5f, Floor - exit.Player.Motion.Size.Y - 0.01f));
         var climbedOut = false;
         for (var i = 0; i < 300 && !climbedOut; i++)
         {
@@ -506,7 +506,7 @@ public static class ParityMovementTests
         Arena(edge, x: 4f);
         Tick(edge, 180, Run(-1f));
         var leftOk = edge.Player.Motion.Position.X >= 0f;
-        Place(edge, new Vector2(edge.World.Width - 5f, Floor - 1.81f));
+        Place(edge, new Vector2(edge.World.Width - 5f, Floor - edge.Player.Motion.Size.Y - 0.01f));
         Tick(edge, 180, Run(1f));
         var rightOk = edge.Player.Motion.Position.X + edge.Player.Motion.Size.X <= edge.World.Width;
         check(leftOk && rightOk, "A11 you cannot leave the world's edges");

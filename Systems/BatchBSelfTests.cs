@@ -45,7 +45,7 @@ public static class BatchBSelfTests
             data.LiquidKind = LiquidKind.None;
             game.World.SetCell(cell, data);
         }
-        Place(game, new Vector2((left + right) / 2f, floorY - 1.81f));
+        Place(game, new Vector2((left + right) / 2f, floorY - game.Player.Motion.Size.Y - 0.01f));
     }
 
     private static void Place(GameSimulation game, Vector2 position)
@@ -191,12 +191,13 @@ public static class BatchBSelfTests
         Tick(mover, 1, new MovementInput(0f, JumpPressed: true, JumpHeld: true));
         var doubleJumped = mover.Player.Motion.Velocity.Y < -7f && !mover.DoubleJumpAvailable;
         Equip(mover, EquipmentSlot.Accessory2, ItemId.RocketPack);
-        Place(mover, new Vector2(30f, 42.19f));
+        var standing = 44f - mover.Player.Motion.Size.Y - 0.01f; // feet on the arena floor (row 44)
+        Place(mover, new Vector2(30f, standing));
         Tick(mover, 3);
         var fuelFull = mover.RocketFuel;
         Tick(mover, 1, new MovementInput(0f, JumpPressed: true, JumpHeld: true));
         Tick(mover, 50, new MovementInput(0f, JumpHeld: true));
-        var rocketed = mover.RocketFuel < fuelFull && mover.Player.Motion.Position.Y < 38f;
+        var rocketed = mover.RocketFuel < fuelFull && mover.Player.Motion.Position.Y < standing - 4.19f;
         check(hadDouble && doubleJumped && fuelFull >= 3f && rocketed,
             "the double-jump canister gives a mid-air jump and the rocket pack lifts while jump is held");
 
@@ -215,7 +216,7 @@ public static class BatchBSelfTests
         for (var y = 2; y < 44; y++)
             climber.World.SetTile(new GridPoint(40, y), TileId.Rock);
         Equip(climber, EquipmentSlot.Accessory, ItemId.ClimbingClaws);
-        climber.Player.Motion.Position = new Vector2(39.27f - 0.01f, 8f);
+        climber.Player.Motion.Position = new Vector2(40f - climber.Player.Motion.Size.X - 0.01f, 8f); // flush against the wall
         climber.Player.Motion.Velocity = Vector2.Zero;
         Tick(climber, 40, new MovementInput(1f));
         var slide = climber.Player.Motion.Velocity.Y;
@@ -228,7 +229,7 @@ public static class BatchBSelfTests
         Arena(hooker, 5, 1, 70, 44);
         for (var x = 5; x <= 70; x++)
             hooker.World.SetTile(new GridPoint(x, 30), TileId.Rock);
-        Place(hooker, new Vector2(30f, 42.19f));
+        Place(hooker, new Vector2(30f, 44f - hooker.Player.Motion.Size.Y - 0.01f));
         var noHook = !hooker.TryFireGrapple(hooker.Player.Motion.Position + new Vector2(0f, -10f));
         Equip(hooker, EquipmentSlot.Accessory, ItemId.GrappleHook);
         hooker.TryFireGrapple(hooker.Player.Motion.Position + new Vector2(0.4f, -10f));
@@ -404,7 +405,7 @@ public static class BatchBSelfTests
         var walkSpeed = walker.Player.Motion.Velocity.X;
         owner.Player.Inventory.Add(ItemId.HoverBikeKey, 1);
         var mounted = owner.ToggleMount() && owner.IsMounted;
-        Place(owner, new Vector2(30f, 18.19f));
+        Place(owner, new Vector2(30f, 20f - owner.Player.Motion.Size.Y - 0.01f));
         Tick(owner, 40, new MovementInput(1f));
         check(mounted && owner.Player.Motion.Velocity.X > walkSpeed * 1.4f && owner.ActiveBuffs.Any(buff => buff.Key == "mount"),
             "the hover-bike runs faster and shows in the buff bar");
