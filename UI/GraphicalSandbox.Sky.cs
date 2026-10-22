@@ -125,7 +125,40 @@ public static partial class GraphicalSandbox
                 var scroll = (int)(startX * TileSize * parallax) % drawW;
                 for (var x = -scroll - drawW; x < Width; x += drawW)
                     g.DrawImageUnscaled(art, x, horizon - drawH);
+                // The panorama sits on the ground line under the screen's centre. Where the ground lies lower (a
+                // valley, a dug-out pit), the band between the panorama's foot and the ground is filled with the colour
+                // of that foot, so the hills always meet the ground instead of leaving a strip of bare sky.
+                if (layer == "near" && horizon < height)
+                {
+                    using var foot = new SolidBrush(Color.FromArgb((int)(255 * fade), FootColor(art)));
+                    g.FillRectangle(foot, 0, horizon - 1, Width, height - horizon + 1);
+                }
             }
+        }
+
+        private readonly Dictionary<Bitmap, Color> _footColors = new();
+
+        /// <summary>The average colour along a panorama's bottom row (its solid foot), worked out once per image.</summary>
+        private Color FootColor(Bitmap art)
+        {
+            if (_footColors.TryGetValue(art, out var cached))
+                return cached;
+            if (_footColors.Count > 64)
+                _footColors.Clear();
+            long r = 0, g = 0, b = 0, a = 0;
+            var y = art.Height - 1;
+            for (var x = 0; x < art.Width; x += Math.Max(1, art.Width / 64))
+            {
+                var pixel = art.GetPixel(x, y);
+                r += pixel.R * pixel.A;
+                g += pixel.G * pixel.A;
+                b += pixel.B * pixel.A;
+                a += pixel.A;
+            }
+            var color = a == 0
+                ? Color.FromArgb(24, 22, 26)
+                : Color.FromArgb((int)(r / a), (int)(g / a), (int)(b / a));
+            return _footColors[art] = color;
         }
 
         private readonly Dictionary<(Bitmap Source, int Shade, int Alpha), Bitmap> _tinted = new();
