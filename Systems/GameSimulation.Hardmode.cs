@@ -160,7 +160,7 @@ public sealed partial class GameSimulation
             return "The vault core needs the precursor vault. Open its door with the vault key first.";
         if (boss == RitualBoss && !_defeatedBosses.Contains(EnemyKind.VaultColossus))
             return "The hymnal's pages are blank until the Vault Colossus has fallen.";
-        return null;
+        return CoverageSummonRefusal(boss); // creature coverage bosses (GameSimulation.CreatureCoverage.cs)
     }
 
     // ------------------------------------------------------------------ per tick
@@ -168,6 +168,7 @@ public sealed partial class GameSimulation
     private void UpdateHardmode(float deltaSeconds)
     {
         ApplyHardmodeScaling();
+        UpdateCreatureCoverage(deltaSeconds); // event mini-bosses and the Lumen Tempest (GameSimulation.CreatureCoverage.cs)
         _hardmodeTimer += deltaSeconds;
         if (_hardmodeTimer < 0.5f)
             return;
@@ -366,8 +367,14 @@ public sealed partial class GameSimulation
                 upgrades[kind] = hard;
         }
         // Rust Moon (the blood-moon analog) gains heavier horrors.
+        // Creature coverage: the rust jester is the Rust Moon's own hardmode unit (Terraria's blood-moon clown).
         Map([EnemyKind.EventHusk, EnemyKind.EventRustWraith, EnemyKind.EventRustHound, EnemyKind.EventEyeDrone],
-            [EnemyKind.EventAbomination, EnemyKind.EventCorrodedMech, EnemyKind.EventEclipseShade, EnemyKind.VengefulWisp]);
+            [EnemyKind.EventAbomination, EnemyKind.EventCorrodedMech, EnemyKind.EventEclipseShade, EnemyKind.VengefulWisp, EnemyKind.RustJester]);
+        // Creature coverage: rainfall gains its storm cloud, the dust storm its sand-swimmer (Terraria: Angry Nimbus, Sand Shark).
+        Map([EnemyKind.DrizzleGel, EnemyKind.RainSkipper, EnemyKind.SlickerHusk], [EnemyKind.Thunderhead]);
+        Map([EnemyKind.EventDustDevil, EnemyKind.EventSandRay], [EnemyKind.DuneRazorfin]);
+        // Creature coverage: Swarm Rain's hardmode swarmer (Terraria's rainbow slime).
+        Map([EnemyKind.EventSwarmer, EnemyKind.ArmoredSwarmer], [EnemyKind.PrismSwarmer]);
         // Scavenger raids bring their veterans.
         Map([EnemyKind.EventScavengerGrunt, EnemyKind.EventScavengerSniper, EnemyKind.EventScout],
             [EnemyKind.NeoTerraReaver, EnemyKind.EventScavengerBrute, EnemyKind.EventScrapElemental]);
@@ -381,7 +388,8 @@ public sealed partial class GameSimulation
 
     /// <summary>The event creature that actually appears: after the Fracture, 40% of upgradable picks become hard ones.</summary>
     private EnemyKind HardmodeEventCreature(EnemyKind kind, double roll) =>
-        FractureActive && HardEventUpgrades.TryGetValue(kind, out var hard) && roll * 7.0 % 1.0 < 0.4
+        LateEventCreature(kind, roll) is { } late ? late // creature coverage: post-Mutated-Flora Dark Sun units
+        : FractureActive && HardEventUpgrades.TryGetValue(kind, out var hard) && roll * 7.0 % 1.0 < 0.4
             ? hard[(int)(roll * 13.0 % 1.0 * hard.Length) % hard.Length]
             : kind;
 

@@ -49,16 +49,17 @@ internal sealed class SpriteAtlas : IDisposable
     public int Count => _sprites.Count;
 
     /// <summary>Prefixes used by the generated sheets (tools/sprites/grid_sheets.py), tried in order.</summary>
-    private static readonly string[] SheetPrefixes =
+    internal static readonly string[] SheetPrefixes =
         ["", "weapon_", "tech_", "cmd_", "armor_", "ammo_", "item_", "tool_", "station_", "furn_", "struct_", "npc_", "critter_", "event_", "creature_", "boss_", "minion_", "sentry_", "deco_", "flora_"];
 
     /// <summary>The first existing sprite among name and prefixed variants, or the name itself.</summary>
-    public string Resolve(string? name)
+    public string Resolve(string? name) => string.IsNullOrEmpty(name) ? string.Empty : ResolveName(name, _sprites.ContainsKey);
+
+    /// <summary><see cref="Resolve"/> against any sprite set (the item audit checks the files on disk).</summary>
+    internal static string ResolveName(string name, Func<string, bool> exists)
     {
-        if (string.IsNullOrEmpty(name))
-            return string.Empty;
         foreach (var prefix in SheetPrefixes)
-            if (_sprites.ContainsKey(prefix + name))
+            if (exists(prefix + name))
                 return prefix + name;
         return name;
     }
@@ -276,9 +277,16 @@ internal static class SpriteCatalog
         ["AshBlock"] = "tile_ash",
         ["PurifierBeacon"] = "hab_frozen",
         ["SupplyCache"] = "mining_pack",
-        ["InsulatedSuit"] = "heavy_astro_suit",
-        ["HeatWard"] = "obsidian_shard",
-        ["RadFilterMask"] = "void_helmet",
+        ["InsulatedSuit"] = "armor_insulated_suit",
+        ["HeatWard"] = "item_heat_ward",
+        ["RadFilterMask"] = "armor_rad_filter_mask",
+        ["MossBlock"] = "terrain_moss",
+        ["PrecursorDungeonBrick"] = "tile_dungeon_brick_precursor",
+        ["DartTrap"] = "tile_dart_trap",
+        ["ExplosiveTrap"] = "tile_explosive_trap",
+        ["Timer1s"] = "item_timer_1s",
+        ["Timer3s"] = "item_timer_3s",
+        ["Timer5s"] = "item_timer_5s",
         ["VentDoor"] = "tile_vent_door",
         ["FerriteBrickWall"] = "wall_brick_ferrite",
         ["AlabasterBrickWall"] = "wall_brick_alabaster",
@@ -329,21 +337,33 @@ internal static class SpriteCatalog
     /// </summary>
     public static Func<ItemId, string, string>? ItemArtFallback { get; set; }
 
-    public static string? ForItem(ItemId item) => ForItemNamed(item) is { } named && ItemArtFallback is { } fallback
-        ? fallback(item, named)
-        : ForItemNamed(item);
+    public static string? ForItem(ItemId item) => ForItem(item, SpriteExists);
+
+    /// <summary>
+    /// The item's sprite: its named or conventional sprite when that file exists (kitbashed or generated art always
+    /// wins), otherwise the renderer's fallback art. <paramref name="exists"/> answers whether a sprite is loaded.
+    /// </summary>
+    internal static string? ForItem(ItemId item, Func<string, bool>? exists)
+    {
+        var named = ForItemNamed(item);
+        if (named is null || exists?.Invoke(named) == true || ItemArtFallback is not { } fallback)
+            return named;
+        return fallback(item, named);
+    }
 
     private static string? ForItemNamed(ItemId item) => item switch
     {
         ItemId.SoilBlock => "terrain_regolith",
         ItemId.RockBlock => "terrain_rock",
         ItemId.SandBlock => "terrain_sand",
-        ItemId.WoodBlock => "wall_panel",
+        ItemId.WoodBlock => "item_hull_panel",
         ItemId.CopperOre => "ore_red",
-        ItemId.WoodenPickaxe or ItemId.CopperPickaxe => "mining_pack",
-        ItemId.WoodenSword or ItemId.CopperSword => "energy_cutlass",
+        ItemId.WoodenPickaxe => "tool_survey_drill",
+        ItemId.CopperPickaxe => "mining_pack",
+        ItemId.WoodenSword => "weapon_shock_baton",
+        ItemId.CopperSword => "energy_cutlass",
         ItemId.CopperBow => "laser_rifle",
-        ItemId.Arrow => "energy_crystals",
+        ItemId.Arrow => "ammo_energy_cell",
         ItemId.Berry => "nano_banana",
         ItemId.WorkbenchBlock => "nano_fabricator",
         ItemId.FurnaceBlock => "hab_lava",
@@ -364,7 +384,7 @@ internal static class SpriteCatalog
         ItemId.HearthCharm => "swarm_gloves",
         ItemId.FestivalMask => "banana_uniform",
         ItemId.RestorativeTonic => "luminous_spores",
-        ItemId.ManaTonic => "crystalline_flora",
+        ItemId.ManaTonic => "item_crystal_tonic",
         ItemId.CobaltOre => "ore_blue",
         ItemId.ViridiumOre => "ore_green",
         ItemId.EnergyCrystal => "energy_crystals",
@@ -376,8 +396,27 @@ internal static class SpriteCatalog
         ItemId.HydroponicsTray => "hydroponics_tray",
         ItemId.SolarPanel => "solar_panel",
         ItemId.OxygenUnit => "oxygen_unit",
+        _ when DynamicItemSprite(item) is { } dynamic => dynamic,
         _ => NamedItems.GetValueOrDefault(item.ToString()) ?? ConventionName(item.ToString())
     };
+
+    /// <summary>Kill banners and per-boss caches, trophies, relics and core-chips (dynamic ids): one kitbashed sprite each.</summary>
+    private static string? DynamicItemSprite(ItemId item)
+    {
+        if (Enum.IsDefined(item))
+            return null;
+        if (PlayerItems.BannerKindOf(item) is { } banner)
+            return "item_banner_" + SnakeCase(banner.ToString());
+        if (PlayerSystemsContent.BagBoss(item) is { } bag)
+            return "item_salvage_cache_" + SnakeCase(bag.ToString());
+        if (PlayerSystemsContent.TrophyBoss(item) is { } trophy)
+            return "item_trophy_" + SnakeCase(trophy.ToString());
+        if (PlayerSystemsContent.RelicBoss(item) is { } relic)
+            return "item_relic_" + SnakeCase(relic.ToString());
+        if (PlayerSystemsContent.ExclusiveBoss(item) is { } exclusive)
+            return "item_core_chip_" + SnakeCase(exclusive.ToString());
+        return null;
+    }
 
     /// <summary>
     /// Surface flora and debris per biome, chosen from the exposed top tile (pattern only:

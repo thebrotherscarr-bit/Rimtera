@@ -324,6 +324,7 @@ internal static partial class ArsenalItems
         new(ItemId.OverseerWatchtower, "Overseer watchtower", WeaponStyle.SentryStaff, 4, "Unique", 1.1f, 1.0f, "minion=TurretAutogun", "boss:RenegadeOverseer", true),
         new(ItemId.WarshipFlakKit, "Warship flak kit", WeaponStyle.SentryStaff, 5, "Unique", 1.1f, 1.0f, "minion=TurretAutogun", "boss:WarshipCore", true),
         new(ItemId.MothershipPylon, "Mothership pylon", WeaponStyle.SentryStaff, 6, "Unique", 1.1f, 1.0f, "minion=TurretTesla", "boss:MothershipCore", true),
+        .. CoverageWeaponRows() // creature coverage: boss and mini-boss loot (ArsenalItems.Coverage.cs)
     ];
 
     // Power and Cooldown 0 = from GearCurve (Terraria-shaped tool tiers; uniques sit 40% toward the next tier).

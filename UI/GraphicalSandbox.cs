@@ -2091,6 +2091,7 @@ public static partial class GraphicalSandbox
             // The map remembers whatever is lit around the player (the light map's padded window).
             Map?.RevealFromLight(game.World, _lighting, startX - LightMap.Padding, startY - LightMap.Padding,
                 viewW + LightMap.Padding * 2, viewH + LightMap.Padding * 2);
+            DrawGearAfterLight(g, game, _rig, now); // light halos, shield glints, detector pings (GraphicalSandbox.Gear.cs)
             _animator.DrawEffects(g, startX, startY, TileSize, now, _hud);
             DrawLeisure(g, game, startX, startY, now); // glow coating, pets, kites, golf (GraphicalSandbox.Leisure.cs)
             if (!MenuOpen)
@@ -2136,9 +2137,8 @@ public static partial class GraphicalSandbox
         {
             if (game.Bobber is not { } bobber)
                 return;
-            var motion = game.Player.Motion;
-            var hand = new PointF((motion.Position.X + motion.Size.X / 2f + motion.Facing * 0.6f - startX) * TileSize,
-                (motion.Position.Y + motion.Size.Y * 0.35f - startY) * TileSize);
+            // The line leaves the rod's tip (or the hand when the rod is not drawn).
+            var hand = _rodTip ?? _heldHand ?? _rig.RestHand;
             var dip = bobber.Biting ? (float)Math.Abs(Math.Sin(now * 18)) * 4f : (float)Math.Sin(now * 2) * 1.5f;
             var at = new PointF((bobber.Position.X - startX) * TileSize, (bobber.Position.Y - startY) * TileSize + dip);
             using (var line = new Pen(Color.FromArgb(180, 230, 230, 240), 1f))
@@ -2236,7 +2236,7 @@ public static partial class GraphicalSandbox
         /// </summary>
         private void DrawSpriteActor(Graphics g, string sprite, Vector2 position, Vector2 size, float scale, bool flip,
             int startX, int startY, float bob = 0f, bool flash = false, bool flashWhite = false, float scaleX = 1f, float scaleY = 1f,
-            string? reference = null)
+            string? reference = null, ImageAttributes? ghost = null)
         {
             var boxW = size.X * TileSize;
             var boxH = size.Y * TileSize;
@@ -2262,7 +2262,9 @@ public static partial class GraphicalSandbox
             var left = (position.X - startX) * TileSize + boxW / 2f - drawW / 2f;
             var top = (position.Y - startY) * TileSize + boxH - drawH + bob;
             var destination = new Rectangle((int)left, (int)top, drawW, drawH);
-            if (flash)
+            if (ghost is not null)
+                g.DrawImage(bitmap, destination, 0, 0, bitmap.Width, bitmap.Height, GraphicsUnit.Pixel, ghost);
+            else if (flash)
             {
                 using var bright = new ImageAttributes();
                 bright.SetColorMatrix(flashWhite
@@ -2294,63 +2296,15 @@ public static partial class GraphicalSandbox
             var look = DyedLook(game, CharacterLook.Body(_sprites, pose.Frame, game.Player.Colonist.AppearanceValue.Normalized()));
             // The idle frame fills the collision box's height; every other frame is drawn at that same scale.
             var reference = pose.Frame.StartsWith("anim_", StringComparison.Ordinal) ? "anim_idle" : "colonist_front";
+            _rig = RigFor(game, pose, startX, startY);
+            UpdateGear(game, now);
+            DrawDashGhosts(g, game, look, pose, reference, startX, startY, now);
+            DrawGearBehind(g, game, _rig, now); // wings, rocket pack (GraphicalSandbox.Gear.cs)
             DrawSpriteActor(g, look, motion.Position, motion.Size, 1f, pose.Flip, startX, startY, pose.Bob, flash: pose.Flash, flashWhite: true,
                 scaleX: pose.ScaleX, scaleY: pose.ScaleY, reference: reference);
-            if (!pose.ShowsTool && !StyleDrawsWeapon(game))
-                DrawHeldItem(g, game, startX, startY, now);
-        }
-
-        /// <summary>
-        /// The selected item while it is being used: melee weapons and drills swing through an arc in
-        /// front of the colonist; guns point at the cursor with a short recoil and muzzle flash.
-        /// </summary>
-        private void DrawHeldItem(Graphics g, GameSimulation game, int startX, int startY, double now)
-        {
-            if (_animator.UseProgress(now) is not { } progress || game.Player.Inventory.SelectedItem is not { } item)
-                return;
-            if (item.UseKind is not (ItemUseKind.Melee or ItemUseKind.Pickaxe or ItemUseKind.Ranged))
-                return;
-            // In proportion to the Terraria-sized body: a held item runs about two thirds of the body's height.
-            var length = (int)(TileSize * (item.UseKind == ItemUseKind.Ranged ? 1.9f : 1.75f));
-            if (_sprites.GetFitted(SpriteCatalog.ForItem(item.Id), length, length) is not { } bitmap)
-                return;
-
-            var motion = game.Player.Motion;
-            var facing = motion.Facing >= 0 ? 1 : -1;
-            var hand = new PointF(
-                (motion.Position.X + motion.Size.X / 2f - startX) * TileSize + facing * TileSize * 0.25f,
-                (motion.Position.Y + motion.Size.Y * 0.55f - startY) * TileSize);
-
-            float angle;
-            var recoil = 0f;
-            if (item.UseKind == ItemUseKind.Ranged)
-            {
-                var target = CursorTile() is { } cursor
-                    ? new PointF((cursor.X + 0.5f - startX) * TileSize, (cursor.Y + 0.5f - startY) * TileSize)
-                    : new PointF(hand.X + facing * 100, hand.Y);
-                angle = MathF.Atan2(target.Y - hand.Y, target.X - hand.X) * 180f / MathF.PI;
-                recoil = progress < 0.2f ? (1f - progress / 0.2f) * 5f : 0f;
-            }
-            else
-            {
-                // Overhead to forward-low arc, mirrored for left-facing swings.
-                var swing = -115f + 160f * EaseOut(progress);
-                angle = facing > 0 ? swing : 180f - swing;
-            }
-
-            var state = g.Save();
-            g.TranslateTransform(hand.X, hand.Y);
-            g.RotateTransform(angle);
-            // Sprites point right; flip vertically when aiming left so guns are not upside down.
-            if (Math.Abs(angle) > 90f)
-                g.ScaleTransform(1f, -1f);
-            g.DrawImage(bitmap, -recoil - bitmap.Width * 0.18f, -bitmap.Height / 2f, bitmap.Width, bitmap.Height);
-            if (item.UseKind == ItemUseKind.Ranged && progress < 0.15f && _menu.Preferences.FlashyEffects)
-            {
-                using var flash = new SolidBrush(Color.FromArgb(200, 140, 240, 255));
-                g.FillEllipse(flash, bitmap.Width * 0.8f - recoil, -6, 12, 12);
-            }
-            g.Restore(state);
+            if (!game.Player.IsDowned)
+                DrawHeldItem(g, game, _rig, now); // every use style, arm from the shoulder (GraphicalSandbox.HeldItems.cs)
+            DrawGearFront(g, game, _rig, now);
         }
 
         private static float EaseOut(float t) => 1f - (1f - t) * (1f - t);
@@ -2561,11 +2515,10 @@ public static partial class GraphicalSandbox
             g.FillEllipse(Brushes.White, Width / 2f - 3, Height / 2f - 3, 6, 6);
         }
 
-        /// <summary>Outline on the tile under the cursor: amber within reach, red beyond it.</summary>
         /// <summary>
-        /// The one in-world indicator under the cursor, as in Terraria: with smart cursor on, its target (brackets on a tile,
-        /// or on a creature for guns and blades); otherwise a tile outline only while the held item works on tiles (blocks,
-        /// walls, drills, cutters, hammers). Weapons and empty hands show nothing but the cursor itself.
+        /// The in-world indicator under the cursor, as in Terraria: with smart cursor on, brackets on its target (a tile, or a
+        /// creature for guns and blades); otherwise only the ghost of a block or furniture about to be placed. There is no
+        /// tile outline: the mouse cursor itself is the cursor.
         /// </summary>
         private void DrawCursorHighlight(Graphics g, GameSimulation game, int startX, int startY)
         {
@@ -2587,13 +2540,7 @@ public static partial class GraphicalSandbox
                     DrawBrackets(g, smartPen, new RectangleF((target.Tile.X - startX) * TileSize - 2, (target.Tile.Y - startY) * TileSize - 2, TileSize + 4, TileSize + 4));
                 return;
             }
-            if (Smart.Enabled || game.Player.Inventory.SelectedItem is not { } held ||
-                !(held.UseKind is ItemUseKind.PlaceTile or ItemUseKind.PlaceWall or ItemUseKind.Pickaxe or ItemUseKind.Cutter or ItemUseKind.Demolisher ||
-                  held.PlacedTile != TileId.Air))
-                return;
-            var inReach = game.IsInToolReach(tile);
-            using var pen = new Pen(inReach ? Color.FromArgb(220, 242, 176, 64) : Color.FromArgb(160, 220, 70, 70), 2f);
-            g.DrawRectangle(pen, (tile.X - startX) * TileSize, (tile.Y - startY) * TileSize, TileSize, TileSize);
+            // Without smart cursor there is no box around the tile: the mouse cursor is the only cursor, as in Terraria.
         }
 
         /// <summary>Adds a renderer-side line to the message log (UI notices that are not game events).</summary>
@@ -3156,6 +3103,14 @@ public static partial class GraphicalSandbox
                 g.DrawString($"D{incident.Day} {incident.Hour:00}h  {incident.DisplayName}", _small, _dimTextBrush,
                     new RectangleF(x, y, panel.Width - 24, 16), format);
                 y += 18;
+            }
+
+            // Worn information gear (compass, depth meter, ...): one small line each under the panel.
+            var readoutY = panel.Bottom + 4;
+            foreach (var readout in game.InfoReadouts)
+            {
+                DrawShadowed(g, readout, _small, _hudBrush, panel.X + 4, readoutY);
+                readoutY += 16;
             }
         }
 

@@ -34,13 +34,17 @@ internal sealed class ActorAnimator
         public Vector2 LastCenter;
         public Color Tint = Color.White;
         public double WalkPhase;
+        public float VelocityY;
     }
 
-    private sealed record Particle(Vector2 Position, Vector2 Velocity, Color Color, double Born, float Life, float Size)
+    private sealed record Particle(Vector2 Position, Vector2 Velocity, Color Color, double Born, float Life, float Size, float Gravity = 14f)
     {
         public Vector2 Position { get; set; } = Position;
         public Vector2 Velocity { get; set; } = Velocity;
     }
+
+    /// <summary>Most particles alive at once; gear trails stop adding when the pool is full so GDI+ keeps its frame rate.</summary>
+    private const int ParticleCap = 700;
 
     private sealed record CombatText(Vector2 Position, string Text, Color Color, double Born);
 
@@ -94,10 +98,9 @@ internal sealed class ActorAnimator
             _tracks.Remove(id);
         }
 
-        var gravity = new Vector2(0, 14f);
         foreach (var particle in _particles)
         {
-            particle.Velocity += gravity * deltaSeconds;
+            particle.Velocity += new Vector2(0, particle.Gravity) * deltaSeconds;
             particle.Position += particle.Velocity * deltaSeconds;
         }
         _particles.RemoveAll(particle => now - particle.Born > particle.Life);
@@ -117,6 +120,7 @@ internal sealed class ActorAnimator
 
         if (player.HitPoints < track.HitPoints - 0.01f)
         {
+            PlayerHitAt = now;
             track.FlashUntil = now + 0.15;
             AddText(center - new Vector2(0, 1.2f), $"-{track.HitPoints - player.HitPoints:0}", Color.FromArgb(255, 90, 90), now);
         }
@@ -132,6 +136,21 @@ internal sealed class ActorAnimator
         }
         if (motion.Facing != track.Facing)
             track.TurnedAt = now;
+        // Leaving the ground with a jump kicks up dust; a second upward kick in mid-air is a double jump (a cloud puff).
+        var feet = new Vector2(center.X, motion.Position.Y + motion.Size.Y);
+        if (!motion.Grounded && track.Grounded && motion.Velocity.Y < -3f)
+            Burst(feet, Color.FromArgb(170, 150, 120), 3, now, 1.4f);
+        else if (!motion.Grounded && !track.Grounded && motion.Velocity.Y < -5f && motion.Velocity.Y < track.VelocityY - 5f)
+        {
+            DoubleJumpAt = now;
+            for (var i = 0; i < 10; i++)
+            {
+                var angle = i / 10.0 * Math.PI * 2;
+                Emit(feet, new Vector2((float)Math.Cos(angle) * 3.2f, (float)Math.Sin(angle) * 1.1f + 1.5f), Color.FromArgb(235, 240, 245), now,
+                    0.45f, 3f, 0f);
+            }
+        }
+        track.VelocityY = motion.Velocity.Y;
         // A jump in the cooldown counter means an item was just used.
         if (player.ActionCooldownTicks > track.LastCooldown)
         {
@@ -224,11 +243,19 @@ internal sealed class ActorAnimator
         return -MathF.Abs(MathF.Sin((float)(phase * Math.PI))) * 2f;
     }
 
+    /// <summary>Real time the player last lost hit points (shield and thorn glints key off it).</summary>
+    public double PlayerHitAt { get; private set; } = -10;
+
+    /// <summary>Real time of the last mid-air jump (double-jump puff).</summary>
+    public double DoubleJumpAt { get; private set; } = -10;
+
     /// <summary>0→1 progress through the current item use, or null when not using.</summary>
     public float? UseProgress(double now)
     {
-        // Drills, cutters and demolishers swing for their own swing time, which the simulation tracks.
-        if (_game is { } game && ToolParity.IsTool(game.Player.Inventory.SelectedItem))
+        // The simulation times every use (useAnimation, held vs pressed, channel): tools, weapons, blocks, food alike.
+        // Items whose use time is a tick or two (their cooldown lives elsewhere) fall back to the cooldown timing below.
+        if (_game is { } game && (ToolParity.IsTool(game.Player.Inventory.SelectedItem) ||
+                                  game.ToolSwingProgress is not null && game.ToolSwingLength >= 6))
             return game.ToolSwingProgress;
         if (!_tracks.TryGetValue(PlayerId, out var track))
             return null;
@@ -242,6 +269,16 @@ internal sealed class ActorAnimator
         if (ShowDamageNumbers)
             _texts.Add(new CombatText(position, text, color, now));
     }
+
+    /// <summary>One presentation particle in world space (gear trails, crumbs, sparks); dropped when the pool is full.</summary>
+    public void Emit(Vector2 position, Vector2 velocity, Color color, double now, float life, float size, float gravity = 14f)
+    {
+        if (_particles.Count < ParticleCap)
+            _particles.Add(new Particle(position, velocity, color, now, life, size, gravity));
+    }
+
+    /// <summary>Particle density setting (0 = off, 2 = normal); gear emitters scale by it.</summary>
+    public float ParticleDensity => ParticleScale / 2f;
 
     private void Burst(Vector2 position, Color color, int count, double now, float speed)
     {
@@ -258,12 +295,14 @@ internal sealed class ActorAnimator
     /// <summary>Particles and floating combat text, in world space.</summary>
     public void DrawEffects(Graphics g, int startX, int startY, int tileSize, double now, Font font)
     {
+        using var dot = new SolidBrush(Color.White);
         foreach (var particle in _particles)
         {
             var age = (float)((now - particle.Born) / particle.Life);
-            var alpha = (int)(255 * Math.Clamp(1f - age, 0f, 1f));
-            using var brush = new SolidBrush(Color.FromArgb(alpha, particle.Color));
-            g.FillRectangle(brush, (particle.Position.X - startX) * tileSize, (particle.Position.Y - startY) * tileSize, particle.Size, particle.Size);
+            var alpha = (int)(particle.Color.A * Math.Clamp(1f - age, 0f, 1f));
+            dot.Color = Color.FromArgb(alpha, particle.Color.R, particle.Color.G, particle.Color.B);
+            g.FillRectangle(dot, (particle.Position.X - startX) * tileSize - particle.Size / 2f,
+                (particle.Position.Y - startY) * tileSize - particle.Size / 2f, particle.Size, particle.Size);
         }
         foreach (var text in _texts)
         {

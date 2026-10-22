@@ -11,8 +11,8 @@ The gap pass (four parallel work streams) closed every system gap below. The sui
 ## Content counts (after the gap pass)
 | Category | Terraria | Rimtera | Gap |
 |---|---|---|---|
-| Bosses and event mini-bosses | ~36 | 28 plus wave-moon bosses | small |
-| Hostile creatures | ~450 distinct (766 NPC ids including segments and variants) | 255, including 46 hardmode versions across 14 biomes | Terraria still has more segment and variant ids; every biome has its own roster |
+| Bosses and event mini-bosses | ~36 | 33 bosses plus 9 event mini-bosses; every boss has a summon item or trigger ([CREATURE_COVERAGE.md](CREATURE_COVERAGE.md)) | ✅ |
+| Hostile creatures | ~450 distinct (766 NPC ids including segments and variants) | 328: 255 plus 73 from the creature coverage pass (sky, underground junk and frost, grave field, late dungeon, and own units for every event) | Terraria still has more segment and variant ids; every biome, variant and event has its own roster |
 | Critters | ~100 (with gold variants) | 102: 11 gold, 13 water, all catchable as bait | ✅ |
 | Town NPCs and pets | ~40 | 20 NPCs plus Greenskeeper, Travelling Merchant, 4 town gels, town pets | ✅ |
 | Items | ~5,400 (about 4,000 furniture, blocks, banners, vanity) | ~1,600 | combat and gear at parity; furniture, decor and vanity volume is not |

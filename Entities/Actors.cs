@@ -331,7 +331,36 @@ public enum EnemyKind : ushort
     CriticalWisp = 1215, WebLurker = 1216, BroodTyrant = 1217, GlyphCaster = 1218, VaultLancer = 1219,
     CryptHoplite = 1220, VoidScribe = 1221, CryptFlitter = 1222,
     // Progression chain (docs/PROGRESSION_DIFF.md G1): the pre-Fracture avenger of radiated blight hearts.
-    FalloutHivemind = 1300
+    FalloutHivemind = 1300,
+    // ---- Creature coverage (append-only; explicit band 1400-1599; data in Systems/Content/CreatureCoverageData.cs;
+    //      docs/CREATURE_COVERAGE.md). Biome variants: sky layer, underground junk and frost, the grave field, the late dungeon. ----
+    StratosRaptor = 1400, IonSkate = 1401, StratosWyvern = 1402, CirrusSentinel = 1403,
+    PitCharger = 1404, PitSwarmer = 1405, TombBorer = 1406, DustGhoul = 1407, RustBasilisk = 1408, GritSeer = 1409,
+    IcicleBat = 1410, FrostboundDelver = 1411, HoarfrostElemental = 1412, GlacierTortoise = 1413,
+    GraveWisp = 1414, CarrionDrone = 1415, TombHusk = 1416, MourningShade = 1417,
+    CryptKnight = 1418, HexNecrotech = 1419, CryptMarksman = 1420, CryptSpirit = 1421, CryptPaladin = 1422,
+    VenomRecluse = 1423, RoyalCombGuard = 1424,
+    // Weather, windy-day and late-event units (and their mini-bosses).
+    DrizzleGel = 1425, RainSkipper = 1426, SlickerHusk = 1427, Thunderhead = 1428,
+    WhiteoutWisp = 1429, DriftStalker = 1430, BlizzardColossus = 1431, DuneRazorfin = 1432, GritElemental = 1433,
+    ThistledownDrifter = 1434, GustMite = 1435, RustJester = 1436, CorrosionNautilus = 1437,
+    EclipseSlasher = 1438, EclipseSphere = 1439, ScavengerHexer = 1440,
+    // Hollow Moon and Rime Moon: wave units, two mini-bosses and a boss each.
+    HollowEffigy = 1441, EmberSplinter = 1442, CinderHound = 1443, StaticPoltergeist = 1444, HollowLancer = 1445,
+    EmberRootwalker = 1446, HollowRegent = 1447,
+    FrostSapper = 1448, Shellcracker = 1449, FlurryFlake = 1450, CargoMimic = 1451, SnowHulk = 1452,
+    FrostspirePine = 1453, CryoTank = 1454, RimeSeraph = 1455,
+    // Cryo Brigade troops.
+    BrigadeTrooper = 1456, BrigadeShiv = 1457, BrigadeLobber = 1458,
+    // Obelisk siege natives (ember, gale, rift, shard).
+    CinderImp = 1459, SlagCentipede = 1460, PyreLancer = 1461, GaleDiver = 1462, SquallHornet = 1463, TempestLarva = 1464,
+    RiftSeer = 1465, MindLeech = 1466, RiftFloater = 1467, StarCell = 1468, LatticeWeaver = 1469, ShardInvader = 1470,
+    // Lumen Tempest (the light-hoard event).
+    LumenFlare = 1471, GlareMote = 1472,
+    // Biome bosses: the frozen wastes' optional boss and the crystal spires' gel boss.
+    HoarfrostBehemoth = 1473, GelSovereign = 1474,
+    // Swarm Rain's own swarmers (the slime-rain analog), regular and post-Fracture.
+    ArmoredSwarmer = 1475, PrismSwarmer = 1476
 }
 
 /// <summary>

@@ -1003,6 +1003,8 @@ public sealed partial class GameSimulation : IStoryHost
             PostMessage("Selected slot is empty.");
             return;
         }
+        if (ToolCombat.IsTool(item))
+            StrikeWithToolSwing(item, point); // tools are melee weapons too: the swing hits creatures in its arc (GameSimulation.ToolCombat.cs)
         if (UseToolParityUtility(item, point)) return; // shaping hammer, wire tools, buckets, paint tools (ToolParityUse.cs)
         if (TryUseLeisureItem(item, point)) return; // kites, paint, golf, permits, decks (GameSimulation.Leisure.cs)
 
@@ -1032,7 +1034,7 @@ public sealed partial class GameSimulation : IStoryHost
                 break;
             default:
                 if (!UsePlayerSystemsItem(item, point) && !UseContentItem(item, point))
-                    PostMessage("That item has no direct use.");
+                    NoDirectUse();
                 break;
         }
     }
@@ -1253,7 +1255,6 @@ public sealed partial class GameSimulation : IStoryHost
         }
         Player.Needs.Restore(NeedKind.Food, food.FoodRestore);
         GearOnAte(food);
-        GearOnAte(food);
         if (food.Id == ItemId.Berry)
             Player.Mind.Thoughts.AddMemory(ThoughtId.AteNanoBanana);
         SetPlayerCooldown(Math.Max(Player.ActionCooldownTicks, 8));
@@ -1292,7 +1293,7 @@ public sealed partial class GameSimulation : IStoryHost
             return;
         if (item.GrantsStatus is not { } status)
         {
-            PostMessage("That item has no direct use.");
+            NoDirectUse();
             return;
         }
         if (!Player.Inventory.TryConsume(item.Id))
@@ -2003,7 +2004,9 @@ public sealed partial class GameSimulation : IStoryHost
         if (_storyteller.FalloutActive && !playerIndoors)
         {
             Player.Statuses.Apply(StatusId.Poison, 1f, Player.Stats.ImmunityTags);
-            Player.Health.AddWholeBody(ConditionKind.RadiationSickness, hours * 0.03f);
+            // Filter masks and suits ("toxic" gear) keep the fallout out of the lungs.
+            if (!Player.Stats.ImmunityTags.Contains("toxic"))
+                Player.Health.AddWholeBody(ConditionKind.RadiationSickness, hours * 0.03f);
         }
 
         foreach (var agent in _colonists)

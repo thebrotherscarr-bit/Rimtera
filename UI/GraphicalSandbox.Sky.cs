@@ -96,23 +96,49 @@ public static partial class GraphicalSandbox
             return true;
         }
 
+        /// <summary>Smoothed world row of the background horizon (the region's average ground line); NaN until first drawn.</summary>
+        private float _backdropHorizon = float.NaN;
+
         /// <summary>
-        /// Far and near parallax panoramas for the current biome, their bottom edge on the surface line under the
-        /// screen centre, scrolling slower than the world. Fades out once the surface is far above the view.
+        /// Far and near panoramas for the current biome, pinned to the world like distant scenery: the horizon is the
+        /// region's average ground line (smoothed, so walking over hills does not bob it), and each layer follows the
+        /// camera vertically by only a small parallax share, so jumping barely moves it. Layers are scaled to the view
+        /// and tile sideways. Fades out once the camera is far below the surface.
         /// </summary>
         private void DrawParallax(Graphics g, GameSimulation game, float startX, float startY, float nightFactor)
         {
             if (!_menu.Preferences.BackgroundEnabled)
                 return;
             var theme = BackgroundTheme(game);
-            var centerX = (int)(startX + Width / TileSize / 2);
-            var horizon = (int)((game.BiomeLayout.SurfaceAt(Math.Clamp(centerX, 0, game.World.Width - 1)) - startY) * TileSize) + TileSize * 2;
             var height = Height - HudHeight;
-            if (horizon < -height / 2)
+            var viewTilesW = Width / (float)TileSize;
+            var viewTilesH = height / (float)TileSize;
+            var cameraX = startX + viewTilesW / 2f;
+            var cameraY = startY + viewTilesH / 2f;
+
+            // The region's ground line: an average over a wide window, eased over time.
+            var sum = 0f;
+            var samples = 0;
+            for (var x = (int)cameraX - 120; x <= (int)cameraX + 120; x += 8)
+            {
+                sum += game.BiomeLayout.SurfaceAt(Math.Clamp(x, 0, game.World.Width - 1));
+                samples++;
+            }
+            var regional = sum / Math.Max(1, samples);
+            _backdropHorizon = float.IsNaN(_backdropHorizon) || MathF.Abs(_backdropHorizon - regional) > 80f
+                ? regional
+                : _backdropHorizon + (regional - _backdropHorizon) * 0.02f;
+
+            // Deep underground the backdrop fades away (the cave backdrop takes over).
+            var depthBelow = cameraY - _backdropHorizon;
+            var fade = Math.Clamp(1f - (depthBelow - 10f) / 30f, 0f, 1f);
+            if (fade <= 0f)
                 return;
-            var fade = Math.Clamp(1f - (-horizon) / (height * 0.5f), 0f, 1f);
             var dark = 1f - nightFactor * 0.55f;
-            foreach (var (layer, parallax, scale, tone) in new[] { ("far", 0.08f, 0.55f, 0.75f), ("near", 0.22f, 0.42f, 0.9f) })
+            foreach (var (layer, parallaxX, parallaxY, scale, tone) in new[]
+                     {
+                         ("far", 0.08f, 0.10f, 0.85f, 0.75f), ("near", 0.22f, 0.25f, 0.62f, 0.9f)
+                     })
             {
                 var name = $"bg_{theme}_{layer}";
                 if (_sprites.Get(name) is not { } source)
@@ -121,17 +147,19 @@ public static partial class GraphicalSandbox
                 var drawW = Math.Max(1, source.Width * drawH / Math.Max(1, source.Height));
                 if (_sprites.GetScaled(name, drawW, drawH) is not { } scaled)
                     continue;
+                // With the camera on the ground line the layer's base sits a little below the screen centre (behind the
+                // terrain); moving the camera by d tiles moves the layer by only d × parallaxY.
+                var baseY = (int)(height * 0.58f + (_backdropHorizon - cameraY) * TileSize * parallaxY);
                 var art = Tinted(scaled, tone * dark, fade);
-                var scroll = (int)(startX * TileSize * parallax) % drawW;
+                var scroll = (int)(startX * TileSize * parallaxX) % drawW;
                 for (var x = -scroll - drawW; x < Width; x += drawW)
-                    g.DrawImageUnscaled(art, x, horizon - drawH);
-                // The panorama sits on the ground line under the screen's centre. Where the ground lies lower (a
-                // valley, a dug-out pit), the band between the panorama's foot and the ground is filled with the colour
-                // of that foot, so the hills always meet the ground instead of leaving a strip of bare sky.
-                if (layer == "near" && horizon < height)
+                    g.DrawImageUnscaled(art, x, baseY - drawH);
+                // The land runs on below the near panorama's foot in that foot's colour, so a rising camera, a valley or
+                // a dug-out pit never opens a strip of bare sky between the hills and the ground.
+                if (layer == "near" && baseY < height)
                 {
                     using var foot = new SolidBrush(Color.FromArgb((int)(255 * fade), FootColor(art)));
-                    g.FillRectangle(foot, 0, horizon - 1, Width, height - horizon + 1);
+                    g.FillRectangle(foot, 0, baseY - 1, Width, height - baseY + 1);
                 }
             }
         }

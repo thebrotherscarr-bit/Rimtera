@@ -12,7 +12,7 @@ public readonly record struct MoonProgress(WorldEventKind Kind, string Name, int
 /// scored waves where each kill earns points, a wave clears at a points threshold, mini-bosses join from the middle waves and a
 /// boss from the final waves, and the wave reached sets the loot tier), the Cryo Brigade invasion (a kill-count siege) and the
 /// windy day. Event specs plug into <see cref="WorldEventSystem"/>; wave scoring lives in <see cref="GameSimulation"/>.
-/// Rosters re-theme existing creatures; every name and number is original.
+/// Each moon, the brigade and the windy day have their own creatures (docs/CREATURE_COVERAGE.md); every name and number is original.
 /// </summary>
 public static class SeasonalEvents
 {
@@ -32,39 +32,51 @@ public static class SeasonalEvents
         yield return new(WorldEventKind.RimeMoon, "Rime Moon", WorldEventCategory.Night, WorldEventMoment.Never, 0f, 9f, MoonNight,
             [], NoHostileSpawns: true, CooldownDays: 0, SheltersTown: true);
         yield return new(WorldEventKind.CryoBrigade, "Cryo Brigade", WorldEventCategory.Invasion, WorldEventMoment.Never, 0f, 12f, Fractured,
-            [(EnemyKind.SnowWolf, 0.4f), (EnemyKind.Cryopterous, 0.25f), (EnemyKind.SnowMite, 0.2f), (EnemyKind.GlacialGolem, 0.15f)],
+            // Creature coverage: the brigade's own troops (Terraria's frost legion: gangsta, stabby, balla analogs).
+            [(EnemyKind.BrigadeTrooper, 0.45f), (EnemyKind.BrigadeShiv, 0.3f), (EnemyKind.BrigadeLobber, 0.25f)],
             Waves: 1, KillsPerWave: BrigadeKills,
             Rewards: [(ItemId.Credits, 150), (ItemId.RimeShard, 6), (ItemId.RimeBeacon, 1)], CooldownDays: 0, SheltersTown: true);
         yield return new(WorldEventKind.WindyDay, "Windy day", WorldEventCategory.Calm, WorldEventMoment.Dawn, 0.1f, 10f,
-            host => host.Weather.Rain < 0.3f && host.Weather.Snow < 0.3f, [], CooldownDays: 2);
+            // Creature coverage: drifting thistledown and gust mites ride the wind (Terraria's windy-day dandelions).
+            host => host.Weather.Rain < 0.3f && host.Weather.Snow < 0.3f, [(EnemyKind.ThistledownDrifter, 0.6f), (EnemyKind.GustMite, 0.4f)],
+            CooldownDays: 2);
     }
 
     /// <summary>Points that clear a wave (rising per wave).</summary>
     public static int WaveThreshold(int wave) => 12 + wave * 8;
 
+    /// <summary>Wave of the second mini-boss (Terraria: the Headless Horseman and Santa-NK1 join from the middle waves).</summary>
+    public const int SecondMiniBossWave = 6;
+
+    /// <summary>
+    /// Wave rosters: each moon has its own units (creature coverage, docs/CREATURE_COVERAGE.md), heavier ones joining as the
+    /// waves rise. Hollow Moon: effigies, splinters, cinder hounds, poltergeists. Rime Moon: sappers, shellcrackers, flurry
+    /// flakes, snow hulks and cargo mimics.
+    /// </summary>
     public static (EnemyKind Kind, float Weight)[] WaveRoster(WorldEventKind moon, int wave) => moon == WorldEventKind.HollowMoon
         ? wave switch
         {
-            <= 3 => [(EnemyKind.EventHusk, 0.45f), (EnemyKind.SporeZombie, 0.35f), (EnemyKind.EventRustHound, 0.2f)],
-            <= 6 => [(EnemyKind.EventHusk, 0.2f), (EnemyKind.ShroomStalker, 0.3f), (EnemyKind.EventRustWraith, 0.3f), (EnemyKind.Wraith, 0.2f)],
-            _ => [(EnemyKind.ShroomStalker, 0.25f), (EnemyKind.EventRustWraith, 0.25f), (EnemyKind.MycelidShaman, 0.25f),
-                  (EnemyKind.EventEclipseReaper, 0.25f)]
+            <= 3 => [(EnemyKind.HollowEffigy, 0.45f), (EnemyKind.EmberSplinter, 0.4f), (EnemyKind.CinderHound, 0.15f)],
+            <= 6 => [(EnemyKind.HollowEffigy, 0.25f), (EnemyKind.EmberSplinter, 0.25f), (EnemyKind.CinderHound, 0.25f), (EnemyKind.StaticPoltergeist, 0.25f)],
+            _ => [(EnemyKind.EmberSplinter, 0.2f), (EnemyKind.CinderHound, 0.3f), (EnemyKind.StaticPoltergeist, 0.3f), (EnemyKind.HollowEffigy, 0.2f)]
         }
         : wave switch
         {
-            <= 3 => [(EnemyKind.SnowWolf, 0.5f), (EnemyKind.SnowMite, 0.3f), (EnemyKind.Cryopterous, 0.2f)],
-            <= 6 => [(EnemyKind.SnowWolf, 0.3f), (EnemyKind.Cryopterous, 0.35f), (EnemyKind.CrystalWraith, 0.35f)],
-            _ => [(EnemyKind.Cryopterous, 0.3f), (EnemyKind.CrystalWraith, 0.3f), (EnemyKind.PrismKnight, 0.25f), (EnemyKind.HaloBat, 0.15f)]
+            <= 3 => [(EnemyKind.FrostSapper, 0.5f), (EnemyKind.FlurryFlake, 0.3f), (EnemyKind.Shellcracker, 0.2f)],
+            <= 6 => [(EnemyKind.FrostSapper, 0.25f), (EnemyKind.FlurryFlake, 0.25f), (EnemyKind.Shellcracker, 0.25f), (EnemyKind.SnowHulk, 0.15f),
+                     (EnemyKind.CargoMimic, 0.1f)],
+            _ => [(EnemyKind.FlurryFlake, 0.25f), (EnemyKind.Shellcracker, 0.25f), (EnemyKind.SnowHulk, 0.3f), (EnemyKind.CargoMimic, 0.2f)]
         };
 
-    public static EnemyKind MiniBoss(WorldEventKind moon) => moon == WorldEventKind.HollowMoon ? EnemyKind.EventCorrodedMech : EnemyKind.GlacialGolem;
-    public static EnemyKind Boss(WorldEventKind moon) => moon == WorldEventKind.HollowMoon ? EnemyKind.SporeMonarch : EnemyKind.PrismEmpress;
+    public static EnemyKind MiniBoss(WorldEventKind moon) => moon == WorldEventKind.HollowMoon ? EnemyKind.EmberRootwalker : EnemyKind.FrostspirePine;
+    public static EnemyKind SecondMiniBoss(WorldEventKind moon) => moon == WorldEventKind.HollowMoon ? EnemyKind.HollowLancer : EnemyKind.CryoTank;
+    public static EnemyKind Boss(WorldEventKind moon) => moon == WorldEventKind.HollowMoon ? EnemyKind.HollowRegent : EnemyKind.RimeSeraph;
 
     public static int PointsFor(WorldEventKind moon, EnemyKind kind, bool boss)
     {
         if (boss || kind == Boss(moon))
             return 60;
-        if (kind == MiniBoss(moon))
+        if (kind == MiniBoss(moon) || kind == SecondMiniBoss(moon))
             return 18;
         var hp = EnemyArchetypes.Contains(kind) ? EnemyArchetypes.Get(kind).HitPoints : 40f;
         return Math.Clamp(1 + (int)(hp / 60f), 1, 6);
@@ -93,6 +105,7 @@ public sealed partial class GameSimulation
         public int Points;
         public float SpawnTimer;
         public bool MiniBossSpawned;
+        public bool SecondMiniBossSpawned;
         public bool BossSpawned;
         public bool Finished;
     }
@@ -136,7 +149,7 @@ public sealed partial class GameSimulation
         var state = Moon(kind);
         var name = _worldEvents.Spec(kind).Name;
         state.Points += SeasonalEvents.PointsFor(kind, killed, wasBoss);
-        if (wasBoss || killed == SeasonalEvents.MiniBoss(kind))
+        if (wasBoss || killed == SeasonalEvents.MiniBoss(kind) || killed == SeasonalEvents.SecondMiniBoss(kind))
             foreach (var (item, count) in SeasonalEvents.TierRewards(kind, Math.Max(1, state.Wave / 2)).Take(2))
                 CollectOrDrop(item, count, PlayerCenter);
         while (state.Wave < SeasonalEvents.MoonWaves && state.Points >= SeasonalEvents.WaveThreshold(state.Wave))
@@ -144,6 +157,7 @@ public sealed partial class GameSimulation
             state.Points -= SeasonalEvents.WaveThreshold(state.Wave);
             state.Wave++;
             state.MiniBossSpawned = false;
+            state.SecondMiniBossSpawned = false;
             state.BossSpawned = false;
             PostMessage(state.Wave == SeasonalEvents.MoonWaves ? $"{name}: final wave!" : $"{name}: wave {state.Wave}!");
         }
@@ -179,6 +193,12 @@ public sealed partial class GameSimulation
                 state.MiniBossSpawned = true;
                 SpawnSeasonCreature(kind, SeasonalEvents.MiniBoss(kind), 0);
                 PostMessage($"A {EnemyArchetypes.Get(SeasonalEvents.MiniBoss(kind)).DisplayName} stalks the {_worldEvents.Spec(kind).Name}!");
+            }
+            if (state.Wave >= SeasonalEvents.SecondMiniBossWave && !state.SecondMiniBossSpawned)
+            {
+                state.SecondMiniBossSpawned = true;
+                SpawnSeasonCreature(kind, SeasonalEvents.SecondMiniBoss(kind), 1);
+                PostMessage($"A {EnemyArchetypes.Get(SeasonalEvents.SecondMiniBoss(kind)).DisplayName} joins the {_worldEvents.Spec(kind).Name}!");
             }
             if (state.Wave >= SeasonalEvents.BossWave && !state.BossSpawned && !tagged.Any(enemy => enemy.IsBoss))
             {

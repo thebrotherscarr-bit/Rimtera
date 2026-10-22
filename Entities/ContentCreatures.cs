@@ -229,5 +229,8 @@ internal static class ContentCreatures
         // ---- Content fill: critters, gold variants and biome hostiles (data in Systems/Content/ContentFillData.cs) ----
         foreach (var archetype in Rimtera.Systems.ContentFillCreatures.Archetypes())
             yield return archetype;
+        // ---- Creature coverage: biome variants, event units, mini-bosses and bosses (Systems/Content/CreatureCoverageData.cs) ----
+        foreach (var archetype in Rimtera.Systems.CreatureCoverage.Archetypes())
+            yield return archetype;
     }
 }

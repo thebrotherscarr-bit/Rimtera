@@ -298,7 +298,7 @@ internal static class ContentItems
             Accessory(ItemId.LavaWaderBoots, "Core wader boots", 4, item => item with { ImmunityTags = Tags("heat", "lava") });
             Accessory(ItemId.FrostGripGloves, "Frost-grip gloves", 3, item => item with { ImmunityTags = Tags("cold"), MeleeDamageBonus = 0.04f });
             Accessory(ItemId.LuckyCharm, "Lucky charm", 2, item => item with { CritBonus = 4 });
-            Accessory(ItemId.ThornPlating, "Thorn plating", 3, item => item with { Defense = 2, ImmunityTags = Tags("thorns") });
+            Accessory(ItemId.ThornPlating, "Thorn plating", 3, item => item with { Defense = 2, ImmunityTags = Tags("thorns:33") });
             Accessory(ItemId.AstralHalo, "Astral halo", 7, item => item with
                 { MeleeDamageBonus = 0.08f, RangedDamageBonus = 0.08f, TechDamageBonus = 0.08f, CommandDamageBonus = 0.08f, Defense = 4 });
 

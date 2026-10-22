@@ -97,6 +97,7 @@ public sealed partial class GameSimulation
                 _ => EnemyKind.MossSlime
             };
             kind = BiomeSpawnTables.ContentFill(reading, inDungeon, underground, isNight, FractureActive, roll, kind); // content fill
+            kind = CoverageSpawn(reading, inDungeon, isNight, roll, kind); // creature coverage: sky, junk/frost underground, grave field, late dungeon
             WorldEventKind? eventTag = null;
             if (_worldEvents.PickSpawn(roll) is { } eventKind)
             {
