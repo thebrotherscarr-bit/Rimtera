@@ -400,7 +400,10 @@ public sealed class UserInterface
         else if (element is UiItemSlotElement slot)
             output.Add(new UiDrawCommand(UiDrawKind.ItemSlot, slot.Bounds, slot.GetDisplayText(), slot.Color, slot.IsFocused, slot.IsMouseHovering,
                 Stack: (uint)slot.SlotIndex < (uint)slot.Inventory.Slots.Count ? slot.Inventory.Slots[slot.SlotIndex] : null,
-                Selected: slot.SlotIndex == slot.Inventory.SelectedSlot));
+                Selected: slot.ShowSelection && slot.SlotIndex == slot.Inventory.SelectedSlot, Badge: slot.Badge));
+        else if (element is UiStackSlotElement single)
+            output.Add(new UiDrawCommand(UiDrawKind.ItemSlot, single.Bounds, single.Label, single.Color, single.IsFocused, single.IsMouseHovering,
+                Stack: single.Stack is { IsEmpty: false } held ? held : null));
         foreach (var child in element.Children)
             AppendDrawCommands(child, output);
     }
@@ -423,7 +426,8 @@ public readonly record struct UiDrawCommand(
     bool Hovered,
     int CaretIndex = -1,
     ItemStack? Stack = null,
-    bool Selected = false);
+    bool Selected = false,
+    string? Badge = null);
 
 public sealed class UiPanelElement(string? id = null, UiStyle? style = null) : UiElement(id, style)
 {
@@ -482,11 +486,32 @@ public sealed class UiEquipmentSlotElement : UiElement
     public ItemId? Item => Vanity ? _loadout[(VanitySlot)(byte)Slot] : _loadout[Slot];
 }
 
+/// <summary>A lone slot showing a stack that lives outside any inventory (the trash); empty, it shows its label.</summary>
+public sealed class UiStackSlotElement : UiElement
+{
+    private readonly Func<ItemStack> _stack;
+
+    public UiStackSlotElement(string? id, string label, Func<ItemStack> stack, UiStyle? style = null) : base(id, style)
+    {
+        SemanticRole = "slot";
+        Label = label;
+        _stack = stack ?? throw new ArgumentNullException(nameof(stack));
+    }
+
+    public string Label { get; }
+    public ItemStack Stack => _stack();
+    public UiColor Color { get; set; } = new(43, 48, 64);
+}
+
 public sealed class UiItemSlotElement : UiElement
 {
     public Inventory Inventory { get; }
     public int SlotIndex { get; }
     public UiColor Color { get; set; } = new(43, 48, 64);
+    /// <summary>A small corner label, such as the hotbar number.</summary>
+    public string? Badge { get; set; }
+    /// <summary>Whether the inventory's selected slot is highlighted (off for chests, which have no selection).</summary>
+    public bool ShowSelection { get; set; } = true;
 
     public UiItemSlotElement(string? id, Inventory inventory, int slotIndex, UiStyle? style = null) : base(id, style)
     {

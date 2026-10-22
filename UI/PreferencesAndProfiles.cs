@@ -168,8 +168,10 @@ public sealed record ControlAction(string Id, string Label, ControlGroup Group, 
 /// The single list of player controls. Gameplay input, the controls screen and the in-game help overlay all
 /// read it, so a key shown anywhere is the key that works. Defaults follow Terraria's PC layout (WASD, Space
 /// jump, Escape inventory, E grapple, T throw, Shift smart select, Ctrl smart cursor, R mount, H/J/B quick
-/// heal/charge/buff, M map, Tab map style); Rimtera's own panels take otherwise free keys. Mouse buttons stay
-/// fixed: left uses the selected item, right interacts, the wheel cycles the hotbar (Ctrl + wheel zooms).
+/// heal/charge/buff, M map, Tab map style). As in Terraria, panels live in the inventory (crafting, crew,
+/// housing, bestiary, feats, wires) and the world answers right clicks (beds, the station AI), so those actions
+/// start unbound but can be given keys. Mouse buttons stay fixed: left uses the selected item, right interacts,
+/// the wheel cycles the hotbar (Ctrl + wheel zooms).
 /// </summary>
 public static class ControlCatalog
 {
@@ -185,7 +187,7 @@ public static class ControlCatalog
         new("Mount", "Quick mount", ControlGroup.Movement, ["R"]),
 
         new("SmartSelect", "Smart select (hold)", ControlGroup.Actions, ["Shift"], "Switches to the right tool for what's under the cursor while held."),
-        new("SmartCursor", "Smart cursor", ControlGroup.Actions, ["Ctrl"], "Toggle or hold, as set in Options > Cursor."),
+        new("SmartCursor", "Smart cursor", ControlGroup.Actions, ["Ctrl"], "Toggle or hold, as set in Settings > Cursor."),
         new("ThrowItem", "Throw", ControlGroup.Actions, ["T"], "Drops the item in your hand."),
         new("Interact", "Interact", ControlGroup.Actions, [], "Right click. Bind a key to interact from the keyboard too."),
         new("UseSelected", "Use item", ControlGroup.Actions, [], "Left click. Bind a key to use from the keyboard too."),
@@ -195,7 +197,7 @@ public static class ControlCatalog
         new("QuickHeal", "Quick heal", ControlGroup.QuickUse, ["H"]),
         new("QuickCharge", "Quick charge", ControlGroup.QuickUse, ["J"]),
         new("QuickBuff", "Quick buff", ControlGroup.QuickUse, ["B"]),
-        new("Eat", "Eat", ControlGroup.QuickUse, ["F"]),
+        new("Eat", "Eat", ControlGroup.QuickUse, [], "Using food from the hotbar eats it."),
         new("Loadout1", "Loadout 1", ControlGroup.QuickUse, [], "Or the loadout buttons in the inventory."),
         new("Loadout2", "Loadout 2", ControlGroup.QuickUse, []),
         new("Loadout3", "Loadout 3", ControlGroup.QuickUse, []),
@@ -205,18 +207,18 @@ public static class ControlCatalog
         new("MapStyle", "Map style", ControlGroup.Panels, ["Tab"], "Minimap, overlay or off."),
         new("MinimapZoomIn", "Map zoom in", ControlGroup.Panels, ["Add", "OemPlus"]),
         new("MinimapZoomOut", "Map zoom out", ControlGroup.Panels, ["Subtract", "OemMinus"]),
-        new("Craft", "Craft selected recipe", ControlGroup.Panels, ["C"]),
-        new("CraftPrevious", "Previous recipe", ControlGroup.Panels, ["Oem4"]),
-        new("CraftNext", "Next recipe", ControlGroup.Panels, ["Oem6"]),
-        new("Colonist", "Crew", ControlGroup.Panels, ["K"]),
-        new("Guide", "Ask the station AI", ControlGroup.Panels, ["V"]),
-        new("Bestiary", "Bestiary", ControlGroup.Panels, ["N"]),
-        new("Achievements", "Feats", ControlGroup.Panels, ["O"]),
+        new("Craft", "Craft selected recipe", ControlGroup.Panels, [], "Crafting lives in the inventory."),
+        new("CraftPrevious", "Previous recipe", ControlGroup.Panels, []),
+        new("CraftNext", "Next recipe", ControlGroup.Panels, []),
+        new("Colonist", "Crew", ControlGroup.Panels, [], "Or the Crew tab in the inventory."),
+        new("Guide", "Ask the station AI", ControlGroup.Panels, [], "Or right-click the station AI, or Ask station AI under crafting."),
+        new("Bestiary", "Bestiary", ControlGroup.Panels, [], "Or the Bestiary tab in the inventory."),
+        new("Achievements", "Feats", ControlGroup.Panels, [], "Or the Feats tab in the inventory, or Settings."),
         new("ControlsHelp", "Show / hide key help", ControlGroup.Panels, ["Oem2"]),
 
-        new("Sleep", "Sleep (near a bed, at night)", ControlGroup.World, ["Z"]),
-        new("CheckHousing", "Check housing at cursor", ControlGroup.World, ["P"]),
-        new("WireLayer", "Next wire layer", ControlGroup.World, ["L"]),
+        new("Sleep", "Sleep (near a bed, at night)", ControlGroup.World, [], "Or right-click a bed."),
+        new("CheckHousing", "Check housing at cursor", ControlGroup.World, [], "Or the Housing tab in the inventory."),
+        new("WireLayer", "Next wire layer", ControlGroup.World, [], "Or the Wires toggle in the inventory."),
         new("CycleInventory", "Next hotbar item", ControlGroup.World, [], "The mouse wheel does this."),
         new("SummonBoss", "Summon next boss (debug)", ControlGroup.World, []),
 
@@ -255,7 +257,7 @@ public static class ControlCatalog
         return
         [
             $"{move} move   {K("Jump")} jump   LMB use   RMB interact   {K("Grapple")} grapple   {K("Mount")} mount   {K("ThrowItem")} throw   {K("SmartSelect")} smart select   {K("SmartCursor")} smart cursor",
-            $"{K("QuickHeal")} heal   {K("QuickCharge")} charge   {K("QuickBuff")} buff   {K("Eat")} eat   {K("Inventory")} inventory   {K("Map")} map   {K("MapStyle")} map style   {K("Craft")} craft   {K("Colonist")} crew   {K("Bestiary")} bestiary   {K("ControlsHelp")} hide"
+            $"{K("QuickHeal")} heal   {K("QuickCharge")} charge   {K("QuickBuff")} buff   {K("Inventory")} inventory, crafting, crew, settings   {K("Map")} map   {K("MapStyle")} map style   {K("ControlsHelp")} hide"
         ];
     }
 }
@@ -264,9 +266,10 @@ public sealed class InputProfile
 {
     /// <summary>
     /// Saved-profile format: 2 took WASD off menu navigation; 3 moved gameplay onto <see cref="ControlCatalog"/>
-    /// (bindings that still match the old defaults take the new ones; anything the player changed is kept).
+    /// (bindings that still match the old defaults take the new ones; anything the player changed is kept); 4 moved
+    /// the panel keys into the inventory hub, unbinding them unless the player had changed them.
     /// </summary>
-    public const int CurrentMenuBindingVersion = 3;
+    public const int CurrentMenuBindingVersion = 4;
 
     public string Name { get; set; } = "Keyboard + Mouse";
     public int MenuBindingVersion { get; set; } = CurrentMenuBindingVersion;
@@ -337,6 +340,8 @@ public sealed class InputProfile
             StripGameplayKeysFromMenuNavigation();
         if (menuActionVersion < 3)
             MigrateToCatalog();
+        if (menuActionVersion < 4)
+            UnbindPanelKeys();
         MenuBindingVersion = CurrentMenuBindingVersion;
         // New actions arrive with their defaults; a player's empty list (deliberately unbound) stays empty.
         foreach (var action in ControlCatalog.All)
@@ -353,6 +358,19 @@ public sealed class InputProfile
     /// the real keys were fixed in code. Actions still on their old defaults move to the catalog's; actions the
     /// player rebound keep their keys; actions that no longer exist go.
     /// </summary>
+    /// <summary>Version 4: the panel keys of version 3, where still untouched, go (their panels moved into the inventory).</summary>
+    private void UnbindPanelKeys()
+    {
+        var version3 = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Eat"] = "F", ["Craft"] = "C", ["CraftPrevious"] = "Oem4", ["CraftNext"] = "Oem6", ["Colonist"] = "K", ["Guide"] = "V",
+            ["Bestiary"] = "N", ["Achievements"] = "O", ["Sleep"] = "Z", ["CheckHousing"] = "P", ["WireLayer"] = "L"
+        };
+        foreach (var (action, key) in version3)
+            if (Bindings.TryGetValue(action, out var saved) && saved.Count == 1 && string.Equals(saved[0], key, StringComparison.OrdinalIgnoreCase))
+                saved.Clear();
+    }
+
     private void MigrateToCatalog()
     {
         var oldDefaults = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)

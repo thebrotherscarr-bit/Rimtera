@@ -298,6 +298,20 @@ public static class CoreSelfTests
               oldProfile.Bindings["Inventory"].SequenceEqual(["Escape", "I"]) && oldProfile.Bindings["Colonist"].SequenceEqual(["J"]) &&
               oldProfile.Bindings["Grapple"].SequenceEqual(["E"]),
             "saved profiles move to the new layout: untouched old defaults take the new ones, a player's own rebinds stay, dead actions go");
+        var v3Profile = new InputProfile
+        {
+            MenuBindingVersion = 3,
+            Bindings = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Colonist"] = ["K"], ["Bestiary"] = ["N"], ["Sleep"] = ["Y"], ["Craft"] = ["C"]
+            }
+        };
+        v3Profile.Normalize();
+        Check(new[] { "Colonist", "Guide", "Bestiary", "Achievements", "Craft", "CraftPrevious", "CraftNext", "Sleep", "CheckHousing", "WireLayer", "Eat" }
+                  .All(action => defaultBindings.Bindings[action].Count == 0) &&
+              v3Profile.Bindings["Colonist"].Count == 0 && v3Profile.Bindings["Bestiary"].Count == 0 &&
+              v3Profile.Bindings["Craft"].Count == 0 && v3Profile.Bindings["Sleep"].SequenceEqual(["Y"]),
+            "panel keys start unbound (their panels live in the inventory, beds and the station AI answer right clicks); a saved profile drops the old ones unless the player changed them");
         Check(defaultBindings.Bindings["MenuUp"].SequenceEqual(["UpArrow"]) &&
               defaultBindings.Bindings["MenuDown"].SequenceEqual(["DownArrow"]) &&
               defaultBindings.Bindings["MenuLeft"].SequenceEqual(["LeftArrow"]) &&
@@ -434,33 +448,40 @@ public static class CoreSelfTests
         Check(resumedFromPause, "pause UI resumes through Escape/back dispatch");
         menuFlow.ShowPauseMenu(
             resume: menuFlow.Close,
-            openInventory: () => { },
+            openInventory: null,
             saveAndExit: () => { },
             save: () => { },
-            load: () => { },
             quitToTitle: () => { },
-            exitGame: () => { });
+            exitGame: () => { },
+            openFeats: () => { });
         var pauseLabels = menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).ToArray();
         Check(pauseLabels.SequenceEqual(new[]
               {
-                  "Resume", "Inventory", "Save Game", "Load Game", "Settings",
-                  "Save & Quit to Main Menu", "Save & Exit Game"
-              }),
-            "pause menu exposes save, load, title, and exit actions in one screen");
+                  "Close Menu", "Save Game", "General", "Interface", "Video", "Volume", "Cursor", "Controls", "Feats",
+                  "Save & Exit to Main Menu", "Save & Exit Game"
+              }) && menuFlow.CurrentScreen.Title == "Settings",
+            "the in-game Settings menu follows Terraria: close, save, the settings categories, feats, then save & exit");
+        var videoIndex = Array.IndexOf(pauseLabels, "Video");
+        menuFlow.CurrentScreen.SelectIndex(videoIndex);
+        menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
+        var videoPage = menuFlow.CurrentScreen.Title == "Video" &&
+                        menuFlow.CurrentScreen.Entries.Any(entry => entry.Label.StartsWith("Window mode:", StringComparison.Ordinal));
+        menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
+        Check(videoPage && menuFlow.CurrentScreen.Id == "pause-menu",
+            "a settings category opens its own page and Back returns to the in-game Settings");
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
         menuFlow.ShowPauseMenu(
             resume: menuFlow.Close,
             openInventory: () => { },
             saveAndExit: () => { },
             save: () => { },
-            load: () => { },
             quitToTitle: () => { },
             exitGame: () => { },
             openColonist: () => { });
         var pauseWithColonist = menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).ToArray();
-        Check(pauseWithColonist.Length == 8 && pauseWithColonist[2] == "Colonist" &&
+        Check(pauseWithColonist[1] == "Inventory" && pauseWithColonist[2] == "Crew" &&
               pauseWithColonist[^1] == "Save & Exit Game",
-            "pause menu exposes the colonist sheet without hiding an eighth action");
+            "hosts without the inventory hub (the terminal) still get Inventory and Crew in Settings");
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
         var inventoryClosed = false;
         menuFlow.ShowInventory(new InventoryUiState(uiInventory), () => inventoryClosed = true);
@@ -481,6 +502,12 @@ public static class CoreSelfTests
         Check(saveRepository.TryReadFile(savedWorld.Id, out var saveFile) &&
               saveFile?.CharacterId == savedCharacter.Id && saveFile.CharacterName == savedCharacter.Name,
             "world save records the character used for Continue and Load");
+        var legacyState = savedState with { Inventory = savedState.Inventory.Take(24).ToArray() };
+        var legacyGame = GameSimulation.Restore(legacyState);
+        Check(legacyGame.Player.Inventory.SlotCount == GameSimulation.PlayerInventorySlots &&
+              legacyGame.Player.Inventory.Slots.Take(24).SequenceEqual(savedState.Inventory.Take(24)) &&
+              legacyGame.Player.Inventory.Slots.Skip(24).All(stack => stack.IsEmpty),
+            "saves from the old 24-slot inventory load into the 50-slot one, items in place and the new slots empty");
         var resumedGame = GameSimulation.Restore(loadedState!);
         Check(resumedGame.World.Width == saveGame.World.Width && resumedGame.TickNumber == saveGame.TickNumber &&
               resumedGame.Player.HitPoints == saveGame.Player.HitPoints &&
@@ -543,35 +570,33 @@ public static class CoreSelfTests
         menuFlow.CurrentScreen.SelectIndex(secondCharacterIndex);
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
         var selectedSecond = menuFlow.SelectedCharacter?.Id == secondCharacter.Id;
-        menuFlow.Open();
+        var savedWorldListed = menuFlow.CurrentScreen.Id == "world-select" &&
+                               menuFlow.CurrentScreen.Entries.Any(entry => entry.Label.StartsWith(savedWorld.Name, StringComparison.Ordinal) &&
+                                                                           entry.Label.Contains("Saved", StringComparison.Ordinal));
         CharacterProfile? continueCharacter = null;
         menuFlow.WorldLaunchRequested += (_, character) => continueCharacter = character;
-        menuFlow.CurrentScreen.SelectIndex(1);
+        menuFlow.CurrentScreen.SelectIndex(menuFlow.CurrentScreen.Entries
+            .Select((entry, index) => (entry, index))
+            .First(item => item.entry.Label.StartsWith(savedWorld.Name, StringComparison.Ordinal)).index);
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
-        Check(selectedSecond && continueCharacter?.Id == savedCharacter.Id &&
+        Check(selectedSecond && savedWorldListed && continueCharacter?.Id == savedCharacter.Id &&
               menuFlow.SelectedCharacter?.Id == savedCharacter.Id,
-            "Continue resolves the character stored in the saved world");
+            "Single Player's world list marks saved worlds, and a saved world launches with the character stored in it");
 
         menuFlow.Open();
-        Check(menuFlow.CurrentScreen.Entries.Single(entry => entry.Label == "Continue").Enabled &&
-              menuFlow.CurrentScreen.Entries.Single(entry => entry.Label == "Load Game").Enabled,
-            "main menu enables Continue and Load when a readable save exists");
+        Check(menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).SequenceEqual(["Single Player", "Settings", "Exit Game"]),
+            "the title menu follows Terraria: Single Player, Settings, Exit");
         menuFlow.Close();
         Check(!menuFlow.IsOpen, "start menu closes without losing its host");
         menuFlow.Open();
-        menuFlow.ShowLoadMenu();
-        Check(menuFlow.CurrentScreen.Id == "load-select" &&
-              menuFlow.CurrentScreen.Entries.Any(entry => entry.Label.Contains(savedWorld.Name, StringComparison.Ordinal) &&
-                                                          entry.Label.Contains(savedCharacter.Name, StringComparison.Ordinal)),
-            "Load Game lists saved worlds with their saved character");
-        menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
-        Check(menuFlow.CurrentScreen.Id == "main-menu",
-            "Load Game back navigation returns to the title menu");
 
-        var optionsIndex = menuFlow.CurrentScreen.Entries
+        var settingsIndex = menuFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))
-            .Single(item => item.entry.Label == "Options").index;
-        menuFlow.CurrentScreen.SelectIndex(optionsIndex);
+            .Single(item => item.entry.Label == "Settings").index;
+        menuFlow.CurrentScreen.SelectIndex(settingsIndex);
+        menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
+        var settingsCategories = menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).ToArray();
+        menuFlow.CurrentScreen.SelectIndex(Array.IndexOf(settingsCategories, "Video"));
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
         var optionLabels = menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).ToArray();
         var windowModeIndex = menuFlow.CurrentScreen.Entries
@@ -590,11 +615,12 @@ public static class CoreSelfTests
         var sizedWindowSelected = menuFlow.Preferences.DisplayWidth == 1366 &&
                                   menuFlow.Preferences.DisplayHeight == 768;
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
-        Check(optionLabels.Any(label => label == "Window mode: Windowed") &&
+        Check(settingsCategories.SequenceEqual(["General", "Interface", "Video", "Volume", "Cursor", "Controls", "Back"]) &&
+              optionLabels.Any(label => label == "Window mode: Windowed") &&
               optionLabels.Any(label => label == "Window size: 1280×720") &&
               borderlessSelected && sizedWindowSelected &&
-              menuFlow.CurrentScreen.Id == "main-menu",
-            "options expose live window mode and standard window size controls");
+              menuFlow.CurrentScreen.Id == "settings",
+            "Settings lists Terraria's categories; Video exposes live window mode and standard window sizes");
 
         var controlsIndex = menuFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))

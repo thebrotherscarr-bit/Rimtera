@@ -333,6 +333,47 @@ public static class BatchBSelfTests
         check(stacked == 11 && keeper.GetContainer(chestCell)!.Count(ItemId.RockBlock) == 12 &&
               keeper.Player.Inventory.Count(ItemId.MedStim) == 1 && keeper.LootAll(chestCell) == 12,
             "quick stack moves matching stacks into nearby containers; loot all empties one");
+        // Terraria's chest links beside the open container: quick stack (into this one), restock, sort.
+        var chest = keeper.GetContainer(chestCell)!;
+        keeper.Player.Inventory.PlaceIntoSlot(30, new ItemStack(ItemId.RockBlock, 4));
+        chest.Add(ItemId.RockBlock, 1);
+        chest.Add(ItemId.MedStim, 3);
+        var stackedHere = keeper.QuickStackInto(chestCell);
+        var restocked = keeper.Restock(chestCell);
+        chest.Add(ItemId.Berry, 2);
+        var sortedChest = keeper.SortContainer(chestCell) && chest.Slots[0].IsEmpty is false;
+        // Quick stack sends the 4 loose rocks and the leftover med stim (the chest holds both); restock brings the rocks
+        // back (the hotbar still carries rock) but not the med stim (no longer carried).
+        check(stackedHere == 5 && restocked == 5 && chest.Count(ItemId.RockBlock) == 0 && chest.Count(ItemId.MedStim) == 4 &&
+              keeper.Player.Inventory.Count(ItemId.MedStim) == 0 && sortedChest,
+            "chest links: quick stack fills the open chest with what it holds, restock tops up carried items, sort tidies it");
+        keeper.PutInTrash(new ItemStack(ItemId.Berry, 3));
+        var dropped = keeper.TrashSlot is { ItemId: ItemId.Berry, Count: 3 };
+        var taken = keeper.TakeTrash();
+        check(dropped && taken.Count == 3 && keeper.TrashSlot.IsEmpty,
+            "a held stack dropped on the trash slot replaces its contents, and an empty-handed click takes it back");
+
+        // The inventory hub: Terraria's 10 × 5 grid with the hotbar on top, trash, sort / quick stack, chest links, tabs, settings.
+        var hub = new Rimtera.UI.InventoryUiState(keeper.Player.Inventory, chest: chest, game: keeper, chestCell: chestCell);
+        var ids = hub.DescendantsAndSelf().Select(element => element.Id).ToHashSet();
+        var playerSlots = hub.Slots.Where(slot => ReferenceEquals(slot.Inventory, keeper.Player.Inventory)).ToArray();
+        check(keeper.Player.Inventory.SlotCount == GameSimulation.PlayerInventorySlots && playerSlots.Length == 50 &&
+              playerSlots[0].Badge == "1" && playerSlots[9].Badge == "0" && playerSlots[10].Badge is null &&
+              new[] { "inventory-sort", "inventory-quick-stack", "inventory-trash", "inventory-wires", "chest-loot-all", "chest-deposit-all",
+                      "chest-quick-stack", "chest-restock", "chest-sort", "crafting-guide", "tab-housing", "tab-crew", "tab-bestiary",
+                      "tab-feats", "loadout-1", "inventory-settings" }.All(ids.Contains),
+            "the inventory hub lays out Terraria's 10 × 5 grid (hotbar numbered 1-0) with trash, sort, quick stack, chest links, crafting help, tabs, loadouts and Settings");
+        keeper.Player.Inventory.PlaceIntoSlot(31, new ItemStack(ItemId.Berry, 2));
+        hub.ClickPlayerSlot(31, alt: true);
+        var favorited = keeper.Player.Inventory.IsFavorite(31);
+        hub.ClickPlayerSlot(31, alt: true);
+        hub.ClickPlayerSlot(31, ctrl: true);
+        var ctrlTrashed = keeper.Player.Inventory.Slots[31].IsEmpty && keeper.TrashSlot.ItemId == ItemId.Berry;
+        keeper.Player.Inventory.PlaceIntoSlot(32, new ItemStack(ItemId.RockBlock, 3));
+        hub.ClickPlayerSlot(32, shift: true);
+        var shiftMoved = keeper.Player.Inventory.Slots[32].IsEmpty && chest.Count(ItemId.RockBlock) == 3;
+        check(favorited && ctrlTrashed && shiftMoved,
+            "inventory clicks follow Terraria: Alt favorites, Ctrl trashes, Shift moves to the open chest");
 
         // ---- Signs ----
         var writer = NewGame(9115);

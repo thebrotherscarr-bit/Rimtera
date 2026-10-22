@@ -83,6 +83,9 @@ public sealed partial class GameSimulation
     public const float PhaseStrainSeconds = 6f;
     public const int LoadoutCount = 3;
     public const int BankSlots = 40;
+
+    /// <summary>The player's inventory: Terraria's ten columns by five rows, the top row being the hotbar.</summary>
+    public const int PlayerInventorySlots = 50;
     public const float BankStationReach = 6f;
     public const float QuickStackRadius = 10f;
     public const int KillsPerBanner = 50;
@@ -859,6 +862,17 @@ public sealed partial class GameSimulation
         return added;
     }
 
+    /// <summary>Puts a stack into the trash slot (the old trash is destroyed), as dropping a held item there does.</summary>
+    public void PutInTrash(ItemStack stack) => TrashSlot = stack.IsEmpty ? default : stack with { Favorite = false };
+
+    /// <summary>Takes the whole trashed stack back out (onto the cursor), leaving the trash empty.</summary>
+    public ItemStack TakeTrash()
+    {
+        var taken = TrashSlot;
+        TrashSlot = default;
+        return taken;
+    }
+
     public bool ToggleFavorite(int slot) => (uint)slot < (uint)Player.Inventory.SlotCount && Player.Inventory.ToggleFavorite(slot);
 
     /// <summary>Sorts the main inventory (hotbar and favorites stay put).</summary>
@@ -883,6 +897,28 @@ public sealed partial class GameSimulation
     {
         var source = cell is { } point ? GetContainer(point) : CanAccessBank ? Bank : null;
         return source is null ? 0 : source.MoveAllTo(Player.Inventory, 0);
+    }
+
+    /// <summary>Quick stack into one container (or the bank): non-hotbar, non-favorite stacks it already holds.</summary>
+    public int QuickStackInto(GridPoint? cell = null)
+    {
+        var target = cell is { } point ? GetContainer(point) : CanAccessBank ? Bank : null;
+        return target is null ? 0 : Player.Inventory.MoveAllTo(target, Inventory.HotbarSlots, onlyMatching: true);
+    }
+
+    /// <summary>Restock: tops up the player's stacks from a container (or the bank) with items the player already carries.</summary>
+    public int Restock(GridPoint? cell = null)
+    {
+        var source = cell is { } point ? GetContainer(point) : CanAccessBank ? Bank : null;
+        return source is null ? 0 : source.MoveAllTo(Player.Inventory, 0, onlyMatching: true);
+    }
+
+    /// <summary>Sorts a container (or the bank) from its first slot.</summary>
+    public bool SortContainer(GridPoint? cell = null)
+    {
+        var target = cell is { } point ? GetContainer(point) : CanAccessBank ? Bank : null;
+        target?.Sort(0);
+        return target is not null;
     }
 
     /// <summary>Puts every non-hotbar, non-favorite stack into a container (or the bank when <paramref name="cell"/> is null).</summary>

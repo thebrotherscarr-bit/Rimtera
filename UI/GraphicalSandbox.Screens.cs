@@ -30,6 +30,10 @@ public static partial class GraphicalSandbox
                     ShowStorage(bank, null, "Cargo pod");
             };
             state.SettingsRequested += OpenPauseMenu;
+            state.CrewRequested += OpenColonistSheet;
+            state.BestiaryRequested += OpenBestiary;
+            state.FeatsRequested += OpenAchievements;
+            state.Modifiers = () => ((ModifierKeys & Keys.Shift) != 0, (ModifierKeys & Keys.Control) != 0, (ModifierKeys & Keys.Alt) != 0);
             _menu.ShowInventory(state, onClose: () =>
             {
                 game.CloseBank();

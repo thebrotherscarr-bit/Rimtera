@@ -70,6 +70,13 @@ public sealed class InventoryUiController
 
     public void DropCursor() => CursorStack = default;
 
+    /// <summary>Puts a stack on the empty cursor (taking an item back out of the trash).</summary>
+    public void PickUp(ItemStack stack)
+    {
+        if (CursorStack.IsEmpty)
+            CursorStack = stack;
+    }
+
     private static void Validate(Inventory inventory, int slot)
     {
         if ((uint)slot >= (uint)inventory.SlotCount)
@@ -77,7 +84,35 @@ public sealed class InventoryUiController
     }
 }
 
-/// <summary>Inventory/hotbar/chest UI tree bound to the live inventory objects.</summary>
+/// <summary>
+/// Screen positions of the inventory screen, shared with the canvas, which draws the crafting list in the space
+/// they leave. Terraria 1.4's arrangement: the grid at the top left with the hotbar as its first row, an open
+/// chest under it, crafting under that, equipment down the right side.
+/// </summary>
+public static class InventoryLayout
+{
+    public const float Left = 20f;
+    public const float Top = 22f;
+    public const float Slot = 46f;
+    public const float Stride = 50f;
+    public const int Columns = 10;
+    public const float SideColumn = Left + Columns * Stride + 10f;
+    public const float SideWidth = 118f;
+
+    public static float GridHeight(int slots) => (slots + Columns - 1) / Columns * Stride;
+    public static float HintTop(int playerSlots) => Top + GridHeight(playerSlots);
+    public static float ChestTop(int playerSlots) => HintTop(playerSlots) + 30f;
+    public static float CraftingTop(int playerSlots, int chestSlots) =>
+        (chestSlots > 0 ? ChestTop(playerSlots) + 24f + GridHeight(chestSlots) : HintTop(playerSlots) + 24f) + 34f;
+}
+
+/// <summary>
+/// The inventory screen, the hub Escape opens as in Terraria: inventory and hotbar, sort / quick stack / trash,
+/// an open chest with Loot all, Deposit all, Quick stack, Restock and Sort, crafting (drawn by the canvas), worn
+/// gear with loadouts, tabs for housing, crew, bestiary and feats, and the Settings button. Clicks follow
+/// Terraria: left picks up and places, right takes half or equips, Shift moves to the open chest (or equips, or
+/// trashes), Ctrl trashes, Alt marks a favorite.
+/// </summary>
 public sealed class InventoryUiState : UiState
 {
     private readonly InventoryUiController _controller;
@@ -87,9 +122,10 @@ public sealed class InventoryUiState : UiState
     private readonly GameSimulation? _game;
     private readonly GridPoint? _chestCell;
     private readonly string _chestTitle;
-    private SlotMode _mode;
+    private Tab _tab;
+    private string? _housingReport;
 
-    private enum SlotMode { Normal, Favorite, Trash }
+    private enum Tab { Gear, Housing }
 
     public InventoryUiState(Inventory playerInventory, InventoryUiController? controller = null, Inventory? chest = null,
         GameSimulation? game = null, GridPoint? chestCell = null, string chestTitle = "Chest")
@@ -110,48 +146,208 @@ public sealed class InventoryUiState : UiState
     /// <summary>Raised by the "Settings" button (Terraria keeps settings in the inventory, which Escape opens).</summary>
     public event Action? SettingsRequested;
 
+    /// <summary>Raised by the Crew, Bestiary and Feats tabs, which open their own screens.</summary>
+    public event Action? CrewRequested;
+    public event Action? BestiaryRequested;
+    public event Action? FeatsRequested;
+
+    /// <summary>Which modifier keys are down, read at each click (the host supplies it; none without one).</summary>
+    public Func<(bool Shift, bool Ctrl, bool Alt)> Modifiers { get; set; } = () => default;
+
     public Inventory PlayerInventory { get; }
     public Inventory? ChestInventory { get; }
     public InventoryUiController Controller => _controller;
     public IReadOnlyList<UiItemSlotElement> Slots => _slots;
+    public string StatusText => _statusLabel?.Text ?? string.Empty;
+
+    /// <summary>The click hints shown under the grid until an action reports something.</summary>
+    public const string ClickHints = "Shift+click move · Ctrl+click trash · Alt+click favorite · right-click equip";
 
     public void SelectHotbarSlot(int index) => PlayerInventory.Select(index);
 
     public int QuickMovePlayerSlotToChest(int slot) => ChestInventory is null ? 0 : _controller.QuickTransfer(PlayerInventory, slot, ChestInventory);
     public int QuickMoveChestSlotToPlayer(int slot) => ChestInventory is null ? 0 : _controller.QuickTransfer(ChestInventory, slot, PlayerInventory);
 
+    /// <summary>A click on a player-grid slot with the given modifiers, as the screen handles it (for hosts and tests).</summary>
+    public void ClickPlayerSlot(int slot, UiPointerButton button = UiPointerButton.Left, bool shift = false, bool ctrl = false, bool alt = false) =>
+        HandleSlotClick(PlayerInventory, slot, button, shift, ctrl, alt, doubleClick: false);
+
     private void Build()
     {
-        var panel = new UiPanelElement("inventory-panel", new UiStyle
+        _slots.Clear();
+        ClearChildren();
+        var playerSlots = PlayerInventory.SlotCount;
+        Add(new UiTextElement("Inventory", "inventory-title", new UiStyle
         {
-            Width = UiLength.Pct(0.9f), Height = UiLength.Pct(0.82f), HAlign = 0.5f, VAlign = 0.5f,
-            MaxWidth = 1000f, MaxHeight = 680f, Padding = UiThickness.Uniform(18f)
-        });
-        Add(panel);
-        panel.Add(new UiTextElement(ChestInventory is null ? "Inventory" : $"Inventory  •  {_chestTitle}", "inventory-title",
-            new UiStyle { Width = UiLength.Pct(1f), Height = UiLength.Px(36f) }) { Scale = 1.1f });
-
-        AddGrid(panel, PlayerInventory, top: 52f, columns: 8, rowsLimit: int.MaxValue, prefix: "player");
+            Left = UiLength.Px(InventoryLayout.Left), Top = UiLength.Px(0f), Width = UiLength.Px(200f), Height = UiLength.Px(InventoryLayout.Top)
+        }) { Scale = 0.8f });
+        AddGrid(PlayerInventory, InventoryLayout.Top, "player");
+        _statusLabel = new UiTextElement(ClickHints, "inventory-status", new UiStyle
+        {
+            Left = UiLength.Px(InventoryLayout.Left - 10f), Top = UiLength.Px(InventoryLayout.HintTop(playerSlots)),
+            Width = UiLength.Px(InventoryLayout.Columns * InventoryLayout.Stride + 10f), Height = UiLength.Px(24f)
+        }) { Scale = 0.7f, Color = new UiColor(196, 204, 222) };
+        Add(_statusLabel);
         if (ChestInventory is not null)
-            AddGrid(panel, ChestInventory, top: 52f + GridHeight(PlayerInventory.SlotCount, 8) + 64f,
-                columns: 8, rowsLimit: int.MaxValue, prefix: "chest");
+        {
+            var chestTop = InventoryLayout.ChestTop(playerSlots);
+            Add(new UiTextElement(_chestTitle, "chest-title", new UiStyle
+            {
+                Left = UiLength.Px(InventoryLayout.Left - 10f), Top = UiLength.Px(chestTop), Width = UiLength.Px(300f), Height = UiLength.Px(22f)
+            }) { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
+            AddGrid(ChestInventory, chestTop + 24f, "chest");
+        }
         _cursorLabel = new UiTextElement(string.Empty, "inventory-cursor", new UiStyle
         {
-            Width = UiLength.Pct(1f), Height = UiLength.Px(32f), Top = UiLength.Mixed(-36f, 1f)
+            Left = UiLength.Px(InventoryLayout.SideColumn + InventoryLayout.SideWidth + 12f), Top = UiLength.Px(InventoryLayout.Top),
+            Width = UiLength.Px(260f), Height = UiLength.Px(24f)
         }) { Scale = 0.75f };
-        panel.Add(_cursorLabel);
-        if (_game is not null)
+        Add(_cursorLabel);
+        if (_game is null)
+            return;
+        AddSideColumn(_game);
+        AddChestActions(_game);
+        AddCraftingHeader(_game);
+        AddRightSide(_game);
+        Add(new UiButtonElement("Settings", () => SettingsRequested?.Invoke(), "inventory-settings", new UiStyle
         {
-            AddActions(panel, _game);
-            AddEquipment(panel, _game);
+            Left = UiLength.Mixed(-132f, 1f), Top = UiLength.Mixed(-46f, 1f), Width = UiLength.Px(112f), Height = UiLength.Px(32f)
+        }));
+        RefreshCursorLabel();
+    }
+
+    private UiButtonElement Button(string id, string text, float left, float top, float width, Action command, float height = 28f)
+    {
+        var button = new UiButtonElement(text, () => { command(); RefreshCursorLabel(); }, id, new UiStyle
+        {
+            Left = UiLength.Px(left), Top = UiLength.Px(top), Width = UiLength.Px(width), Height = UiLength.Px(height)
+        }) { TextScale = 0.75f };
+        Add(button);
+        return button;
+    }
+
+    /// <summary>Beside the grid: sort, quick stack to nearby chests, the cargo pod, the wire-layer builder toggle and the trash slot.</summary>
+    private void AddSideColumn(GameSimulation game)
+    {
+        var x = InventoryLayout.SideColumn;
+        var top = InventoryLayout.Top;
+        Button("inventory-sort", "Sort", x, top, InventoryLayout.SideWidth, () => { game.SortInventory(); Status("Sorted (hotbar and favorites stay put)."); });
+        Button("inventory-quick-stack", "Quick stack", x, top + 32f, InventoryLayout.SideWidth,
+            () => Status($"Quick-stacked {game.QuickStackToNearbyChests()} items into nearby chests."));
+        if (ChestInventory is null && game.CanAccessBank)
+            Button("inventory-bank", "Cargo pod", x, top + 64f, InventoryLayout.SideWidth, () => BankRequested?.Invoke());
+        UiButtonElement? wires = null;
+        wires = Button("inventory-wires", $"Wires: layer {game.ActiveWireLayer}", x, top + 96f, InventoryLayout.SideWidth, () =>
+        {
+            game.CycleWireLayer();
+            wires!.Text = $"Wires: layer {game.ActiveWireLayer}";
+            Status($"Showing and placing wire layer {game.ActiveWireLayer}.");
+        });
+
+        var trash = new UiStackSlotElement("inventory-trash", "Trash", () => game.TrashSlot, new UiStyle
+        {
+            Left = UiLength.Px(x), Top = UiLength.Px(InventoryLayout.HintTop(PlayerInventory.SlotCount) - InventoryLayout.Stride),
+            Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot)
+        });
+        // Terraria's trash: drop a held stack in (destroying what was there); click it empty-handed to take it back.
+        trash.OnClick(_ =>
+        {
+            if (!_controller.CursorStack.IsEmpty)
+            {
+                game.PutInTrash(_controller.CursorStack);
+                _controller.DropCursor();
+                Status("Trashed.");
+            }
+            else if (!game.TrashSlot.IsEmpty)
+                _controller.PickUp(game.TakeTrash());
+            RefreshCursorLabel();
+        });
+        Add(trash);
+    }
+
+    /// <summary>Terraria's chest links: Loot all, Deposit all, Quick stack, Restock, Sort.</summary>
+    private void AddChestActions(GameSimulation game)
+    {
+        if (ChestInventory is null)
+            return;
+        var x = InventoryLayout.SideColumn;
+        var top = InventoryLayout.ChestTop(PlayerInventory.SlotCount) + 24f;
+        Button("chest-loot-all", "Loot all", x, top, InventoryLayout.SideWidth, () => Status($"Took {game.LootAll(_chestCell)} items."));
+        Button("chest-deposit-all", "Deposit all", x, top + 30f, InventoryLayout.SideWidth, () => Status($"Stored {game.DepositAll(_chestCell)} items."));
+        Button("chest-quick-stack", "Quick stack", x, top + 60f, InventoryLayout.SideWidth, () => Status($"Stacked {game.QuickStackInto(_chestCell)} items here."));
+        Button("chest-restock", "Restock", x, top + 90f, InventoryLayout.SideWidth, () => Status($"Restocked {game.Restock(_chestCell)} items."));
+        Button("chest-sort", "Sort", x, top + 120f, InventoryLayout.SideWidth, () => Status(game.SortContainer(_chestCell) ? "Sorted the container." : "Nothing to sort."));
+    }
+
+    /// <summary>The crafting heading and the station AI, which (like Terraria's Guide) tells you what your materials make.</summary>
+    private void AddCraftingHeader(GameSimulation game)
+    {
+        var top = InventoryLayout.CraftingTop(PlayerInventory.SlotCount, ChestInventory?.SlotCount ?? 0) - 30f;
+        Add(new UiTextElement("Crafting", "crafting-title", new UiStyle
+        {
+            Left = UiLength.Px(InventoryLayout.Left - 10f), Top = UiLength.Px(top), Width = UiLength.Px(140f), Height = UiLength.Px(26f)
+        }) { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
+        Button("crafting-guide", "Ask station AI", InventoryLayout.Left + 130f, top, 140f, () =>
+        {
+            var advice = game.ConsultGuide();
+            Status(advice.Count > 0 ? advice[0] : "The station AI has nothing new to suggest.");
+        }, height: 26f);
+    }
+
+    /// <summary>Right side: loadouts, worn gear (or the housing panel) and the tabs.</summary>
+    private void AddRightSide(GameSimulation game)
+    {
+        const float gearTop = 206f;
+        UiLength FromRight(float pixels) => UiLength.Mixed(-pixels, 1f);
+        void Tab(string id, string text, int row, Action command, bool active = false) =>
+            Add(new UiButtonElement(active ? $"▸ {text}" : text, () => { command(); RefreshCursorLabel(); }, id, new UiStyle
+            {
+                Left = FromRight(258f), Top = UiLength.Px(gearTop + row * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
+            }) { TextScale = 0.75f });
+
+        Tab("tab-gear", "Gear", 0, () => SwitchTab(InventoryUiState.Tab.Gear), _tab == InventoryUiState.Tab.Gear);
+        Tab("tab-housing", "Housing", 1, () => SwitchTab(InventoryUiState.Tab.Housing), _tab == InventoryUiState.Tab.Housing);
+        Tab("tab-crew", "Crew", 2, () => CrewRequested?.Invoke());
+        Tab("tab-bestiary", "Bestiary", 3, () => BestiaryRequested?.Invoke());
+        Tab("tab-feats", "Feats", 4, () => FeatsRequested?.Invoke());
+        for (var i = 0; i < GameSimulation.LoadoutCount; i++)
+        {
+            var index = i;
+            Add(new UiButtonElement(game.ActiveLoadout == i ? $"▸ Loadout {i + 1}" : $"Loadout {i + 1}", () =>
+            {
+                Status(game.SwitchLoadout(index) ? $"Loadout {index + 1} equipped." : "Already wearing that loadout.");
+                Rebuild();
+            }, $"loadout-{i + 1}", new UiStyle
+            {
+                Left = FromRight(258f), Top = UiLength.Px(gearTop + (6 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
+            }) { TextScale = 0.75f });
         }
+
+        if (_tab == InventoryUiState.Tab.Housing)
+            AddHousing(game, gearTop);
+        else
+            AddEquipment(game, gearTop);
+    }
+
+    private void SwitchTab(Tab tab)
+    {
+        _tab = tab;
+        Rebuild();
+    }
+
+    private void Rebuild()
+    {
+        var status = _statusLabel?.Text;
+        Build();
+        if (status is not null && _statusLabel is not null)
+            _statusLabel.Text = status;
     }
 
     /// <summary>
-    /// Armor and five accessory slots, with vanity beside them. Clicking a worn item takes it off;
-    /// right-clicking an equippable item in the grid puts it on.
+    /// Armor and the accessory slots in a column at the right edge, vanity beside them. Clicking a worn item takes it
+    /// off; right-clicking (or Shift-clicking) an equippable item in the grid puts it on.
     /// </summary>
-    private void AddEquipment(UiPanelElement panel, GameSimulation game)
+    private void AddEquipment(GameSimulation game, float top)
     {
         (EquipmentSlot Slot, string Label)[] functional =
         [
@@ -161,72 +357,55 @@ public sealed class InventoryUiState : UiState
             // The sixth slot opens with the auxiliary socket or on Annihilation worlds.
             (EquipmentSlot.Accessory6, game.AccessorySlot6Unlocked ? "ACC 6" : "LOCKED")
         ];
-        void Add(EquipmentSlot slot, string label, bool vanity, float left, int row)
+        void Slot(EquipmentSlot slot, string label, bool vanity, float fromRight, int row)
         {
             var element = new UiEquipmentSlotElement($"equip-{(vanity ? "vanity" : "gear")}-{slot}", game.Player.Equipment, slot, vanity, label, new UiStyle
             {
-                Left = UiLength.Px(left), Top = UiLength.Px(52f + row * 50f), Width = UiLength.Px(52f), Height = UiLength.Px(44f)
+                Left = UiLength.Mixed(-fromRight, 1f), Top = UiLength.Px(top + row * InventoryLayout.Stride),
+                Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot)
             });
             element.OnClick(_ =>
             {
                 if (element.Item is { } worn)
                     Status(game.TryUnequipEquipment(slot, vanity) ? $"Took off {game.Items[worn].Name}." : "No room in the inventory.");
             });
-            panel.Add(element);
+            Add(element);
         }
         for (var row = 0; row < functional.Length; row++)
-            Add(functional[row].Slot, functional[row].Label, vanity: false, 846f, row);
-        Add(EquipmentSlot.Head, "VAN H", vanity: true, 902f, 0);
-        Add(EquipmentSlot.Body, "VAN B", vanity: true, 902f, 1);
-        Add(EquipmentSlot.Legs, "VAN L", vanity: true, 902f, 2);
+            Slot(functional[row].Slot, functional[row].Label, vanity: false, 66f, row);
+        Slot(EquipmentSlot.Head, "VAN H", vanity: true, 120f, 0);
+        Slot(EquipmentSlot.Body, "VAN B", vanity: true, 120f, 1);
+        Slot(EquipmentSlot.Legs, "VAN L", vanity: true, 120f, 2);
     }
 
-    /// <summary>Sort, quick stack, favorites, trash, loadouts, and loot/deposit for the open container.</summary>
-    private void AddActions(UiPanelElement panel, GameSimulation game)
+    /// <summary>Terraria's housing panel: check the room you stand in, and who lives with you.</summary>
+    private void AddHousing(GameSimulation game, float top)
     {
-        var top = 52f;
-        void Button(string text, Action command)
+        var left = UiLength.Mixed(-130f, 1f);
+        Add(new UiTextElement("Housing", "housing-title", new UiStyle { Left = left, Top = UiLength.Px(top), Width = UiLength.Px(120f), Height = UiLength.Px(24f) })
+            { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
+        Add(new UiButtonElement("Check this room", () =>
         {
-            var button = new UiButtonElement(text, () => { command(); RefreshCursorLabel(); }, $"inventory-action-{top}", new UiStyle
+            var center = game.Player.Motion.Position + game.Player.Motion.Size / 2f;
+            var housing = game.CheckHousing(new GridPoint((int)center.X, (int)center.Y));
+            _housingReport = housing.Valid ? "Suitable housing." : $"Not valid: {housing.Reason}";
+            Status(_housingReport);
+            Rebuild();
+        }, "housing-check", new UiStyle { Left = left, Top = UiLength.Px(top + 28f), Width = UiLength.Px(120f), Height = UiLength.Px(28f) }) { TextScale = 0.75f });
+        var lines = new List<string>();
+        if (_housingReport is not null)
+            lines.Add(_housingReport);
+        lines.Add(game.Colonists.Count == 0 ? "No crew yet." : "Crew:");
+        lines.AddRange(game.Colonists.Where(colonist => colonist.IsAlive).Take(10).Select(colonist => $"{colonist.Profile.Name} · {colonist.Activity}"));
+        for (var i = 0; i < lines.Count; i++)
+            Add(new UiTextElement(lines[i], $"housing-line-{i}", new UiStyle
             {
-                Left = UiLength.Px(632f), Top = UiLength.Px(top), Width = UiLength.Px(200f), Height = UiLength.Px(36f)
-            });
-            panel.Add(button);
-            top += 42f;
-        }
-
-        Button("Sort inventory", () => { game.SortInventory(); Status("Sorted (hotbar and favorites stay put)."); });
-        Button("Quick stack to nearby", () => Status($"Stacked {game.QuickStackToNearbyChests()} items into nearby containers."));
-        Button("Favorite mode", () => { _mode = _mode == SlotMode.Favorite ? SlotMode.Normal : SlotMode.Favorite; Status(ModeText()); });
-        Button("Trash mode", () => { _mode = _mode == SlotMode.Trash ? SlotMode.Normal : SlotMode.Trash; Status(ModeText()); });
-        Button("Recover trash", () => Status(game.RecoverTrash() > 0 ? "Recovered the trashed stack." : "The trash is empty."));
-        if (ChestInventory is not null)
-        {
-            Button("Loot all", () => Status($"Took {game.LootAll(_chestCell)} items."));
-            Button("Deposit all", () => Status($"Stored {game.DepositAll(_chestCell)} items."));
-        }
-        else if (game.CanAccessBank)
-            Button("Open cargo pod", () => BankRequested?.Invoke());
-        Button("Settings", () => SettingsRequested?.Invoke());
-        for (var i = 0; i < GameSimulation.LoadoutCount; i++)
-        {
-            var index = i;
-            Button($"Loadout {i + 1}{(game.ActiveLoadout == i ? "  (worn)" : string.Empty)}",
-                () => Status(game.SwitchLoadout(index) ? $"Loadout {index + 1} equipped." : "Already wearing that loadout."));
-        }
-        _statusLabel = new UiTextElement(ModeText(), "inventory-status", new UiStyle
-        {
-            Left = UiLength.Px(632f), Top = UiLength.Px(top + 4f), Width = UiLength.Px(200f), Height = UiLength.Px(48f)
-        }) { Scale = 0.7f };
-        panel.Add(_statusLabel);
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top + 62f + i * 20f), Width = UiLength.Px(240f), Height = UiLength.Px(20f)
+            }) { Scale = 0.7f });
     }
 
-    private string ModeText() => _mode switch
-    {
-        SlotMode.Favorite => "Click slots to mark favorites (kept by sort and deposit).",
-        SlotMode.Trash => "Click a slot to trash it.",
-        _ => _game is { TrashSlot.IsEmpty: false } game ? $"Trash: {game.Items[game.TrashSlot.ItemId].Name}" : "Trash: empty"
-    };
+    /// <summary>Shows a message on the status line under the grid (crafting results, for one).</summary>
+    public void ShowStatus(string text) => Status(text);
 
     private void Status(string text)
     {
@@ -234,54 +413,84 @@ public sealed class InventoryUiState : UiState
             _statusLabel.Text = text;
     }
 
-    private void AddGrid(UiPanelElement panel, Inventory inventory, float top, int columns, int rowsLimit, string prefix)
+    private void AddGrid(Inventory inventory, float top, string prefix)
     {
-        // Widen before multiplying: an unbounded row limit (int.MaxValue) used to overflow to a negative count.
-        var count = (int)Math.Min(inventory.SlotCount, (long)columns * rowsLimit);
-        for (var slot = 0; slot < count; slot++)
+        var player = ReferenceEquals(inventory, PlayerInventory);
+        for (var slot = 0; slot < inventory.SlotCount; slot++)
         {
             var slotIndex = slot;
-            var column = slotIndex % columns;
-            var row = slotIndex / columns;
             var element = new UiItemSlotElement($"{prefix}-slot-{slotIndex}", inventory, slotIndex, new UiStyle
             {
-                Left = UiLength.Px(column * 76f), Top = UiLength.Px(top + row * 54f),
-                Width = UiLength.Px(70f), Height = UiLength.Px(46f), Padding = UiThickness.Uniform(3f)
-            });
+                Left = UiLength.Px(InventoryLayout.Left + slotIndex % InventoryLayout.Columns * InventoryLayout.Stride),
+                Top = UiLength.Px(top + slotIndex / InventoryLayout.Columns * InventoryLayout.Stride),
+                Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot), Padding = UiThickness.Uniform(3f)
+            })
+            {
+                Badge = player && slotIndex < Inventory.HotbarSlots ? ((slotIndex + 1) % 10).ToString() : null,
+                ShowSelection = player
+            };
             element.OnClick(input =>
             {
-                if (_game is not null && _mode != SlotMode.Normal && ReferenceEquals(inventory, PlayerInventory))
-                {
-                    if (_mode == SlotMode.Favorite)
-                        _game.ToggleFavorite(slotIndex);
-                    else
-                        Status(_game.TrashInventorySlot(slotIndex) ? ModeText() + "  ·  " + "Trashed." : "Can't trash that (empty or favorite).");
-                    return;
-                }
-                if (input.IsDoubleClick && ChestInventory is not null)
-                {
-                    if (ReferenceEquals(inventory, PlayerInventory)) _controller.QuickTransfer(PlayerInventory, slotIndex, ChestInventory);
-                    else _controller.QuickTransfer(ChestInventory, slotIndex, PlayerInventory);
-                    RefreshCursorLabel();
-                    return;
-                }
-                // Right-clicking armor or an accessory in the player grid wears it (Terraria-style quick equip).
-                if (input.Button != UiPointerButton.Left && _game is not null && ReferenceEquals(inventory, PlayerInventory) &&
-                    _controller.CursorStack.IsEmpty && !inventory.Slots[slotIndex].IsEmpty &&
-                    _game.Items[inventory.Slots[slotIndex].ItemId].EquipmentSlot is not null)
-                {
-                    var name = _game.Items[inventory.Slots[slotIndex].ItemId].Name;
-                    Status(_game.TryEquipFromInventory(slotIndex) ? $"Equipped {name}." : $"Cannot equip {name}.");
-                    return;
-                }
-                if (input.Button == UiPointerButton.Left) _controller.LeftClick(inventory, slotIndex);
-                else _controller.RightClick(inventory, slotIndex);
-                RefreshCursorLabel();
+                var (shift, ctrl, alt) = Modifiers();
+                HandleSlotClick(inventory, slotIndex, input.Button, shift, ctrl, alt, input.IsDoubleClick);
             });
             element.OnActivate(_ => { _controller.LeftClick(inventory, slotIndex); RefreshCursorLabel(); });
             _slots.Add(element);
-            panel.Add(element);
+            Add(element);
         }
+    }
+
+    private void HandleSlotClick(Inventory inventory, int slotIndex, UiPointerButton button, bool shift, bool ctrl, bool alt, bool doubleClick)
+    {
+        var player = ReferenceEquals(inventory, PlayerInventory);
+        var stack = inventory.Slots[slotIndex];
+        if (_game is not null && player && button == UiPointerButton.Left && _controller.CursorStack.IsEmpty && !stack.IsEmpty)
+        {
+            if (alt)
+            {
+                _game.ToggleFavorite(slotIndex);
+                Status(inventory.IsFavorite(slotIndex) ? "Favorited: kept by sort, deposit and quick stack." : "No longer a favorite.");
+                return;
+            }
+            if (ctrl)
+            {
+                Status(_game.TrashInventorySlot(slotIndex) ? "Trashed." : "Favorites can't be trashed.");
+                return;
+            }
+        }
+        if (shift && button == UiPointerButton.Left && _controller.CursorStack.IsEmpty && !stack.IsEmpty)
+        {
+            if (ChestInventory is not null)
+            {
+                var moved = player ? _controller.QuickTransfer(PlayerInventory, slotIndex, ChestInventory)
+                    : _controller.QuickTransfer(ChestInventory, slotIndex, PlayerInventory);
+                Status(moved > 0 ? $"Moved {moved}." : "No room.");
+            }
+            else if (_game is not null && player && _game.Items[stack.ItemId].EquipmentSlot is not null)
+                Status(_game.TryEquipFromInventory(slotIndex) ? $"Equipped {_game.Items[stack.ItemId].Name}." : $"Cannot equip {_game.Items[stack.ItemId].Name}.");
+            else if (_game is not null && player)
+                Status(_game.TrashInventorySlot(slotIndex) ? "Trashed." : "Favorites can't be trashed.");
+            RefreshCursorLabel();
+            return;
+        }
+        if (doubleClick && ChestInventory is not null)
+        {
+            if (player) _controller.QuickTransfer(PlayerInventory, slotIndex, ChestInventory);
+            else _controller.QuickTransfer(ChestInventory, slotIndex, PlayerInventory);
+            RefreshCursorLabel();
+            return;
+        }
+        // Right-clicking armor or an accessory in the player grid wears it (Terraria-style quick equip).
+        if (button != UiPointerButton.Left && _game is not null && player && _controller.CursorStack.IsEmpty && !stack.IsEmpty &&
+            _game.Items[stack.ItemId].EquipmentSlot is not null)
+        {
+            var name = _game.Items[stack.ItemId].Name;
+            Status(_game.TryEquipFromInventory(slotIndex) ? $"Equipped {name}." : $"Cannot equip {name}.");
+            return;
+        }
+        if (button == UiPointerButton.Left) _controller.LeftClick(inventory, slotIndex);
+        else _controller.RightClick(inventory, slotIndex);
+        RefreshCursorLabel();
     }
 
     private void RefreshCursorLabel()
@@ -291,8 +500,6 @@ public sealed class InventoryUiState : UiState
                 ? string.Empty
                 : $"Holding {(_game is null ? _controller.CursorStack.ItemId.ToString() : _game.Items[_controller.CursorStack.ItemId].Name)} × {_controller.CursorStack.Count}";
     }
-
-    private static float GridHeight(int count, int columns) => ((count + columns - 1) / columns) * 54f;
 }
 
 /// <summary>
