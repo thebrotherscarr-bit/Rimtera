@@ -83,7 +83,11 @@ public sealed class Storyteller
     public const int RecentLogSize = 5;
     public const float MinimumThreatPoints = 35f;
     public const float MaximumThreatPoints = 900f;
-    private const float OpeningGraceHours = 6f;
+    /// <summary>Three in-game days of quiet at the start, as Terraria gives a new world: build a house first.</summary>
+    private const float OpeningGraceHours = 72f;
+
+    /// <summary>The first day weather incidents (cold snaps, heat waves, fallout, flares) may happen.</summary>
+    public const int FirstWeatherDay = 4;
 
     private readonly List<IStoryIncident> _incidents = new();
     private readonly Dictionary<string, long> _lastFired = new(StringComparer.OrdinalIgnoreCase);
@@ -100,7 +104,8 @@ public sealed class Storyteller
         Register(new ToxicFalloutIncident());
         Register(new SolarFlareIncident());
         Register(new CargoDropIncident());
-        Register(new WandererJoinsIncident());
+        // Crew no longer wander in at random: they arrive like Terraria's town NPCs, into free housing
+        // (GameSimulation.Town.cs). WandererJoinsIncident stays defined; its WanderersJoined counter now counts every arrival.
     }
 
     public IReadOnlyList<IStoryIncident> Incidents => _incidents;
@@ -336,7 +341,8 @@ public sealed class RaidIncident : IStoryIncident
     public string DisplayName => "Raid";
     public IncidentCategory Category => IncidentCategory.MajorThreat;
     public float RefireHours => 18f;
-    public bool CanFire(StoryContext context, Storyteller teller) => !context.BossActive && context.Day >= 2;
+    // Terraria's invasions wait for progress: raids start once the first boss is down.
+    public bool CanFire(StoryContext context, Storyteller teller) => !context.BossActive && context.DefeatedBosses >= 1;
     public float ChanceWeight(StoryContext context) => 1f;
 
     public string? TryExecute(IncidentParms parms, Storyteller teller, IStoryHost host)
@@ -355,7 +361,7 @@ public sealed class TemperatureShiftIncident(bool cold) : IStoryIncident
     public float RefireHours => 30f;
 
     public bool CanFire(StoryContext context, Storyteller teller) =>
-        teller.TemperatureOffsetHoursRemaining <= 0f &&
+        context.Day >= Storyteller.FirstWeatherDay && teller.TemperatureOffsetHoursRemaining <= 0f &&
         (cold ? context.Biome != BiomeZone.MoltenChasm : context.Biome != BiomeZone.FrozenWasteland);
 
     public float ChanceWeight(StoryContext context) => (cold, context.Biome) switch
@@ -383,7 +389,8 @@ public sealed class ToxicFalloutIncident : IStoryIncident
     public string DisplayName => "Toxic fallout";
     public IncidentCategory Category => IncidentCategory.MinorThreat;
     public float RefireHours => 36f;
-    public bool CanFire(StoryContext context, Storyteller teller) => context.RadiatedNearby && !teller.FalloutActive;
+    public bool CanFire(StoryContext context, Storyteller teller) =>
+        context.Day >= Storyteller.FirstWeatherDay && context.RadiatedNearby && !teller.FalloutActive;
     public float ChanceWeight(StoryContext context) => context.Biome == BiomeZone.RadiatedDeeps ? 1.5f : 0.9f;
 
     public string? TryExecute(IncidentParms parms, Storyteller teller, IStoryHost host)
@@ -400,7 +407,7 @@ public sealed class SolarFlareIncident : IStoryIncident
     public string DisplayName => "Solar flare";
     public IncidentCategory Category => IncidentCategory.MinorThreat;
     public float RefireHours => 40f;
-    public bool CanFire(StoryContext context, Storyteller teller) => !teller.SolarFlareActive && context.Day >= 2;
+    public bool CanFire(StoryContext context, Storyteller teller) => !teller.SolarFlareActive && context.Day >= Storyteller.FirstWeatherDay;
     public float ChanceWeight(StoryContext context) => 0.7f;
 
     public string? TryExecute(IncidentParms parms, Storyteller teller, IStoryHost host)

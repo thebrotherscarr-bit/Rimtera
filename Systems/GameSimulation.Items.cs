@@ -102,7 +102,7 @@ public sealed partial class GameSimulation
         }
         if (item.StartsEvent is { } eventKind)
         {
-            if (eventKind == WorldEventKind.DefenseProtocol && !Guide.IsInRange(PlayerCenter) &&
+            if (eventKind == WorldEventKind.DefenseProtocol && !IsNearGuide(PlayerCenter) &&
                 !_townNpcs.Any(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound &&
                                       Vector2.Distance(npc.Motion.Position, PlayerCenter) < 8f))
             {

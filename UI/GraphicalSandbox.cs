@@ -994,7 +994,7 @@ public static partial class GraphicalSandbox
             if (_game.TryInteractPlayerSystems(target))
                 return;
             // Right-clicking the station AI talks to it, as with Terraria's Guide.
-            if (Vector2.Distance(new Vector2(target.X + 0.5f, target.Y + 0.5f), _game.Guide.Position) < 1.5f)
+            if (Vector2.Distance(new Vector2(target.X + 0.5f, target.Y + 0.5f), _game.GuidePosition) < 1.5f)
             {
                 var advice = _game.ConsultGuide();
                 _canvas.Notify(advice.Count > 0 ? advice[0] : "The station AI has nothing new to suggest.");
@@ -1947,8 +1947,10 @@ public static partial class GraphicalSandbox
 
             DrawLooseObjects(g, game, startX, startY, now);
 
-            DrawSpriteActor(g, "station_ai", game.Guide.Position, new Vector2(0.8f, 1.6f), 1.5f, false, startX, startY,
-                bob: (float)Math.Sin(now * 2.0) * 2f);
+            // The station AI waits as a hologram at the landing site until it moves into a house (then it's drawn as a resident).
+            if (!game.GuideMovedIn)
+                DrawSpriteActor(g, "station_ai", game.Guide.Position, new Vector2(0.8f, 1.6f), 1.5f, false, startX, startY,
+                    bob: (float)Math.Sin(now * 2.0) * 2f);
 
             foreach (var enemy in game.Enemies.Where(enemy => enemy.IsAlive))
             {
@@ -2016,7 +2018,8 @@ public static partial class GraphicalSandbox
             };
             lamps.AddRange(game.Colonists.Where(agent => agent.IsAlive)
                 .Select(agent => new LightMap.LampLight(agent.Motion.Position + agent.Motion.Size / 2f, Color.FromArgb(255, 230, 190), 0.6f)));
-            lamps.Add(new LightMap.LampLight(game.Guide.Position, Color.FromArgb(120, 230, 255), 0.7f));
+            if (!game.GuideMovedIn)
+                lamps.Add(new LightMap.LampLight(game.Guide.Position, Color.FromArgb(120, 230, 255), 0.7f));
             lamps.AddRange(game.PlayerLightSources.Select(light => new LightMap.LampLight(light.Position, light.Tint switch
             {
                 "cyan" => Color.FromArgb(140, 230, 255),
@@ -2660,7 +2663,7 @@ public static partial class GraphicalSandbox
             foreach (var colonist in game.Colonists)
                 if (colonist.IsAlive && Over(world, colonist.Motion.Position, colonist.Motion.Size, 0.3f))
                     return $"{colonist.Profile.Name} · {colonist.Activity} · {colonist.MoodLabel}";
-            if (Vector2.Distance(world, game.Guide.Position) < 1.2f)
+            if (!game.GuideMovedIn && Vector2.Distance(world, game.Guide.Position) < 1.2f)
                 return "Station AI · right-click for guidance";
 
             if (CursorTile() is { } tile)
@@ -2816,7 +2819,8 @@ public static partial class GraphicalSandbox
             }
             foreach (var agent in game.Colonists.Where(agent => agent.IsAlive))
                 Icon(CharacterLook.Face(_sprites, agent.Profile.AppearanceValue.Normalized()), agent.Motion.Position.X, agent.Motion.Position.Y, iconSize - 4);
-            Icon("station_ai", game.Guide.Position.X, game.Guide.Position.Y, iconSize - 4);
+            if (!game.GuideMovedIn)
+                Icon("station_ai", game.Guide.Position.X, game.Guide.Position.Y, iconSize - 4);
             // Town NPCs and bound survivors once their spot has been seen; blight hearts that were found and still stand.
             foreach (var npc in game.TownNpcs)
                 if (Map.IsRevealed((int)npc.Motion.Position.X, (int)npc.Motion.Position.Y))

@@ -534,6 +534,7 @@ public static class CoreSelfTests
         Check(!saveRepository.TryLoad(sidecarWorld, out _), "a save whose cell sidecar is missing is refused instead of loading empty");
 
         var colonyGame = new GameSimulation(seed: 2211, width: 80, height: 48, colonist: draftProfile);
+        colonyGame.AddStartingCrewForChecks();
         Check(colonyGame.Player.Colonist.Id == draftProfile.Id &&
               colonyGame.Colonists.Count == 2 &&
               colonyGame.Player.MaximumHitPoints == draftProfile.EffectiveMaximumHealth &&
@@ -1035,8 +1036,8 @@ public static class CoreSelfTests
             }
             return sim;
         }
-        var storyA = RunStory(2024, 48);
-        var storyB = RunStory(2024, 48);
+        var storyA = RunStory(2024, 24 * 7); // past the three quiet opening days
+        var storyB = RunStory(2024, 24 * 7);
         Check(storyA.IncidentLog.Count > 0 &&
               storyA.IncidentLog.Select(record => (record.IncidentId, record.Day, record.Summary))
                   .SequenceEqual(storyB.IncidentLog.Select(record => (record.IncidentId, record.Day, record.Summary))) &&
@@ -1175,6 +1176,7 @@ public static class CoreSelfTests
         static (MentalBreakKind Kind, long StartTick, bool Catharsis) RunBreak()
         {
             var sim = new GameSimulation(seed: 3434, width: 80, height: 48);
+            sim.AddStartingCrewForChecks();
             var crew = sim.Colonists[0];
             var started = MentalBreakKind.None;
             var startTick = -1L;
@@ -1202,6 +1204,7 @@ public static class CoreSelfTests
 
         // Relations and interactions.
         var socialGame = new GameSimulation(seed: 3535, width: 80, height: 48);
+        socialGame.AddStartingCrewForChecks();
         var chatter = socialGame.Colonists[0];
         var listener = socialGame.Colonists[1];
         ColonySocialSystem.SetBoth(chatter, listener, RelationKind.Crewmate, 0f);
@@ -1218,6 +1221,7 @@ public static class CoreSelfTests
             "repeated chats raise opinion until the pair count as friends");
 
         var fightGame = new GameSimulation(seed: 3636, width: 80, height: 48);
+        fightGame.AddStartingCrewForChecks();
         var bully = fightGame.Colonists[0];
         var victim = fightGame.Colonists[1];
         ColonySocialSystem.SetBoth(bully, victim, RelationKind.Crewmate, 0f);
@@ -1232,6 +1236,7 @@ public static class CoreSelfTests
             "insults at low opinion can start a social fight that bruises both sides");
 
         var griefGame = new GameSimulation(seed: 3737, width: 80, height: 48);
+        griefGame.AddStartingCrewForChecks();
         var mourner = griefGame.Colonists[0];
         var lost = griefGame.Colonists[1];
         ColonySocialSystem.SetBoth(mourner, lost, RelationKind.Crewmate, 0f);
@@ -1250,6 +1255,7 @@ public static class CoreSelfTests
 
         // Body, mind and social state survive a save round-trip; older saves still load.
         var mindSave = new GameSimulation(seed: 3838, width: 80, height: 48);
+        mindSave.AddStartingCrewForChecks();
         var savedPlayer = mindSave.Player;
         var savedCrew = mindSave.Colonists[0];
         savedPlayer.Health.ApplyDamageToPart(savedPlayer.Health.FindPart("left hand")!, 100f, DamageKind.Cut);
