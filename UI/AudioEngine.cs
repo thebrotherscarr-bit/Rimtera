@@ -4,8 +4,8 @@ namespace Rimtera.UI;
 
 /// <summary>
 /// Dependency-free audio: a software mixer streaming 16-bit stereo PCM to the Windows waveOut API.
-/// Sound effects are synthesised once at startup (no audio files), music is generated live as
-/// slow chord pads with a sparse melody whose key and mood follow the biome and time of day, and
+/// Sound effects are synthesised once at startup (no audio files), music is generated live as a
+/// grooving generative score whose key, style and mood follow the biome and time of day, and
 /// rain plays as a filtered-noise ambience loop. If no audio device is available everything is a
 /// silent no-op.
 /// </summary>
@@ -226,15 +226,18 @@ internal sealed class AudioEngine : IDisposable
     // ---------------------------------------------------------------- generative music
 
     /// <summary>
-    /// Generative score in three original style voices, chosen per biome, over a modern groove and an ambient bed:
+    /// Generative score in four original style voices, chosen per biome, over a modern groove and an ambient bed:
     /// <list type="bullet">
     /// <item>Vivaldi: driving sixteenth-note string figuration, harpsichord continuo, walking root-fifth bass.</item>
     /// <item>Bach: the same motor figuration answered a bar later by an imitating voice an octave down, over a
     ///   walking eighth-note bass (counterpoint).</item>
     /// <item>Tchaikovsky: a lyrical stepwise melody with wide vibrato over lush strings and harp, often a 3/4 waltz.</item>
+    /// <item>Funk: a resonant filtered slap bass with ghost notes and octave pops, wah-swept clav stabs, and
+    ///   call-and-response horn riffs with a pitch scoop, over Dorian/Mixolydian seventh-chord vamps.</item>
     /// </list>
-    /// Each biome has its own key, tempo, harmony, meter and drum groove (four-on-the-floor, breakbeat, half-time,
-    /// tribal toms, waltz, syncopated funk). A sustained pad and a stereo echo add ambience; drums and density grow with tension.
+    /// Each biome has its own key, mode, tempo, swing, harmony, meter and drum groove (four-on-the-floor, disco,
+    /// breakbeat, half-time, tribal toms, waltz, syncopated funk), with open hats, claps, a fill every fourth bar and
+    /// a crash every eighth. A sustained pad and a stereo echo add ambience; drums and density grow with tension.
     /// All material is original and generated live.
     /// </summary>
     private sealed class MusicState
@@ -248,12 +251,13 @@ internal sealed class AudioEngine : IDisposable
         private int _pattern;
         private readonly Random _random = new(11);
 
-        private enum Composer : byte { Vivaldi, Bach, Tchaikovsky }
+        private enum Composer : byte { Vivaldi, Bach, Tchaikovsky, Funk }
 
-        private enum Groove : byte { Four, Break, Half, Tribal, Waltz, Funk }
+        private enum Groove : byte { Four, Break, Half, Tribal, Waltz, Funk, Disco }
 
-        private readonly record struct Style(int Root, int Bpm, int[] Progression, bool Minor, float Brightness,
-            Composer Composer, int Meter, Groove Groove, float Pad);
+        /// <summary>Swing delays every off-sixteenth by that fraction of a sixteenth (0 straight, 0.33 full shuffle).</summary>
+        private readonly record struct Style(int Root, int Bpm, int[] Progression, int[] Scale, float Brightness,
+            Composer Composer, int Meter, Groove Groove, float Pad, float Swing);
 
         // Lead strings (two detuned voices), the imitating second voice (Bach), harpsichord/harp plucks, bass, pad.
         private float _leadFreq, _leadPhaseA, _leadPhaseB, _leadEnv, _vibrato;
@@ -263,10 +267,20 @@ internal sealed class AudioEngine : IDisposable
         private readonly float[] _pluckFreq = new float[4], _pluckPhase = new float[4], _pluckEnv = new float[4];
         private int _nextPluck;
         private float _bassFreq, _bassPhase, _bassEnv;
-        private readonly float[] _padFreq = new float[3], _padPhase = new float[3];
-        private float _padEnv;
+        private readonly float[] _padFreq = new float[4], _padPhase = new float[4];
+        private float _padEnv, _tremolo;
+        // Funk: slap bass through a resonant low-pass, wah-filtered clav stabs, and a pitch scoop on the horn riffs.
+        private float _slapFreq, _slapPhase, _slapEnv, _slapDecay, _slapFilterEnv;
+        private Svf _slapFilter;
+        private readonly float[] _clavFreq = new float[4], _clavPhase = new float[4];
+        private float _clavEnv, _wahPhase, _leadBend = 1f;
+        private Svf _clavFilter;
         // Drums: kick/tom sweep, clap/snare noise, hat and shaker noise; sidechain pump follows the kick.
         private float _kickEnv, _kickPhase, _kickPitch = 85f, _snareEnv, _hatEnv, _pump = 1f, _hatPrev;
+        // Open hat (choked by the closed hat; a long decay doubles as a crash) and a three-slap clap.
+        private float _openHatEnv, _openHatDecay = 0.99975f, _openHatPrev, _clapEnv;
+        private int _clapAge;
+        private Svf _clapFilter;
         // Ambience: a stereo feedback echo with a soft low-pass in the loop.
         private readonly float[] _echoLeft = new float[SampleRate], _echoRight = new float[SampleRate];
         private int _echoIndex;
@@ -274,6 +288,10 @@ internal sealed class AudioEngine : IDisposable
 
         private static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
         private static readonly int[] HarmonicMinor = [0, 2, 3, 5, 7, 8, 11];
+        private static readonly int[] Dorian = [0, 2, 3, 5, 7, 9, 10];
+        private static readonly int[] Mixolydian = [0, 2, 4, 5, 7, 9, 10];
+        private static readonly int[] MinorPentatonic = [0, 3, 5, 7, 10];
+        private static readonly int[] MajorPentatonic = [0, 2, 4, 7, 9];
 
         // Harmony: a circle-of-fifths sequence, a bright cadence loop, a driving minor sequence, and a romantic
         // loop with a lift to the relative minor.
@@ -281,6 +299,10 @@ internal sealed class AudioEngine : IDisposable
         private static readonly int[] BrightLoop = [0, 4, 5, 3, 0, 3, 4, 4];
         private static readonly int[] MinorDrive = [0, 5, 3, 4, 0, 3, 4, 4];
         private static readonly int[] Romantic = [0, 5, 3, 4, 0, 2, 3, 4];
+        // Funk vamps, two bars a chord: i7–IV7 (Dorian), I7–bVII–IV (Mixolydian), and a restless i7–IV7 strut.
+        private static readonly int[] DorianVamp = [0, 0, 3, 3, 0, 0, 3, 4];
+        private static readonly int[] MixoVamp = [0, 0, 6, 6, 3, 3, 0, 4];
+        private static readonly int[] Strut = [0, 3, 0, 3, 0, 3, 4, 4];
 
         // Sixteenth-note figurations over six chord tones; -1 = rest.
         private static readonly int[][] Figures =
@@ -292,22 +314,51 @@ internal sealed class AudioEngine : IDisposable
             [0, -1, 2, -1, 4, -1, 2, -1, 1, -1, 3, -1, 5, -1, 3, -1],
         ];
 
+        // Funk bass lines in semitones over the chord root; Rest and Ghost (a muted dead note) are markers,
+        // and anything an octave up is popped. The first is the disco octave bounce.
+        private const int Rest = 99, Ghost = 98;
+        private static readonly int[][] FunkBass =
+        [
+            [0, Rest, 12, Rest, 0, Rest, 12, Rest, 0, Rest, 12, Rest, 0, Ghost, 12, 10],
+            [0, Rest, Ghost, 12, Rest, 0, Ghost, Rest, 0, Rest, 12, Ghost, 10, Rest, 7, Ghost],
+            [0, Ghost, Rest, 0, 12, Rest, Ghost, 7, Rest, 0, Ghost, 12, Rest, 10, 12, Ghost],
+            [0, Rest, Rest, Ghost, 0, Rest, 10, 12, Rest, Ghost, 7, Rest, 5, Rest, 3, 2],
+        ];
+
+        // Clav "chicken scratch" velocities per sixteenth (the last is the disco off-beat stab).
+        private static readonly float[][] Scratch =
+        [
+            [0, 0, 1, 0, 0, 0.45f, 0, 0.8f, 0, 0, 1, 0, 0.45f, 0, 0.8f, 0.35f],
+            [1, 0, 0, 0.4f, 0, 0, 0.9f, 0, 0, 0.4f, 0, 0, 0.9f, 0, 0.4f, 0],
+            [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+        ];
+
+        // Horn riffs as indices into the pentatonic (5+ climbs an octave); -1 = rest.
+        private static readonly int[][] FunkRiffs =
+        [
+            [5, -1, -1, 7, -1, 5, -1, -1, 3, -1, 4, -1, 5, -1, -1, -1],
+            [-1, -1, 7, -1, 8, 7, -1, 5, -1, -1, -1, -1, 4, -1, 5, -1],
+            [-1, -1, 5, -1, -1, -1, 5, -1, -1, 5, -1, -1, 7, -1, -1, -1],
+            [3, 4, 5, 7, 8, 7, 5, 4, 5, -1, -1, -1, -1, -1, -1, -1],
+        ];
+
         private Style CurrentStyle() => Theme switch
         {
-            "title" => new(55, 92, Romantic, false, 0.8f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.9f),
-            "grassland" => new(57, 124, BrightLoop, false, 1f, Composer.Vivaldi, 4, Groove.Four, 0.45f),
-            "canopy" => new(59, 128, FifthsCircle, false, 1f, Composer.Vivaldi, 4, Groove.Tribal, 0.55f),
-            "coast" or "ocean" => new(60, 104, Romantic, false, 0.85f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.85f),
-            "frozen" => new(62, 112, FifthsCircle, false, 1.1f, Composer.Bach, 4, Groove.Half, 0.7f),
-            "crystal" => new(64, 120, FifthsCircle, false, 1.15f, Composer.Bach, 4, Groove.Break, 0.6f),
-            "fungal" => new(58, 96, Romantic, false, 0.85f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.9f),
-            "junk" => new(57, 132, BrightLoop, false, 1f, Composer.Vivaldi, 4, Groove.Break, 0.4f),
-            "forest" => new(49, 115, BrightLoop, false, 0.9f, Composer.Vivaldi, 4, Groove.Funk, 0.5f),
-            "radiated" => new(62, 124, MinorDrive, true, 1f, Composer.Bach, 4, Groove.Break, 0.6f),
-            "underground" => new(55, 110, FifthsCircle, false, 0.85f, Composer.Bach, 4, Groove.Half, 0.75f),
-            "molten" or "core" => new(52, 136, MinorDrive, true, 1f, Composer.Vivaldi, 4, Groove.Four, 0.6f),
-            "boss" => new(52, 150, MinorDrive, true, 1.1f, Composer.Vivaldi, 4, Groove.Break, 0.5f),
-            _ => new(57, 124, BrightLoop, false, 1f, Composer.Vivaldi, 4, Groove.Four, 0.5f)
+            "title" => new(55, 92, Romantic, Major, 0.8f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.9f, 0f),
+            "grassland" => new(57, 116, MixoVamp, Mixolydian, 1f, Composer.Funk, 4, Groove.Disco, 0.45f, 0.06f),
+            "canopy" => new(59, 128, FifthsCircle, Major, 1f, Composer.Vivaldi, 4, Groove.Tribal, 0.55f, 0.1f),
+            "coast" or "ocean" => new(60, 104, Romantic, Major, 0.85f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.85f, 0f),
+            "frozen" => new(62, 112, FifthsCircle, Major, 1.1f, Composer.Bach, 4, Groove.Half, 0.7f, 0.12f),
+            "crystal" => new(64, 120, FifthsCircle, Major, 1.15f, Composer.Bach, 4, Groove.Break, 0.6f, 0.1f),
+            "fungal" => new(58, 96, Romantic, Major, 0.85f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.9f, 0f),
+            "junk" => new(57, 112, Strut, Dorian, 1.05f, Composer.Funk, 4, Groove.Break, 0.35f, 0.14f),
+            "forest" => new(49, 100, DorianVamp, Dorian, 0.9f, Composer.Funk, 4, Groove.Funk, 0.5f, 0.2f),
+            "overgrowth" => new(53, 94, DorianVamp, Dorian, 0.85f, Composer.Funk, 4, Groove.Funk, 0.7f, 0.24f),
+            "radiated" => new(62, 124, MinorDrive, HarmonicMinor, 1f, Composer.Bach, 4, Groove.Break, 0.6f, 0.08f),
+            "underground" => new(55, 110, FifthsCircle, Major, 0.85f, Composer.Bach, 4, Groove.Half, 0.75f, 0.14f),
+            "molten" or "core" => new(52, 136, MinorDrive, HarmonicMinor, 1f, Composer.Vivaldi, 4, Groove.Four, 0.6f, 0f),
+            "boss" => new(52, 150, MinorDrive, HarmonicMinor, 1.1f, Composer.Vivaldi, 4, Groove.Break, 0.5f, 0f),
+            _ => new(57, 116, MixoVamp, Mixolydian, 1f, Composer.Funk, 4, Groove.Disco, 0.45f, 0.06f)
         };
 
         public void Render(float[] left, float[] right, float volume)
@@ -316,37 +367,46 @@ internal sealed class AudioEngine : IDisposable
                 return;
             var style = CurrentStyle();
             var bpm = Night && Theme != "boss" ? (int)(style.Bpm * 0.9f) : style.Bpm;
-            var scale = style.Minor ? HarmonicMinor : Major;
+            var scale = style.Scale;
             var stepsPerBar = style.Meter * 4;
             var sixteenth = Math.Max(1, (long)(SampleRate * 60.0 / bpm / 4));
+            // Swing: steps come in pairs; the off-sixteenth of each pair lands late.
+            var pair = sixteenth * 2;
+            var offbeat = (long)(sixteenth * (1f + style.Swing));
             var drums = Theme != "title" || Tension > 0.2f;
             var lyrical = style.Composer == Composer.Tchaikovsky;
+            var funk = style.Composer == Composer.Funk;
             var echoLeft = (int)Math.Min(_echoLeft.Length - 1, sixteenth * 3);
             var echoRight = (int)Math.Min(_echoRight.Length - 1, sixteenth * 4);
             for (var i = 0; i < left.Length; i++)
             {
-                var step = (int)(_frame / sixteenth % stepsPerBar);
-                if (_frame % sixteenth == 0)
+                var inPair = _frame % pair;
+                var late = inPair >= offbeat;
+                var step = (int)((_frame / pair * 2 + (late ? 1 : 0)) % stepsPerBar);
+                if (inPair == 0 || inPair == offbeat)
                 {
                     if (step == 0)
                         StartBar(style, scale);
-                    var chord = ChordTones(style.Root, scale, style.Progression[_bar % style.Progression.Length]);
+                    var degree = style.Progression[_bar % style.Progression.Length];
+                    var chord = ChordTones(style.Root, scale, degree);
                     PlayLead(style, chord, scale, step, stepsPerBar);
-                    PlayAccompaniment(style, chord, step);
+                    PlayAccompaniment(style, chord, scale, degree, step);
                     if (drums)
                         PlayDrums(style.Groove, step);
                 }
 
-                // Lead strings with vibrato (wider and slower for the lyrical style), detached bowing on figuration.
+                // Lead strings with vibrato (wider and slower for the lyrical style), detached bowing on figuration;
+                // funk horns scoop up into each note and bite off short.
                 _vibrato += (lyrical ? 5f : 5.5f) / SampleRate;
                 var vib = 1f + (lyrical ? 0.006f : 0.004f) * MathF.Sin(_vibrato * MathF.Tau);
-                _leadPhaseA = Wrap(_leadPhaseA + _leadFreq * vib / SampleRate);
-                _leadPhaseB = Wrap(_leadPhaseB + _leadFreq * vib * 1.004f / SampleRate);
+                _leadBend += (1f - _leadBend) * 0.0012f;
+                _leadPhaseA = Wrap(_leadPhaseA + _leadFreq * vib * _leadBend / SampleRate);
+                _leadPhaseB = Wrap(_leadPhaseB + _leadFreq * vib * _leadBend * 1.004f / SampleRate);
                 var lead = (Strings(_leadPhaseA, style.Brightness) + Strings(_leadPhaseB, style.Brightness)) * 0.5f;
-                _leadEnv *= lyrical ? 0.99997f : 0.99985f;
-                var stepPosition = (_frame % sixteenth) / (float)sixteenth;
+                _leadEnv *= lyrical ? 0.99997f : funk ? 0.9998f : 0.99985f;
+                var stepPosition = (late ? inPair - offbeat : inPair) / (float)(late ? pair - offbeat : offbeat);
                 var articulation = !lyrical && stepPosition > 0.8f ? 1f - (stepPosition - 0.8f) / 0.2f * 0.85f : 1f;
-                lead *= MathF.Min(1f, _leadEnv * 1.4f) * articulation * 0.15f;
+                lead *= MathF.Min(1f, _leadEnv * 1.4f) * articulation * (funk ? 0.21f : 0.15f);
 
                 // Bach's imitating voice: last bar's line an octave lower.
                 var canon = 0f;
@@ -372,26 +432,62 @@ internal sealed class AudioEngine : IDisposable
                 }
                 plucks *= 0.065f;
 
-                // Bass.
-                _bassPhase = Wrap(_bassPhase + _bassFreq / SampleRate);
-                _bassEnv *= 0.99992f;
-                var bass = (MathF.Sin(_bassPhase * MathF.Tau) + 0.25f * MathF.Sin(2 * _bassPhase * MathF.Tau)) * _bassEnv * 0.2f;
+                // Bass: a round sine for the classical styles; for funk a sawtooth slap through a resonant low-pass
+                // whose cutoff snaps open on each pluck, over a sine sub.
+                var bass = 0f;
+                if (funk)
+                {
+                    _slapPhase = Wrap(_slapPhase + _slapFreq / SampleRate);
+                    var cutoff = 110f + 2600f * _slapFilterEnv * _slapFilterEnv;
+                    var growl = _slapFilter.LowPass(2f * _slapPhase - 1f, cutoff, 0.4f);
+                    bass = (growl * 0.75f + MathF.Sin(_slapPhase * MathF.Tau) * 0.6f) * _slapEnv * 0.21f;
+                    _slapEnv *= _slapDecay;
+                    _slapFilterEnv *= 0.9988f;
+                }
+                else
+                {
+                    _bassPhase = Wrap(_bassPhase + _bassFreq / SampleRate);
+                    _bassEnv *= 0.99992f;
+                    bass = (MathF.Sin(_bassPhase * MathF.Tau) + 0.25f * MathF.Sin(2 * _bassPhase * MathF.Tau)) * _bassEnv * 0.2f;
+                }
 
-                // Pad: sustained chord swelling in each bar (the ambience bed).
+                // Clav: a narrow pulse chord through a band-pass that the stab opens and a beat-synced wah sweeps.
+                var clav = 0f;
+                _wahPhase = Wrap(_wahPhase + bpm / 120f / SampleRate);
+                if (_clavEnv > 0.001f)
+                {
+                    for (var n = 0; n < _clavFreq.Length; n++)
+                    {
+                        _clavPhase[n] = Wrap(_clavPhase[n] + _clavFreq[n] / SampleRate);
+                        clav += _clavPhase[n] < 0.28f ? 1f : -0.39f;
+                    }
+                    var wah = 500f + 2200f * (0.55f * _clavEnv + 0.45f * (0.5f + 0.5f * MathF.Sin(_wahPhase * MathF.Tau)));
+                    clav = _clavFilter.BandPass(clav, wah, 0.45f) * _clavEnv * 0.11f;
+                    _clavEnv *= 0.99945f;
+                }
+
+                // Pad: sustained chord swelling in each bar (the ambience bed); funk's seventh chords add a fourth
+                // voice and an electric-piano tremolo that pans across the stereo field.
                 _padEnv = MathF.Min(1f, _padEnv + 1f / (SampleRate * 0.6f));
                 var pad = 0f;
-                for (var n = 0; n < 3; n++)
+                for (var n = 0; n < _padFreq.Length; n++)
                 {
+                    if (_padFreq[n] <= 0f)
+                        continue;
                     _padPhase[n] = Wrap(_padPhase[n] + _padFreq[n] / SampleRate);
                     pad += 1f - 4f * MathF.Abs(_padPhase[n] - 0.5f);
                 }
                 pad *= _padEnv * style.Pad * 0.05f;
+                _tremolo = Wrap(_tremolo + 4.5f / SampleRate);
+                var swirl = funk ? 0.35f * MathF.Sin(_tremolo * MathF.Tau) : 0f;
 
                 var beat = Drums(style.Groove) * (drums ? 0.8f + Tension * 0.35f : 0f);
 
-                var dry = (lead + canon + plucks) * _pump + bass * _pump + pad + beat;
+                var dry = (lead + canon + plucks + clav * 0.8f) * _pump + bass * _pump + beat;
+                var dryLeft = dry + pad * (1f + swirl) + clav * 0.2f * _pump;
+                var dryRight = dry + pad * (1f - swirl) - clav * 0.2f * _pump;
                 // Ambience: a stereo echo (3/16 left, 1/4 right) fed by the melodic voices, softened each repeat.
-                var send = (lead + canon + plucks + pad) * 0.5f;
+                var send = (lead + canon + plucks + clav + pad) * 0.5f;
                 var tapLeft = _echoLeft[(_echoIndex - echoLeft + _echoLeft.Length) % _echoLeft.Length];
                 var tapRight = _echoRight[(_echoIndex - echoRight + _echoRight.Length) % _echoRight.Length];
                 _echoLowLeft += (tapLeft - _echoLowLeft) * 0.35f;
@@ -399,8 +495,8 @@ internal sealed class AudioEngine : IDisposable
                 _echoLeft[_echoIndex] = send + _echoLowRight * 0.38f;
                 _echoRight[_echoIndex] = send + _echoLowLeft * 0.38f;
                 _echoIndex = (_echoIndex + 1) % _echoLeft.Length;
-                var sampleLeft = MathF.Tanh((dry + _echoLowLeft * 0.42f) * 1.1f) * volume;
-                var sampleRight = MathF.Tanh((dry + _echoLowRight * 0.42f) * 1.1f) * volume;
+                var sampleLeft = MathF.Tanh((dryLeft + _echoLowLeft * 0.42f) * 1.1f) * volume;
+                var sampleRight = MathF.Tanh((dryRight + _echoLowRight * 0.42f) * 1.1f) * volume;
                 left[i] += sampleLeft;
                 right[i] += sampleRight;
                 _frame++;
@@ -415,15 +511,32 @@ internal sealed class AudioEngine : IDisposable
             Array.Fill(_barNotes, 0);
             if (_bar % 2 == 0)
                 _pattern = Tension > 0.5f && _random.NextDouble() < 0.4 ? 2 + _random.Next(2) : _random.Next(Figures.Length);
-            // The pad holds the bar's chord, a little below the melody.
-            var chord = ChordTones(style.Root, scale, style.Progression[_bar % style.Progression.Length]);
-            for (var n = 0; n < 3; n++)
-                _padFreq[n] = Midi(chord[n] - 12);
+            // The pad holds the bar's chord, a little below the melody (with the seventh for funk).
+            var degree = style.Progression[_bar % style.Progression.Length];
+            var chord = style.Composer == Composer.Funk ? SeventhChord(style.Root, scale, degree) : ChordTones(style.Root, scale, degree);
+            for (var n = 0; n < _padFreq.Length; n++)
+                _padFreq[n] = n < 3 || style.Composer == Composer.Funk ? Midi(chord[n] - 12) : 0f;
             _padEnv = 0.25f;
         }
 
         private void PlayLead(Style style, int[] chord, int[] scale, int step, int stepsPerBar)
         {
+            if (style.Composer == Composer.Funk)
+            {
+                // Horn section: the riff calls on odd bars and answers lower on even bars (only once things heat up).
+                var call = _bar % 2 == 1;
+                if (!call && Tension < 0.35f)
+                    return;
+                var riff = FunkRiffs[_pattern % FunkRiffs.Length][step % 16];
+                if (riff < 0)
+                    return;
+                var pentatonic = scale[2] == 3 ? MinorPentatonic : MajorPentatonic;
+                var degree = Math.Max(0, call ? riff : riff - 2);
+                _leadFreq = Midi(style.Root + 12 + pentatonic[degree % 5] + 12 * (degree / 5));
+                _leadEnv = 1f;
+                _leadBend = 0.94f;
+                return;
+            }
             if (style.Composer == Composer.Tchaikovsky)
             {
                 // Lyrical line: a note per beat (two beats when calm), stepping through the scale toward a chord
@@ -441,7 +554,7 @@ internal sealed class AudioEngine : IDisposable
                 _leadEnv = 1f;
                 return;
             }
-            var dense = Tension > 0.25f || style.Composer == Composer.Bach || Theme is "boss" or "grassland" or "canopy" or "junk" or "forest" or "core" or "molten";
+            var dense = Tension > 0.25f || style.Composer == Composer.Bach || Theme is "boss" or "canopy" or "core" or "molten";
             if (!dense && step % 2 == 1)
                 return;
             var index = Figures[_pattern][step % 16];
@@ -461,10 +574,37 @@ internal sealed class AudioEngine : IDisposable
             }
         }
 
-        private void PlayAccompaniment(Style style, int[] chord, int step)
+        private void PlayAccompaniment(Style style, int[] chord, int[] scale, int degree, int step)
         {
             switch (style.Composer)
             {
+                case Composer.Funk:
+                {
+                    // Slap bass: disco octaves on the disco groove, otherwise a syncopated line chosen with the riff.
+                    var line = style.Groove == Groove.Disco ? FunkBass[0] : FunkBass[1 + _pattern % (FunkBass.Length - 1)];
+                    var cell = line[step % 16];
+                    if (cell == Ghost)
+                        Slap(Midi(chord[0] - 24), 0.45f, 0.9982f, 0.15f);
+                    else if (cell != Rest)
+                    {
+                        var note = Snap(chord[0] - 24 + cell, style.Root, scale);
+                        if (cell >= 12)
+                            Slap(Midi(note), 1f, 0.9998f, 1f);
+                        else
+                            Slap(Midi(note), 1f, 0.99984f, 0.65f);
+                    }
+                    // Clav stabs on the seventh chord; the disco groove skanks the off-beats.
+                    var scratch = style.Groove == Groove.Disco ? Scratch[2] : Scratch[_pattern % 2];
+                    var velocity = scratch[step % 16];
+                    if (velocity > 0f && (Tension > 0.15f || step % 4 != 3))
+                    {
+                        var seventh = SeventhChord(style.Root, scale, degree);
+                        for (var n = 0; n < _clavFreq.Length; n++)
+                            _clavFreq[n] = Midi(seventh[n]);
+                        _clavEnv = velocity;
+                    }
+                    break;
+                }
                 case Composer.Tchaikovsky when style.Meter == 3:
                     // Waltz: bass on beat one, chord plucks on beats two and three.
                     if (step == 0)
@@ -520,23 +660,72 @@ internal sealed class AudioEngine : IDisposable
                 _kickPhase = 0f;
                 _kickPitch = pitch;
             }
+            // Closed hats chop off a ringing open hat; every hit wobbles a little in level so the hats breathe.
+            void Hat(float level)
+            {
+                _hatEnv = level * (0.85f + (float)_random.NextDouble() * 0.3f);
+                _openHatEnv *= 0.15f;
+            }
+            void OpenHat(float level, float decay = 0.99975f)
+            {
+                _openHatEnv = level;
+                _openHatDecay = decay;
+            }
+            void Clap(float level)
+            {
+                _clapEnv = level;
+                _clapAge = 0;
+            }
+
+            // Crash at the top of every eighth bar, and a snare-and-tom fill to close every fourth.
+            var driving = groove is Groove.Four or Groove.Break or Groove.Funk or Groove.Disco || tense && groove == Groove.Half;
+            if (driving && step == 0 && _bar % 8 == 0)
+                OpenHat(0.9f, 0.99993f);
+            if (driving && _bar % 4 == 3 && step >= 12)
+            {
+                _snareEnv = 0.45f + (step - 12) * 0.18f;
+                if (step is 13 or 15)
+                    Kick(step == 13 ? 210f : 150f);
+                if (step == 15)
+                    Clap(0.8f);
+                return;
+            }
+
             switch (groove)
             {
                 case Groove.Four:
                     if (step % 4 == 0) Kick();
                     if (step % 8 == 4) _snareEnv = 1f;
-                    if (step % 2 == 0) _hatEnv = step % 4 == 2 ? 0.9f : 0.5f;
+                    if (step % 4 == 2) OpenHat(0.55f);
+                    else if (step % 2 == 0) Hat(0.5f);
+                    break;
+                case Groove.Disco:
+                    // Four on the floor, open hats on every off-beat, clap stacked on the backbeat, sixteenth hats when hot.
+                    if (step % 4 == 0) Kick(90f);
+                    if (step is 4 or 12)
+                    {
+                        _snareEnv = 0.7f;
+                        Clap(1f);
+                    }
+                    if (step % 4 == 2) OpenHat(0.7f);
+                    else if (step % 4 == 0 || Tension > 0.3f) Hat(step % 2 == 0 ? 0.5f : 0.3f);
                     break;
                 case Groove.Break:
                     if (step is 0 or 10 || tense && step == 6) Kick();
                     if (step is 4 or 12) _snareEnv = 1f;
                     else if (step is 7 or 15) _snareEnv = 0.35f;
-                    _hatEnv = step % 2 == 0 ? 0.6f : 0.35f;
+                    if (step == 14 && _bar % 2 == 1) OpenHat(0.5f);
+                    else Hat(step % 2 == 0 ? 0.6f : 0.35f);
                     break;
                 case Groove.Half:
                     if (step == 0 || tense && step == 10) Kick();
-                    if (step == 8) _snareEnv = 1f;
-                    if (step % 2 == 0) _hatEnv = 0.45f;
+                    if (step == 8)
+                    {
+                        _snareEnv = 1f;
+                        Clap(0.6f);
+                    }
+                    if (step % 2 == 0) Hat(0.45f);
+                    else if (step is 7 or 15) Hat(0.25f);
                     break;
                 case Groove.Tribal:
                     if (step is 0 or 3 or 6) Kick(110f);
@@ -550,12 +739,17 @@ internal sealed class AudioEngine : IDisposable
                     if (step % 2 == 0) _hatEnv = 0.35f;
                     break;
                 case Groove.Funk:
-                    // Syncopated funk: kick on the one and the "and" of three, snares on two and four
-                    // with ghost notes, and accented off-beat hats for the shuffle.
+                    // Syncopated funk: kick on the one and the "and" of three, snare and clap on two and four with
+                    // ghost notes, accented hats, and an open hat lifting into the next bar.
                     if (step is 0 or 6 or 10 || tense && step == 14) Kick(step == 10 ? 95f : 80f);
-                    if (step is 4 or 12) _snareEnv = 1f;
+                    if (step is 4 or 12)
+                    {
+                        _snareEnv = 1f;
+                        Clap(0.7f);
+                    }
                     else if (step is 7 or 15 || !tense && step == 9) _snareEnv = 0.28f;
-                    _hatEnv = step % 2 == 0 ? (step % 4 == 2 ? 0.7f : 0.45f) : 0.3f;
+                    if (step == 14) OpenHat(0.6f);
+                    else if (step != 15) Hat(step % 2 == 0 ? (step % 4 == 2 ? 0.7f : 0.45f) : 0.3f);
                     break;
             }
         }
@@ -585,7 +779,33 @@ internal sealed class AudioEngine : IDisposable
                 _hatPrev = noise;
                 _hatEnv *= groove == Groove.Tribal ? 0.9993f : 0.9985f;
             }
+            if (_openHatEnv > 0.001f)
+            {
+                var noise = (float)_random.NextDouble() * 2f - 1f;
+                beat += (noise - _openHatPrev) * _openHatEnv * 0.05f;
+                _openHatPrev = noise;
+                _openHatEnv *= _openHatDecay;
+            }
+            if (_clapEnv > 0.001f)
+            {
+                // Three quick slaps ~10 ms apart, then the room tail, all band-passed around 1.2 kHz.
+                var slap = _clapAge < 1320 ? 1f - _clapAge % 440 / 440f : 1f;
+                var noise = (float)_random.NextDouble() * 2f - 1f;
+                beat += _clapFilter.BandPass(noise, 1200f, 0.7f) * slap * _clapEnv * 0.3f;
+                if (_clapAge >= 1320)
+                    _clapEnv *= 0.9993f;
+                _clapAge++;
+            }
             return beat;
+        }
+
+        /// <summary>Plucks the slap bass: level, amplitude decay per sample, and how far the filter snaps open.</summary>
+        private void Slap(float freq, float level, float decay, float bite)
+        {
+            _slapFreq = freq;
+            _slapEnv = level;
+            _slapDecay = decay;
+            _slapFilterEnv = bite;
         }
 
         private void Pluck(float freq)
@@ -604,6 +824,18 @@ internal sealed class AudioEngine : IDisposable
             {
                 var step = degree + (n % 3) * 2;
                 tones[n] = root + scale[step % scale.Length] + 12 * (step / scale.Length) + 12 * (n / 3);
+            }
+            return tones;
+        }
+
+        /// <summary>Four-note seventh chord (root, third, fifth, seventh) for a scale degree, as MIDI notes.</summary>
+        private static int[] SeventhChord(int root, int[] scale, int degree)
+        {
+            var tones = new int[4];
+            for (var n = 0; n < 4; n++)
+            {
+                var step = degree + n * 2;
+                tones[n] = root + scale[step % scale.Length] + 12 * (step / scale.Length);
             }
             return tones;
         }
@@ -629,6 +861,31 @@ internal sealed class AudioEngine : IDisposable
         private static float Wrap(float phase) => phase - MathF.Floor(phase);
 
         private static float Midi(int note) => 440f * MathF.Pow(2f, (note - 69) / 12f);
+
+        /// <summary>Chamberlin state-variable filter; damping runs from 0 (ringing) to 2 (dull).</summary>
+        private struct Svf
+        {
+            private float _low, _band;
+
+            public float LowPass(float input, float cutoff, float damping)
+            {
+                Step(input, cutoff, damping);
+                return _low;
+            }
+
+            public float BandPass(float input, float cutoff, float damping)
+            {
+                Step(input, cutoff, damping);
+                return _band;
+            }
+
+            private void Step(float input, float cutoff, float damping)
+            {
+                var f = 2f * MathF.Sin(MathF.PI * MathF.Min(cutoff, SampleRate / 6f) / SampleRate);
+                _low += f * _band;
+                _band += f * (input - _low - damping * _band);
+            }
+        }
     }
 
     /// <summary>
@@ -638,7 +895,7 @@ internal sealed class AudioEngine : IDisposable
     public static int RenderMusicPreviews(string folder)
     {
         Directory.CreateDirectory(folder);
-        foreach (var theme in new[] { "title", "grassland", "canopy", "frozen", "junk", "fungal", "crystal", "ocean", "underground", "radiated", "core", "boss" })
+        foreach (var theme in new[] { "title", "grassland", "canopy", "frozen", "junk", "forest", "overgrowth", "fungal", "crystal", "ocean", "underground", "radiated", "core", "boss" })
         {
             var music = new MusicState { Theme = theme };
             var seconds = 20;
