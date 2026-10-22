@@ -61,7 +61,7 @@ public static partial class GraphicalSandbox
             // Chevrons ride the belt: phase from world x and time so neighbouring tiles line up.
             var dir = Math.Sign(belt);
             var spacing = s * 0.5f;
-            var phase = (float)((Environment.TickCount64 / 1000.0 * MathF.Abs(belt) * s) % spacing);
+            var phase = (float)((FrameClock.Seconds * MathF.Abs(belt) * s) % spacing);
             var clip = g.Clip;
             g.SetClip(new RectangleF(rect.X, beltTop, s, beltHeight));
             for (var cx = rect.X - spacing + (dir > 0 ? phase : spacing - phase); cx < rect.Right + spacing; cx += spacing)

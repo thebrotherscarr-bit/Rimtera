@@ -52,9 +52,12 @@ internal sealed class LightMap
 
     public readonly record struct LampLight(Vector2 Position, Color Color, float Strength);
 
-    /// <summary>Recomputes light for the visible window plus padding.</summary>
+    /// <summary>
+    /// Recomputes light for the visible window plus padding. With <paramref name="present"/> off (lighting disabled) only
+    /// the light values are kept, for the map's reveal, and the overlay images are not rebuilt.
+    /// </summary>
     public void Compute(TileGrid world, TileCatalog tiles, int startX, int startY, int viewW, int viewH,
-        float daylight, IEnumerable<LampLight> lamps)
+        float daylight, IEnumerable<LampLight> lamps, bool present = true)
     {
         OriginX = startX - Padding;
         OriginY = startY - Padding;
@@ -68,15 +71,12 @@ internal sealed class LightMap
         for (var lx = 0; lx < _width; lx++)
         {
             var x = OriginX + lx;
-            var open = x >= 0 && x < world.Width;
-            for (var y = 0; open && y < Math.Min(world.Height, OriginY + _height); y++)
-            {
-                var cell = world.GetCell(new GridPoint(x, y));
-                if (cell.TileId != TileId.Air && !cell.IsInactive && tiles.Contains(cell.TileId) && tiles[cell.TileId].IsSolid)
-                    open = false;
-                else if (y >= OriginY && cell.WallId == 0)
+            if (x < 0 || x >= world.Width)
+                continue;
+            var stop = Math.Min(SkyStop(world, tiles, x), OriginY + _height);
+            for (var y = Math.Max(0, OriginY); y < stop; y++)
+                if (world.GetCell(new GridPoint(x, y)).WallId == 0)
                     Seed(lx, y - OriginY, sky);
-            }
         }
 
         for (var ly = 0; ly < _height; ly++)
@@ -113,7 +113,35 @@ internal sealed class LightMap
 
         for (var pass = 0; pass < 2; pass++)
             Spread();
-        Present();
+        if (present)
+            Present();
+    }
+
+    private int[] _skyStop = [];
+    private long[] _skyStamp = [];
+
+    /// <summary>
+    /// The first solid row of a column, where sunlight stops. Cached per column against the world's revision, so a still
+    /// world costs nothing; scanning from the sky down every frame cost tens of thousands of reads deep underground.
+    /// </summary>
+    private int SkyStop(TileGrid world, TileCatalog tiles, int x)
+    {
+        if (_skyStop.Length != world.Width)
+        {
+            _skyStop = new int[world.Width];
+            _skyStamp = new long[world.Width];
+            Array.Fill(_skyStamp, -1);
+        }
+        var revision = world.TileRevision;
+        if (_skyStamp[x] == revision)
+            return _skyStop[x];
+        var y = 0;
+        while (y < world.Height && world.GetCell(new GridPoint(x, y)) is var cell &&
+               !(cell.TileId != TileId.Air && !cell.IsInactive && tiles.Contains(cell.TileId) && tiles[cell.TileId].IsSolid))
+            y++;
+        _skyStop[x] = y;
+        _skyStamp[x] = revision;
+        return y;
     }
 
     /// <summary>Draws the darkness and glow layers over the world area.</summary>
@@ -202,8 +230,9 @@ internal sealed class LightMap
         _medium = new byte[width * height];
         _darkness?.Dispose();
         _glow?.Dispose();
-        _darkness = new Bitmap(width * Subdivision, height * Subdivision, PixelFormat.Format32bppArgb);
-        _glow = new Bitmap(width * Subdivision, height * Subdivision, PixelFormat.Format32bppArgb);
+        // Premultiplied: the format GDI+ blends fastest, as these cover the whole screen every frame.
+        _darkness = new Bitmap(width * Subdivision, height * Subdivision, PixelFormat.Format32bppPArgb);
+        _glow = new Bitmap(width * Subdivision, height * Subdivision, PixelFormat.Format32bppPArgb);
     }
 
     private void Seed(int lx, int ly, Vector3 light)
@@ -267,18 +296,27 @@ internal sealed class LightMap
         return Vector3.Lerp(top, bottom, ty);
     }
 
+    private int[] _darkPixels = [];
+    private int[] _glowPixels = [];
+
     private void Present()
     {
         var pixelWidth = _width * Subdivision;
         var pixelHeight = _height * Subdivision;
         var bounds = new Rectangle(0, 0, pixelWidth, pixelHeight);
-        var dark = _darkness!.LockBits(bounds, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-        var glow = _glow!.LockBits(bounds, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+        var dark = _darkness!.LockBits(bounds, ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
+        var glow = _glow!.LockBits(bounds, ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
         try
         {
             var stride = dark.Stride / 4;
-            var darkPixels = new int[stride * pixelHeight];
-            var glowPixels = new int[stride * pixelHeight];
+            // Reused between frames: two fresh ~320 KB arrays a frame landed on the large-object heap and caused hitches.
+            if (_darkPixels.Length != stride * pixelHeight)
+            {
+                _darkPixels = new int[stride * pixelHeight];
+                _glowPixels = new int[stride * pixelHeight];
+            }
+            var darkPixels = _darkPixels;
+            var glowPixels = _glowPixels;
             for (var py = 0; py < pixelHeight; py++)
             for (var px = 0; px < pixelWidth; px++)
             {
@@ -288,10 +326,12 @@ internal sealed class LightMap
                 var min = MathF.Min(light.X, MathF.Min(light.Y, light.Z));
                 var brightness = Math.Clamp(max, 0f, 1f);
                 var p = py * stride + px;
-                darkPixels[p] = (int)(245 * (1f - brightness)) << 24 | 0x05060A;
+                // Premultiplied colour: each channel is scaled by its alpha.
+                var darkAlpha = (int)(245 * (1f - brightness));
+                darkPixels[p] = darkAlpha << 24 | (0x05 * darkAlpha / 255) << 16 | (0x06 * darkAlpha / 255) << 8 | 0x0A * darkAlpha / 255;
                 // Coloured light shows as a faint tint where one channel dominates.
                 var glowAlpha = (int)Math.Clamp((max - min) * 120f, 0f, 90f);
-                var scale = max > 0.001f ? 255f / max : 0f;
+                var scale = max > 0.001f ? 255f / max * glowAlpha / 255f : 0f;
                 glowPixels[p] = glowAlpha << 24
                                 | (int)Math.Clamp(light.X * scale, 0, 255) << 16
                                 | (int)Math.Clamp(light.Y * scale, 0, 255) << 8

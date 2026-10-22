@@ -81,21 +81,17 @@ public static partial class GraphicalSandbox
             var cover = game.Weather.CloudCover;
             var count = (int)(cover * 12);
             var height = Height - HudHeight;
-            using var attributes = new ImageAttributes();
             var shade = game.Weather.Storm ? 0.45f : 1f;
-            attributes.SetColorMatrix(new ColorMatrix
-            {
-                Matrix00 = shade, Matrix11 = shade, Matrix22 = shade * 1.05f, Matrix33 = 0.5f + cover * 0.45f, Matrix44 = 1f
-            });
             for (var i = 0; i < count; i++)
             {
                 var w = 140 + i * 37 % 180;
-                if (_sprites.GetFitted(CloudSprites[i % CloudSprites.Length], w, w / 2) is not { } cloud)
+                if (_sprites.GetFitted(CloudSprites[i % CloudSprites.Length], w, w / 2) is not { } fitted)
                     continue;
+                var cloud = Tinted(fitted, shade, 0.5f + cover * 0.45f);
                 var span = Width + cloud.Width * 2;
                 var x = (float)(((i * 263 + now * (8 + game.Weather.Wind * 12) * (1 + i % 3 * 0.4)) % span + span) % span) - cloud.Width;
                 var y = 20 + i * 53 % Math.Max(1, height / 3);
-                g.DrawImage(cloud, new Rectangle((int)x, y, cloud.Width, cloud.Height), 0, 0, cloud.Width, cloud.Height, GraphicsUnit.Pixel, attributes);
+                g.DrawImageUnscaled(cloud, (int)x, y);
             }
             return true;
         }
@@ -123,15 +119,42 @@ public static partial class GraphicalSandbox
                     continue;
                 var drawH = (int)(height * scale);
                 var drawW = Math.Max(1, source.Width * drawH / Math.Max(1, source.Height));
-                if (_sprites.GetScaled(name, drawW, drawH) is not { } art)
+                if (_sprites.GetScaled(name, drawW, drawH) is not { } scaled)
                     continue;
-                using var attributes = new ImageAttributes();
-                var k = tone * dark;
-                attributes.SetColorMatrix(new ColorMatrix { Matrix00 = k, Matrix11 = k, Matrix22 = k * 1.05f, Matrix33 = fade, Matrix44 = 1f });
+                var art = Tinted(scaled, tone * dark, fade);
                 var scroll = (int)(startX * TileSize * parallax) % drawW;
                 for (var x = -scroll - drawW; x < Width; x += drawW)
-                    g.DrawImage(art, new Rectangle(x, horizon - drawH, drawW, drawH), 0, 0, drawW, drawH, GraphicsUnit.Pixel, attributes);
+                    g.DrawImageUnscaled(art, x, horizon - drawH);
             }
+        }
+
+        private readonly Dictionary<(Bitmap Source, int Shade, int Alpha), Bitmap> _tinted = new();
+
+        /// <summary>
+        /// A copy of <paramref name="source"/> darkened by <paramref name="shade"/> (blue kept a touch brighter) at
+        /// <paramref name="alpha"/>, made once per step of 1/32 and reused: drawing through a colour matrix every frame is
+        /// GDI+'s slowest image path, and these images span the screen.
+        /// </summary>
+        private Bitmap Tinted(Bitmap source, float shade, float alpha)
+        {
+            var key = (source, (int)MathF.Round(Math.Clamp(shade, 0f, 1.2f) * 32), (int)MathF.Round(Math.Clamp(alpha, 0f, 1f) * 32));
+            if (_tinted.TryGetValue(key, out var cached))
+                return cached;
+            if (_tinted.Count > 160)
+            {
+                foreach (var old in _tinted.Values)
+                    old.Dispose();
+                _tinted.Clear();
+            }
+            var k = key.Item2 / 32f;
+            var copy = new Bitmap(source.Width, source.Height, PixelFormat.Format32bppPArgb);
+            using (var g = Graphics.FromImage(copy))
+            using (var attributes = new ImageAttributes())
+            {
+                attributes.SetColorMatrix(new ColorMatrix { Matrix00 = k, Matrix11 = k, Matrix22 = k * 1.05f, Matrix33 = key.Item3 / 32f, Matrix44 = 1f });
+                g.DrawImage(source, new Rectangle(0, 0, source.Width, source.Height), 0, 0, source.Width, source.Height, GraphicsUnit.Pixel, attributes);
+            }
+            return _tinted[key] = copy;
         }
     }
 }

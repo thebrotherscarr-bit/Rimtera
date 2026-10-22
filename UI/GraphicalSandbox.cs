@@ -66,7 +66,6 @@ public static partial class GraphicalSandbox
     {
         private readonly MenuFlow _menu;
         private readonly GameCanvas _canvas;
-        private readonly System.Windows.Forms.Timer _timer;
         private readonly HashSet<Keys> _down = new();
         private readonly HashSet<Keys> _menuDown = new();
         private GameSimulation? _game;
@@ -190,9 +189,9 @@ public static partial class GraphicalSandbox
                 ForwardPointer(new UiInputFrame(ToUiPoint(e.Location), ScrollDelta: e.Delta));
             };
 
-            _timer = new System.Windows.Forms.Timer { Interval = 16 };
-            _timer.Tick += (_, _) => Advance();
-            _timer.Start();
+            // The game loop runs whenever the message queue is empty (OnIdle): 60 simulation steps a second on a precise clock.
+            timeBeginPeriod(1);
+            Application.Idle += OnIdle;
 
             KeyDown += OnKeyDown;
             KeyPress += OnKeyPress;
@@ -1189,10 +1188,77 @@ public static partial class GraphicalSandbox
         private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
             _audio.Dispose();
-            _timer.Stop();
+            Application.Idle -= OnIdle;
+            timeEndPeriod(1);
             if (_game is not null && _activeWorld is not null && _menu.Preferences.AutoSave)
                 SaveGame(showStatus: false);
         }
+    }
+
+    /// <summary>Seconds since start on the high-resolution clock: smooth animation and camera time (TickCount64 only moves every 10-16 ms).</summary>
+    internal static class FrameClock
+    {
+        private static readonly System.Diagnostics.Stopwatch Watch = System.Diagnostics.Stopwatch.StartNew();
+        public static double Seconds => Watch.Elapsed.TotalSeconds;
+    }
+
+    private sealed partial class GameForm
+    {
+        /// <summary>One simulation step: the game is tuned for 60 a second.</summary>
+        private const double StepSeconds = 1.0 / 60.0;
+        /// <summary>Steps run back to back at most when catching up, so a long stall can't snowball.</summary>
+        private const int MaximumCatchUpSteps = 4;
+        private double _loopTime = -1;
+        private double _stepDebt;
+
+        /// <summary>
+        /// The game loop. A Forms timer at 16 ms really fires every ~31 ms and one step per tick ran the world at about
+        /// half speed and stuttered; instead, whenever no window messages wait, this runs as many fixed 60 Hz steps as
+        /// the precise clock says are due (each step marks the canvas for repaint, which the message pump then draws)
+        /// and otherwise sleeps a millisecond.
+        /// </summary>
+        private void OnIdle(object? sender, EventArgs e)
+        {
+            while (!IsDisposed && !PeekMessage(out _, IntPtr.Zero, 0, 0, 0))
+            {
+                var now = FrameClock.Seconds;
+                if (_loopTime < 0)
+                    _loopTime = now;
+                _stepDebt += Math.Min(0.25, now - _loopTime);
+                _loopTime = now;
+                var steps = 0;
+                while (_stepDebt >= StepSeconds && steps < MaximumCatchUpSteps)
+                {
+                    Advance();
+                    _stepDebt -= StepSeconds;
+                    steps++;
+                }
+                if (steps == MaximumCatchUpSteps)
+                    _stepDebt = Math.Min(_stepDebt, StepSeconds);
+                if (steps == 0)
+                    Thread.Sleep(1);
+            }
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct NativeMessage
+        {
+            public IntPtr Handle;
+            public uint Message;
+            public IntPtr WParam;
+            public IntPtr LParam;
+            public uint Time;
+            public Point Location;
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool PeekMessage(out NativeMessage message, IntPtr window, uint filterMin, uint filterMax, uint remove);
+
+        [System.Runtime.InteropServices.DllImport("winmm.dll")]
+        private static extern uint timeBeginPeriod(uint milliseconds);
+
+        [System.Runtime.InteropServices.DllImport("winmm.dll")]
+        private static extern uint timeEndPeriod(uint milliseconds);
     }
 
     private sealed partial class GameCanvas : Control
@@ -1306,7 +1372,7 @@ public static partial class GraphicalSandbox
         {
             _menu = menu;
             DoubleBuffered = true;
-            SetStyle(ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.Selectable, true);
+            SetStyle(ControlStyles.ResizeRedraw | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.Selectable, true);
             BackColor = Color.FromArgb(12, 14, 22);
             // The game draws its own cursor (see DrawGameCursor); hide the Windows arrow over the canvas.
             Cursor = HiddenCursor;
@@ -1619,7 +1685,7 @@ public static partial class GraphicalSandbox
         {
             var width = Math.Max(1, Width);
             var height = Math.Max(1, Height);
-            var time = Environment.TickCount64 / 1000.0 * Math.Max(0.05, _menu.Preferences.BackgroundParallax);
+            var time = FrameClock.Seconds * Math.Max(0.05, _menu.Preferences.BackgroundParallax);
             // Slow day/night cycle (about 80 s), mostly night so the logo reads well.
             var cycle = (Math.Sin(time * Math.PI * 2 / 80.0) + 1) / 2;
             var night = (float)Math.Clamp(0.35 + cycle * 0.75, 0, 1);
@@ -1795,7 +1861,7 @@ public static partial class GraphicalSandbox
         {
             var motion = game.Player.Motion;
             var night = NightFactor(game.ClockHour);
-            var now = Environment.TickCount64 / 1000.0;
+            var now = FrameClock.Seconds;
             var frameDelta = _lastWorldFrame > 0 ? (float)Math.Clamp(now - _lastWorldFrame, 0, 0.1) : 1f / 60f;
             _lastWorldFrame = now;
 
@@ -1839,24 +1905,9 @@ public static partial class GraphicalSandbox
             var worldState = g.Save();
             g.TranslateTransform(-offsetX, -offsetY);
 
-            // Cave backdrop below each column's surface so tunnels don't show sky.
-            for (var col = 0; col < viewW && startX + col < game.World.Width; col++)
-            {
-                var surface = 0;
-                // Trees, plants, platforms and ropes are not ground: the backdrop starts at the first solid block.
-                while (surface < game.World.Height && game.World.GetCell(new GridPoint(startX + col, surface)) is var probe &&
-                       (probe.TileId == TileId.Air || !game.Tiles.Contains(probe.TileId) || !game.Tiles[probe.TileId].IsSolid))
-                    surface++;
-                // A sky island is not the ground: below one, the open sky runs down to the terrain surface.
-                var terrain = game.BiomeLayout.SurfaceAt(Math.Clamp(startX + col, 0, game.World.Width - 1));
-                if (surface < terrain - 12)
-                    surface = terrain;
-                var caveTop = Math.Max(0, surface + 1 - startY);
-                if (caveTop < viewH)
-                    DrawDepthBackdrop(g, game, startX + col, col * TileSize, startY + caveTop, startY + viewH, startY);
-            }
-
-            var stations = new List<(TileId Tile, int X, int Y)>();
+            // The static layer (backdrop, walls, blocks, plants, debris, props) comes from cached chunks
+            // (GraphicalSandbox.Chunks.cs); the cells that animate or change often are drawn over it here.
+            DrawTileChunks(g, game, startX, startY, viewW, viewH);
             for (var row = 0; row < viewH; row++)
             for (var col = 0; col < viewW; col++)
             {
@@ -1865,20 +1916,11 @@ public static partial class GraphicalSandbox
                 if (x >= game.World.Width || y >= game.World.Height)
                     continue;
                 var cell = game.World.GetCell(new GridPoint(x, y));
+                if (cell.TileId == TileId.Air && cell.LiquidDepth <= 0.05f && cell.WallId == 0)
+                    continue;
                 var rect = new Rectangle(col * TileSize, row * TileSize, TileSize, TileSize);
-                if (cell.WallId != 0 && (cell.TileId == TileId.Air || ShowsWallBehind(cell)))
-                {
-                    if (_sprites.GetScaled(SpriteCatalog.ForWall(cell.WallId), TileSize, TileSize) is { } wall)
-                        g.DrawImageUnscaled(wall, rect.X, rect.Y);
-                    g.FillRectangle(_wallShade, rect);
-                }
-                if (cell.TileId == TileId.Air || DrawTravelTile(g, cell, x, y, rect, game) || DrawSpecialTile(g, cell, x, y, rect, game))
-                {
-                }
-                else if (PropFor(cell.TileId) is not null)
-                    stations.Add((cell.TileId, rect.X, rect.Bottom));
-                else
-                    DrawShapedTile(g, cell, x, y, rect, game);
+                if (cell.TileId != TileId.Air && IsLiveTile(cell.TileId) && !DrawTravelTile(g, cell, x, y, rect, game))
+                    DrawSpecialTile(g, cell, x, y, rect, game);
                 if (cell.Damage > 0 && cell.TileId != TileId.Air && game.Tiles[cell.TileId].HitPoints > 0)
                     DrawTileCracks(g, rect, cell.Damage / (float)game.Tiles[cell.TileId].HitPoints); // parity B2: mining progress
                 DrawLeisureCell(g, game, x, y, cell, rect); // paint tints (GraphicalSandbox.Leisure.cs)
@@ -1903,34 +1945,6 @@ public static partial class GraphicalSandbox
                 }
             }
 
-            // Biome flora/debris on exposed surface tiles, deterministic per world position.
-            for (var row = 1; row < viewH; row++)
-            for (var col = 0; col < viewW; col++)
-            {
-                var x = startX + col;
-                var y = startY + row;
-                if (x >= game.World.Width || y >= game.World.Height)
-                    continue;
-                var ground = game.World.GetCell(new GridPoint(x, y));
-                // Grass plants are real tiles now (drawn with the tiles); this layer keeps rocks and debris only.
-                if (SpriteCatalog.DebrisFor(ground.TileId) is not { } options)
-                    continue;
-                var above = game.World.GetCell(new GridPoint(x, y - 1));
-                if (above.TileId != TileId.Air || above.LiquidDepth > 0.05f)
-                    continue;
-                var hash = unchecked((uint)(x * 73856093) ^ (uint)(y * 19349663) ^ (uint)game.World.Width * 83492791u);
-                hash ^= hash >> 13;
-                hash *= 0x5bd1e995;
-                if (hash % 100 >= 16)
-                    continue;
-                var sprite = options[(int)((hash >> 8) % (uint)options.Length)];
-                var height = (int)(SpriteCatalog.DecorationHeight(sprite) * TileSize);
-                DrawPropOnGround(g, sprite, col * TileSize + TileSize / 2f, row * TileSize, (int)(TileSize * 1.8f), height,
-                    flip: (hash & 1) == 0);
-            }
-
-            foreach (var (tile, x, bottom) in stations)
-                DrawPropOnGround(g, PropFor(tile)!, x + TileSize / 2f, bottom, TileSize * 2, TileSize * 2);
             DrawLooseObjects(g, game, startX, startY, now);
 
             DrawSpriteActor(g, "station_ai", game.Guide.Position, new Vector2(0.8f, 1.6f), 1.5f, false, startX, startY,
@@ -2013,7 +2027,7 @@ public static partial class GraphicalSandbox
             _lighting.Subdivision = lighting == LightingQuality.Low ? 1 : 4;
             _lighting.ColouredGlow = lighting == LightingQuality.High;
             // Sky light follows the clock, moon phase and weather (cloud, rain, storms dim the surface).
-            _lighting.Compute(game.World, game.Tiles, startX, startY, viewW, viewH, game.SkyLightLevel, lamps);
+            _lighting.Compute(game.World, game.Tiles, startX, startY, viewW, viewH, game.SkyLightLevel, lamps, present: lighting != LightingQuality.Off);
             if (lighting != LightingQuality.Off)
                 _lighting.Draw(g, 0, 0, TileSize);
             // The map remembers whatever is lit around the player (the light map's padded window).
@@ -2402,7 +2416,7 @@ public static partial class GraphicalSandbox
             alpha = 0;
             if (Game is null)
                 return false;
-            var now = Environment.TickCount64 / 1000.0;
+            var now = FrameClock.Seconds;
             if (!ReferenceEquals(_hintGame, Game))
             {
                 _hintGame = Game;
@@ -2590,7 +2604,7 @@ public static partial class GraphicalSandbox
         {
             if (MousePosition is not { } mouse)
                 return;
-            var time = Environment.TickCount64 / 1000.0;
+            var time = FrameClock.Seconds;
             var breathe = (float)(0.85 + 0.15 * Math.Sin(time * 3));
             var preset = GamePreferences.CursorColors[Math.Clamp(_menu.Preferences.CursorColor, 0, GamePreferences.CursorColors.Length - 1)];
             var baseColor = Smart.Enabled && Game is not null && !MenuOpen ? Color.FromArgb(90, 230, 255) : Color.FromArgb(preset.R, preset.G, preset.B);
@@ -3250,7 +3264,7 @@ public static partial class GraphicalSandbox
             var commands = _menu.Ui.BuildDrawCommands().ToArray();
             var buttons = commands.Where(command => command.Kind == UiDrawKind.Button).ToArray();
             var top = buttons.Length > 0 ? buttons.Min(command => command.Bounds.Y) : Height / 2f;
-            var time = Environment.TickCount64 / 1000.0;
+            var time = FrameClock.Seconds;
 
             // Logo: amber gradient lettering with a dark outline, gently bobbing.
             var bob = (float)Math.Sin(time * 1.6) * 4f;
