@@ -681,6 +681,10 @@ public sealed partial class GameSimulation : IStoryHost
         CarryOnGlideWalk(deltaSeconds);
         AfterPlayerMovement(movement, deltaSeconds);
         UpdateToolUse(input.Action); // swing, press/hold and release tracking (ToolParityUse.cs)
+        // As in Terraria, using an item turns the player toward what it is used on, even while walking the other way.
+        if (input.Action is PlayerAction.Mine or PlayerAction.UseSelected or PlayerAction.ReplaceSelected && input.Target is { } aimed &&
+            !Player.IsDowned && MathF.Abs(aimed.X + 0.5f - PlayerCenter.X) > 0.3f)
+            Player.Motion.Facing = aimed.X + 0.5f < PlayerCenter.X ? -1 : 1;
         if (input.Action != PlayerAction.None && !Player.IsDowned)
             PerformAction(input.Action, input.Target);
 
