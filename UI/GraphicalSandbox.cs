@@ -130,10 +130,11 @@ public static partial class GraphicalSandbox
                     _canvas.MapMouseDown(e.Location);
                     return;
                 }
-                if (e.Button == MouseButtons.Left && _menuOpen && _game is not null && _canvas.TryHitCraftButton(e.Location, out var recipeId))
+                if (e.Button == MouseButtons.Left && _menuOpen && _game is not null && _menu.Ui.CurrentState is InventoryUiState &&
+                    _canvas.TryCraftClick(e.Location, out var recipeId))
                 {
-                    var result = _game.TryCraft(recipeId);
-                    _menu.SetStatus(result.Message);
+                    if (recipeId is not null && _menu.Ui.CurrentState is InventoryUiState crafting)
+                        crafting.ShowStatus(_game.TryCraft(recipeId).Message);
                     SyncCanvas();
                     return;
                 }
@@ -184,6 +185,8 @@ public static partial class GraphicalSandbox
                     _game.TrySelectInventorySlot(next);
                     return;
                 }
+                if (_menuOpen && _menu.Ui.CurrentState is InventoryUiState && _canvas.TryScrollCrafting(e.Location, e.Delta))
+                    return;
                 ForwardPointer(new UiInputFrame(ToUiPoint(e.Location), ScrollDelta: e.Delta));
             };
 
@@ -195,8 +198,10 @@ public static partial class GraphicalSandbox
             KeyPress += OnKeyPress;
             KeyUp += (_, e) =>
             {
-                if (e.KeyCode == Keys.ControlKey && _menu.Preferences.SmartCursor == SmartCursorMode.Hold)
+                if (IsBoundTo("SmartCursor", e.KeyCode) && _menu.Preferences.SmartCursor == SmartCursorMode.Hold)
                     _canvas.Smart.Enabled = false;
+                if (IsBoundTo("SmartSelect", e.KeyCode))
+                    EndSmartSelect();
                 HandleEmoteKeyUp(e.KeyCode);
                 _down.Remove(e.KeyCode);
                 _menuDown.Remove(e.KeyCode);
@@ -288,7 +293,7 @@ public static partial class GraphicalSandbox
             if (_canvas.FullscreenMapOpen)
             {
                 // The map takes over input; the world keeps running behind it.
-                if (e.KeyCode is Keys.M or Keys.Escape)
+                if (IsBoundTo("Map", e.KeyCode) || e.KeyCode == Keys.Escape)
                     _canvas.FullscreenMapOpen = false;
                 return;
             }
@@ -320,166 +325,205 @@ public static partial class GraphicalSandbox
                 return;
             }
 
-            _down.Add(e.KeyCode);
-
-            if (e.KeyCode == Keys.ControlKey && _game is not null && _menu.Preferences.SmartCursor == SmartCursorMode.Hold)
-            {
-                _canvas.Smart.Enabled = true;
+            var repeat = !_down.Add(e.KeyCode);
+            if (e.KeyCode == Keys.Menu)
+                e.SuppressKeyPress = true; // Alt is bindable; don't let it open the window menu.
+            if (HandleEmoteKey(e))
                 return;
-            }
-            if (e.KeyCode == Keys.ControlKey && _game is not null)
+            var actions = ActionsFor(e.KeyCode);
+            if (actions.Count == 0 && e.KeyCode == Keys.Escape)
             {
-                _canvas.Smart.Enabled = !_canvas.Smart.Enabled;
-                _canvas.Notify(_canvas.Smart.Enabled ? "Smart cursor on." : "Smart cursor off.");
-                return;
-            }
-            if (e.KeyCode == Keys.Escape)
-            {
+                // Escape always gets somewhere: with nothing bound to it, it opens settings.
                 OpenPauseMenu();
                 e.Handled = true;
                 e.SuppressKeyPress = true;
                 return;
             }
-
-            if (HandleEmoteKey(e))
-                return;
-            if (IsMenuBound("Colonist", e.KeyCode))
+            if (!repeat && TryDoubleTapDash(actions))
+                _dash = true;
+            foreach (var action in actions)
             {
-                OpenColonistSheet();
+                if (repeat && action is not ("Jump" or "CraftPrevious" or "CraftNext" or "MinimapZoomIn" or "MinimapZoomOut" or "CycleInventory"))
+                    continue;
+                RunAction(action);
                 e.Handled = true;
                 e.SuppressKeyPress = true;
+            }
+        }
+
+        /// <summary>Carries out one gameplay action from <see cref="ControlCatalog"/>.</summary>
+        private void RunAction(string action)
+        {
+            if (_game is null)
+                return;
+            var game = _game;
+            if (action.StartsWith("Hotbar", StringComparison.Ordinal) && int.TryParse(action[6..], out var hotbar))
+            {
+                game.TrySelectInventorySlot(hotbar - 1);
                 return;
             }
-
-            switch (e.KeyCode)
+            if (action.StartsWith("Loadout", StringComparison.Ordinal) && int.TryParse(action[7..], out var loadout))
             {
-                case Keys.W:
-                case Keys.Space:
-                    _jump = true;
-                    break;
-                case Keys.X:
-                    _dash = true;
-                    break;
-                case Keys.M:
-                    if (_game is not null)
-                        _canvas.OpenFullscreenMap(_game);
-                    break;
-                case Keys.E:
-                case Keys.Enter:
-                    _use = true;
-                    break;
-                case Keys.R:
-                    _replace = true;
-                    break;
-                case Keys.F:
-                    _eat = true;
-                    break;
-                case Keys.B:
-                    _boss = true;
-                    break;
-                case Keys.Z:
-                    if (_game is not null)
-                        _canvas.Notify(_game.TrySleep() ? "You lie down. Time passes quickly until dawn." : "You need a bed nearby, and it must be night.");
-                    break;
-                case Keys.H:
-                    if (_game is not null && _canvas.CursorTile() is { } housingCell)
+                if (game.SwitchLoadout(loadout - 1))
+                    _canvas.Notify($"Loadout {loadout} equipped.");
+                return;
+            }
+            switch (action)
+            {
+                case "Jump": _jump = true; break;
+                case "Dash": _dash = true; break;
+                case "UseSelected": _use = true; break;
+                case "ReplaceTile": _replace = true; break;
+                case "Eat": _eat = true; break;
+                case "Interact": InteractAtCursor(); break;
+                case "SmartSelect": BeginSmartSelect(); break;
+                case "SmartCursor":
+                    if (_menu.Preferences.SmartCursor == SmartCursorMode.Hold)
+                        _canvas.Smart.Enabled = true;
+                    else
                     {
-                        var housing = _game.CheckHousing(housingCell);
-                        _canvas.Notify(housing.Valid ? "This room is suitable housing." : $"Not valid housing: {housing.Reason}");
+                        _canvas.Smart.Enabled = !_canvas.Smart.Enabled;
+                        _canvas.Notify(_canvas.Smart.Enabled ? "Smart cursor on." : "Smart cursor off.");
                     }
                     break;
-                case Keys.G:
-                    InteractAtCursor();
+                case "ThrowItem":
+                    if (game.DropInventorySlot(game.Player.Inventory.SelectedSlot) is null)
+                        _canvas.Notify("Nothing in hand to throw.");
                     break;
-                case Keys.D1: _game?.TrySelectInventorySlot(0); break;
-                case Keys.D2: _game?.TrySelectInventorySlot(1); break;
-                case Keys.D3: _game?.TrySelectInventorySlot(2); break;
-                case Keys.D4: _game?.TrySelectInventorySlot(3); break;
-                case Keys.D5: _game?.TrySelectInventorySlot(4); break;
-                case Keys.D6: _game?.TrySelectInventorySlot(5); break;
-                case Keys.D7: _game?.TrySelectInventorySlot(6); break;
-                case Keys.D8: _game?.TrySelectInventorySlot(7); break;
-                case Keys.D9: _game?.TrySelectInventorySlot(8); break;
-                case Keys.D0: _game?.TrySelectInventorySlot(9); break;
-                case Keys.Tab:
-                    _game?.SelectNextInventoryItem();
+                case "Grapple":
+                    if (game.Grapple is not null)
+                        game.ReleaseGrapple();
+                    else if (_canvas.CursorTile() is { } hookAt && !game.TryFireGrapple(new Vector2(hookAt.X + 0.5f, hookAt.Y + 0.5f)))
+                        _canvas.Notify("Equip a grappling hook to fire it.");
                     break;
-                case Keys.OemOpenBrackets:
-                    _game?.CycleCraftableRecipe(-1);
-                    break;
-                case Keys.OemCloseBrackets:
-                    _game?.CycleCraftableRecipe(1);
-                    break;
-                case Keys.C:
-                    _game?.TryCraftNext();
-                    break;
-                case Keys.V:
-                    _game?.ConsultGuide();
-                    break;
-                case Keys.I:
-                    OpenInventory();
-                    break;
-                case Keys.Q:
-                    if (_game is not null && !_game.QuickHeal())
-                        _canvas.Notify(_game.PotionSick ? "Still recovering from the last dose." : "No healing item to use.");
-                    break;
-                case Keys.J:
-                    if (_game is not null && !_game.QuickCharge())
-                        _canvas.Notify("No charge item to use.");
-                    break;
-                case Keys.Y:
-                    if (_game is not null)
-                    {
-                        var buffs = _game.QuickBuff();
-                        _canvas.Notify(buffs > 0 ? $"Used {buffs} buff item{(buffs == 1 ? "" : "s")}." : "No buff items to use.");
-                    }
-                    break;
-                case Keys.T:
-                    if (_game is not null)
-                    {
-                        if (_game.Grapple is not null)
-                            _game.ReleaseGrapple();
-                        else if (_canvas.CursorTile() is { } hookAt && !_game.TryFireGrapple(new Vector2(hookAt.X + 0.5f, hookAt.Y + 0.5f)))
-                            _canvas.Notify("Equip a grappling hook to fire it.");
-                    }
-                    break;
-                case Keys.U:
-                    if (_game is not null && !_game.ToggleMount())
+                case "Mount":
+                    if (!game.ToggleMount())
                         _canvas.Notify("You need a hover-bike key, on open ground.");
                     break;
-                case Keys.L:
-                    if (_game is not null)
-                    {
-                        _game.CycleWireLayer();
-                        _canvas.Notify($"Wire layer {_game.ActiveWireLayer}.");
-                    }
+                case "QuickHeal":
+                    if (!game.QuickHeal())
+                        _canvas.Notify(game.PotionSick ? "Still recovering from the last dose." : "No healing item to use.");
                     break;
-                case Keys.F1:
-                case Keys.F2:
-                case Keys.F3:
-                    if (_game is not null && _game.SwitchLoadout(e.KeyCode - Keys.F1))
-                        _canvas.Notify($"Loadout {e.KeyCode - Keys.F1 + 1} equipped.");
+                case "QuickCharge":
+                    if (!game.QuickCharge())
+                        _canvas.Notify("No charge item to use.");
                     break;
-                case Keys.F9:
+                case "QuickBuff":
+                    var buffs = game.QuickBuff();
+                    _canvas.Notify(buffs > 0 ? $"Used {buffs} buff item{(buffs == 1 ? "" : "s")}." : "No buff items to use.");
+                    break;
+                case "Inventory": OpenInventory(); break;
+                case "Pause": OpenPauseMenu(); break;
+                case "Colonist": OpenColonistSheet(); break;
+                case "Bestiary": OpenBestiary(); break;
+                case "Achievements": OpenAchievements(); break;
+                case "Map": _canvas.OpenFullscreenMap(game); break;
+                case "MapStyle":
                     _canvas.MapView = (GameCanvas.MapStyle)(((int)_canvas.MapView + 1) % 3);
                     _canvas.Notify($"Map: {_canvas.MapView}.");
                     break;
-                case Keys.Oemplus:
-                    _canvas.ZoomMinimap(1);
+                case "MinimapZoomIn": _canvas.ZoomMinimap(1); break;
+                case "MinimapZoomOut": _canvas.ZoomMinimap(-1); break;
+                case "ControlsHelp": _canvas.ShowControls = !_canvas.ShowControls; break;
+                case "Craft": game.TryCraftNext(); break;
+                case "CraftPrevious": game.CycleCraftableRecipe(-1); break;
+                case "CraftNext": game.CycleCraftableRecipe(1); break;
+                case "Guide": game.ConsultGuide(); break;
+                case "CycleInventory": game.SelectNextInventoryItem(); break;
+                case "SummonBoss": _boss = true; break;
+                case "Sleep":
+                    _canvas.Notify(game.TrySleep() ? "You lie down. Time passes quickly until dawn." : "You need a bed nearby, and it must be night.");
                     break;
-                case Keys.OemMinus:
-                    _canvas.ZoomMinimap(-1);
+                case "CheckHousing":
+                    if (_canvas.CursorTile() is { } housingCell)
+                    {
+                        var housing = game.CheckHousing(housingCell);
+                        _canvas.Notify(housing.Valid ? "This room is suitable housing." : $"Not valid housing: {housing.Reason}");
+                    }
                     break;
-                case Keys.OemQuestion:
-                    _canvas.ShowControls = !_canvas.ShowControls;
-                    break;
-                case Keys.N:
-                    OpenBestiary();
-                    break;
-                case Keys.O:
-                    OpenAchievements();
+                case "WireLayer":
+                    game.CycleWireLayer();
+                    _canvas.Notify($"Wire layer {game.ActiveWireLayer}.");
                     break;
             }
+        }
+
+        // ------------------------------------------------------------ key bindings
+
+        private Dictionary<Keys, List<string>> _keyActions = new();
+        private InputProfile? _keyActionsProfile;
+        private int _keyActionsRevision = -1;
+
+        /// <summary>The gameplay actions bound to a key (menu-navigation actions excluded), rebuilt when bindings change.</summary>
+        private List<string> ActionsFor(Keys key)
+        {
+            var profile = _menu.InputProfile;
+            if (!ReferenceEquals(profile, _keyActionsProfile) || profile.Revision != _keyActionsRevision)
+            {
+                _keyActions = new Dictionary<Keys, List<string>>();
+                foreach (var action in ControlCatalog.All.Where(action => !action.IsMenu))
+                {
+                    if (!profile.Bindings.TryGetValue(action.Id, out var bindings))
+                        continue;
+                    foreach (var binding in bindings)
+                        if (InputBindingResolver.TryParseKeyCode(binding, out var code))
+                            (_keyActions.TryGetValue((Keys)code, out var list) ? list : _keyActions[(Keys)code] = new List<string>()).Add(action.Id);
+                }
+                _keyActionsProfile = profile;
+                _keyActionsRevision = profile.Revision;
+            }
+            return _keyActions.TryGetValue(key, out var found) ? found : [];
+        }
+
+        private bool IsBoundTo(string action, Keys key) => ActionsFor(key).Contains(action);
+
+        /// <summary>True while any key bound to the action is held.</summary>
+        private bool Held(string action) => _down.Any(key => IsBoundTo(action, key));
+
+        private string _lastTapAction = string.Empty;
+        private long _lastTapTicks;
+
+        /// <summary>Terraria's dash: tapping left or right twice within a quarter second.</summary>
+        private bool TryDoubleTapDash(List<string> actions)
+        {
+            var direction = actions.FirstOrDefault(action => action is "MoveLeft" or "MoveRight");
+            if (direction is null)
+                return false;
+            var now = Environment.TickCount64;
+            var doubled = direction == _lastTapAction && now - _lastTapTicks <= 250;
+            _lastTapAction = doubled ? string.Empty : direction;
+            _lastTapTicks = now;
+            return doubled;
+        }
+
+        private int? _smartSelectReturnSlot;
+
+        /// <summary>
+        /// Smart select (Terraria's Shift): while held, the hotbar jumps to the tool that can work what's under the
+        /// cursor (cutter for trees, then drill, then demolisher for walls); letting go returns to the item before.
+        /// </summary>
+        private void BeginSmartSelect()
+        {
+            if (_game is null || _canvas.CursorTile() is not { } cursor)
+                return;
+            var inventory = _game.Player.Inventory;
+            var mouse = new Vector2(cursor.X + 0.5f, cursor.Y + 0.5f);
+            foreach (var kind in new[] { ItemUseKind.Cutter, ItemUseKind.Pickaxe, ItemUseKind.Demolisher })
+                for (var slot = 0; slot < Inventory.HotbarSlots; slot++)
+                    if (inventory.Slots[slot] is { IsEmpty: false } stack && _game.Items.Contains(stack.ItemId) &&
+                        _game.Items[stack.ItemId] is var item && item.UseKind == kind && SmartToolTargeting.Find(_game, item, mouse) is not null)
+                    {
+                        _smartSelectReturnSlot ??= inventory.SelectedSlot;
+                        _game.TrySelectInventorySlot(slot);
+                        return;
+                    }
+        }
+
+        private void EndSmartSelect()
+        {
+            if (_smartSelectReturnSlot is { } slot)
+                _game?.TrySelectInventorySlot(slot);
+            _smartSelectReturnSlot = null;
         }
 
         private void HandleTextPromptKey(KeyEventArgs e)
@@ -538,23 +582,16 @@ public static partial class GraphicalSandbox
             {
                 _menu.CancelBindingCapture();
             }
-            else if (!IsModifierKey(e.KeyCode))
+            else if (InputBindingResolver.NameForKeyCode((int)e.KeyCode) is { } name)
             {
-                var key = (ConsoleKey)(int)e.KeyCode;
-                if (Enum.IsDefined(key))
-                    _menu.CaptureBinding(key);
+                // Shift, Ctrl and Alt bind too (Terraria puts smart select and smart cursor on them).
+                _menu.CaptureBinding(name);
             }
 
             e.Handled = true;
             e.SuppressKeyPress = true;
             AfterMenuAction();
         }
-
-        private static bool IsModifierKey(Keys key) => key is
-            Keys.ShiftKey or Keys.LShiftKey or Keys.RShiftKey or
-            Keys.ControlKey or Keys.LControlKey or Keys.RControlKey or
-            Keys.Menu or Keys.LMenu or Keys.RMenu or
-            Keys.LWin or Keys.RWin or Keys.CapsLock or Keys.NumLock or Keys.Scroll;
 
         private void OnKeyPress(object? sender, KeyPressEventArgs e)
         {
@@ -600,16 +637,14 @@ public static partial class GraphicalSandbox
                 return new UiInputFrame(default, NavigationX: 1);
             if (IsMenuBound("MenuConfirm", key))
                 return new UiInputFrame(default, ConfirmPressed: true);
-            if (IsMenuBound("MenuBack", key) || IsMenuBound("Quit", key))
+            if (IsMenuBound("MenuBack", key))
                 return new UiInputFrame(default, BackPressed: true);
             return null;
         }
 
         private bool IsMenuBound(string action, Keys key) =>
             _menu.InputProfile.Bindings.TryGetValue(action, out var bindings) &&
-            bindings.Any(binding =>
-                InputBindingResolver.TryParseConsoleKey(binding, out var consoleKey) &&
-                (Keys)(int)consoleKey == key);
+            bindings.Any(binding => InputBindingResolver.TryParseKeyCode(binding, out var code) && (Keys)code == key);
 
         private void Advance()
         {
@@ -657,7 +692,7 @@ public static partial class GraphicalSandbox
                 _down.Clear();
                 _mouseUseHeld = false;
             }
-            var horizontal = _down.Contains(Keys.A) ? -1f : _down.Contains(Keys.D) ? 1f : 0f;
+            var horizontal = Held("MoveLeft") ? -1f : Held("MoveRight") ? 1f : 0f;
             if (_mouseUseHeld && !_mine && !_use)
             {
                 if (_game.Player.Inventory.SelectedItem?.UseKind == ItemUseKind.Pickaxe)
@@ -672,13 +707,19 @@ public static partial class GraphicalSandbox
                 : PlayerAction.None;
             if (_boss)
                 _game.TrySummonSentinel();
+            var aim = AimTile();
+            // Terraria's block swap: using a block on a different solid block replaces it (given a strong enough drill).
+            if (action == PlayerAction.UseSelected && _game.Player.Inventory.SelectedItem is { UseKind: ItemUseKind.PlaceTile } block &&
+                _game.World.Contains(aim) && _game.World.GetCell(aim).TileId is var standing && _game.Tiles[standing].IsSolid &&
+                block.PlacedTile != standing)
+                action = PlayerAction.ReplaceSelected;
 
             _game.Tick(new GameInput(
                 new MovementInput(horizontal, JumpPressed: _jump, DashPressed: _dash,
-                    JumpHeld: _down.Contains(Keys.W) || _down.Contains(Keys.Space),
-                    Vertical: _down.Contains(Keys.W) ? -1f : _down.Contains(Keys.S) ? 1f : 0f),
+                    JumpHeld: Held("Jump"),
+                    Vertical: Held("MoveUp") ? -1f : Held("MoveDown") ? 1f : 0f),
                 action,
-                AimTile()));
+                aim));
             _jump = _dash = _mine = _use = _replace = _eat = _boss = false;
             if (_game.IsOver)
             {
@@ -822,16 +863,16 @@ public static partial class GraphicalSandbox
                 return;
             }
 
+            // Terraria's in-game Settings: reached from the inventory, so it doesn't offer the inventory or crew again.
             _menu.ShowPauseMenu(
                 resume: CloseMenu,
-                openInventory: OpenInventory,
+                openInventory: null,
                 saveAndExit: SaveAndQuitToTitle,
                 save: () => SaveGame(),
-                load: () => { _menu.ShowLoadMenu(); UpdateMenuViewport(); SyncCanvas(); },
                 quitToTitle: SaveAndQuitToTitle,
                 exitGame: SaveAndExitGame,
-                openColonist: OpenColonistSheet,
-                openCreative: _game?.IsCreative == true ? OpenCreativeMenu : null);
+                openCreative: _game?.IsCreative == true ? OpenCreativeMenu : null,
+                openFeats: OpenAchievements);
             _menuOpen = true;
             UpdateMenuViewport();
             SyncCanvas();
@@ -953,6 +994,19 @@ public static partial class GraphicalSandbox
             var target = _canvas.CursorTile() ?? AimTile();
             if (_game.TryInteractPlayerSystems(target))
                 return;
+            // Right-clicking the station AI talks to it, as with Terraria's Guide.
+            if (Vector2.Distance(new Vector2(target.X + 0.5f, target.Y + 0.5f), _game.Guide.Position) < 1.5f)
+            {
+                var advice = _game.ConsultGuide();
+                _canvas.Notify(advice.Count > 0 ? advice[0] : "The station AI has nothing new to suggest.");
+                return;
+            }
+            // Right-clicking a bed sleeps in it, as in Terraria 1.4.
+            if (_game.World.Contains(target) && ContentTiles.Has(_game.World.TileAt(target.X, target.Y), TileTraits.Bed))
+            {
+                _canvas.Notify(_game.TrySleep() ? "You lie down. Time passes quickly until dawn." : "You can only sleep in a bed at night.");
+                return;
+            }
             var result = _game.Interact(target);
             switch (result.Kind)
             {
@@ -1101,6 +1155,7 @@ public static partial class GraphicalSandbox
         private void SyncCanvas()
         {
             _canvas.Game = _game;
+            _canvas.KeyBindings = _menu.InputProfile;
             _canvas.Transition = _transition;
             _canvas.MenuOpen = _menuOpen;
             _canvas.ActiveWorldName = _activeWorld?.Name;
@@ -1199,6 +1254,9 @@ public static partial class GraphicalSandbox
         private readonly Brush _hudBrush = new SolidBrush(Color.White);
         private readonly Brush _hudBack = new SolidBrush(Color.FromArgb(190, 0, 0, 0));
         private readonly Brush _menuDim = new SolidBrush(Color.FromArgb(150, 6, 8, 12));
+        /// <summary>The inventory dims the world less, as in Terraria, where it opens over the game.</summary>
+        private readonly Brush _inventoryDim = new SolidBrush(Color.FromArgb(70, 6, 8, 12));
+        private bool _pausedLight;
         private readonly Brush _menuPanel = new SolidBrush(Color.FromArgb(238, 22, 28, 46));
         private readonly Brush _menuPanelBorder = new SolidBrush(Color.FromArgb(150, 98, 118, 178));
         private readonly Brush _menuButton = new SolidBrush(Color.FromArgb(238, 46, 52, 60));
@@ -1352,6 +1410,9 @@ public static partial class GraphicalSandbox
         private const float CameraFollowY = 9f;
         private readonly List<(RectangleF Rect, int Slot)> _hotbarHits = new();
         private readonly List<(RectangleF Rect, string RecipeId)> _craftHits = new();
+        private RectangleF _craftArea;
+        private string? _craftSelected;
+        private int _craftScrollRows;
         private readonly List<(string Text, long At)> _messageLog = new();
         private string? _lastLoggedMessage;
         private Bitmap? _minimap;
@@ -1375,18 +1436,36 @@ public static partial class GraphicalSandbox
             return null;
         }
 
-        public bool TryHitCraftButton(Point point, out string recipeId)
+        /// <summary>
+        /// A click on the crafting grid, Terraria-style: an unselected result becomes the selection (and shows its
+        /// materials); the selected one is crafted, returned in <paramref name="craftRecipeId"/>. True when the click
+        /// landed on the grid.
+        /// </summary>
+        public bool TryCraftClick(Point point, out string? craftRecipeId)
         {
+            craftRecipeId = null;
             foreach (var (rect, id) in _craftHits)
             {
-                if (rect.Contains(point))
-                {
-                    recipeId = id;
-                    return true;
-                }
+                if (!rect.Contains(point))
+                    continue;
+                if (id == _craftSelected)
+                    craftRecipeId = id;
+                else
+                    _craftSelected = id;
+                Invalidate();
+                return true;
             }
-            recipeId = string.Empty;
             return false;
+        }
+
+        /// <summary>The mouse wheel over the crafting grid scrolls it a row at a time.</summary>
+        public bool TryScrollCrafting(Point point, int delta)
+        {
+            if (!_craftArea.Contains(point))
+                return false;
+            _craftScrollRows = Math.Max(0, _craftScrollRows + (delta < 0 ? 1 : -1));
+            Invalidate();
+            return true;
         }
 
         [Browsable(false)]
@@ -1409,7 +1488,9 @@ public static partial class GraphicalSandbox
                 // Under a menu the world is drawn into an opaque image with the dim baked in; the opaque
                 // format stops the overlay exposing partly transparent seams. A paused world renders once
                 // and is reused; with Autopause off it re-renders every frame.
-                if (WorldRunsBehindMenu || _pausedWorld is null || _pausedWorld.Width != Width || _pausedWorld.Height != Height || !ReferenceEquals(_pausedGame, game))
+                var light = _menu.Ui.CurrentState is InventoryUiState;
+                if (WorldRunsBehindMenu || _pausedWorld is null || _pausedWorld.Width != Width || _pausedWorld.Height != Height || !ReferenceEquals(_pausedGame, game) ||
+                    light != _pausedLight)
                 {
                     if (_pausedWorld is null || _pausedWorld.Width != Width || _pausedWorld.Height != Height)
                     {
@@ -1423,7 +1504,8 @@ public static partial class GraphicalSandbox
                     world.Clear(Color.FromArgb(12, 14, 22));
                     DrawWorld(world, game);
                     // The dim is baked in so the screen draws one opaque image under the menu.
-                    world.FillRectangle(_menuDim, 0, 0, Width, Height);
+                    world.FillRectangle(light ? _inventoryDim : _menuDim, 0, 0, Width, Height);
+                    _pausedLight = light;
                 }
                 g.DrawImageUnscaled(_pausedWorld, 0, 0);
             }
@@ -1444,8 +1526,8 @@ public static partial class GraphicalSandbox
                 _menu.Ui.SetViewport(Width, Height);
                 _hoveredSlotStack = null;
                 DrawMenu(g);
-                if (Game is { } running && _menu.Ui.CurrentState is InventoryUiState { ChestInventory: null })
-                    DrawCraftingPanel(g, running);
+                if (Game is { } running && _menu.Ui.CurrentState is InventoryUiState inventoryScreen)
+                    DrawCraftingPanel(g, running, inventoryScreen);
                 if (Game is { } inspecting && _hoveredSlotStack is { } hoveredStack && MousePosition is { } hoverAt &&
                     _menu.Ui.CurrentState is InventoryUiState { Controller.CursorStack.IsEmpty: true })
                     DrawItemTooltip(g, inspecting.Items[hoveredStack.ItemId], hoveredStack.Count, hoverAt);
@@ -2288,10 +2370,15 @@ public static partial class GraphicalSandbox
         private double _hintStart;
         private GameSimulation? _hintGame;
 
-        /// <summary>Toggled with "?"; otherwise the hint shows for the first minute and a half of a session.</summary>
+        /// <summary>Toggled with the key-help key ("/" by default); otherwise the hint shows for the first minute and a half of a session.</summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ShowControls { get; set; }
+
+        /// <summary>The player's key bindings, for the help overlay and key prompts.</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public InputProfile? KeyBindings { get; set; }
 
         private bool ControlsHintVisible(out int alpha)
         {
@@ -2317,11 +2404,7 @@ public static partial class GraphicalSandbox
         {
             if (!ControlsHintVisible(out var alpha))
                 return;
-            string[] lines =
-            [
-                "A/D move   W/S climb   Space jump   X dash   LMB use   RMB interact   T hook   U mount   Ctrl smart cursor",
-                "Q heal   J charge   Y buff   F eat   F1-F3 loadout   I inventory   C craft   K crew   M map   N bestiary   O feats   F9 map   ? hide"
-            ];
+            var lines = KeyBindings is null ? [] : ControlCatalog.HintLines(KeyBindings);
             var width = lines.Max(line => g.MeasureString(line, _small).Width) + 24;
             var panel = new RectangleF((Width - width) / 2f, Height - 76, width, 46);
             using var back = new SolidBrush(Color.FromArgb(alpha * 200 / 255, 24, 28, 36));
@@ -2538,7 +2621,7 @@ public static partial class GraphicalSandbox
                 if (colonist.IsAlive && Over(world, colonist.Motion.Position, colonist.Motion.Size, 0.3f))
                     return $"{colonist.Profile.Name} · {colonist.Activity} · {colonist.MoodLabel}";
             if (Vector2.Distance(world, game.Guide.Position) < 1.2f)
-                return "Station AI · press V for guidance";
+                return "Station AI · right-click for guidance";
 
             if (CursorTile() is { } tile)
             {
@@ -2852,46 +2935,68 @@ public static partial class GraphicalSandbox
         }
 
         /// <summary>Craftable recipes beside the inventory; clicking one crafts it.</summary>
-        private void DrawCraftingPanel(Graphics g, GameSimulation game)
+        /// <summary>
+        /// Crafting under the inventory (and any open chest), Terraria 1.4's grid: everything craftable here as result
+        /// slots, the selected one outlined with its materials on the row below. Click to select, click again to
+        /// craft; the wheel scrolls; hovering shows the item's tooltip.
+        /// </summary>
+        private void DrawCraftingPanel(Graphics g, GameSimulation game, InventoryUiState inventory)
         {
             _craftHits.Clear();
             var recipes = game.GetCraftableRecipes();
-            // Inside the inventory panel, under the player grid (same geometry as InventoryUiState's layout).
-            var outerW = Math.Min(Width * 0.9f, 1000f);
-            var outerH = Math.Min(Height * 0.82f, 680f);
-            var outerX = (Width - outerW) / 2f;
-            var outerY = (Height - outerH) / 2f;
-            var rows = (game.Player.Inventory.SlotCount + 7) / 8;
-            var top = outerY + 18 + 52 + rows * 54 + 6;
-            var panel = new RectangleF(outerX + 18, top, 600, Math.Max(90, outerY + outerH - 60 - top));
-            DrawRivetedPanel(g, panel);
-            g.DrawString("CRAFTING", _hud, _amberBrush, panel.X + 14, panel.Y + 10);
+            var top = InventoryLayout.CraftingTop(inventory.PlayerInventory.SlotCount, inventory.ChestInventory?.SlotCount ?? 0);
+            var stride = InventoryLayout.Stride;
+            var size = InventoryLayout.Slot;
+            var left = InventoryLayout.Left;
             if (recipes.Count == 0)
             {
-                g.DrawString("Nothing craftable here.", _small, _dimTextBrush, panel.X + 14, panel.Y + 36);
-                g.DrawString("Stand near a station with materials.", _small, _dimTextBrush, panel.X + 14, panel.Y + 52);
+                _craftArea = RectangleF.Empty;
+                g.DrawString("Nothing to craft here. Stand near a station with the materials.", _small, _dimTextBrush, left, top + 4);
                 return;
             }
-            var index = 0;
-            foreach (var recipe in recipes)
+            var selectedIndex = recipes.ToList().FindIndex(recipe => recipe.Id == _craftSelected);
+            if (selectedIndex < 0)
             {
-                var y = panel.Y + 36 + index / 2 * 46;
-                if (y + 42 > panel.Bottom)
-                    break;
-                var row = new RectangleF(panel.X + 10 + index % 2 * ((panel.Width - 20) / 2f), y, (panel.Width - 26) / 2f, 42);
-                index++;
-                var hovered = MousePosition is { } mouse && row.Contains(mouse);
-                g.FillRectangle(hovered ? _menuButtonHot : _menuSlot, row);
-                g.DrawRectangle(_menuBorderPen, row.X, row.Y, row.Width, row.Height);
-                if (_sprites.GetFitted(SpriteCatalog.ForItem(recipe.Output), 34, 34) is { } icon)
-                    g.DrawImageUnscaled(icon, (int)row.X + 4 + (34 - icon.Width) / 2, (int)row.Y + 4 + (34 - icon.Height) / 2);
-                var output = game.Items[recipe.Output];
-                g.DrawString(recipe.OutputCount > 1 ? $"{output.Name} ×{recipe.OutputCount}" : output.Name, _small, Brushes.White, row.X + 44, row.Y + 4);
-                var ingredients = string.Join(", ", recipe.Ingredients.Select(ingredient => $"{ingredient.Quantity} {string.Join("/", ingredient.Alternatives.Select(alternative => game.Items[alternative].Name))}"));
-                using var format = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
-                g.DrawString(ingredients, _small, _dimTextBrush, new RectangleF(row.X + 44, row.Y + 22, row.Width - 50, 16), format);
-                _craftHits.Add((row, recipe.Id));
+                selectedIndex = 0;
+                _craftSelected = recipes[0].Id;
             }
+            // Rows that fit above the materials row and the bottom edge.
+            var visibleRows = Math.Max(1, (int)((Height - top - stride - 28) / stride));
+            var totalRows = (recipes.Count + InventoryLayout.Columns - 1) / InventoryLayout.Columns;
+            _craftScrollRows = Math.Clamp(_craftScrollRows, 0, Math.Max(0, totalRows - visibleRows));
+            _craftArea = new RectangleF(left, top, InventoryLayout.Columns * stride, visibleRows * stride);
+            for (var i = _craftScrollRows * InventoryLayout.Columns; i < recipes.Count && i < (_craftScrollRows + visibleRows) * InventoryLayout.Columns; i++)
+            {
+                var recipe = recipes[i];
+                var row = i / InventoryLayout.Columns - _craftScrollRows;
+                var rect = new RectangleF(left + i % InventoryLayout.Columns * stride, top + row * stride, size, size);
+                var selected = i == selectedIndex;
+                DrawSlot(g, rect, new ItemStack(recipe.Output, recipe.OutputCount), selected, null);
+                if (selected)
+                    g.DrawRectangle(_menuFocusPen, rect.X - 2, rect.Y - 2, rect.Width + 4, rect.Height + 4);
+                if (MousePosition is { } mouse && rect.Contains(mouse))
+                    _hoveredSlotStack = new ItemStack(recipe.Output, recipe.OutputCount);
+                _craftHits.Add((rect, recipe.Id));
+            }
+            if (totalRows > visibleRows)
+                g.DrawString($"{_craftScrollRows + 1}-{Math.Min(totalRows, _craftScrollRows + visibleRows)} of {totalRows} rows · wheel to scroll", _small, _dimTextBrush,
+                    left + InventoryLayout.Columns * stride + 4, top);
+
+            // Materials for the selected result.
+            var chosen = recipes[selectedIndex];
+            var materialsTop = top + visibleRows * stride + 6;
+            var output = game.Items[chosen.Output];
+            g.DrawString($"{output.Name}{(chosen.OutputCount > 1 ? $" ×{chosen.OutputCount}" : "")} needs:", _small, _amberBrush, left, materialsTop);
+            var x = left;
+            foreach (var ingredient in chosen.Ingredients)
+            {
+                var rect = new RectangleF(x, materialsTop + 18, 34, 34);
+                DrawSlot(g, rect, new ItemStack(ingredient.Alternatives[0], ingredient.Quantity), false, null);
+                if (MousePosition is { } mouse && rect.Contains(mouse))
+                    _hoveredSlotStack = new ItemStack(ingredient.Alternatives[0], ingredient.Quantity);
+                x += 38;
+            }
+            g.DrawString("click the outlined result to craft", _small, _dimTextBrush, x + 6, materialsTop + 28);
         }
 
         /// <summary>Top-right readout: biome, temperature/comfort, shelter, events, recent incidents.</summary>
@@ -3061,7 +3166,7 @@ public static partial class GraphicalSandbox
                     case UiDrawKind.ItemSlot:
                         if (command.Stack is { } stack)
                         {
-                            DrawSlot(g, rect, stack, command.Selected || command.Focused, null);
+                            DrawSlot(g, rect, stack, command.Selected || command.Focused, command.Badge);
                             if (command.Hovered && !stack.IsEmpty)
                                 _hoveredSlotStack = stack;
                         }

@@ -335,7 +335,10 @@ public sealed class MenuFlow
             prompt.Cancel();
     }
 
-    public void CaptureBinding(ConsoleKey key)
+    public void CaptureBinding(ConsoleKey key) => CaptureBinding(key.ToString());
+
+    /// <summary>Finishes key capture with a binding name (a ConsoleKey name, or Shift / Ctrl / Alt).</summary>
+    public void CaptureBinding(string key)
     {
         if (Ui.CurrentState is BindingCaptureState capture)
             capture.Capture(key);
@@ -478,14 +481,16 @@ public sealed class MenuFlow
         Ui.SetState(prompt);
     }
 
-    private void PromptForBinding(string action, string current)
+    private void PromptForBinding(string action)
     {
-        var capture = new BindingCaptureState(action, current);
+        var label = ControlCatalog.Find(action)?.Label ?? action;
+        var current = InputProfile.KeyLabel(action);
+        var capture = new BindingCaptureState(label, current.Length > 0 ? current : "nothing");
         capture.Captured += key =>
         {
             if (Ui.CurrentState == capture)
                 Ui.GoBack();
-            SetBinding(action, key.ToString());
+            SetBinding(action, key);
         };
         capture.Cancelled += () =>
         {
@@ -495,21 +500,24 @@ public sealed class MenuFlow
         Ui.SetState(capture);
     }
 
+    /// <summary>
+    /// Makes <paramref name="key"/> the action's main key (alternates stay). A key taken from another action is
+    /// moved, and the screen says which; menu navigation keeps to the arrow keys.
+    /// </summary>
     public void SetBinding(string action, string key)
     {
         if (string.IsNullOrWhiteSpace(action) || string.IsNullOrWhiteSpace(key))
             return;
-        if (!InputBindingResolver.TryParseConsoleKey(key, out var parsed))
+        if (!InputBindingResolver.TryParseKeyCode(key, out var code) || InputBindingResolver.NameForKeyCode(code) is not { } name)
         {
             if (Ui.CurrentState is MenuScreen screen)
             {
-                screen.SetStatus("Enter a ConsoleKey name (for example J, Spacebar, or D1).");
+                screen.SetStatus("That key can't be bound.");
                 screen.FocusSelection(Ui);
             }
             return;
         }
-        if (action.StartsWith("Menu", StringComparison.OrdinalIgnoreCase) &&
-            parsed is ConsoleKey.W or ConsoleKey.A or ConsoleKey.S or ConsoleKey.D)
+        if (action.StartsWith("Menu", StringComparison.OrdinalIgnoreCase) && name is "W" or "A" or "S" or "D")
         {
             if (Ui.CurrentState is MenuScreen screen)
             {
@@ -518,9 +526,14 @@ public sealed class MenuFlow
             }
             return;
         }
-        InputProfile.Bindings[action] = [parsed.ToString()];
+        var displaced = InputProfile.Rebind(action, name);
         SavePreferences();
-        ReplaceCurrent(CreateControlsMenu());
+        var label = ControlCatalog.Find(action)?.Label ?? action;
+        var status = $"{label}: {InputBindingResolver.Describe(name)}.";
+        if (displaced is not null)
+            status += $" {InputBindingResolver.Describe(name)} was on {ControlCatalog.Find(displaced)?.Label ?? displaced}, which is now {(InputProfile.KeyLabel(displaced) is { Length: > 0 } rest ? rest : "unbound")}.";
+        ReplaceCurrent(CreateControlsMenu(action));
+        CurrentScreen.SetStatus(status);
     }
 
     public void SavePreferences()
@@ -531,58 +544,66 @@ public sealed class MenuFlow
         _inputStore.Save(InputProfile);
     }
 
+    /// <summary>
+    /// The in-game Settings menu, Terraria's: Close Menu, the settings categories, Feats, and the save-and-exit
+    /// choices. The graphical game opens it from the inventory's Settings button; Inventory and Crew rows appear only
+    /// for hosts without that hub (the terminal).
+    /// </summary>
     public void ShowPauseMenu(
         Action resume,
-        Action openInventory,
+        Action? openInventory,
         Action saveAndExit,
         Action? save = null,
-        Action? load = null,
         Action? quitToTitle = null,
         Action? exitGame = null,
         Action? openColonist = null,
-        Action? openCreative = null)
+        Action? openCreative = null,
+        Action? openFeats = null)
     {
         _pauseResume = resume;
         _directUiClose = null;
 
-        var entries = new List<MenuEntry>
-        {
-            new("Resume", resume),
-            new("Inventory", openInventory)
-        };
+        var entries = new List<MenuEntry> { new("Close Menu", resume) };
+        if (openInventory is not null)
+            entries.Add(new MenuEntry("Inventory", openInventory));
         if (openColonist is not null)
-            entries.Add(new MenuEntry("Colonist", openColonist));
+            entries.Add(new MenuEntry("Crew", openColonist));
         if (openCreative is not null)
             entries.Add(new MenuEntry("Creative Powers", openCreative));
         if (save is not null)
             entries.Add(new MenuEntry("Save Game", save));
-        if (load is not null)
-            entries.Add(new MenuEntry("Load Game", load));
-
-        entries.Add(new MenuEntry("Settings", () => Navigate(CreatePauseSettingsMenu())));
-
+        entries.AddRange(SettingsCategoryEntries());
+        if (openFeats is not null)
+            entries.Add(new MenuEntry("Feats", openFeats));
         if (quitToTitle is not null)
-            entries.Add(new MenuEntry("Save & Quit to Main Menu", quitToTitle));
+            entries.Add(new MenuEntry("Save & Exit to Main Menu", quitToTitle));
         else
             entries.Add(new MenuEntry("Save & Exit", saveAndExit));
         if (exitGame is not null)
             entries.Add(new MenuEntry("Save & Exit Game", exitGame));
 
-        var screen = new MenuScreen("pause-menu", "Paused", entries);
+        var screen = new MenuScreen("pause-menu", "Settings", entries, "Esc closes  ·  the world waits while this is open");
         Ui.ClearHistory();
         Ui.SetState(screen, saveCurrent: false);
         screen.FocusSelection(Ui);
     }
 
-    private MenuScreen CreatePauseSettingsMenu() => new("pause-settings", "Settings", new[]
-    {
-        new MenuEntry("Options", () => Navigate(CreateOptionsMenu())),
-        new MenuEntry("Controls", () => Navigate(CreateControlsMenu())),
-        new MenuEntry("Back", GoBack)
-    }, "Settings return to the pause menu");
+    /// <summary>Terraria's settings categories, each opening its page (Controls opens the key bindings).</summary>
+    private IEnumerable<MenuEntry> SettingsCategoryEntries() => Enum.GetValues<OptionsCategory>().Select(category =>
+        new MenuEntry(category.ToString(), () => Navigate(category == OptionsCategory.Controls ? CreateControlsMenu() : CreateOptionsMenu(category)),
+            Description: category switch
+            {
+                OptionsCategory.General => "Autosave, autopause, item text, damage numbers, minimap, building grid.",
+                OptionsCategory.Interface => "UI scale, zoom, health bars, name tags, status panel, frame rate.",
+                OptionsCategory.Video => "Window mode and size, lighting, frame pacing, background and effects.",
+                OptionsCategory.Volume => "Music, sound and ambient volume.",
+                OptionsCategory.Cursor => "Cursor colour, border and size; smart cursor toggle or hold.",
+                _ => "Every key, rebindable; Terraria's layout by default."
+            }));
 
-    /// <summary>Opens the saved-world picker from either the title or pause menu.</summary>
-    public void ShowLoadMenu() => Navigate(CreateLoadSelectMenu());
+    /// <summary>The title screen's Settings: the same categories, then Back.</summary>
+    private MenuScreen CreateSettingsMenu() =>
+        new("settings", "Settings", SettingsCategoryEntries().Append(new MenuEntry("Back", GoBack)), "Choose a category");
 
     /// <summary>Shows a screen over the game (NPC talk, shop); Back closes it via <paramref name="onClose"/>.</summary>
     public void ShowDirect(MenuScreen screen, Action onClose)
@@ -627,74 +648,19 @@ public sealed class MenuFlow
         Ui.SetState(state, saveCurrent: false);
     }
 
+    /// <summary>Terraria's title menu: Single Player (characters, then worlds), Settings, Exit.</summary>
     private MenuScreen CreateMainMenu()
     {
-        var savedWorlds = _profiles.Worlds.Where(world => _saves.Exists(world.Id)).ToArray();
-        var hasReadableSave = savedWorlds.Any(world => _saves.TryReadFile(world.Id, out _));
-        var status = hasReadableSave
-            ? "Saved worlds are ready"
-            : savedWorlds.Length > 0
-                ? "Saved data could not be read; create a new world"
-                : "Create a character and world to begin";
+        var hasSave = _profiles.Worlds.Any(world => _saves.Exists(world.Id));
         return new MenuScreen("main-menu", "RIMTERA", new[]
         {
             new MenuEntry("Single Player", () => Navigate(CreateCharacterSelectMenu())),
-            new MenuEntry("Continue", ContinueLatest, Enabled: hasReadableSave),
-            new MenuEntry("Load Game", () => Navigate(CreateLoadSelectMenu()), Enabled: savedWorlds.Length > 0),
-            new MenuEntry("Options", () => Navigate(CreateOptionsMenu())),
-            new MenuEntry("Controls", () => Navigate(CreateControlsMenu())),
+            new MenuEntry("Settings", () => Navigate(CreateSettingsMenu())),
             new MenuEntry("Exit Game", () => ExitRequested?.Invoke())
-        }, status);
+        }, hasSave ? "Single Player lists your characters, then your worlds" : "Create a character and world to begin");
     }
 
-    private void ContinueLatest()
-    {
-        WorldProfile? latestWorld = null;
-        var latestSavedAt = DateTimeOffset.MinValue;
-        foreach (var world in _profiles.Worlds.Where(candidate => _saves.Exists(candidate.Id)))
-        {
-            if (!_saves.TryReadFile(world.Id, out var file) || file is null)
-                continue;
-            if (file.SavedAt <= latestSavedAt)
-                continue;
-            latestWorld = world;
-            latestSavedAt = file.SavedAt;
-        }
-
-        if (latestWorld is null)
-        {
-            SetStatus("No readable saved world yet.");
-            return;
-        }
-        Launch(latestWorld);
-    }
-
-    private MenuScreen CreateLoadSelectMenu()
-    {
-        var entries = _profiles.Worlds
-            .Where(world => _saves.Exists(world.Id))
-            .Select(world =>
-            {
-                var readable = _saves.TryReadFile(world.Id, out var file);
-                var savedAt = file?.SavedAt ?? world.LastPlayed;
-                var character = string.IsNullOrWhiteSpace(file?.CharacterName) ? "unknown character" : file!.CharacterName;
-                var label = readable
-                    ? $"{world.Name}  •  {character}  •  {world.Width}×{world.Height}  •  {savedAt.LocalDateTime:g}"
-                    : $"{world.Name}  •  unreadable save";
-                return (world.Favorite, SavedAt: savedAt, Entry: new MenuEntry(
-                    label, () => Launch(world), Enabled: readable, SnapLabel: world.Name, Tag: world,
-                    RowActions: WorldRowActions(world, CreateLoadSelectMenu)));
-            })
-            .OrderByDescending(item => item.Favorite)
-            .ThenByDescending(item => item.SavedAt)
-            .Select(item => item.Entry)
-            .ToList();
-        entries.Add(new MenuEntry("Back", GoBack, SnapLabel: "Back"));
-        return new MenuScreen("load-select", "Load Game", entries,
-            entries.Count > 1 ? "Choose a saved world" : "No saved worlds yet", MenuLayout.Cards);
-    }
-
-    /// <summary>Favourite / rename / delete buttons shared by the world and load lists.</summary>
+    /// <summary>Favourite / rename / delete buttons for the world list.</summary>
     private IReadOnlyList<MenuRowAction> WorldRowActions(WorldProfile world, Func<MenuScreen> rebuild) =>
     [
         new(world.Favorite ? "Unfavorite" : "Favorite", () =>
@@ -1122,13 +1088,13 @@ public sealed class MenuFlow
         Ui.SetState(prompt);
     }
 
-    private OptionsCategory _optionsCategory = OptionsCategory.Video;
 
     /// <summary>
     /// Options in categories like the reference game's settings sidebar: General, Interface, Video,
     /// Volume, Cursor and Controls. The first row switches category with ←/→; Video is the default.
     /// </summary>
-    private MenuScreen CreateOptionsMenu()
+    /// <summary>One settings category's page (Terraria's General, Interface, Video, Volume and Cursor).</summary>
+    private MenuScreen CreateOptionsMenu(OptionsCategory category)
     {
         MenuEntry Percent(string name, Func<float> get, Action<float> set, float step, float min, float max, string? description = null) => new(
             $"{name}: {get():P0}",
@@ -1148,18 +1114,11 @@ public sealed class MenuFlow
         {
             SavePreferences();
             DisplayPreferencesChanged?.Invoke();
-            ReplaceCurrent(CreateOptionsMenu());
+            ReplaceCurrent(CreateOptionsMenu(category));
         }
 
-        var entries = new List<MenuEntry>
-        {
-            new($"Category: {_optionsCategory}",
-                () => { _optionsCategory = Cycle(_optionsCategory, 1); ReplaceCurrent(CreateOptionsMenu()); },
-                amount => { _optionsCategory = Cycle(_optionsCategory, amount); ReplaceCurrent(CreateOptionsMenu()); },
-                Description: "←/→ switch between General, Interface, Video, Volume, Cursor and Controls.")
-        };
-
-        switch (_optionsCategory)
+        var entries = new List<MenuEntry>();
+        switch (category)
         {
             case OptionsCategory.General:
                 entries.Add(Toggle("Autosave", () => Preferences.AutoSave, value => Preferences.AutoSave = value, "Save the world every 90 seconds and on exit."));
@@ -1202,9 +1161,9 @@ public sealed class MenuFlow
                 entries.Add(Choice("Particles", () => Preferences.Particles, value => Preferences.Particles = value, "Debris and death bursts."));
                 break;
             case OptionsCategory.Volume:
-                entries.Add(Percent("Music", () => Preferences.MusicVolume, value => Preferences.MusicVolume = value, 0.05f, 0f, 1f, "Saved for when audio playback is connected."));
-                entries.Add(Percent("Sound", () => Preferences.SoundVolume, value => Preferences.SoundVolume = value, 0.05f, 0f, 1f, "Saved for when audio playback is connected."));
-                entries.Add(Percent("Ambient", () => Preferences.AmbientVolume, value => Preferences.AmbientVolume = value, 0.05f, 0f, 1f, "Saved for when audio playback is connected."));
+                entries.Add(Percent("Music", () => Preferences.MusicVolume, value => Preferences.MusicVolume = value, 0.05f, 0f, 1f, "The soundtrack."));
+                entries.Add(Percent("Sound", () => Preferences.SoundVolume, value => Preferences.SoundVolume = value, 0.05f, 0f, 1f, "Effects: tools, hits, voices and menus."));
+                entries.Add(Percent("Ambient", () => Preferences.AmbientVolume, value => Preferences.AmbientVolume = value, 0.05f, 0f, 1f, "Rain and other weather."));
                 break;
             case OptionsCategory.Cursor:
                 entries.Add(new($"Cursor color: {GamePreferences.CursorColors[Preferences.CursorColor].Name}",
@@ -1215,23 +1174,45 @@ public sealed class MenuFlow
                 entries.Add(Percent("Cursor size", () => Preferences.CursorScale, value => Preferences.CursorScale = value, 0.05f, 0.75f, 1.5f));
                 entries.Add(Choice("Smart cursor", () => Preferences.SmartCursor, value => Preferences.SmartCursor = value, "Toggle: Ctrl switches it on and off. Hold: active while Ctrl is held."));
                 break;
-            case OptionsCategory.Controls:
-                entries.Add(new MenuEntry("Edit key bindings", () => Navigate(CreateControlsMenu()), Description: "Rebind gameplay and menu keys."));
-                break;
         }
 
         entries.Add(new MenuEntry("Back", GoBack));
-        return new MenuScreen("options", "Options", entries, "←/→ adjust  ·  changes apply and persist immediately");
+        return new MenuScreen("options", category.ToString(), entries, "←/→ adjust  ·  changes apply and persist immediately");
     }
 
-    private MenuScreen CreateControlsMenu()
+    /// <summary>
+    /// The controls screen: every action from <see cref="ControlCatalog"/> under its group, with its keys. Selecting
+    /// one captures a new main key; Terraria's defaults are one entry away.
+    /// </summary>
+    private MenuScreen CreateControlsMenu(string? focus = null)
     {
-        var entries = InputProfile.Bindings.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(pair => new MenuEntry($"{pair.Key}: {string.Join(" / ", pair.Value)}",
-                () => PromptForBinding(pair.Key, pair.Value.FirstOrDefault() ?? string.Empty))).ToList();
-        entries.Add(new MenuEntry("Reset defaults", () => { InputProfile = Rimtera.UI.InputProfile.CreateDefault(); SavePreferences(); ReplaceCurrent(CreateControlsMenu()); }));
+        var entries = new List<MenuEntry>
+        {
+            new("Mouse: left use · right interact · wheel hotbar · Ctrl+wheel zoom", Enabled: false)
+        };
+        foreach (var group in ControlCatalog.All.GroupBy(action => action.Group))
+        {
+            entries.Add(new MenuEntry($"— {ControlCatalog.GroupName(group.Key)} —", Enabled: false));
+            foreach (var action in group)
+            {
+                var keys = InputProfile.KeyLabel(action.Id);
+                entries.Add(new MenuEntry($"{action.Label}: {(keys.Length > 0 ? keys : "unbound")}",
+                    () => PromptForBinding(action.Id), Tag: action.Id,
+                    Description: action.Hint.Length > 0 ? action.Hint : "Enter to change the main key; other keys stay."));
+            }
+        }
+        entries.Add(new MenuEntry("Reset to defaults", () =>
+        {
+            InputProfile = Rimtera.UI.InputProfile.CreateDefault();
+            SavePreferences();
+            ReplaceCurrent(CreateControlsMenu());
+            CurrentScreen.SetStatus("Controls reset to the Terraria-style defaults.");
+        }, Description: "Restores every key to the defaults (Terraria's layout)."));
         entries.Add(new MenuEntry("Back", GoBack));
-        return new MenuScreen("controls", "Controls", entries, "Select an action to bind a key");
+        var screen = new MenuScreen("controls", "Controls", entries, "Enter rebind   ↑/↓ navigate   Esc back");
+        if (focus is not null && entries.FindIndex(entry => Equals(entry.Tag, focus)) is >= 0 and var index)
+            screen.SelectIndex(index);
+        return screen;
     }
 
     private void Launch(WorldProfile world)

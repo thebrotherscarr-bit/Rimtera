@@ -179,7 +179,7 @@ public sealed class BindingCaptureState : UiState
             Width = UiLength.Pct(1f), Height = UiLength.Px(20f), Top = UiLength.Px(40f)
         }));
 
-        panel.Add(new UiTextElement("Press a key to bind it. Escape cancels.", "binding-capture-hint", new UiStyle
+        panel.Add(new UiTextElement("Press a key to bind it (Shift, Ctrl and Alt work too). Escape cancels.", "binding-capture-hint", new UiStyle
         {
             Width = UiLength.Pct(1f), Height = UiLength.Px(20f), Top = UiLength.Px(68f)
         }) { Color = new UiColor(168, 178, 202) });
@@ -193,10 +193,13 @@ public sealed class BindingCaptureState : UiState
 
     public string ActionName { get; }
 
-    public event Action<ConsoleKey>? Captured;
+    /// <summary>Raised with the binding name of the pressed key (a ConsoleKey name, or Shift / Ctrl / Alt).</summary>
+    public event Action<string>? Captured;
     public event Action? Cancelled;
 
-    public void Capture(ConsoleKey key)
+    public void Capture(ConsoleKey key) => Capture(key.ToString());
+
+    public void Capture(string key)
     {
         if (_completed)
             return;
