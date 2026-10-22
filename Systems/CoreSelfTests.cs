@@ -488,6 +488,13 @@ public static class CoreSelfTests
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
         Check(inventoryClosed, "inventory overlay can close back into the active simulation");
 
+        var hubGame = new GameSimulation(seed: 5, width: 80, height: 48);
+        var hubUi = new UserInterface();
+        hubUi.SetViewport(1280, 720);
+        hubUi.SetState(new InventoryUiState(hubGame.Player.Inventory, game: hubGame));
+        Check(hubUi.IsOverInterface(new System.Numerics.Vector2(40f, 80f)) && !hubUi.IsOverInterface(new System.Numerics.Vector2(700f, 500f)),
+            "the inventory covers only its panels: a click on the world beside them reaches the world, as in Terraria");
+
         var saveGame = new GameSimulation(seed: 789, width: 80, height: 48);
         saveGame.Player.Motion.Position = new System.Numerics.Vector2(20.5f, 15f);
         saveGame.Player.Motion.Velocity = new System.Numerics.Vector2(2f, -1f);

@@ -118,7 +118,7 @@ public static partial class GraphicalSandbox
                     _canvas.MapMouseMove(e.Location);
                     return;
                 }
-                ForwardPointer(new UiInputFrame(ToUiPoint(e.Location)));
+                ForwardPointer(PointerFrame(e.Location));
             };
             _canvas.MouseLeave += (_, _) => _canvas.MousePosition = null;
             _canvas.MouseDown += (_, e) =>
@@ -137,6 +137,17 @@ public static partial class GraphicalSandbox
                     SyncCanvas();
                     return;
                 }
+                // Terraria plays on with the inventory open: a click on the world (not on a panel) uses the held item
+                // or interacts, as it would with the inventory closed.
+                if (PlaysThroughMenu && _menu.Ui.CurrentState is InventoryUiState { Controller.CursorStack.IsEmpty: true } &&
+                    !_menu.Ui.IsOverInterface(ToUiPoint(e.Location)) && !_canvas.IsOverCraftingPanel(e.Location))
+                {
+                    if (e.Button == MouseButtons.Left)
+                        _mouseUseHeld = true;
+                    else if (e.Button == MouseButtons.Right)
+                        InteractAtCursor();
+                    return;
+                }
                 if (!_menuOpen && _game is not null)
                 {
                     if (e.Button == MouseButtons.Left && _canvas.HotbarSlotAt(e.Location) is { } slot)
@@ -147,16 +158,14 @@ public static partial class GraphicalSandbox
                         InteractAtCursor();
                     return;
                 }
-                if (e.Button == MouseButtons.Left)
-                    ForwardPointer(new UiInputFrame(ToUiPoint(e.Location), LeftDown: true));
+                ForwardPointer(PointerFrame(e.Location));
             };
             _canvas.MouseUp += (_, e) =>
             {
                 _canvas.MapMouseUp();
                 if (e.Button == MouseButtons.Left)
                     _mouseUseHeld = false;
-                if (e.Button == MouseButtons.Left)
-                    ForwardPointer(new UiInputFrame(ToUiPoint(e.Location)));
+                ForwardPointer(PointerFrame(e.Location));
             };
             _canvas.MouseWheel += (_, e) =>
             {
@@ -186,7 +195,7 @@ public static partial class GraphicalSandbox
                 }
                 if (_menuOpen && _menu.Ui.CurrentState is InventoryUiState && _canvas.TryScrollCrafting(e.Location, e.Delta))
                     return;
-                ForwardPointer(new UiInputFrame(ToUiPoint(e.Location), ScrollDelta: e.Delta));
+                ForwardPointer(PointerFrame(e.Location) with { ScrollDelta = e.Delta });
             };
 
             // The game loop runs whenever the message queue is empty (OnIdle): 60 simulation steps a second on a precise clock.
@@ -309,6 +318,16 @@ public static partial class GraphicalSandbox
                     return;
                 }
 
+                if (PlaysThroughMenu && ActionsFor(e.KeyCode).Where(IsPlayThroughAction).ToList() is { Count: > 0 } playing)
+                {
+                    var held = !_down.Add(e.KeyCode);
+                    foreach (var action in playing)
+                        if (!held || action == "Jump")
+                            RunAction(action);
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
                 var menuRepeat = !_menuDown.Add(e.KeyCode);
                 if (TranslateMenuKey(e.KeyCode) is { } frame)
                 {
@@ -620,6 +639,22 @@ public static partial class GraphicalSandbox
             SyncCanvas();
         }
 
+        /// <summary>
+        /// A pointer frame carrying the real button state. Frames from mouse moves used to say "no button down", which
+        /// the UI read as a release: a click fired on the first move after the press, or was lost if that move left the slot.
+        /// </summary>
+        private UiInputFrame PointerFrame(Point location) => new(ToUiPoint(location),
+            LeftDown: (MouseButtons & MouseButtons.Left) != 0, RightDown: (MouseButtons & MouseButtons.Right) != 0);
+
+        /// <summary>The inventory is open over a running world (Autopause off): the player keeps moving and using items, as in Terraria.</summary>
+        private bool PlaysThroughMenu => _menuOpen && _game is not null && !_menu.Preferences.AutoPause && _menu.Ui.CurrentState is InventoryUiState;
+
+        /// <summary>Gameplay keys that keep working with the inventory open.</summary>
+        private static bool IsPlayThroughAction(string action) =>
+            action is "MoveLeft" or "MoveRight" or "MoveUp" or "MoveDown" or "Jump" or "Dash" or "Grapple" or "Mount" or "QuickHeal" or
+                "QuickCharge" or "QuickBuff" or "SmartCursor" or "SmartSelect" or "ThrowItem" or "FrameRate" ||
+            action.StartsWith("Hotbar", StringComparison.Ordinal);
+
         private void ForwardPointer(UiInputFrame frame)
         {
             if (!_menuOpen)
@@ -678,13 +713,13 @@ public static partial class GraphicalSandbox
             var runBehindMenu = _menuOpen && _game is not null && !_menu.Preferences.AutoPause &&
                                 _menu.Ui.CurrentState is InventoryUiState or ColonistSheetState;
             _canvas.WorldRunsBehindMenu = runBehindMenu;
-            if (runBehindMenu)
+            if (runBehindMenu && !PlaysThroughMenu)
             {
                 _game!.Tick(new GameInput(new MovementInput(0f)));
                 SyncCanvas();
                 return;
             }
-            if (_menuOpen || _game is null)
+            if (_menuOpen && !PlaysThroughMenu || _game is null)
             {
                 SyncCanvas();
                 return;
@@ -1327,7 +1362,6 @@ public static partial class GraphicalSandbox
         private readonly Brush _hudBack = new SolidBrush(Color.FromArgb(190, 0, 0, 0));
         private readonly Brush _menuDim = new SolidBrush(Color.FromArgb(150, 6, 8, 12));
         /// <summary>The inventory dims the world less, as in Terraria, where it opens over the game.</summary>
-        private readonly Brush _inventoryDim = new SolidBrush(Color.FromArgb(70, 6, 8, 12));
         private bool _pausedLight;
         private readonly Brush _menuPanel = new SolidBrush(Color.FromArgb(238, 22, 28, 46));
         private readonly Brush _menuPanelBorder = new SolidBrush(Color.FromArgb(150, 98, 118, 178));
@@ -1530,6 +1564,9 @@ public static partial class GraphicalSandbox
             return false;
         }
 
+        /// <summary>True over the crafting panel, which the canvas draws beside the inventory's UI tree.</summary>
+        public bool IsOverCraftingPanel(Point point) => _craftArea.Contains(point) || _craftHits.Any(hit => hit.Rect.Contains(point));
+
         /// <summary>The mouse wheel over the crafting grid scrolls it a row at a time.</summary>
         public bool TryScrollCrafting(Point point, int delta)
         {
@@ -1576,7 +1613,9 @@ public static partial class GraphicalSandbox
                     world.Clear(Color.FromArgb(12, 14, 22));
                     DrawWorld(world, game);
                     // The dim is baked in so the screen draws one opaque image under the menu.
-                    world.FillRectangle(light ? _inventoryDim : _menuDim, 0, 0, Width, Height);
+                    // Terraria doesn't dim the world behind the inventory, which is played through.
+                    if (!light)
+                        world.FillRectangle(_menuDim, 0, 0, Width, Height);
                     _pausedLight = light;
                 }
                 g.DrawImageUnscaled(_pausedWorld, 0, 0);
