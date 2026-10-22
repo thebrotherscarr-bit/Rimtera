@@ -107,6 +107,9 @@ public sealed class InventoryUiState : UiState
     /// <summary>Raised by the "Cargo pod" button; the host reopens the screen with the bank as the container.</summary>
     public event Action? BankRequested;
 
+    /// <summary>Raised by the "Settings" button (Terraria keeps settings in the inventory, which Escape opens).</summary>
+    public event Action? SettingsRequested;
+
     public Inventory PlayerInventory { get; }
     public Inventory? ChestInventory { get; }
     public InventoryUiController Controller => _controller;
@@ -204,6 +207,7 @@ public sealed class InventoryUiState : UiState
         }
         else if (game.CanAccessBank)
             Button("Open cargo pod", () => BankRequested?.Invoke());
+        Button("Settings", () => SettingsRequested?.Invoke());
         for (var i = 0; i < GameSimulation.LoadoutCount; i++)
         {
             var index = i;

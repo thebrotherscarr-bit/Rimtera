@@ -118,16 +118,18 @@ public static class ConsoleSandbox
                     if (InputBindingResolver.IsBound(bindings, "MoveLeft", key)) { horizontal = -1f; movementHold = 8; }
                     else if (InputBindingResolver.IsBound(bindings, "MoveRight", key)) { horizontal = 1f; movementHold = 8; }
                     else if (InputBindingResolver.IsBound(bindings, "Jump", key)) jump = true;
-                    else if (InputBindingResolver.IsBound(bindings, "Dash", key)) dash = true;
-                    else if (InputBindingResolver.IsBound(bindings, "Mine", key)) action = PlayerAction.Mine;
-                    else if (InputBindingResolver.IsBound(bindings, "UseSelected", key)) action = PlayerAction.UseSelected;
+                    // The console has no mouse, so a few keys are fixed here: X dash, M mine, E use, R replace, Tab next
+                    // item, P pause, Q quit (the graphical game spends those keys on Terraria's layout).
+                    else if (InputBindingResolver.IsBound(bindings, "Dash", key) || key == ConsoleKey.X) dash = true;
+                    else if (key == ConsoleKey.M) action = PlayerAction.Mine;
+                    else if (InputBindingResolver.IsBound(bindings, "UseSelected", key) || key == ConsoleKey.E) action = PlayerAction.UseSelected;
                     else if (InputBindingResolver.IsBound(bindings, "Eat", key)) action = PlayerAction.Eat;
-                    else if (InputBindingResolver.IsBound(bindings, "ReplaceTile", key)) action = PlayerAction.ReplaceSelected;
+                    else if (InputBindingResolver.IsBound(bindings, "ReplaceTile", key) || key == ConsoleKey.R) action = PlayerAction.ReplaceSelected;
                     else if (InputBindingResolver.IsBound(bindings, "Craft", key)) game.TryCraftNext();
                     else if (InputBindingResolver.IsBound(bindings, "CraftPrevious", key)) game.CycleCraftableRecipe(-1);
                     else if (InputBindingResolver.IsBound(bindings, "CraftNext", key)) game.CycleCraftableRecipe(1);
                     else if (InputBindingResolver.IsBound(bindings, "Guide", key)) game.ConsultGuide();
-                    else if (InputBindingResolver.IsBound(bindings, "CycleInventory", key)) game.SelectNextInventoryItem();
+                    else if (InputBindingResolver.IsBound(bindings, "CycleInventory", key) || key == ConsoleKey.Tab) game.SelectNextInventoryItem();
                     else if (InputBindingResolver.IsBound(bindings, "Colonist", key))
                     {
                         uiOpen = true;
@@ -150,7 +152,7 @@ public static class ConsoleSandbox
                         });
                         uiNeedsRedraw = true;
                     }
-                    else if (InputBindingResolver.IsBound(bindings, "Pause", key))
+                    else if (InputBindingResolver.IsBound(bindings, "Pause", key) || key == ConsoleKey.P)
                     {
                         uiOpen = true;
                         menus.ShowPauseMenu(
@@ -160,7 +162,7 @@ public static class ConsoleSandbox
                             openColonist: () => menus.ShowColonistSheet(game.Player.Colonist, game));
                         uiNeedsRedraw = true;
                     }
-                    else if (InputBindingResolver.IsBound(bindings, "Quit", key)) running = false;
+                    else if (key == ConsoleKey.Q) running = false;
                 }
 
                 if (!running)
@@ -331,7 +333,7 @@ public static class ConsoleSandbox
         var selectedRecipe = game.SelectedRecipe?.Id ?? "none";
         WriteHud($"Day {game.Day} {game.ClockHour:00.0}h | HP {player.HitPoints:000}/{player.MaximumHitPoints:000} | mood {player.Mood:P0} | food {player.Needs.FoodReserve:P0} rest {player.Needs.RestReserve:P0} joy {player.Needs.JoyReserve:P0} | colonists {game.Colonists.Count} | mobs {game.Enemies.Count} | {events}", viewWidth);
         WriteHud($"Slot {player.Inventory.SelectedSlot + 1}: {selected?.Name ?? "empty"} x{count} | {game.LastMessage}", viewWidth);
-        WriteHud("A/D move W jump X dash | 1-0 slot, Tab next | M mine E use R replace", viewWidth);
+        WriteHud("A/D move Space jump X dash | 1-0 slot, Tab next | M mine E use R replace | Esc inventory P pause Q quit", viewWidth);
         WriteHud($"Recipe {selectedRecipe} | [ ] choose C craft V guide F eat B boss Q quit", viewWidth);
         WriteHud("@ player * shot s bug m moth-ray b spore bat r mite y sky-ray z rat B boss | regolith s basalt # ferrite c cobalt k viridium v crystal % water ~ fabricator + refinery F forge A", viewWidth);
     }

@@ -251,6 +251,53 @@ public static class CoreSelfTests
         Check(InputBindingResolver.IsBound(defaultBindings, "Jump", ConsoleKey.Spacebar) &&
               InputBindingResolver.IsBound(defaultBindings, "Hotbar10", ConsoleKey.D0),
             "input profile resolves alternate keyboard bindings and hotbar key aliases");
+        bool Keys(string action, params string[] keys) => defaultBindings.Bindings[action].SequenceEqual(keys);
+        Check(Keys("MoveUp", "W") && Keys("MoveLeft", "A") && Keys("MoveDown", "S") && Keys("MoveRight", "D") &&
+              Keys("Jump", "Spacebar") && Keys("Inventory", "Escape", "I") && Keys("Grapple", "E") && Keys("ThrowItem", "T") &&
+              Keys("SmartSelect", "Shift") && Keys("SmartCursor", "Ctrl") && Keys("Mount", "R") && Keys("QuickHeal", "H") &&
+              Keys("QuickCharge", "J") && Keys("QuickBuff", "B") && Keys("Map", "M") && Keys("MapStyle", "Tab") &&
+              Keys("Dash") && Keys("Interact") && Keys("UseSelected"),
+            "default controls follow Terraria's PC layout (WASD, Space jump, Esc inventory, E grapple, T throw, Shift/Ctrl smart select/cursor, R mount, H/J/B quick use, M/Tab map; dash on double-tap, mouse for use and interact)");
+        var gameplayKeys = ControlCatalog.All.Where(action => !action.IsMenu)
+            .SelectMany(action => action.Defaults.Select(key => (action.Id, Code: InputBindingResolver.TryParseKeyCode(key, out var code) ? code : -1)))
+            .ToList();
+        Check(gameplayKeys.All(entry => entry.Code > 0) &&
+              gameplayKeys.GroupBy(entry => entry.Code).All(group => group.Count() == 1) &&
+              ControlCatalog.All.All(action => defaultBindings.Bindings.ContainsKey(action.Id)),
+            $"every control has parseable defaults and no two gameplay actions share a default key ({gameplayKeys.Count} keys, {ControlCatalog.All.Length} actions)");
+        var conflictProfile = InputProfile.CreateDefault();
+        var displaced = conflictProfile.Rebind("Grapple", "H");
+        var menuSide = conflictProfile.Rebind("MenuConfirm", "E");
+        Check(displaced == "QuickHeal" && conflictProfile.Bindings["QuickHeal"].Count == 0 &&
+              conflictProfile.Bindings["Grapple"].SequenceEqual(["H"]) &&
+              menuSide is null && conflictProfile.Bindings["MenuConfirm"][0] == "E" && conflictProfile.Bindings["Grapple"].SequenceEqual(["H"]),
+            "rebinding moves a key off the gameplay action that had it (and reports it), while menu keys live in their own context");
+        Check(InputBindingResolver.TryParseKeyCode("Shift", out var shiftCode) && shiftCode == 16 &&
+              InputBindingResolver.TryParseKeyCode("Ctrl", out var ctrlCode) && ctrlCode == 17 &&
+              InputBindingResolver.NameForKeyCode(161) == "Shift" && InputBindingResolver.NameForKeyCode(0x4A) == "J" &&
+              InputBindingResolver.Describe("Oem4") == "[" && InputBindingResolver.Describe("D7") == "7" &&
+              InputBindingResolver.Describe("Spacebar") == "Space" && defaultBindings.KeyLabel("Inventory") == "Esc / I",
+            "bindings cover Shift/Ctrl/Alt and read on screen as Space, 7, [, Esc / I");
+        var hints = ControlCatalog.HintLines(defaultBindings);
+        Check(hints[0].StartsWith("WASD move") && hints[0].Contains("Space jump") && hints[1].Contains("Esc inventory") &&
+              hints[1].Contains("H heal"),
+            "the in-game key help is built from the bindings (" + hints[0][..24] + "…)");
+        var oldProfile = new InputProfile
+        {
+            MenuBindingVersion = 2,
+            Bindings = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Jump"] = ["W", "Spacebar", "UpArrow"], ["Mine"] = ["M"], ["Quit"] = ["Q"], ["SummonBoss"] = ["B"],
+                ["Colonist"] = ["J"], ["Inventory"] = ["I"], ["MenuUp"] = ["UpArrow"]
+            }
+        };
+        oldProfile.Normalize();
+        Check(oldProfile.MenuBindingVersion == InputProfile.CurrentMenuBindingVersion &&
+              oldProfile.Bindings["Jump"].SequenceEqual(["Spacebar"]) && !oldProfile.Bindings.ContainsKey("Mine") &&
+              !oldProfile.Bindings.ContainsKey("Quit") && oldProfile.Bindings["SummonBoss"].Count == 0 &&
+              oldProfile.Bindings["Inventory"].SequenceEqual(["Escape", "I"]) && oldProfile.Bindings["Colonist"].SequenceEqual(["J"]) &&
+              oldProfile.Bindings["Grapple"].SequenceEqual(["E"]),
+            "saved profiles move to the new layout: untouched old defaults take the new ones, a player's own rebinds stay, dead actions go");
         Check(defaultBindings.Bindings["MenuUp"].SequenceEqual(["UpArrow"]) &&
               defaultBindings.Bindings["MenuDown"].SequenceEqual(["DownArrow"]) &&
               defaultBindings.Bindings["MenuLeft"].SequenceEqual(["LeftArrow"]) &&
@@ -556,7 +603,7 @@ public static class CoreSelfTests
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
         var colonistBindingIndex = menuFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))
-            .Single(item => item.entry.Label.StartsWith("Colonist:", StringComparison.Ordinal)).index;
+            .Single(item => item.entry.Label.StartsWith("Crew:", StringComparison.Ordinal)).index;
         menuFlow.CurrentScreen.SelectIndex(colonistBindingIndex);
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
         var bindingCapture = menuFlow.Ui.CurrentState is BindingCaptureState;
@@ -567,7 +614,7 @@ public static class CoreSelfTests
             "controls bind keys through in-game key capture instead of a native prompt");
         var menuUpIndex = menuFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))
-            .Single(item => item.entry.Label.StartsWith("MenuUp:", StringComparison.Ordinal)).index;
+            .Single(item => item.entry.Label.StartsWith("Menu up:", StringComparison.Ordinal)).index;
         menuFlow.CurrentScreen.SelectIndex(menuUpIndex);
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
         var menuCapture = menuFlow.Ui.CurrentState is BindingCaptureState;
