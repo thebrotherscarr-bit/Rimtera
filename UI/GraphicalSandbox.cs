@@ -1588,6 +1588,7 @@ public static partial class GraphicalSandbox
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
+            _profiler.Begin();
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.NearestNeighbor;
             g.Clear(Color.FromArgb(12, 14, 22));
@@ -1661,7 +1662,15 @@ public static partial class GraphicalSandbox
                 _fpsWindowStart = Environment.TickCount64;
             }
             if (_menu.Preferences.ShowFrameRate)
-                g.DrawString($"{_fps} FPS", _small, _amberBrush, 6, 4);
+            {
+                _profiler.Mark("menus");
+                // F10: the frame rate, the window's size in pixels, and where the drawing time goes (ms per frame).
+                var report = $"{_fps} FPS   {Width}×{Height} px at {DeviceDpi} dpi   drawing {_profiler.Total:0.0} ms\n{_profiler.Describe()}";
+                var size = g.MeasureString(report, _small);
+                using var back = new SolidBrush(Color.FromArgb(170, 0, 0, 0));
+                g.FillRectangle(back, 2, 2, size.Width + 8, size.Height + 4);
+                g.DrawString(report, _small, _amberBrush, 6, 4);
+            }
         }
 
         private void DrawTransition(Graphics g, ScreenTransition transition)
@@ -1936,15 +1945,9 @@ public static partial class GraphicalSandbox
             _animator.ParticleScale = (int)_menu.Preferences.Particles;
             _animator.Update(game, now, frameDelta);
 
-            DrawSky(g, Width, Height - HudHeight, night);
-            DrawSkyBodies(g, game, night);
-            DrawClouds(g, game, now);
-            DrawParallax(g, game, _viewStartX, _viewStartY, night);
-            if (_menu.Preferences.WeatherEffects && BiomeSkyTint(game.CurrentBiome.Zone) is { } tint)
-            {
-                using var tintBrush = new SolidBrush(tint);
-                g.FillRectangle(tintBrush, 0, 0, Width, Height - HudHeight);
-            }
+            _profiler.Mark("setup");
+            DrawBackdrop(g, game, night, now, startX, startY, viewW, viewH); // sky, clouds, parallax (GraphicalSandbox.Backdrop.cs)
+            _profiler.Mark("sky");
 
             // Everything in tile space below is shifted by the camera's sub-tile pixel offset.
             var worldState = g.Save();
@@ -1953,6 +1956,7 @@ public static partial class GraphicalSandbox
             // The static layer (backdrop, walls, blocks, plants, debris, props) comes from cached chunks
             // (GraphicalSandbox.Chunks.cs); the cells that animate or change often are drawn over it here.
             DrawTileChunks(g, game, startX, startY, viewW, viewH);
+            _profiler.Mark("tiles");
             for (var row = 0; row < viewH; row++)
             for (var col = 0; col < viewW; col++)
             {
@@ -1990,6 +1994,7 @@ public static partial class GraphicalSandbox
                 }
             }
 
+            _profiler.Mark("live");
             DrawLooseObjects(g, game, startX, startY, now);
 
             // The station AI waits as a hologram at the landing site until it moves into a house (then it's drawn as a resident).
@@ -2054,6 +2059,7 @@ public static partial class GraphicalSandbox
             DrawBreath(g, game, startX, startY);
             DrawBobber(g, game, startX, startY, now);
 
+            _profiler.Mark("actors");
             // Lighting over tiles and actors: sun or moon from open sky, glowing tiles, lamps.
             var lamps = new List<LightMap.LampLight>
             {
@@ -2076,8 +2082,10 @@ public static partial class GraphicalSandbox
             _lighting.ColouredGlow = lighting == LightingQuality.High;
             // Sky light follows the clock, moon phase and weather (cloud, rain, storms dim the surface).
             _lighting.Compute(game.World, game.Tiles, startX, startY, viewW, viewH, game.SkyLightLevel, lamps, present: lighting != LightingQuality.Off);
+            _profiler.Mark("light calc");
             if (lighting != LightingQuality.Off)
                 _lighting.Draw(g, 0, 0, TileSize);
+            _profiler.Mark("light draw");
             // The map remembers whatever is lit around the player (the light map's padded window).
             Map?.RevealFromLight(game.World, _lighting, startX - LightMap.Padding, startY - LightMap.Padding,
                 viewW + LightMap.Padding * 2, viewH + LightMap.Padding * 2);
@@ -2101,6 +2109,7 @@ public static partial class GraphicalSandbox
             }
 
             _craftHits.Clear();
+            _profiler.Mark("effects");
             if (MenuOpen)
                 return;
             DrawCursorHighlight(g, game, startX, startY);
@@ -2117,6 +2126,7 @@ public static partial class GraphicalSandbox
             if (_menu.Preferences.ShowItemText)
                 DrawMessageLog(g, game);
             DrawHotbarTooltip(g, game);
+            _profiler.Mark("hud");
         }
 
         /// <summary>Fishing line from the colonist's hand to the bobber; "!" while a fish is biting.</summary>
