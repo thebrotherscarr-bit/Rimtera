@@ -13,6 +13,16 @@ dotnet run -- --self-test
 dotnet run -- --demo
 ```
 
+### Continuous integration
+
+Three GitHub Actions workflows guard the repository:
+
+- **Prove** (`prove.yml`) — on every push and pull request: builds in Release, then runs three provers in parallel (`--self-test`, `--batch-a-test`, headless `--demo`) and proves the demo is byte-identical across two runs. Each prover log is kept as a run artifact.
+- **Version** (`version.yml`) — validates `<Version>` in `Rimtera.csproj` as SemVer. Run it manually on `main` to create the matching `vX.Y.Z` tag.
+- **Publish** (`publish.yml`) — on a `vX.Y.Z` tag: checks the tag matches `<Version>`, re-runs the core proofs, publishes a self-contained win-x64 single-file build, and attaches a zip plus `SHA256SUMS.txt` to the GitHub release. A manual run builds the artifact without creating a release.
+
+Release: bump `<Version>`, run **Version** on `main` to tag, and **Publish** takes it from there — or push the tag yourself (`git tag v0.1.0; git push origin v0.1.0`).
+
 No arguments (or `--graphics` / `--game`) opens the WinForms client at the title menu. From there: Single Player routes through character and world selection/creation; Continue resumes the most recently saved world; Load Game lists saved worlds; Options and Controls persist; Exit Game closes the app. While playing, `Esc` opens the pause menu with Resume, Inventory, Save Game, Load Game, Settings, Save & Quit to Main Menu, and Save & Exit Game. Menus use the arrow keys or the mouse (hover, click, and wheel); `WASD` remains reserved for gameplay. Character names, world names, and key bindings are edited in retained in-game fields and key-capture panels, not native Windows dialogs. `--menu` is the terminal equivalent; `--play` starts directly in a terminal world.
 
 ### Terminal gameplay controls

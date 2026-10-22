@@ -1,0 +1,155 @@
+name: Publish
+
+# Tag a commit (vMAJOR.MINOR.PATCH) and this builds the Windows game, checks
+# the tag against <Version> in Rimtera.csproj, runs the core proofs, and
+# attaches a self-contained win-x64 zip plus SHA256SUMS to a GitHub release.
+# A manual run only builds the artifact; it never creates a release.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  verify:
+    name: Verify version and tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read <Version> and check the tag
+        id: version
+        shell: pwsh
+        run: |
+          [xml] $project = Get-Content Rimtera.csproj
+          $version = @($project.Project.PropertyGroup.Version) | Where-Object { $_ } | Select-Object -Last 1
+          if (-not $version) { throw "Rimtera.csproj does not declare a <Version>." }
+
+          $tag = "v$version"
+          if ("${{ github.ref_type }}" -eq "tag" -and "${{ github.ref_name }}" -ne $tag) {
+            throw "Tag ${{ github.ref_name }} does not match <Version> $version in Rimtera.csproj."
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "Publishing $tag" | Out-File -Append -FilePath $env:GITHUB_STEP_SUMMARY
+
+  prove:
+    name: Prove before publishing
+    needs: verify
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Rimtera.csproj
+
+      - name: Run the core proofs
+        shell: pwsh
+        run: |
+          dotnet run --project Rimtera.csproj -c Release -- --self-test *>&1 | Tee-Object -FilePath proof-publish.log
+          if ($LASTEXITCODE -ne 0) { throw "Core proofs failed with exit code $LASTEXITCODE; publishing stopped." }
+
+      - name: Keep the prover log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proof-publish
+          path: proof-publish.log
+          retention-days: 14
+
+  publish:
+    name: Publish win-x64
+    needs: [verify, prove]
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Rimtera.csproj
+
+      - name: Publish self-contained win-x64
+        run: >
+          dotnet publish Rimtera.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o artifacts/publish
+
+      - name: Package and checksum
+        shell: pwsh
+        run: |
+          $tag = "${{ needs.verify.outputs.tag }}"
+          $zip = "artifacts/Rimtera-$tag-win-x64.zip"
+          Compress-Archive -Path "artifacts/publish/*" -DestinationPath $zip -CompressionLevel Optimal
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $(Split-Path -Leaf $zip)" | Set-Content -Encoding ascii artifacts/SHA256SUMS.txt
+          Get-Content artifacts/SHA256SUMS.txt
+
+      - name: Keep the build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rimtera-${{ needs.verify.outputs.tag }}-win-x64
+          path: |
+            artifacts/Rimtera-*-win-x64.zip
+            artifacts/SHA256SUMS.txt
+          retention-days: 30
+
+      - name: Create or update the GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $tag = "${{ needs.verify.outputs.tag }}"
+          $zip = "artifacts/Rimtera-$tag-win-x64.zip"
+          $sums = "artifacts/SHA256SUMS.txt"
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $zip $sums --clobber
+          } else {
+            gh release create $tag $zip $sums --title "Rimtera $tag" --generate-notes --verify-tag
+          }

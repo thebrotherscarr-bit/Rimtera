@@ -1,0 +1,74 @@
+name: Version
+
+# One source of truth for the version: <Version> in Rimtera.csproj.
+# Every push and pull request validates it as SemVer. Running this workflow
+# manually on main creates the matching vX.Y.Z tag, which triggers Publish.
+# Nothing is tagged automatically; tagging stays a deliberate act.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check <Version>
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate SemVer
+        id: version
+        shell: pwsh
+        run: |
+          [xml] $project = Get-Content Rimtera.csproj
+          $version = @($project.Project.PropertyGroup.Version) | Where-Object { $_ } | Select-Object -Last 1
+          if (-not $version) {
+            throw "Rimtera.csproj must declare a <Version>."
+          }
+          if ($version -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') {
+            throw "<Version> '$version' is not SemVer; expected MAJOR.MINOR.PATCH[-prerelease]."
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "Rimtera version: $version" | Out-File -Append -FilePath $env:GITHUB_STEP_SUMMARY
+
+  tag:
+    name: Tag v${{ needs.check.outputs.version }}
+    needs: check
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create the tag if it is missing
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="v${VERSION}"
+
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "Tag ${tag} already exists; nothing to do."
+            echo "Tag \`${tag}\` already exists." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${tag}" -m "Rimtera ${tag}"
+          git push origin "${tag}"
+
+          echo "Created \`${tag}\`; Publish now builds the release." >> "$GITHUB_STEP_SUMMARY"
