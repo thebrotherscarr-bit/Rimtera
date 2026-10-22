@@ -113,7 +113,7 @@ public sealed partial class GameSimulation
             Flags.Increment("merchant.visit_day", Day + 1);
             if (ContentFillArrivalSpot(4) is { } spot)
             {
-                var npc = AddTownNpc(TownNpcKind.TravellingMerchant, CellCenter(spot), bound: false);
+                var npc = AddTownNpc(TownNpcKind.TravellingMerchant, StandingAt(spot), bound: false);
                 npc.HomeCell = spot;
                 PostMessage($"{npc.Name} the {npc.Definition.Role} has arrived with today's wares!");
             }
@@ -133,7 +133,7 @@ public sealed partial class GameSimulation
                 continue;
             Flags.Set(key);
             Flags.Set($"npc.{WorldFlags.Key(kind)}.unlocked");
-            var gel = AddTownNpc(kind, CellCenter(spot), bound: false);
+            var gel = AddTownNpc(kind, StandingAt(spot), bound: false);
             PostMessage($"A friendly {colour} gel named {gel.Name} bounces up to you. It will move into a free house.");
             return;
         }

@@ -182,7 +182,8 @@ internal sealed class ActorAnimator
 
     /// <summary>
     /// Pose from the generated frame set: an 8-frame walk timed to speed, idle, jump, fall, a
-    /// landing frame, the mining swing while drilling, hurt and knocked-down. Frames face right.
+    /// landing frame, hurt and knocked-down. Frames face right. Tools are never part of the body: a drill swings as its
+    /// own sprite (DrawHeldItem), so the body keeps one size whatever the hands are doing.
     /// </summary>
     private Pose AnimatedPose(GameSimulation game, double now)
     {
@@ -198,8 +199,6 @@ internal sealed class ActorAnimator
             return new Pose("anim_down", flip, 1f, 1f, 0f, flash);
         if (flash && now - (track.FlashUntil - 0.15) < 0.25)
             return new Pose("anim_hurt", flip, 1f, 1f, 0f, true);
-        if (UseProgress(now) is { } progress && player.Inventory.SelectedItem?.UseKind == ItemUseKind.Pickaxe)
-            return new Pose(progress < 0.5f ? "anim_mine_start" : "anim_mine_hit", flip, 1f, 1f, 0f, flash, ShowsTool: true);
         if (!motion.Grounded)
             return new Pose(motion.Velocity.Y < 0 ? "anim_jump" : "anim_fall", flip, 1f, 1f, 0f, flash);
         if (sinceLanding < 0.1f)

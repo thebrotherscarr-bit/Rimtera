@@ -215,23 +215,12 @@ public sealed partial class GameSimulation : IStoryHost
         var startX = Math.Clamp(Features?.SpawnColumn ?? width / 2, 2, width - 3);
         SpawnColumn = startX;
         var surfaceY = FindSurface(startX);
-        var playerMotion = new PawnMotionState(new Vector2(startX, surfaceY - 1.8f), new Vector2(0.72f, 1.8f));
+        var playerMotion = new PawnMotionState(new Vector2(startX, surfaceY - HumanoidBody.Size.Y), HumanoidBody.Size);
         Player = new PlayerCharacter(playerMotion, inventory, PlayerProfile, healthSeed: unchecked(seed ^ 0x4EA1F00D));
         AttachGrowth(); // character growth: sixth slot gate, lifebloom and upgrade stat bonuses
         Guide = new GuideNpc(new Vector2(startX + 2.5f, surfaceY - 0.8f));
 
-        var crew = ColonistCatalog.GenerateCrew(seed, 2, PlayerProfile.Name);
-        for (var index = 0; index < crew.Count; index++)
-        {
-            var x = Math.Clamp(startX + (index == 0 ? 5 : -4), 2, width - 3);
-            var y = FindSurface(x);
-            var agent = new ColonistAgent(_nextEntityId++, crew[index], new Vector2(x, y - 1.8f),
-                healthSeed: unchecked(seed * 31 + 7 * (index + 1)));
-            agent.HomePosition = agent.Motion.Position;
-            agent.WanderTarget = agent.Motion.Position;
-            agent.SocialKey = _colonists.Count + 1;
-            _colonists.Add(agent);
-        }
+        // As in Terraria, a new world starts with just you and the station AI (the Guide); crew arrive later, into housing.
         _social = new ColonySocialSystem(seed ^ 0x50C1A1E5);
         _mindRandom = new Random(seed ^ 0x6D1D5EED);
         ColonySocialSystem.SeedStartingRelations(ColonyPawns, seed);
@@ -245,8 +234,7 @@ public sealed partial class GameSimulation : IStoryHost
             for (var index = 0; index < features.SurvivorSpots.Count; index++)
             {
                 var spot = features.SurvivorSpots[index];
-                AddTownNpc(TownNpcCatalog.SurvivorKinds[index % TownNpcCatalog.SurvivorKinds.Length],
-                    new Vector2(spot.X + 0.15f, spot.Y - 0.8f), bound: true);
+                AddTownNpc(TownNpcCatalog.SurvivorKinds[index % TownNpcCatalog.SurvivorKinds.Length], StandingAt(spot), bound: true);
             }
 
         _eventManager = new EventManager(seed ^ 0x51ED270B);
@@ -281,8 +269,7 @@ public sealed partial class GameSimulation : IStoryHost
         CurrentBiome = BiomeScanner.Scan(World, PlayerCell());
         PlayerAmbientTemperature = AmbientAt(PlayerCenter, CurrentBiome);
         PlayerComfort = TemperatureModel.Evaluate(PlayerAmbientTemperature, Player.Stats.ImmunityTags);
-        PostMessage($"{PlayerProfile.Name} and {string.Join(" and ", _colonists.Select(agent => agent.Profile.Name))} " +
-                    $"make camp. Seed {seed}.");
+        PostMessage($"{PlayerProfile.Name} touches down; the station AI flickers awake beside the landing site. Seed {seed}.");
         OnSimulationCreated(loaded is not null);
     }
 
@@ -534,6 +521,11 @@ public sealed partial class GameSimulation : IStoryHost
             snapshot.RestReserve,
             snapshot.JoyReserve ?? 0.70f,
             snapshot.ComfortReserve ?? 0.70f);
+        // Saves from before crew arrived through housing carry the two crew members a world used to start with.
+        var savedCrew = snapshot.Colonists?.Length ?? 0;
+        var joined = snapshot.Storyteller?.WanderersJoined ?? 0;
+        if (savedCrew > joined)
+            game.AddLegacyStartingCrew(savedCrew - joined);
         if (snapshot.Storyteller is { } story)
         {
             if (story.WanderersJoined is < 0 or > WandererJoinsIncident.MaximumCrew)
@@ -608,6 +600,9 @@ public sealed partial class GameSimulation : IStoryHost
         game.PlayerAmbientTemperature = game.AmbientAt(game.PlayerCenter, game.CurrentBiome);
         game.PlayerComfort = TemperatureModel.Evaluate(game.PlayerAmbientTemperature, game.Player.Stats.ImmunityTags);
         game.RestoreBatchB(snapshot);
+        // People grew to Terraria's body size (HumanoidBody); an older save can leave feet in the ground, so lift them clear.
+        foreach (var body in game.TownNpcs.Select(npc => npc.Motion).Concat(game._colonists.Select(agent => agent.Motion)).Prepend(game.Player.Motion))
+            game.LiftClear(body);
         return game;
     }
 
@@ -686,6 +681,10 @@ public sealed partial class GameSimulation : IStoryHost
         CarryOnGlideWalk(deltaSeconds);
         AfterPlayerMovement(movement, deltaSeconds);
         UpdateToolUse(input.Action); // swing, press/hold and release tracking (ToolParityUse.cs)
+        // As in Terraria, using an item turns the player toward what it is used on, even while walking the other way.
+        if (input.Action is PlayerAction.Mine or PlayerAction.UseSelected or PlayerAction.ReplaceSelected && input.Target is { } aimed &&
+            !Player.IsDowned && MathF.Abs(aimed.X + 0.5f - PlayerCenter.X) > 0.3f)
+            Player.Motion.Facing = aimed.X + 0.5f < PlayerCenter.X ? -1 : 1;
         if (input.Action != PlayerAction.None && !Player.IsDowned)
             PerformAction(input.Action, input.Target);
 
@@ -842,7 +841,7 @@ public sealed partial class GameSimulation : IStoryHost
     public IReadOnlyList<string> ConsultGuide()
     {
         var playerCenter = Player.Motion.Position + Player.Motion.Size / 2f;
-        if (!Guide.IsInRange(playerCenter))
+        if (!IsNearGuide(playerCenter))
         {
             PostMessage("The guide is too far away to consult.");
             return Array.Empty<string>();
@@ -1580,10 +1579,17 @@ public sealed partial class GameSimulation : IStoryHost
         ColonySocialSystem.NotifyDeath(agent, ColonyPawns);
     }
 
+    /// <summary>Raises a body a quarter tile at a time (up to two tiles) until it no longer overlaps solid ground.</summary>
+    private void LiftClear(PawnMotionState motion)
+    {
+        for (var step = 0; step < 8 && PawnMovementSystem.OverlapsSolid(motion.Position, motion.Size, World, Tiles); step++)
+            motion.Position -= new Vector2(0f, 0.25f);
+    }
+
     private bool IsBlockedAhead(ColonistAgent agent, float horizontal)
     {
         var motion = agent.Motion;
-        var x = (int)MathF.Floor(motion.Position.X + motion.Size.X / 2f + MathF.Sign(horizontal) * 0.72f);
+        var x = (int)MathF.Floor(motion.Position.X + motion.Size.X / 2f + MathF.Sign(horizontal) * motion.Size.X);
         var y = (int)MathF.Floor(motion.Position.Y + motion.Size.Y - 0.30f);
         if (x < 0 || y < 0 || x >= World.Width || y >= World.Height)
             return true;
@@ -1929,7 +1935,7 @@ public sealed partial class GameSimulation : IStoryHost
                 break;
         }
 
-        var nearCamp = Vector2.Distance(Player.Motion.Position, Guide.Position) < 7f;
+        var nearCamp = Vector2.Distance(Player.Motion.Position, GuidePosition) < 7f;
         if (safeToRest && nearCamp && Player.Motion.Velocity.LengthSquared() < 0.04f)
         {
             Player.Needs.Restore(NeedKind.Joy, elapsedHours * 0.06f);
@@ -2282,6 +2288,35 @@ public sealed partial class GameSimulation : IStoryHost
         return false;
     }
 
+    /// <summary>
+    /// The two crew members a world started with before crew arrived through housing. Only loading a save from then
+    /// recreates them (same seed, same people), so their saved state has someone to land on.
+    /// </summary>
+    private void AddLegacyStartingCrew(int count)
+    {
+        var crew = ColonistCatalog.GenerateCrew(Seed, 2, PlayerProfile.Name);
+        for (var index = 0; index < Math.Min(count, crew.Count); index++)
+        {
+            var x = Math.Clamp(SpawnColumn + (index == 0 ? 5 : -4), 2, World.Width - 3);
+            var agent = new ColonistAgent(_nextEntityId++, crew[index], new Vector2(x, FindSurface(x) - HumanoidBody.Size.Y),
+                healthSeed: unchecked(Seed * 31 + 7 * (index + 1)));
+            agent.HomePosition = agent.Motion.Position;
+            agent.WanderTarget = agent.Motion.Position;
+            agent.SocialKey = _colonists.Count + 1;
+            _colonists.Add(agent);
+        }
+    }
+
+    /// <summary>
+    /// Gives a world the two crew members (and their seeded relations) every world used to start with, for checks that
+    /// exercise crew systems on a fresh world. A save of such a world reloads them the way older saves do.
+    /// </summary>
+    internal void AddStartingCrewForChecks()
+    {
+        AddLegacyStartingCrew(2);
+        ColonySocialSystem.SeedStartingRelations(ColonyPawns, Seed);
+    }
+
     private ColonistAgent AddWanderer(int wandererIndex, Vector2 near)
     {
         // Deterministic per world and arrival order; avoid repeating a crew member's name.
@@ -2290,7 +2325,7 @@ public sealed partial class GameSimulation : IStoryHost
         var crew = ColonistCatalog.GenerateCrew(unchecked(Seed + 7919 * (wandererIndex + 1)), 4, PlayerProfile.Name);
         var profile = crew.FirstOrDefault(candidate => !taken.Contains(candidate.Name)) ?? crew[0];
         var x = Math.Clamp((int)MathF.Floor(near.X) + (wandererIndex % 2 == 0 ? 3 : -3), 2, World.Width - 3);
-        var agent = new ColonistAgent(_nextEntityId++, profile, new Vector2(x, FindSurface(x) - 1.8f),
+        var agent = new ColonistAgent(_nextEntityId++, profile, new Vector2(x, FindSurface(x) - HumanoidBody.Size.Y),
             healthSeed: unchecked(Seed * 31 + 7919 * (wandererIndex + 1)));
         agent.SocialKey = _colonists.Count + 1;
         _colonists.Add(agent);
@@ -2340,10 +2375,12 @@ public sealed partial class GameSimulation : IStoryHost
     string IStoryHost.DeliverCargo(BiomeZone biome, float threatPoints)
     {
         var cells = 20 + (int)(threatPoints / 10f);
-        var alloy = 2 + (int)(threatPoints / 150f);
+        // Before the first boss a pod carries supplies only, so smelting your own bars stays part of the climb.
+        var alloy = _defeatedBosses.Count == 0 ? 0 : 2 + (int)(threatPoints / 150f);
         Player.Inventory.Add(ItemId.Berry, 6);
         Player.Inventory.Add(ItemId.Arrow, cells);
-        Player.Inventory.Add(ItemId.CopperBar, alloy);
+        if (alloy > 0)
+            Player.Inventory.Add(ItemId.CopperBar, alloy);
         var bonus = biome switch
         {
             BiomeZone.FrozenWasteland => ItemId.FrostCrystal,
@@ -2355,7 +2392,9 @@ public sealed partial class GameSimulation : IStoryHost
         };
         Player.Inventory.Add(bonus, 2);
         AddColonyMemory(ThoughtId.CargoDropArrived);
-        return $"6 {Items[ItemId.Berry].Name}s, {cells} {Items[ItemId.Arrow].Name}s, {alloy} {Items[ItemId.CopperBar].Name} and 2 {Items[bonus].Name}s";
+        return alloy > 0
+            ? $"6 {Items[ItemId.Berry].Name}s, {cells} {Items[ItemId.Arrow].Name}s, {alloy} {Items[ItemId.CopperBar].Name} and 2 {Items[bonus].Name}s"
+            : $"6 {Items[ItemId.Berry].Name}s, {cells} {Items[ItemId.Arrow].Name}s and 2 {Items[bonus].Name}s";
     }
 
     bool IStoryHost.TryAddWanderer(int wandererIndex, out string name)
@@ -2554,7 +2593,7 @@ public sealed partial class GameSimulation : IStoryHost
         }
 
         var column = Math.Clamp(SpawnColumn == 0 ? World.Width / 2 : SpawnColumn, 2, World.Width - 3);
-        Player.Respawn(new Vector2(column, FindSurface(column) - 1.8f));
+        Player.Respawn(new Vector2(column, FindSurface(column) - Player.Motion.Size.Y));
         var message = lost > 0
             ? $"{Player.Colonist.Name} wakes at the landing site. {lost} materials were lost."
             : $"{Player.Colonist.Name} wakes at the landing site.";

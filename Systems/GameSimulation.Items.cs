@@ -102,7 +102,7 @@ public sealed partial class GameSimulation
         }
         if (item.StartsEvent is { } eventKind)
         {
-            if (eventKind == WorldEventKind.DefenseProtocol && !Guide.IsInRange(PlayerCenter) &&
+            if (eventKind == WorldEventKind.DefenseProtocol && !IsNearGuide(PlayerCenter) &&
                 !_townNpcs.Any(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound &&
                                       Vector2.Distance(npc.Motion.Position, PlayerCenter) < 8f))
             {
@@ -553,7 +553,7 @@ public sealed partial class GameSimulation
     private void RespawnPlayerAtLanding()
     {
         var column = Math.Clamp(SpawnColumn == 0 ? World.Width / 2 : SpawnColumn, 2, World.Width - 3);
-        Player.Motion.Position = new Vector2(column, FindSurface(column) - 1.8f);
+        Player.Motion.Position = new Vector2(column, FindSurface(column) - Player.Motion.Size.Y);
         Player.Motion.Velocity = Vector2.Zero;
         PostMessage("The beacon folds space and you step out at the landing site.");
     }

@@ -66,7 +66,6 @@ public static partial class GraphicalSandbox
     {
         private readonly MenuFlow _menu;
         private readonly GameCanvas _canvas;
-        private readonly System.Windows.Forms.Timer _timer;
         private readonly HashSet<Keys> _down = new();
         private readonly HashSet<Keys> _menuDown = new();
         private GameSimulation? _game;
@@ -119,7 +118,7 @@ public static partial class GraphicalSandbox
                     _canvas.MapMouseMove(e.Location);
                     return;
                 }
-                ForwardPointer(new UiInputFrame(ToUiPoint(e.Location)));
+                ForwardPointer(PointerFrame(e.Location));
             };
             _canvas.MouseLeave += (_, _) => _canvas.MousePosition = null;
             _canvas.MouseDown += (_, e) =>
@@ -138,6 +137,17 @@ public static partial class GraphicalSandbox
                     SyncCanvas();
                     return;
                 }
+                // Terraria plays on with the inventory open: a click on the world (not on a panel) uses the held item
+                // or interacts, as it would with the inventory closed.
+                if (PlaysThroughMenu && _menu.Ui.CurrentState is InventoryUiState { Controller.CursorStack.IsEmpty: true } &&
+                    !_menu.Ui.IsOverInterface(ToUiPoint(e.Location)) && !_canvas.IsOverCraftingPanel(e.Location))
+                {
+                    if (e.Button == MouseButtons.Left)
+                        _mouseUseHeld = true;
+                    else if (e.Button == MouseButtons.Right)
+                        InteractAtCursor();
+                    return;
+                }
                 if (!_menuOpen && _game is not null)
                 {
                     if (e.Button == MouseButtons.Left && _canvas.HotbarSlotAt(e.Location) is { } slot)
@@ -148,16 +158,14 @@ public static partial class GraphicalSandbox
                         InteractAtCursor();
                     return;
                 }
-                if (e.Button == MouseButtons.Left)
-                    ForwardPointer(new UiInputFrame(ToUiPoint(e.Location), LeftDown: true));
+                ForwardPointer(PointerFrame(e.Location));
             };
             _canvas.MouseUp += (_, e) =>
             {
                 _canvas.MapMouseUp();
                 if (e.Button == MouseButtons.Left)
                     _mouseUseHeld = false;
-                if (e.Button == MouseButtons.Left)
-                    ForwardPointer(new UiInputFrame(ToUiPoint(e.Location)));
+                ForwardPointer(PointerFrame(e.Location));
             };
             _canvas.MouseWheel += (_, e) =>
             {
@@ -187,12 +195,12 @@ public static partial class GraphicalSandbox
                 }
                 if (_menuOpen && _menu.Ui.CurrentState is InventoryUiState && _canvas.TryScrollCrafting(e.Location, e.Delta))
                     return;
-                ForwardPointer(new UiInputFrame(ToUiPoint(e.Location), ScrollDelta: e.Delta));
+                ForwardPointer(PointerFrame(e.Location) with { ScrollDelta = e.Delta });
             };
 
-            _timer = new System.Windows.Forms.Timer { Interval = 16 };
-            _timer.Tick += (_, _) => Advance();
-            _timer.Start();
+            // The game loop runs whenever the message queue is empty (OnIdle): 60 simulation steps a second on a precise clock.
+            timeBeginPeriod(1);
+            Application.Idle += OnIdle;
 
             KeyDown += OnKeyDown;
             KeyPress += OnKeyPress;
@@ -310,6 +318,16 @@ public static partial class GraphicalSandbox
                     return;
                 }
 
+                if (PlaysThroughMenu && ActionsFor(e.KeyCode).Where(IsPlayThroughAction).ToList() is { Count: > 0 } playing)
+                {
+                    var held = !_down.Add(e.KeyCode);
+                    foreach (var action in playing)
+                        if (!held || action == "Jump")
+                            RunAction(action);
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
                 var menuRepeat = !_menuDown.Add(e.KeyCode);
                 if (TranslateMenuKey(e.KeyCode) is { } frame)
                 {
@@ -425,6 +443,10 @@ public static partial class GraphicalSandbox
                 case "MinimapZoomIn": _canvas.ZoomMinimap(1); break;
                 case "MinimapZoomOut": _canvas.ZoomMinimap(-1); break;
                 case "ControlsHelp": _canvas.ShowControls = !_canvas.ShowControls; break;
+                case "FrameRate":
+                    _menu.Preferences.ShowFrameRate = !_menu.Preferences.ShowFrameRate;
+                    _menu.SavePreferences();
+                    break;
                 case "Craft": game.TryCraftNext(); break;
                 case "CraftPrevious": game.CycleCraftableRecipe(-1); break;
                 case "CraftNext": game.CycleCraftableRecipe(1); break;
@@ -617,6 +639,22 @@ public static partial class GraphicalSandbox
             SyncCanvas();
         }
 
+        /// <summary>
+        /// A pointer frame carrying the real button state. Frames from mouse moves used to say "no button down", which
+        /// the UI read as a release: a click fired on the first move after the press, or was lost if that move left the slot.
+        /// </summary>
+        private UiInputFrame PointerFrame(Point location) => new(ToUiPoint(location),
+            LeftDown: (MouseButtons & MouseButtons.Left) != 0, RightDown: (MouseButtons & MouseButtons.Right) != 0);
+
+        /// <summary>The inventory is open over a running world (Autopause off): the player keeps moving and using items, as in Terraria.</summary>
+        private bool PlaysThroughMenu => _menuOpen && _game is not null && !_menu.Preferences.AutoPause && _menu.Ui.CurrentState is InventoryUiState;
+
+        /// <summary>Gameplay keys that keep working with the inventory open.</summary>
+        private static bool IsPlayThroughAction(string action) =>
+            action is "MoveLeft" or "MoveRight" or "MoveUp" or "MoveDown" or "Jump" or "Dash" or "Grapple" or "Mount" or "QuickHeal" or
+                "QuickCharge" or "QuickBuff" or "SmartCursor" or "SmartSelect" or "ThrowItem" or "FrameRate" ||
+            action.StartsWith("Hotbar", StringComparison.Ordinal);
+
         private void ForwardPointer(UiInputFrame frame)
         {
             if (!_menuOpen)
@@ -675,13 +713,13 @@ public static partial class GraphicalSandbox
             var runBehindMenu = _menuOpen && _game is not null && !_menu.Preferences.AutoPause &&
                                 _menu.Ui.CurrentState is InventoryUiState or ColonistSheetState;
             _canvas.WorldRunsBehindMenu = runBehindMenu;
-            if (runBehindMenu)
+            if (runBehindMenu && !PlaysThroughMenu)
             {
                 _game!.Tick(new GameInput(new MovementInput(0f)));
                 SyncCanvas();
                 return;
             }
-            if (_menuOpen || _game is null)
+            if (_menuOpen && !PlaysThroughMenu || _game is null)
             {
                 SyncCanvas();
                 return;
@@ -995,7 +1033,7 @@ public static partial class GraphicalSandbox
             if (_game.TryInteractPlayerSystems(target))
                 return;
             // Right-clicking the station AI talks to it, as with Terraria's Guide.
-            if (Vector2.Distance(new Vector2(target.X + 0.5f, target.Y + 0.5f), _game.Guide.Position) < 1.5f)
+            if (Vector2.Distance(new Vector2(target.X + 0.5f, target.Y + 0.5f), _game.GuidePosition) < 1.5f)
             {
                 var advice = _game.ConsultGuide();
                 _canvas.Notify(advice.Count > 0 ? advice[0] : "The station AI has nothing new to suggest.");
@@ -1189,10 +1227,79 @@ public static partial class GraphicalSandbox
         private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
             _audio.Dispose();
-            _timer.Stop();
+            Application.Idle -= OnIdle;
+            timeEndPeriod(1);
             if (_game is not null && _activeWorld is not null && _menu.Preferences.AutoSave)
                 SaveGame(showStatus: false);
         }
+    }
+
+    /// <summary>Seconds since start on the high-resolution clock: smooth animation and camera time (TickCount64 only moves every 10-16 ms).</summary>
+    internal static class FrameClock
+    {
+        private static readonly System.Diagnostics.Stopwatch Watch = System.Diagnostics.Stopwatch.StartNew();
+        public static double Seconds => Watch.Elapsed.TotalSeconds;
+    }
+
+    private sealed partial class GameForm
+    {
+        /// <summary>One simulation step: the game is tuned for 60 a second.</summary>
+        private const double StepSeconds = 1.0 / 60.0;
+        /// <summary>Steps run back to back at most when catching up (frame skip On), so a long stall can't snowball.</summary>
+        private const int MaximumCatchUpSteps = 4;
+        private double _loopTime = -1;
+        private double _stepDebt;
+
+        /// <summary>
+        /// The game loop. A Forms timer at 16 ms really fires every ~31 ms and one step per tick ran the world at about
+        /// half speed and stuttered; instead, whenever no window messages wait, this runs as many fixed 60 Hz steps as
+        /// the precise clock says are due (each step marks the canvas for repaint, which the message pump then draws)
+        /// and otherwise sleeps a millisecond.
+        /// </summary>
+        private void OnIdle(object? sender, EventArgs e)
+        {
+            while (!IsDisposed && !PeekMessage(out _, IntPtr.Zero, 0, 0, 0))
+            {
+                var now = FrameClock.Seconds;
+                if (_loopTime < 0)
+                    _loopTime = now;
+                _stepDebt += Math.Min(0.25, now - _loopTime);
+                _loopTime = now;
+                var steps = 0;
+                var catchUp = _menu.Preferences.FrameSkip switch { FrameSkipMode.Off => 1, FrameSkipMode.Subtle => 2, _ => MaximumCatchUpSteps };
+                while (_stepDebt >= StepSeconds && steps < catchUp)
+                {
+                    Advance();
+                    _stepDebt -= StepSeconds;
+                    steps++;
+                }
+                // Frame skip off (or a stall past the catch-up limit): the world slows down rather than jumping ahead.
+                if (steps == catchUp)
+                    _stepDebt = Math.Min(_stepDebt, StepSeconds);
+                if (steps == 0)
+                    Thread.Sleep(1);
+            }
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct NativeMessage
+        {
+            public IntPtr Handle;
+            public uint Message;
+            public IntPtr WParam;
+            public IntPtr LParam;
+            public uint Time;
+            public Point Location;
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool PeekMessage(out NativeMessage message, IntPtr window, uint filterMin, uint filterMax, uint remove);
+
+        [System.Runtime.InteropServices.DllImport("winmm.dll")]
+        private static extern uint timeBeginPeriod(uint milliseconds);
+
+        [System.Runtime.InteropServices.DllImport("winmm.dll")]
+        private static extern uint timeEndPeriod(uint milliseconds);
     }
 
     private sealed partial class GameCanvas : Control
@@ -1255,7 +1362,6 @@ public static partial class GraphicalSandbox
         private readonly Brush _hudBack = new SolidBrush(Color.FromArgb(190, 0, 0, 0));
         private readonly Brush _menuDim = new SolidBrush(Color.FromArgb(150, 6, 8, 12));
         /// <summary>The inventory dims the world less, as in Terraria, where it opens over the game.</summary>
-        private readonly Brush _inventoryDim = new SolidBrush(Color.FromArgb(70, 6, 8, 12));
         private bool _pausedLight;
         private readonly Brush _menuPanel = new SolidBrush(Color.FromArgb(238, 22, 28, 46));
         private readonly Brush _menuPanelBorder = new SolidBrush(Color.FromArgb(150, 98, 118, 178));
@@ -1306,7 +1412,7 @@ public static partial class GraphicalSandbox
         {
             _menu = menu;
             DoubleBuffered = true;
-            SetStyle(ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.Selectable, true);
+            SetStyle(ControlStyles.ResizeRedraw | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.Selectable, true);
             BackColor = Color.FromArgb(12, 14, 22);
             // The game draws its own cursor (see DrawGameCursor); hide the Windows arrow over the canvas.
             Cursor = HiddenCursor;
@@ -1458,6 +1564,9 @@ public static partial class GraphicalSandbox
             return false;
         }
 
+        /// <summary>True over the crafting panel, which the canvas draws beside the inventory's UI tree.</summary>
+        public bool IsOverCraftingPanel(Point point) => _craftArea.Contains(point) || _craftHits.Any(hit => hit.Rect.Contains(point));
+
         /// <summary>The mouse wheel over the crafting grid scrolls it a row at a time.</summary>
         public bool TryScrollCrafting(Point point, int delta)
         {
@@ -1504,7 +1613,9 @@ public static partial class GraphicalSandbox
                     world.Clear(Color.FromArgb(12, 14, 22));
                     DrawWorld(world, game);
                     // The dim is baked in so the screen draws one opaque image under the menu.
-                    world.FillRectangle(light ? _inventoryDim : _menuDim, 0, 0, Width, Height);
+                    // Terraria doesn't dim the world behind the inventory, which is played through.
+                    if (!light)
+                        world.FillRectangle(_menuDim, 0, 0, Width, Height);
                     _pausedLight = light;
                 }
                 g.DrawImageUnscaled(_pausedWorld, 0, 0);
@@ -1619,7 +1730,7 @@ public static partial class GraphicalSandbox
         {
             var width = Math.Max(1, Width);
             var height = Math.Max(1, Height);
-            var time = Environment.TickCount64 / 1000.0 * Math.Max(0.05, _menu.Preferences.BackgroundParallax);
+            var time = FrameClock.Seconds * Math.Max(0.05, _menu.Preferences.BackgroundParallax);
             // Slow day/night cycle (about 80 s), mostly night so the logo reads well.
             var cycle = (Math.Sin(time * Math.PI * 2 / 80.0) + 1) / 2;
             var night = (float)Math.Clamp(0.35 + cycle * 0.75, 0, 1);
@@ -1795,7 +1906,7 @@ public static partial class GraphicalSandbox
         {
             var motion = game.Player.Motion;
             var night = NightFactor(game.ClockHour);
-            var now = Environment.TickCount64 / 1000.0;
+            var now = FrameClock.Seconds;
             var frameDelta = _lastWorldFrame > 0 ? (float)Math.Clamp(now - _lastWorldFrame, 0, 0.1) : 1f / 60f;
             _lastWorldFrame = now;
 
@@ -1839,24 +1950,9 @@ public static partial class GraphicalSandbox
             var worldState = g.Save();
             g.TranslateTransform(-offsetX, -offsetY);
 
-            // Cave backdrop below each column's surface so tunnels don't show sky.
-            for (var col = 0; col < viewW && startX + col < game.World.Width; col++)
-            {
-                var surface = 0;
-                // Trees, plants, platforms and ropes are not ground: the backdrop starts at the first solid block.
-                while (surface < game.World.Height && game.World.GetCell(new GridPoint(startX + col, surface)) is var probe &&
-                       (probe.TileId == TileId.Air || !game.Tiles.Contains(probe.TileId) || !game.Tiles[probe.TileId].IsSolid))
-                    surface++;
-                // A sky island is not the ground: below one, the open sky runs down to the terrain surface.
-                var terrain = game.BiomeLayout.SurfaceAt(Math.Clamp(startX + col, 0, game.World.Width - 1));
-                if (surface < terrain - 12)
-                    surface = terrain;
-                var caveTop = Math.Max(0, surface + 1 - startY);
-                if (caveTop < viewH)
-                    DrawDepthBackdrop(g, game, startX + col, col * TileSize, startY + caveTop, startY + viewH, startY);
-            }
-
-            var stations = new List<(TileId Tile, int X, int Y)>();
+            // The static layer (backdrop, walls, blocks, plants, debris, props) comes from cached chunks
+            // (GraphicalSandbox.Chunks.cs); the cells that animate or change often are drawn over it here.
+            DrawTileChunks(g, game, startX, startY, viewW, viewH);
             for (var row = 0; row < viewH; row++)
             for (var col = 0; col < viewW; col++)
             {
@@ -1865,20 +1961,11 @@ public static partial class GraphicalSandbox
                 if (x >= game.World.Width || y >= game.World.Height)
                     continue;
                 var cell = game.World.GetCell(new GridPoint(x, y));
+                if (cell.TileId == TileId.Air && cell.LiquidDepth <= 0.05f && cell.WallId == 0)
+                    continue;
                 var rect = new Rectangle(col * TileSize, row * TileSize, TileSize, TileSize);
-                if (cell.WallId != 0 && (cell.TileId == TileId.Air || ShowsWallBehind(cell)))
-                {
-                    if (_sprites.GetScaled(SpriteCatalog.ForWall(cell.WallId), TileSize, TileSize) is { } wall)
-                        g.DrawImageUnscaled(wall, rect.X, rect.Y);
-                    g.FillRectangle(_wallShade, rect);
-                }
-                if (cell.TileId == TileId.Air || DrawTravelTile(g, cell, x, y, rect, game) || DrawSpecialTile(g, cell, x, y, rect, game))
-                {
-                }
-                else if (PropFor(cell.TileId) is not null)
-                    stations.Add((cell.TileId, rect.X, rect.Bottom));
-                else
-                    DrawShapedTile(g, cell, x, y, rect, game);
+                if (cell.TileId != TileId.Air && IsLiveTile(cell.TileId) && !DrawTravelTile(g, cell, x, y, rect, game))
+                    DrawSpecialTile(g, cell, x, y, rect, game);
                 if (cell.Damage > 0 && cell.TileId != TileId.Air && game.Tiles[cell.TileId].HitPoints > 0)
                     DrawTileCracks(g, rect, cell.Damage / (float)game.Tiles[cell.TileId].HitPoints); // parity B2: mining progress
                 DrawLeisureCell(g, game, x, y, cell, rect); // paint tints (GraphicalSandbox.Leisure.cs)
@@ -1903,38 +1990,12 @@ public static partial class GraphicalSandbox
                 }
             }
 
-            // Biome flora/debris on exposed surface tiles, deterministic per world position.
-            for (var row = 1; row < viewH; row++)
-            for (var col = 0; col < viewW; col++)
-            {
-                var x = startX + col;
-                var y = startY + row;
-                if (x >= game.World.Width || y >= game.World.Height)
-                    continue;
-                var ground = game.World.GetCell(new GridPoint(x, y));
-                // Grass plants are real tiles now (drawn with the tiles); this layer keeps rocks and debris only.
-                if (SpriteCatalog.DebrisFor(ground.TileId) is not { } options)
-                    continue;
-                var above = game.World.GetCell(new GridPoint(x, y - 1));
-                if (above.TileId != TileId.Air || above.LiquidDepth > 0.05f)
-                    continue;
-                var hash = unchecked((uint)(x * 73856093) ^ (uint)(y * 19349663) ^ (uint)game.World.Width * 83492791u);
-                hash ^= hash >> 13;
-                hash *= 0x5bd1e995;
-                if (hash % 100 >= 16)
-                    continue;
-                var sprite = options[(int)((hash >> 8) % (uint)options.Length)];
-                var height = (int)(SpriteCatalog.DecorationHeight(sprite) * TileSize);
-                DrawPropOnGround(g, sprite, col * TileSize + TileSize / 2f, row * TileSize, (int)(TileSize * 1.8f), height,
-                    flip: (hash & 1) == 0);
-            }
-
-            foreach (var (tile, x, bottom) in stations)
-                DrawPropOnGround(g, PropFor(tile)!, x + TileSize / 2f, bottom, TileSize * 2, TileSize * 2);
             DrawLooseObjects(g, game, startX, startY, now);
 
-            DrawSpriteActor(g, "station_ai", game.Guide.Position, new Vector2(0.8f, 1.6f), 1.5f, false, startX, startY,
-                bob: (float)Math.Sin(now * 2.0) * 2f);
+            // The station AI waits as a hologram at the landing site until it moves into a house (then it's drawn as a resident).
+            if (!game.GuideMovedIn)
+                DrawSpriteActor(g, "station_ai", game.Guide.Position, new Vector2(0.8f, 1.6f), 1.5f, false, startX, startY,
+                    bob: (float)Math.Sin(now * 2.0) * 2f);
 
             foreach (var enemy in game.Enemies.Where(enemy => enemy.IsAlive))
             {
@@ -1951,7 +2012,7 @@ public static partial class GraphicalSandbox
                 var hit = _menu.Preferences.FlashyEffects && _animator.IsFlashing(enemy.Id, now);
                 DrawSpriteActor(g, SpriteCatalog.EnemyFrame(enemy, now), enemy.Motion.Position, enemy.Motion.Size,
                     SpriteCatalog.EnemyDrawScale(enemy), flip, startX, startY, bob: _animator.EnemyBob(enemy, now),
-                    flash: telegraph || hit, flashWhite: hit);
+                    flash: telegraph || hit, flashWhite: hit, reference: SpriteCatalog.ForEnemy(enemy));
                 if ((enemy.HitPoints < enemy.MaximumHitPoints || enemy.IsBoss) && _menu.Preferences.EnemyHealthBars != HealthBarPlacement.Off)
                     DrawHealthBar(g, enemy.Motion.Position, enemy.Motion.Size, enemy.HitPoints / enemy.MaximumHitPoints,
                         enemy.IsBoss, startX, startY);
@@ -1975,8 +2036,8 @@ public static partial class GraphicalSandbox
             {
                 var npcFlip = npc.Motion.Velocity.X < -0.05f;
                 DrawSpriteActor(g, SpriteCatalog.AnimatedFrame(npc.SpriteName, MathF.Abs(npc.Motion.Velocity.X) > 0.3f, false, now, npc.Id),
-                    npc.Motion.Position, npc.Motion.Size, 1.3f, npcFlip, startX, startY,
-                    MathF.Abs(npc.Motion.Velocity.X) > 0.3f ? (float)Math.Abs(Math.Sin(now * 9 + npc.Id)) * -2f : 0f);
+                    npc.Motion.Position, npc.Motion.Size, 1f, npcFlip, startX, startY,
+                    MathF.Abs(npc.Motion.Velocity.X) > 0.3f ? (float)Math.Abs(Math.Sin(now * 9 + npc.Id)) * -2f : 0f, reference: npc.SpriteName);
                 DrawNameTag(g, npc.IsBound ? $"{npc.Name} (bound)" : npc.Name, npc.Motion.Position, npc.Motion.Size, startX, startY);
             }
             foreach (var minion in game.Minions)
@@ -2002,7 +2063,8 @@ public static partial class GraphicalSandbox
             };
             lamps.AddRange(game.Colonists.Where(agent => agent.IsAlive)
                 .Select(agent => new LightMap.LampLight(agent.Motion.Position + agent.Motion.Size / 2f, Color.FromArgb(255, 230, 190), 0.6f)));
-            lamps.Add(new LightMap.LampLight(game.Guide.Position, Color.FromArgb(120, 230, 255), 0.7f));
+            if (!game.GuideMovedIn)
+                lamps.Add(new LightMap.LampLight(game.Guide.Position, Color.FromArgb(120, 230, 255), 0.7f));
             lamps.AddRange(game.PlayerLightSources.Select(light => new LightMap.LampLight(light.Position, light.Tint switch
             {
                 "cyan" => Color.FromArgb(140, 230, 255),
@@ -2013,7 +2075,7 @@ public static partial class GraphicalSandbox
             _lighting.Subdivision = lighting == LightingQuality.Low ? 1 : 4;
             _lighting.ColouredGlow = lighting == LightingQuality.High;
             // Sky light follows the clock, moon phase and weather (cloud, rain, storms dim the surface).
-            _lighting.Compute(game.World, game.Tiles, startX, startY, viewW, viewH, game.SkyLightLevel, lamps);
+            _lighting.Compute(game.World, game.Tiles, startX, startY, viewW, viewH, game.SkyLightLevel, lamps, present: lighting != LightingQuality.Off);
             if (lighting != LightingQuality.Off)
                 _lighting.Draw(g, 0, 0, TileSize);
             // The map remembers whatever is lit around the player (the light map's padded window).
@@ -2042,15 +2104,13 @@ public static partial class GraphicalSandbox
             if (MenuOpen)
                 return;
             DrawCursorHighlight(g, game, startX, startY);
-            DrawBuildingGrid(g, game, startX, startY);
             DrawHud(g, game);
             DrawBuffBar(g, game);
             if (MapView == MapStyle.Overlay)
                 DrawMapOverlay(g, game);
             else if (MapView == MapStyle.Minimap && _menu.Preferences.MinimapEnabled)
                 DrawMinimap(g, game);
-            if (_menu.Preferences.StatusPanel)
-                DrawStatusPanel(g, game);
+            DrawStatusPanel(g, game);
             DrawBossBar(g, game);
             DrawEventBars(g, game);
             DrawLeisureHud(g, game); // strokes, wave-moon score, creative (GraphicalSandbox.Leisure.cs)
@@ -2157,14 +2217,28 @@ public static partial class GraphicalSandbox
             }
         }
 
+        /// <summary>
+        /// Draws an actor with its feet on the bottom of its collision box. With a <paramref name="reference"/> frame (an
+        /// actor's idle pose or base sprite) the scale comes from that frame alone and every animation frame keeps it, so a
+        /// body never grows or shrinks between frames; without one, the sprite is fitted to the box.
+        /// </summary>
         private void DrawSpriteActor(Graphics g, string sprite, Vector2 position, Vector2 size, float scale, bool flip,
-            int startX, int startY, float bob = 0f, bool flash = false, bool flashWhite = false, float scaleX = 1f, float scaleY = 1f)
+            int startX, int startY, float bob = 0f, bool flash = false, bool flashWhite = false, float scaleX = 1f, float scaleY = 1f,
+            string? reference = null)
         {
             var boxW = size.X * TileSize;
             var boxH = size.Y * TileSize;
             var maxW = (int)MathF.Max(6f, boxW * scale * 1.6f);
             var maxH = (int)MathF.Max(6f, boxH * scale);
-            if (_sprites.GetFitted(sprite, maxW, maxH, flip) is not { } bitmap)
+            Bitmap? bitmap;
+            if (reference is not null && _sprites.Get(reference) is { } model && _sprites.Get(sprite) is { } frame)
+            {
+                var fit = MathF.Min(maxW / (float)model.Width, maxH / (float)model.Height);
+                bitmap = _sprites.GetScaled(sprite, Math.Max(1, (int)MathF.Round(frame.Width * fit)), Math.Max(1, (int)MathF.Round(frame.Height * fit)), flip);
+            }
+            else
+                bitmap = _sprites.GetFitted(sprite, maxW, maxH, flip);
+            if (bitmap is null)
             {
                 g.FillRectangle(_enemyBrush, (position.X - startX) * TileSize, (position.Y - startY) * TileSize,
                     Math.Max(3f, boxW), Math.Max(3f, boxH));
@@ -2206,11 +2280,12 @@ public static partial class GraphicalSandbox
             var motion = game.Player.Motion;
             var pose = _animator.PlayerPose(game, now);
             var look = DyedLook(game, CharacterLook.Body(_sprites, pose.Frame, game.Player.Colonist.AppearanceValue.Normalized()));
-            DrawSpriteActor(g, look, motion.Position, motion.Size, pose.Frame.StartsWith("anim_", StringComparison.Ordinal) ? 1.35f : 1.25f,
-                pose.Flip, startX, startY, pose.Bob, flash: pose.Flash, flashWhite: true, scaleX: pose.ScaleX, scaleY: pose.ScaleY);
+            // The idle frame fills the collision box's height; every other frame is drawn at that same scale.
+            var reference = pose.Frame.StartsWith("anim_", StringComparison.Ordinal) ? "anim_idle" : "colonist_front";
+            DrawSpriteActor(g, look, motion.Position, motion.Size, 1f, pose.Flip, startX, startY, pose.Bob, flash: pose.Flash, flashWhite: true,
+                scaleX: pose.ScaleX, scaleY: pose.ScaleY, reference: reference);
             if (!pose.ShowsTool && !StyleDrawsWeapon(game))
                 DrawHeldItem(g, game, startX, startY, now);
-            DrawNameTag(g, game.Player.Colonist.Name, motion.Position, motion.Size, startX, startY);
         }
 
         /// <summary>
@@ -2223,7 +2298,8 @@ public static partial class GraphicalSandbox
                 return;
             if (item.UseKind is not (ItemUseKind.Melee or ItemUseKind.Pickaxe or ItemUseKind.Ranged))
                 return;
-            var length = (int)(TileSize * (item.UseKind == ItemUseKind.Ranged ? 1.6f : 1.4f));
+            // In proportion to the Terraria-sized body: a held item runs about two thirds of the body's height.
+            var length = (int)(TileSize * (item.UseKind == ItemUseKind.Ranged ? 1.9f : 1.75f));
             if (_sprites.GetFitted(SpriteCatalog.ForItem(item.Id), length, length) is not { } bitmap)
                 return;
 
@@ -2273,16 +2349,19 @@ public static partial class GraphicalSandbox
             var flip = motion.Velocity.X < -0.05f;
             var bob = MathF.Abs(motion.Velocity.X) > 0.3f ? (float)Math.Abs(Math.Sin(now * 9 + agent.Id)) * -2f : 0f;
             var crewSprite = SpriteCatalog.AnimatedFrame(SpriteCatalog.ForCrew(agent.Id), MathF.Abs(motion.Velocity.X) > 0.3f, false, now, agent.Id);
-            DrawSpriteActor(g, crewSprite, motion.Position, motion.Size, 1.3f, flip, startX, startY, bob);
+            DrawSpriteActor(g, crewSprite, motion.Position, motion.Size, 1f, flip, startX, startY, bob, reference: SpriteCatalog.ForCrew(agent.Id));
             DrawNameTag(g, agent.Profile.Name, motion.Position, motion.Size, startX, startY);
         }
 
         private void DrawNameTag(Graphics g, string? name, Vector2 position, Vector2 size, int startX, int startY)
         {
-            if (string.IsNullOrWhiteSpace(name) || !_menu.Preferences.NameTags)
+            if (string.IsNullOrWhiteSpace(name) || MousePosition is not { } mouse)
                 return;
             var x = (position.X - startX) * TileSize;
             var y = (position.Y - startY) * TileSize - size.Y * TileSize * 0.35f;
+            // As in Terraria, a resident's name shows while the mouse is over them.
+            if (!new RectangleF(x - 4f, (position.Y - startY) * TileSize - 4f, size.X * TileSize + 8f, size.Y * TileSize + 8f).Contains(mouse))
+                return;
             using var format = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
             var rect = new RectangleF(x - 40f, y - 16f, size.X * TileSize + 80f, 14f);
             g.DrawString(name, _small, Brushes.Black, new RectangleF(rect.X + 1, rect.Y + 1, rect.Width, rect.Height), format);
@@ -2385,7 +2464,7 @@ public static partial class GraphicalSandbox
             alpha = 0;
             if (Game is null)
                 return false;
-            var now = Environment.TickCount64 / 1000.0;
+            var now = FrameClock.Seconds;
             if (!ReferenceEquals(_hintGame, Game))
             {
                 _hintGame = Game;
@@ -2471,11 +2550,18 @@ public static partial class GraphicalSandbox
         }
 
         /// <summary>Outline on the tile under the cursor: amber within reach, red beyond it.</summary>
+        /// <summary>
+        /// The one in-world indicator under the cursor, as in Terraria: with smart cursor on, its target (brackets on a tile,
+        /// or on a creature for guns and blades); otherwise a tile outline only while the held item works on tiles (blocks,
+        /// walls, drills, cutters, hammers). Weapons and empty hands show nothing but the cursor itself.
+        /// </summary>
         private void DrawCursorHighlight(Graphics g, GameSimulation game, int startX, int startY)
         {
             if (CursorTile() is not { } tile)
                 return;
-            if (Smart.Resolve(game, tile, useHeld: false) is { } target)
+            var smartTarget = Smart.Enabled ? Smart.Resolve(game, tile, useHeld: false) : null;
+            DrawPlacementPreview(g, game, smartTarget is { Enemy: null } placed ? placed.Tile : tile, startX, startY);
+            if (smartTarget is { } target)
             {
                 var pulse = 0.6f + 0.4f * MathF.Sin((float)(Environment.TickCount64 / 160.0));
                 using var smartPen = new Pen(Color.FromArgb((int)(255 * pulse), 90, 230, 255), 2f);
@@ -2489,6 +2575,10 @@ public static partial class GraphicalSandbox
                     DrawBrackets(g, smartPen, new RectangleF((target.Tile.X - startX) * TileSize - 2, (target.Tile.Y - startY) * TileSize - 2, TileSize + 4, TileSize + 4));
                 return;
             }
+            if (Smart.Enabled || game.Player.Inventory.SelectedItem is not { } held ||
+                !(held.UseKind is ItemUseKind.PlaceTile or ItemUseKind.PlaceWall or ItemUseKind.Pickaxe or ItemUseKind.Cutter or ItemUseKind.Demolisher ||
+                  held.PlacedTile != TileId.Air))
+                return;
             var inReach = game.IsInToolReach(tile);
             using var pen = new Pen(inReach ? Color.FromArgb(220, 242, 176, 64) : Color.FromArgb(160, 220, 70, 70), 2f);
             g.DrawRectangle(pen, (tile.X - startX) * TileSize, (tile.Y - startY) * TileSize, TileSize, TileSize);
@@ -2502,16 +2592,34 @@ public static partial class GraphicalSandbox
                 _messageLog.RemoveAt(0);
         }
 
-        /// <summary>Faint grid inside reach while a placeable block is selected.</summary>
-        private void DrawBuildingGrid(Graphics g, GameSimulation game, int startX, int startY)
+        private static readonly ImageAttributes PreviewAlpha = CreateAlphaAttributes(0.45f);
+
+        private static ImageAttributes CreateAlphaAttributes(float alpha)
         {
-            if (!_menu.Preferences.ShowBuildingGrid || game.Player.Inventory.SelectedItem?.UseKind != ItemUseKind.PlaceTile)
+            var attributes = new ImageAttributes();
+            attributes.SetColorMatrix(new ColorMatrix { Matrix33 = alpha });
+            return attributes;
+        }
+
+        /// <summary>
+        /// Terraria's Placement Preview: a faint ghost of the held block or wall in the cell it would go into
+        /// (the smart cursor's cell when that is on), only where it can actually be placed from here.
+        /// </summary>
+        private void DrawPlacementPreview(Graphics g, GameSimulation game, GridPoint cell, int startX, int startY)
+        {
+            if (!_menu.Preferences.PlacementPreview || game.Player.Inventory.SelectedItem is not { } held || !game.World.Contains(cell) ||
+                !game.IsInToolReach(cell))
                 return;
-            using var pen = new Pen(Color.FromArgb(40, 255, 255, 255), 1f);
-            var box = game.ToolReachBox(); // the same reach box the simulation checks
-            for (var y = box.MinY; y <= box.MaxY; y++)
-            for (var x = box.MinX; x <= box.MaxX; x++)
-                g.DrawRectangle(pen, (x - startX) * TileSize, (y - startY) * TileSize, TileSize, TileSize);
+            var current = game.World.GetCell(cell);
+            string? sprite = null;
+            if (held.UseKind == ItemUseKind.PlaceTile && held.PlacedTile != TileId.Air && current.TileId == TileId.Air && PropFor(held.PlacedTile) is null)
+                sprite = SpriteCatalog.ForTile(held.PlacedTile);
+            else if (held.UseKind == ItemUseKind.PlaceWall && held.PlacedWall != 0 && current.WallId == 0)
+                sprite = SpriteCatalog.ForWall(held.PlacedWall);
+            if (sprite is null || _sprites.GetScaled(sprite, TileSize, TileSize) is not { } image)
+                return;
+            var rect = new Rectangle((cell.X - startX) * TileSize, (cell.Y - startY) * TileSize, TileSize, TileSize);
+            g.DrawImage(image, rect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, PreviewAlpha);
         }
 
         private readonly Dictionary<TileId, string?> _propCache = new();
@@ -2564,7 +2672,7 @@ public static partial class GraphicalSandbox
         {
             if (MousePosition is not { } mouse)
                 return;
-            var time = Environment.TickCount64 / 1000.0;
+            var time = FrameClock.Seconds;
             var breathe = (float)(0.85 + 0.15 * Math.Sin(time * 3));
             var preset = GamePreferences.CursorColors[Math.Clamp(_menu.Preferences.CursorColor, 0, GamePreferences.CursorColors.Length - 1)];
             var baseColor = Smart.Enabled && Game is not null && !MenuOpen ? Color.FromArgb(90, 230, 255) : Color.FromArgb(preset.R, preset.G, preset.B);
@@ -2620,7 +2728,7 @@ public static partial class GraphicalSandbox
             foreach (var colonist in game.Colonists)
                 if (colonist.IsAlive && Over(world, colonist.Motion.Position, colonist.Motion.Size, 0.3f))
                     return $"{colonist.Profile.Name} · {colonist.Activity} · {colonist.MoodLabel}";
-            if (Vector2.Distance(world, game.Guide.Position) < 1.2f)
+            if (!game.GuideMovedIn && Vector2.Distance(world, game.Guide.Position) < 1.2f)
                 return "Station AI · right-click for guidance";
 
             if (CursorTile() is { } tile)
@@ -2776,7 +2884,8 @@ public static partial class GraphicalSandbox
             }
             foreach (var agent in game.Colonists.Where(agent => agent.IsAlive))
                 Icon(CharacterLook.Face(_sprites, agent.Profile.AppearanceValue.Normalized()), agent.Motion.Position.X, agent.Motion.Position.Y, iconSize - 4);
-            Icon("station_ai", game.Guide.Position.X, game.Guide.Position.Y, iconSize - 4);
+            if (!game.GuideMovedIn)
+                Icon("station_ai", game.Guide.Position.X, game.Guide.Position.Y, iconSize - 4);
             // Town NPCs and bound survivors once their spot has been seen; blight hearts that were found and still stand.
             foreach (var npc in game.TownNpcs)
                 if (Map.IsRevealed((int)npc.Motion.Position.X, (int)npc.Motion.Position.Y))
@@ -3224,7 +3333,7 @@ public static partial class GraphicalSandbox
             var commands = _menu.Ui.BuildDrawCommands().ToArray();
             var buttons = commands.Where(command => command.Kind == UiDrawKind.Button).ToArray();
             var top = buttons.Length > 0 ? buttons.Min(command => command.Bounds.Y) : Height / 2f;
-            var time = Environment.TickCount64 / 1000.0;
+            var time = FrameClock.Seconds;
 
             // Logo: amber gradient lettering with a dark outline, gently bobbing.
             var bob = (float)Math.Sin(time * 1.6) * 4f;

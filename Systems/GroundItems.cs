@@ -36,8 +36,8 @@ public sealed record GroundItemSnapshot(ItemId ItemId, int Count, float X, float
 
 public sealed partial class GameSimulation
 {
-    /// <summary>Tiles within which loose items fly to the player.</summary>
-    public const float ItemGrabRadius = 2.25f;
+    /// <summary>Tiles within which loose items fly to the player: Terraria's 42-pixel default grab range at 16-pixel tiles.</summary>
+    public const float ItemGrabRadius = 2.625f;
     /// <summary>Grab radius with a magnet accessory.</summary>
     public const float ItemMagnetRadius = 10f;
     /// <summary>Tiles within which an item is collected.</summary>

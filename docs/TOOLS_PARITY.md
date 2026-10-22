@@ -26,7 +26,7 @@ This pass makes Rimtera's tools follow Terraria's tool rules.
   - `GameSimulation.Items.cs`: `Demolish`, `HammerWall`, `AddTileHitDamage`, `PrepareMiningHit`, `Cut`, the bug net and the placement constants.
 - UI:
   - `UI/SmartCursor.cs`: tools go through `SmartToolTargeting`; there is a new wall-placement spot; the reach box replaces the circle.
-  - `UI/GraphicalSandbox.cs`: the cursor outline and building grid use the reach box.
+  - `UI/GraphicalSandbox.cs`: the cursor outline and placement preview use the reach box.
   - `UI/ActorAnimator.cs`: a tool's swing lasts its swing time.
 - Tests: `Systems/ToolParitySelfTests.cs` (check names start with `tools`), hooked into `CoreSelfTests`.
 
@@ -50,7 +50,7 @@ This pass makes Rimtera's tools follow Terraria's tool rules.
 
 | # | Terraria rule (IL) | Rimtera before | Rimtera now | Status |
 |---|---|---|---|---|
-| 1.1 | Item range check: `IsInTileInteractionRange(tileTarget, Simple, item.tileBoost)` (`Player.IsTargetTileInItemRange @0–@22`). The box is the body's edge cells ± range, where range = `min(tileRange × mult, 20) + tileBoost` (`TileReachCheckSettings.GetRanges`, `.GetTileRegion`, `..cctor @10–@25`: limit 20). | Box of 5/3 plus gear bonus. No per-tool reach and no cap. | `ToolParity.ReachBox`: base (5 + gear, 3 + gear), each capped at 20, plus the held item's boost. Used by `IsInReach` for every item use, by the smart cursor, by the cursor outline and by the building grid. | CHANGED |
+| 1.1 | Item range check: `IsInTileInteractionRange(tileTarget, Simple, item.tileBoost)` (`Player.IsTargetTileInItemRange @0–@22`). The box is the body's edge cells ± range, where range = `min(tileRange × mult, 20) + tileBoost` (`TileReachCheckSettings.GetRanges`, `.GetTileRegion`, `..cctor @10–@25`: limit 20). | Box of 5/3 plus gear bonus. No per-tool reach and no cap. | `ToolParity.ReachBox`: base (5 + gear, 3 + gear), each capped at 20, plus the held item's boost. Used by `IsInReach` for every item use, by the smart cursor, by the cursor outline and by the placement preview. | CHANGED |
 | 1.2 | Per-tool `tileBoost` (`tools.csv`): copper pickaxe, axe and hammer −1; tin to adamantite 0; chlorophyte +1; lunar picks, axes and hammers +4, lunar drills +3; wrenches and wire cutter +20; rope and chain +3; bottomless bucket +2. | None. | `ToolUseProfile.TileBoost`. The ferrite (copper-tier) pick, drill, hatchet, cutter and demolisher and the two starter drills get −1. Tier 7 tools get +4 (channel drills +3). The wire tool and wire cutter get +20. Climbing rope gets +3. | CHANGED (tier mapping: D4) |
 | 1.3 | Smart cursor search region = the reach box with the item's tileBoost (`SmartCursorHelper.SmartCursorLookup @243–@449`). Steps run in order (`@625–@994`): axe, force-to-minable, shinies, solids, …, hammers, wire cutter, walls, …, empty buckets. | A circle of radius 5. | Every tool step searches only the reach box (`ToolReachBox`). | CHANGED |
 | 1.4 | Force cursor (`Step_ForceCursorToAnyMinableThing`): the tile under the mouse, if in reach, active, `CanKillTile`, non-solid or solid-top, and hittable by this tool. Axe tiles need `axe`, hammer tiles need `hammer`, everything else needs `pick`. | — | `SmartToolTargeting.ForceToBreakable`. | CHANGED |
@@ -146,7 +146,7 @@ This pass makes Rimtera's tools follow Terraria's tool rules.
 - It passes the locked cursor offset while the button is held.
 - When a tool step finds nothing, the cell under the cursor is used.
 
-Blocks keep Rimtera's fill-spot strategy, now inside the reach box. Walls use `WallSpot`. Melee and ranged weapons keep lock-on. The cursor outline is amber inside the held item's reach box and red outside it. The building grid draws the box.
+Blocks keep Rimtera's fill-spot strategy, now inside the reach box. Walls use `WallSpot`. Melee and ranged weapons keep lock-on. The cursor outline is amber inside the held item's reach box and red outside it. The placement preview shows only inside it.
 
 ## 8. Deliberate differences
 

@@ -79,6 +79,7 @@ public static class ParityWorldTests
     {
         DayNight(check);
         TownNpcArrivals(check);
+        SoloStartAndCrew(check);
         Housing(check);
         Happiness(check);
         InventoryStacking(check);
@@ -146,6 +147,49 @@ public static class ParityWorldTests
         var awakeHours = sleeper.ElapsedGameHours - before;
         check(slept && asleepHours > awakeHours * 3f,
             $"D1 sleeping in a bed at night makes time pass faster ({asleepHours:0.00} vs {awakeHours:0.00} h per second)");
+    }
+
+    // ---- Terraria's opening: just you and the guide; crew arrive into housing; the storyteller waits ----
+    private static void SoloStartAndCrew(Action<bool, string> check)
+    {
+        var fresh = new GameSimulation(seed: 9420, width: 80, height: 48);
+        var nearHologram = fresh.Guide.Position + new Vector2(0.5f, 0.5f);
+        check(fresh.Colonists.Count == 0 && fresh.TownNpcs.All(npc => npc.IsBound) && !fresh.GuideMovedIn &&
+              fresh.IsNearGuide(nearHologram) && fresh.LastMessage.Contains("touches down", StringComparison.Ordinal),
+            "a new world starts with just you and the station AI's hologram, as Terraria starts with you and the Guide");
+
+        var quiet = NewGame(9421);
+        RunUntil(quiet, () => quiet.ElapsedGameHours >= 60f, cap: 400000);
+        var raid = new RaidIncident();
+        var context = new StoryContext(Day: 9, ClockHour: 12f, Biome: BiomeZone.Grassland, ColonistCount: 0, DefeatedBosses: 0,
+            ColonyWealth: 0f, BossActive: false, RadiatedNearby: false, PlayerHealthFraction: 1f);
+        check(quiet.IncidentLog.Count == 0 && !raid.CanFire(context, quiet.Storyteller) && raid.CanFire(context with { DefeatedBosses = 1 }, quiet.Storyteller) &&
+              !new SolarFlareIncident().CanFire(context with { Day = 3 }, quiet.Storyteller),
+            "the storyteller stays quiet for the first three days, raids wait for the first boss, weather waits for day four");
+
+        var colony = NewGame(9422);
+        BuildRoom(colony, 4, width: 12);
+        var secondHouse = BuildRoom(colony, 22, width: 12);
+        BuildRoom(colony, 40, width: 12);
+        colony.CheckTownArrivals(); // the station AI (the guide) moves in
+        var guideHome = colony.TownNpcs.FirstOrDefault(npc => npc.Kind == TownNpcKind.StationAi)?.HomeCell;
+        var guideFollows = colony.GuideMovedIn && guideHome is { } home &&
+                           Vector2.Distance(colony.GuidePosition, new Vector2(home.X + 0.5f, home.Y + 0.5f)) < 3f &&
+                           colony.IsNearGuide(new Vector2(home.X + 0.5f, home.Y)) && !colony.IsNearGuide(colony.Guide.Position + new Vector2(60f, 0f));
+        var crewBefore = colony.Colonists.Count;
+        // A second housed resident makes room for one crew member. Other residents it draws (merchant, consul, gels)
+        // compete for the free houses, so build a second storey of them; crew take one once the newcomers are housed.
+        var second = colony.AddTownNpc(TownNpcKind.Quartermaster, colony.StandingAt(secondHouse), bound: false);
+        second.HomeCell = secondHouse;
+        foreach (var x0 in new[] { 4, 22, 40, 58 })
+            BuildRoom(colony, x0, top: 16, width: 12);
+        for (var i = 0; i < 24 && colony.Colonists.Count == 0; i++)
+            colony.CheckTownArrivals();
+        var recruit = colony.Colonists.FirstOrDefault();
+        var feetOnFloor = recruit is not null && colony.Regions.GetRegion(RegionMap.CellAt(recruit.Motion.Position + recruit.Motion.Size / 2f)) is not null &&
+                          !PawnMovementSystem.OverlapsSolid(recruit.Motion.Position, recruit.Motion.Size, colony.World, colony.Tiles);
+        check(guideFollows && crewBefore == 0 && colony.Colonists.Count == 1 && colony.Colonists.Count <= colony.CrewCapacity && feetOnFloor,
+            "the guide moves into the first house and is found there; crew arrive like town NPCs, into a free house, one per two housed residents");
     }
 
     // ---- D2: town NPCs move in (day only, one at a time), die and come back ----

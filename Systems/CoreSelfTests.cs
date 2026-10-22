@@ -488,6 +488,13 @@ public static class CoreSelfTests
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
         Check(inventoryClosed, "inventory overlay can close back into the active simulation");
 
+        var hubGame = new GameSimulation(seed: 5, width: 80, height: 48);
+        var hubUi = new UserInterface();
+        hubUi.SetViewport(1280, 720);
+        hubUi.SetState(new InventoryUiState(hubGame.Player.Inventory, game: hubGame));
+        Check(hubUi.IsOverInterface(new System.Numerics.Vector2(40f, 80f)) && !hubUi.IsOverInterface(new System.Numerics.Vector2(700f, 500f)),
+            "the inventory covers only its panels: a click on the world beside them reaches the world, as in Terraria");
+
         var saveGame = new GameSimulation(seed: 789, width: 80, height: 48);
         saveGame.Player.Motion.Position = new System.Numerics.Vector2(20.5f, 15f);
         saveGame.Player.Motion.Velocity = new System.Numerics.Vector2(2f, -1f);
@@ -534,6 +541,7 @@ public static class CoreSelfTests
         Check(!saveRepository.TryLoad(sidecarWorld, out _), "a save whose cell sidecar is missing is refused instead of loading empty");
 
         var colonyGame = new GameSimulation(seed: 2211, width: 80, height: 48, colonist: draftProfile);
+        colonyGame.AddStartingCrewForChecks();
         Check(colonyGame.Player.Colonist.Id == draftProfile.Id &&
               colonyGame.Colonists.Count == 2 &&
               colonyGame.Player.MaximumHitPoints == draftProfile.EffectiveMaximumHealth &&
@@ -609,7 +617,7 @@ public static class CoreSelfTests
                                  !menuFlow.Preferences.Fullscreen;
         var windowSizeIndex = menuFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))
-            .Single(item => item.entry.Label.StartsWith("Window size:", StringComparison.Ordinal)).index;
+            .Single(item => item.entry.Label.StartsWith("Resolution:", StringComparison.Ordinal)).index;
         menuFlow.CurrentScreen.SelectIndex(windowSizeIndex);
         menuFlow.Handle(new UiInputFrame(default, NavigationX: 1));
         var sizedWindowSelected = menuFlow.Preferences.DisplayWidth == 1366 &&
@@ -617,10 +625,11 @@ public static class CoreSelfTests
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
         Check(settingsCategories.SequenceEqual(["General", "Interface", "Video", "Volume", "Cursor", "Controls", "Back"]) &&
               optionLabels.Any(label => label == "Window mode: Windowed") &&
-              optionLabels.Any(label => label == "Window size: 1280×720") &&
+              optionLabels.Any(label => label == "Resolution: 1280×720") &&
+              optionLabels.Any(label => label == "Frame skip: On") && !optionLabels.Any(label => label.StartsWith("Frame pacing", StringComparison.Ordinal)) &&
               borderlessSelected && sizedWindowSelected &&
               menuFlow.CurrentScreen.Id == "settings",
-            "Settings lists Terraria's categories; Video exposes live window mode and standard window sizes");
+            "Settings lists Terraria's categories; Video exposes live window mode, standard resolutions and frame skip");
 
         var controlsIndex = menuFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))
@@ -1035,8 +1044,8 @@ public static class CoreSelfTests
             }
             return sim;
         }
-        var storyA = RunStory(2024, 48);
-        var storyB = RunStory(2024, 48);
+        var storyA = RunStory(2024, 24 * 7); // past the three quiet opening days
+        var storyB = RunStory(2024, 24 * 7);
         Check(storyA.IncidentLog.Count > 0 &&
               storyA.IncidentLog.Select(record => (record.IncidentId, record.Day, record.Summary))
                   .SequenceEqual(storyB.IncidentLog.Select(record => (record.IncidentId, record.Day, record.Summary))) &&
@@ -1175,6 +1184,7 @@ public static class CoreSelfTests
         static (MentalBreakKind Kind, long StartTick, bool Catharsis) RunBreak()
         {
             var sim = new GameSimulation(seed: 3434, width: 80, height: 48);
+            sim.AddStartingCrewForChecks();
             var crew = sim.Colonists[0];
             var started = MentalBreakKind.None;
             var startTick = -1L;
@@ -1202,6 +1212,7 @@ public static class CoreSelfTests
 
         // Relations and interactions.
         var socialGame = new GameSimulation(seed: 3535, width: 80, height: 48);
+        socialGame.AddStartingCrewForChecks();
         var chatter = socialGame.Colonists[0];
         var listener = socialGame.Colonists[1];
         ColonySocialSystem.SetBoth(chatter, listener, RelationKind.Crewmate, 0f);
@@ -1218,6 +1229,7 @@ public static class CoreSelfTests
             "repeated chats raise opinion until the pair count as friends");
 
         var fightGame = new GameSimulation(seed: 3636, width: 80, height: 48);
+        fightGame.AddStartingCrewForChecks();
         var bully = fightGame.Colonists[0];
         var victim = fightGame.Colonists[1];
         ColonySocialSystem.SetBoth(bully, victim, RelationKind.Crewmate, 0f);
@@ -1232,6 +1244,7 @@ public static class CoreSelfTests
             "insults at low opinion can start a social fight that bruises both sides");
 
         var griefGame = new GameSimulation(seed: 3737, width: 80, height: 48);
+        griefGame.AddStartingCrewForChecks();
         var mourner = griefGame.Colonists[0];
         var lost = griefGame.Colonists[1];
         ColonySocialSystem.SetBoth(mourner, lost, RelationKind.Crewmate, 0f);
@@ -1250,6 +1263,7 @@ public static class CoreSelfTests
 
         // Body, mind and social state survive a save round-trip; older saves still load.
         var mindSave = new GameSimulation(seed: 3838, width: 80, height: 48);
+        mindSave.AddStartingCrewForChecks();
         var savedPlayer = mindSave.Player;
         var savedCrew = mindSave.Colonists[0];
         savedPlayer.Health.ApplyDamageToPart(savedPlayer.Health.FindPart("left hand")!, 100f, DamageKind.Cut);

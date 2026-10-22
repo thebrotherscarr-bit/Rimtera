@@ -126,6 +126,7 @@ public static class PlayerSystemsSelfTests
 
         // ---- Aggro: a taunting player draws a creature off a colonist ----
         var aggroGame = NewGame(9104);
+        aggroGame.AddStartingCrewForChecks();
         var colonist = aggroGame.Colonists.First(agent => agent.IsAlive);
         var hunter = Spawn(aggroGame, EnemyKind.AstroBeast, new Vector2(14f, -0.4f));
         colonist.Motion.Position = hunter.Motion.Position + new Vector2(-1.2f, hunter.Motion.Size.Y - colonist.Motion.Size.Y);

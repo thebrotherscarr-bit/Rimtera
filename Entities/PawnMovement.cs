@@ -19,6 +19,15 @@ public readonly record struct MovementInput(
     public bool DropThrough => Vertical > 0.5f;
 }
 
+/// <summary>
+/// The body every person in the world shares (player, crew, town NPCs): Terraria's 20 × 42 pixel player at
+/// 16-pixel tiles, so it needs a gap two tiles wide and three tall, exactly as Terraria's does.
+/// </summary>
+public static class HumanoidBody
+{
+    public static readonly Vector2 Size = new(1.25f, 2.625f);
+}
+
 /// <summary>Movement dimensions use grid cells as world units.</summary>
 public sealed class PawnMotionState
 {

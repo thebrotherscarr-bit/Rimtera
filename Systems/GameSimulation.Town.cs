@@ -71,10 +71,22 @@ public sealed partial class GameSimulation
                 continue;
             if (FindFreeHouse() is not { } house)
                 return;
-            var npc = AddTownNpc(definition.Kind, CellCenter(house), bound: false);
+            var npc = AddTownNpc(definition.Kind, StandingAt(house), bound: false);
             npc.HomeCell = house;
             PostMessage($"{npc.Name} the {definition.Role} has arrived and moved in!");
             return;
+        }
+
+        // With every unlocked resident housed, a crew member may come: one per check, into a free house.
+        if (_storyteller.WanderersJoined < WandererJoinsIncident.MaximumCrew &&
+            _colonists.Count(agent => agent.IsAlive) < CrewCapacity && FindFreeHouse() is { } crewHouse)
+        {
+            var agent = AddWanderer(_storyteller.WanderersJoined, StandingAt(crewHouse));
+            agent.Motion.Position = StandingAt(crewHouse);
+            agent.HomePosition = agent.Motion.Position;
+            agent.WanderTarget = agent.Motion.Position;
+            _storyteller.WanderersJoined++;
+            PostMessage($"{agent.Profile.Name} has joined the crew and moved in!");
         }
     }
 
@@ -85,7 +97,8 @@ public sealed partial class GameSimulation
         Unlock(TownNpcKind.StationAi);
         if (Player.Inventory.Count(ItemId.Credits) >= 50)
             Unlock(TownNpcKind.Quartermaster);
-        if (Player.MaximumHitPoints > 120f || _colonists.Any(agent => agent.IsAlive && agent.Health.NeedsTending))
+        // Terraria's Nurse: the player's own progress (more than the starting health), not the crew's injuries.
+        if (Player.MaximumHitPoints > 120f)
             Unlock(TownNpcKind.Medic);
         if (Player.Inventory.Slots.Any(stack => !stack.IsEmpty && Items[stack.ItemId].EffectiveClass == DamageClass.Ranged &&
                                                 Items[stack.ItemId].UseKind == ItemUseKind.Ranged && stack.ItemId != ItemId.CopperBow))
@@ -138,7 +151,47 @@ public sealed partial class GameSimulation
         return null;
     }
 
-    private static Vector2 CellCenter(GridPoint cell) => new(cell.X + 0.15f, cell.Y - 0.8f);
+    /// <summary>
+    /// Where a person stands on an open cell over a floor: feet on the floor, centred on the cell, but nudged off a wall on
+    /// either side, since a body (1.25 tiles) is wider than the cell.
+    /// </summary>
+    internal Vector2 StandingAt(GridPoint cell)
+    {
+        bool WallBeside(int dx)
+        {
+            for (var dy = 0; dy < (int)MathF.Ceiling(HumanoidBody.Size.Y); dy++)
+                if (World.Contains(cell.X + dx, cell.Y - dy) && Tiles[World.TileAt(cell.X + dx, cell.Y - dy)].IsSolid)
+                    return true;
+            return false;
+        }
+        var x = cell.X + 0.5f - HumanoidBody.Size.X / 2f;
+        var left = WallBeside(-1);
+        var right = WallBeside(1);
+        if (left && !right)
+            x = cell.X + 0.01f;
+        else if (right && !left)
+            x = cell.X + 1f - HumanoidBody.Size.X - 0.01f;
+        return new Vector2(x, cell.Y + 1f - HumanoidBody.Size.Y - 0.01f);
+    }
+
+    /// <summary>The station AI's resident self once it has moved into a house (Terraria's Guide finding a home).</summary>
+    private TownNpc? StationAiResident => _townNpcs.FirstOrDefault(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound && npc.HomeCell is not null);
+
+    /// <summary>True once the station AI lives in a house; until then it waits as a hologram at the landing site.</summary>
+    public bool GuideMovedIn => StationAiResident is not null;
+
+    /// <summary>Where to find the station AI: its hologram at the landing site, then (once housed) wherever it lives.</summary>
+    public Vector2 GuidePosition => StationAiResident is { } ai ? ai.Motion.Position + ai.Motion.Size / 2f : Guide.Position;
+
+    /// <summary>Within talking distance of the station AI, wherever it is.</summary>
+    public bool IsNearGuide(Vector2 point) => Vector2.Distance(point, GuidePosition) <= Guide.InteractionRadius;
+
+    /// <summary>
+    /// How many crew the colony can attract: one for every two housed residents, plus one per boss defeated, up to five.
+    /// Crew arrive like Terraria's town NPCs, by day into a free valid house, rather than walking into camp at random.
+    /// </summary>
+    public int CrewCapacity => Math.Min(WandererJoinsIncident.MaximumCrew,
+        _townNpcs.Count(npc => !npc.IsBound && npc.HomeCell is not null) / 2 + _defeatedBosses.Count);
 
     /// <summary>Adds a town NPC directly (debug tools, tests and survivor placement).</summary>
     public TownNpc AddTownNpc(TownNpcKind kind, Vector2 position, bool bound)

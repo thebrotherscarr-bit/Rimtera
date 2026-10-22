@@ -769,7 +769,7 @@ public sealed class ColonistAgent : IColonyPawn
         Id = id;
         Profile = profile ?? throw new ArgumentNullException(nameof(profile));
         ColonistStats = profile.Stats;
-        Motion = new PawnMotionState(position, new Vector2(0.68f, 1.8f));
+        Motion = new PawnMotionState(position, HumanoidBody.Size);
         Needs = new SurvivalNeeds(0.80f, 0.86f, 0.70f, 0.66f);
         _torso = ColonistAnatomy.CreateTorso();
         Health = new HealthComponent(_torso, seed: healthSeed != 0 ? healthSeed : unchecked((int)id * 7919 + 17));

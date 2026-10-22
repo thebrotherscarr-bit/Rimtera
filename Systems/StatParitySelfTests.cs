@@ -41,7 +41,7 @@ public static class StatParitySelfTests
             data.LiquidKind = LiquidKind.None;
             game.World.SetCell(cell, data);
         }
-        game.Player.Motion.Position = new Vector2((left + right) / 2f + 0.16f, floorY - 1.81f);
+        game.Player.Motion.Position = new Vector2((left + right) / 2f + 0.16f, floorY - game.Player.Motion.Size.Y - 0.01f);
         game.Player.Motion.Velocity = Vector2.Zero;
         Tick(game, 2);
     }

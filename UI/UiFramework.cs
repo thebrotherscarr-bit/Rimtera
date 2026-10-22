@@ -243,6 +243,16 @@ public sealed class UserInterface
         CurrentState?.Layout(Viewport);
     }
 
+    /// <summary>True when <paramref name="point"/> is over one of the current screen's elements rather than its empty backdrop.</summary>
+    public bool IsOverInterface(Vector2 point)
+    {
+        if (!IsVisible || CurrentState is null)
+            return false;
+        CurrentState.Layout(Viewport);
+        var hit = CurrentState.HitTest(point, Viewport);
+        return hit is not null && !ReferenceEquals(hit, CurrentState);
+    }
+
     public void SetState(UiState? next, bool saveCurrent = true)
     {
         if (ReferenceEquals(CurrentState, next))

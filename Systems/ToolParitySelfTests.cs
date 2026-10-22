@@ -37,7 +37,7 @@ public static class ToolParitySelfTests
             data.Shape = TileShape.Full;
             game.World.SetCell(cell, data);
         }
-        game.Player.Motion.Position = new Vector2(40.14f, Floor - 1.81f);
+        game.Player.Motion.Position = new Vector2(40.14f, Floor - game.Player.Motion.Size.Y - 0.01f);
         game.Player.Motion.Velocity = Vector2.Zero;
         Idle(game, 3);
         return game;
