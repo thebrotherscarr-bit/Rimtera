@@ -1097,10 +1097,11 @@ public static partial class GraphicalSandbox
             if (npc.Kind == TownNpcKind.TideWarden)
                 entries.Add(new MenuEntry($"Turn in quest fish ({game.Items[game.TodaysQuestFish].Name})",
                     () => OpenNpcScreen(npc, game.TurnInQuestFish(npc) ? "A fine catch. Here is your reward." : "You haven't caught today's fish.")));
-            entries.Add(new MenuEntry($"Happiness: {npc.Happiness:+0.0;-0.0;0}  ·  prices ×{game.GetPriceMultiplier(npc):0.00}", () => { }));
+            entries.Add(new MenuEntry($"Happiness {npc.Happiness:+0.0;-0.0;0}   ·   prices ×{game.GetPriceMultiplier(npc):0.00}", Enabled: false));
             entries.Add(new MenuEntry("Goodbye", CloseMenu));
-            var screen = new MenuScreen("npc-talk", $"{npc.Name} — {npc.Definition.Role}", entries,
-                string.IsNullOrWhiteSpace(status) ? game.GetNpcDialogue(npc) : status);
+            var screen = new MenuScreen("npc-talk", $"{npc.Name} the {npc.Definition.Role}", entries,
+                "Enter  choose      ↑ ↓  move      Esc  leave",
+                body: string.IsNullOrWhiteSpace(status) ? $"“{game.GetNpcDialogue(npc)}”" : status);
             _down.Clear();
             _menu.ShowDirect(screen, CloseMenu);
             _menuOpen = true;
@@ -1115,12 +1116,13 @@ public static partial class GraphicalSandbox
             var game = _game;
             var credits = game.Player.Inventory.Count(ItemId.Credits);
             var entries = game.GetShop(npc).Select(offer => new MenuEntry(
-                $"{offer.Name}  ·  {offer.Price} cr",
+                $"{offer.Name}: {offer.Price} credits",
                 () => OpenShopScreen(npc, game.Buy(npc, offer.Item) ? $"Bought {offer.Name}." : "Not enough credits or no room."),
                 Enabled: credits >= offer.Price)).ToList();
             entries.Add(new MenuEntry("Back", () => OpenNpcScreen(npc, string.Empty)));
-            var screen = new MenuScreen("npc-shop", $"{npc.Name}'s stock", entries,
-                $"{credits} credits{(string.IsNullOrWhiteSpace(status) ? string.Empty : "  ·  " + status)}");
+            var screen = new MenuScreen("npc-shop", $"{npc.Name}'s shop", entries,
+                $"You have {credits} credits      Enter  buy      Esc  leave",
+                body: string.IsNullOrWhiteSpace(status) ? null : status);
             _menu.ShowDirect(screen, CloseMenu);
             _menuOpen = true;
             UpdateMenuViewport();
@@ -1703,7 +1705,7 @@ public static partial class GraphicalSandbox
                 g.FillRectangle(_barBack, overall);
                 g.FillRectangle(_foodBar, overall.X, overall.Y, overall.Width * Math.Clamp(transition.VisualTotal, 0f, 1f), overall.Height);
                 g.DrawRectangle(_panelEdgePen, overall.X, overall.Y, overall.Width, overall.Height);
-                DrawCentered(g, $"{Math.Clamp(transition.VisualTotal, 0f, 1f):P0}", overall, _small, Brushes.Black);
+                DrawCentered(g, $"{MathF.Round(Math.Clamp(transition.VisualTotal, 0f, 1f) * 100f):0}%", overall, _small, Brushes.Black);
                 g.FillRectangle(_barBack, pass);
                 g.FillRectangle(_restBar, pass.X, pass.Y, pass.Width * Math.Clamp(transition.VisualPass, 0f, 1f), pass.Height);
                 g.DrawRectangle(_menuBorderPen, pass.X, pass.Y, pass.Width, pass.Height);
@@ -3098,7 +3100,7 @@ public static partial class GraphicalSandbox
                 _craftHits.Add((rect, recipe.Id));
             }
             if (totalRows > visibleRows)
-                g.DrawString($"{_craftScrollRows + 1}-{Math.Min(totalRows, _craftScrollRows + visibleRows)} of {totalRows} rows · wheel to scroll", _small, _dimTextBrush,
+                g.DrawString($"Rows {_craftScrollRows + 1}–{Math.Min(totalRows, _craftScrollRows + visibleRows)} of {totalRows}   ·   scroll with the wheel", _small, _dimTextBrush,
                     left + InventoryLayout.Columns * stride + 4, top);
 
             // Materials for the selected result.
@@ -3115,7 +3117,7 @@ public static partial class GraphicalSandbox
                     _hoveredSlotStack = new ItemStack(ingredient.Alternatives[0], ingredient.Quantity);
                 x += 38;
             }
-            g.DrawString("click the outlined result to craft", _small, _dimTextBrush, x + 6, materialsTop + 28);
+            g.DrawString("Click the highlighted result again to craft it.", _small, _dimTextBrush, x + 6, materialsTop + 28);
         }
 
         /// <summary>Top-right readout: biome, temperature/comfort, shelter, events, recent incidents.</summary>
@@ -3228,6 +3230,12 @@ public static partial class GraphicalSandbox
                     DrawCard(g, rect, cardEntry, command.Focused, command.Hovered);
                     continue;
                 }
+                if (command.Kind == UiDrawKind.Button && screen is not null && entriesByLabel.TryGetValue(command.Text, out var rowEntry) &&
+                    rowEntry.Tag is not (CharacterProfile or WorldProfile or CardIcon))
+                {
+                    DrawMenuRow(g, rect, MenuRows.Parse(rowEntry), rowEntry.Enabled, rowEntry.Adjust is not null, command.Focused, command.Hovered);
+                    continue;
+                }
                 switch (command.Kind)
                 {
                     case UiDrawKind.Panel:
@@ -3237,7 +3245,9 @@ public static partial class GraphicalSandbox
                     {
                         var baseColor = ToColor(command.Color);
                         var disabled = baseColor.R < 80 && baseColor.G < 80 && baseColor.B < 90;
+                        var active = command.Color == UiColor.ButtonActive;
                         var brush = command.Focused ? _menuButtonFocus
+                            : active ? _rowFocus
                             : command.Hovered ? _menuButtonHot
                             : disabled ? _menuButton
                             : new SolidBrush(Slate(baseColor));
@@ -3249,30 +3259,41 @@ public static partial class GraphicalSandbox
                         {
                             if (!ReferenceEquals(brush, _menuButton) &&
                                 !ReferenceEquals(brush, _menuButtonHot) &&
-                                !ReferenceEquals(brush, _menuButtonFocus))
+                                !ReferenceEquals(brush, _menuButtonFocus) &&
+                                !ReferenceEquals(brush, _rowFocus))
                                 brush.Dispose();
                         }
-                        if (command.Focused)
+                        if (command.Focused || active)
                             g.DrawRectangle(_menuFocusPen, rect.X, rect.Y, rect.Width, rect.Height);
                         else
                             g.DrawRectangle(_menuBorderPen, rect.X, rect.Y, rect.Width, rect.Height);
-                        DrawCentered(g, command.Text, rect, _menuFont, disabled ? Brushes.Gray : Brushes.White);
+                        DrawCentered(g, command.Text, rect, _menuFont, disabled ? Brushes.Gray : active ? _rowLabelHot : Brushes.White);
                         break;
                     }
                     case UiDrawKind.Text:
                     {
-                        var isTitle = rect.Height >= 32f && rect.Width >= 250f;
-                        var font = isTitle ? _menuTitleFont : command.Text.Length > 86 ? _menuSmallFont : _menuFont;
+                        var isTitle = rect.Height >= 32f && rect.Width >= 250f && !command.Wrap && command.Align != UiTextAlign.Right;
+                        var font = isTitle ? _menuTitleFont : command.Text.Length > 86 || rect.Height <= 18f || command.Centered && rect.Height <= 28f ? _menuSmallFont : _menuFont;
                         var color = isTitle ? Color.FromArgb(242, 176, 64) : ToColor(command.Color);
                         using var brush = new SolidBrush(color);
-                        if (isTitle || command.Text.Contains('↑') || command.Text.Contains('↓') ||
+                        if (command.Wrap)
+                        {
+                            using var wrapped = new StringFormat
+                            {
+                                Alignment = command.Align == UiTextAlign.Center ? StringAlignment.Center : StringAlignment.Near,
+                                LineAlignment = StringAlignment.Center,
+                                Trimming = StringTrimming.EllipsisWord
+                            };
+                            g.DrawString(command.Text, _menuFont, brush, rect, wrapped);
+                        }
+                        else if (isTitle || command.Centered || command.Text.Contains('↑') || command.Text.Contains('↓') ||
                             command.Text.Contains('←') || command.Text.Contains('→'))
                             DrawCentered(g, command.Text, rect, font, brush);
                         else
                         {
                             using var format = new StringFormat
                             {
-                                Alignment = StringAlignment.Near,
+                                Alignment = command.Align == UiTextAlign.Right ? StringAlignment.Far : StringAlignment.Near,
                                 LineAlignment = StringAlignment.Center,
                                 Trimming = StringTrimming.EllipsisCharacter,
                                 FormatFlags = StringFormatFlags.NoWrap
@@ -3319,6 +3340,105 @@ public static partial class GraphicalSandbox
             }
         }
 
+        private readonly Brush _rowFocus = new SolidBrush(Color.FromArgb(150, 92, 72, 30));
+        private readonly Brush _rowHover = new SolidBrush(Color.FromArgb(40, 255, 255, 255));
+        private readonly Pen _rowRule = new(Color.FromArgb(28, 255, 255, 255), 1f);
+        private readonly Brush _rowValue = new SolidBrush(Color.FromArgb(242, 176, 64));
+        private readonly Brush _rowLabelHot = new SolidBrush(Color.FromArgb(255, 226, 150));
+        private readonly Brush _sliderTrack = new SolidBrush(Color.FromArgb(200, 18, 20, 26));
+        private readonly Font _menuHeaderFont = TechFont("Bahnschrift SemiBold", "Segoe UI Semibold", 10f, FontStyle.Regular);
+
+        /// <summary>
+        /// One list row, drawn the way Terraria's settings lists read: the setting on the left and its value on the right
+        /// (a slider for percentages), section headers as small amber captions over a rule, notes as quiet text, ticks and
+        /// choices with real boxes, and actions centred. The selected row is lit amber, the hovered one faintly.
+        /// </summary>
+        private void DrawMenuRow(Graphics g, RectangleF rect, MenuRowView row, bool enabled, bool adjustable, bool focused, bool hovered)
+        {
+            using var near = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
+            using var far = new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
+            switch (row.Kind)
+            {
+                case MenuRowKind.Header:
+                {
+                    var caption = row.Label.ToUpperInvariant();
+                    var size = g.MeasureString(caption, _menuHeaderFont);
+                    var y = rect.Y + rect.Height - 10;
+                    g.DrawString(caption, _menuHeaderFont, _amberBrush, rect.X + 6, y - size.Height / 2f);
+                    using var rule = new Pen(Color.FromArgb(110, 242, 176, 64), 1f);
+                    g.DrawLine(rule, rect.X + 14 + size.Width, y, rect.Right - 6, y);
+                    return;
+                }
+                case MenuRowKind.Info:
+                    DrawCentered(g, row.Label, rect, _menuSmallFont, _dimTextBrush);
+                    return;
+            }
+
+            if (focused)
+            {
+                g.FillRectangle(_rowFocus, rect);
+                g.FillRectangle(_amberBrush, rect.X, rect.Y, 3, rect.Height);
+            }
+            else if (hovered && enabled)
+                g.FillRectangle(_rowHover, rect);
+            g.DrawLine(_rowRule, rect.X + 6, rect.Bottom, rect.Right - 6, rect.Bottom);
+            var labelBrush = !enabled ? Brushes.Gray : focused ? _rowLabelHot : Brushes.White;
+            var text = new RectangleF(rect.X + 14, rect.Y, rect.Width - 28, rect.Height);
+
+            switch (row.Kind)
+            {
+                case MenuRowKind.Action:
+                    DrawCentered(g, row.Label, rect, _menuFont, labelBrush);
+                    return;
+                case MenuRowKind.Check:
+                case MenuRowKind.Radio:
+                {
+                    var box = new RectangleF(rect.X + 14, rect.Y + (rect.Height - 16) / 2f, 16, 16);
+                    using var edge = new Pen(enabled ? Color.FromArgb(200, 242, 176, 64) : Color.FromArgb(120, 120, 120), 1.5f);
+                    if (row.Kind == MenuRowKind.Check)
+                    {
+                        g.FillRectangle(_sliderTrack, box);
+                        g.DrawRectangle(edge, box.X, box.Y, box.Width, box.Height);
+                        if (row.Checked)
+                        {
+                            using var tick = new Pen(Color.FromArgb(255, 242, 176, 64), 2.4f) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+                            g.DrawLines(tick, new[] { new PointF(box.X + 3.5f, box.Y + 8.5f), new PointF(box.X + 6.8f, box.Y + 12f), new PointF(box.X + 12.8f, box.Y + 4f) });
+                        }
+                    }
+                    else
+                    {
+                        g.FillEllipse(_sliderTrack, box);
+                        g.DrawEllipse(edge, box);
+                        if (row.Checked)
+                            g.FillEllipse(_amberBrush, box.X + 4, box.Y + 4, 8, 8);
+                    }
+                    var after = new RectangleF(box.Right + 10, rect.Y, rect.Right - box.Right - 24, rect.Height);
+                    g.DrawString(row.Label, _menuFont, labelBrush, after, near);
+                    if (row.Value is { } detail)
+                        g.DrawString(detail, _menuSmallFont, enabled ? _dimTextBrush : Brushes.Gray, after, far);
+                    return;
+                }
+            }
+
+            // A setting: name on the left, value on the right; ‹ › when it can be stepped with left/right.
+            g.DrawString(row.Label, _menuFont, labelBrush, text, near);
+            var value = row.Value ?? string.Empty;
+            var valueText = focused && adjustable ? $"‹  {value}  ›" : value;
+            if (row.Slider is { } fraction)
+            {
+                const float trackWidth = 160f;
+                var track = new RectangleF(text.Right - trackWidth, rect.Y + rect.Height / 2f - 4, trackWidth, 8);
+                g.FillRectangle(_sliderTrack, track);
+                g.FillRectangle(_amberBrush, track.X, track.Y, track.Width * Math.Clamp(fraction, 0f, 1f), track.Height);
+                g.DrawRectangle(_menuBorderPen, track.X, track.Y, track.Width, track.Height);
+                var knob = track.X + track.Width * Math.Clamp(fraction, 0f, 1f);
+                g.FillRectangle(Brushes.White, knob - 2, track.Y - 4, 4, track.Height + 8);
+                g.DrawString(value, _menuFont, _rowValue, new RectangleF(text.X, rect.Y, text.Width - trackWidth - 12, rect.Height), far);
+            }
+            else
+                g.DrawString(valueText, _menuFont, !enabled || value is "unbound" or "Off" ? _dimTextBrush : _rowValue, text, far);
+        }
+
         private string? _lastScreenId;
         private long _screenChangedAt;
 
@@ -3336,6 +3456,11 @@ public static partial class GraphicalSandbox
             using var fade = new SolidBrush(Color.FromArgb((int)(150 * (1f - t)), 0, 0, 0));
             g.FillRectangle(fade, ClientRectangle);
         }
+
+        /// <summary>The build's version, "0.1.3", from the project's &lt;Version&gt;.</summary>
+        private static readonly string GameVersion = typeof(GraphicalSandbox).Assembly.GetName().Version is { } version
+            ? $"{version.Major}.{version.Minor}.{Math.Max(0, version.Build)}"
+            : "dev";
 
         /// <summary>Title menu: animated logo and free-floating entries instead of a boxed panel.</summary>
         private void DrawMainMenu(Graphics g, MenuScreen screen)
@@ -3373,9 +3498,9 @@ public static partial class GraphicalSandbox
 
             var status = screen.StatusMessage.Length > 0 ? screen.StatusMessage : screen.Footer;
             DrawCentered(g, status, new RectangleF(0, Height - 64, Width, 20), _menuSmallFont, Brushes.Gainsboro);
-            g.DrawString("Rimtera 0.5  ·  Neo-Terra art", _menuSmallFont, _dimTextBrush, 10, Height - 22);
+            g.DrawString($"Rimtera {GameVersion}", _menuSmallFont, _dimTextBrush, 10, Height - 22);
             using var right = new StringFormat { Alignment = StringAlignment.Far };
-            g.DrawString("↑/↓ or mouse  ·  Enter select  ·  Esc back", _menuSmallFont, _dimTextBrush, new RectangleF(0, Height - 22, Width - 10, 20), right);
+            g.DrawString("↑ ↓  move      Enter  choose      Esc  back", _menuSmallFont, _dimTextBrush, new RectangleF(0, Height - 22, Width - 10, 20), right);
         }
 
         /// <summary>Left-hand area beside a creation screen's (right-shifted) option panel.</summary>

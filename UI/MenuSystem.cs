@@ -11,7 +11,51 @@ public sealed record MenuEntry(
     string? SnapLabel = null,
     object? Tag = null,
     IReadOnlyList<MenuRowAction>? RowActions = null,
-    string? Description = null);
+    string? Description = null,
+    float? Slider = null);
+
+/// <summary>How a list row is drawn: a setting with its value on the right, a section header, a note, a box to tick, one of a set, or a plain action.</summary>
+public enum MenuRowKind : byte { Action, Option, Header, Info, Check, Radio }
+
+/// <summary>A row split into what the renderer draws: the label, the value on the right, the tick, the slider position.</summary>
+public readonly record struct MenuRowView(MenuRowKind Kind, string Label, string? Value = null, bool Checked = false, float? Slider = null);
+
+public static class MenuRows
+{
+    /// <summary>
+    /// Reads a row's parts from its label: "— Group —" is a header, "[x] name  •  effect" a tick box, "● name  •  detail"
+    /// one choice of a set, "Setting: value" a setting, any other disabled row a note, and the rest plain actions.
+    /// </summary>
+    public static MenuRowView Parse(MenuEntry entry)
+    {
+        var label = entry.Label;
+        if (label.StartsWith("— ", StringComparison.Ordinal) && label.EndsWith(" —", StringComparison.Ordinal))
+            return new MenuRowView(MenuRowKind.Header, label[2..^2]);
+        if (label.StartsWith("[x] ", StringComparison.Ordinal) || label.StartsWith("[ ] ", StringComparison.Ordinal))
+        {
+            var (name, detail) = SplitDetail(label[4..]);
+            return new MenuRowView(MenuRowKind.Check, name, detail, label[1] == 'x');
+        }
+        if (label.StartsWith("● ", StringComparison.Ordinal) || label.StartsWith("○ ", StringComparison.Ordinal))
+        {
+            var (name, detail) = SplitDetail(label[2..]);
+            return new MenuRowView(MenuRowKind.Radio, name, detail, label[0] == '●');
+        }
+        var colon = label.IndexOf(": ", StringComparison.Ordinal);
+        if (colon > 0)
+            return new MenuRowView(MenuRowKind.Option, label[..colon], label[(colon + 2)..], Slider: entry.Slider);
+        if (!entry.Enabled)
+            return new MenuRowView(MenuRowKind.Info, label);
+        var (left, right) = SplitDetail(label);
+        return right is null ? new MenuRowView(MenuRowKind.Action, label) : new MenuRowView(MenuRowKind.Option, left, right);
+    }
+
+    private static (string Name, string? Detail) SplitDetail(string text)
+    {
+        var dot = text.IndexOf("  •  ", StringComparison.Ordinal);
+        return dot > 0 ? (text[..dot], text[(dot + 5)..]) : (text, null);
+    }
+}
 
 /// <summary>A small button on a list card (favourite, rename, delete).</summary>
 public sealed record MenuRowAction(string Label, Action Activate);
@@ -40,10 +84,11 @@ public sealed class MenuScreen : UiState
     private int _firstVisible;
 
     public MenuScreen(string id, string title, IEnumerable<MenuEntry> entries, string? footer = null,
-        MenuLayout layout = MenuLayout.List, MenuPreview preview = MenuPreview.None)
+        MenuLayout layout = MenuLayout.List, MenuPreview preview = MenuPreview.None, string? body = null)
         : base(id, style: new UiStyle { Width = UiLength.Pct(1f), Height = UiLength.Pct(1f) })
     {
         Title = title;
+        Body = body;
         Footer = footer ?? "↑/↓ navigate   Mouse click   Enter select   Esc back";
         ListLayout = layout;
         Preview = preview;
@@ -51,8 +96,8 @@ public sealed class MenuScreen : UiState
         // Creation screens move the list right so the renderer can draw a live preview on the left.
         _menuPanel = new UiPanelElement($"{id}-panel", new UiStyle
         {
-            Width = UiLength.Pct(preview == MenuPreview.None ? 0.8f : 0.52f), Height = UiLength.Mixed(-220f, 1f),
-            MaxWidth = 650f, MaxHeight = 560f, MinHeight = 456f,
+            Width = UiLength.Pct(preview == MenuPreview.None ? 0.8f : 0.52f), Height = UiLength.Mixed(-80f, 1f),
+            MaxWidth = 720f, MaxHeight = 640f, MinHeight = 240f,
             Top = UiLength.Px(0f), HAlign = preview == MenuPreview.None ? 0.5f : 0.86f, VAlign = 0.5f,
             Padding = UiThickness.Uniform(18f), OverflowHidden = true
         });
@@ -62,6 +107,8 @@ public sealed class MenuScreen : UiState
     }
 
     public string Title { get; }
+    /// <summary>Text under the title (what an NPC says, what a sign reads, a summary), wrapped across the panel.</summary>
+    public string? Body { get; }
     public string Footer { get; }
     public MenuLayout ListLayout { get; }
     public MenuPreview Preview { get; }
@@ -157,12 +204,14 @@ public sealed class MenuScreen : UiState
         _buttonEntryIndices.Clear();
         _menuPanel.Add(new UiTextElement(Title, $"{Id}-title", new UiStyle
         {
-            Width = UiLength.Pct(1f), Height = UiLength.Px(42f), Top = UiLength.Px(8f), HAlign = 0.5f
+            Width = UiLength.Pct(1f), Height = UiLength.Px(40f), Top = UiLength.Px(6f), HAlign = 0.5f
         }) { Scale = 0.8f, Color = UiColor.HeaderBlue });
 
         // Cards are taller (portrait + details) so fewer fit; plain rows keep the original geometry.
         var cards = ListLayout == MenuLayout.Cards;
-        var visibleRows = cards ? 5 : 8;
+        // About 78 characters of body text fit on a line of the panel; its lines take the place of rows.
+        var bodyHeight = string.IsNullOrWhiteSpace(Body) ? 0f : Math.Clamp((int)Math.Ceiling(Body.Length / 78.0), 1, 5) * 20f + 10f;
+        var visibleRows = Math.Max(3, (cards ? 5 : 14) - (int)Math.Ceiling(bodyHeight / (cards ? 81f : 32f)));
         // The view only moves when the selection would leave it, instead of pinning the selection to the bottom row.
         if (SelectedIndex >= 0 && SelectedIndex < _firstVisible)
             _firstVisible = SelectedIndex;
@@ -174,19 +223,31 @@ public sealed class MenuScreen : UiState
         if (firstVisible > 0)
             _menuPanel.Add(new UiTextElement($"↑  {firstVisible} more above", $"{Id}-more-above", new UiStyle
             {
-                Width = UiLength.Pct(1f), Height = UiLength.Px(16f), Top = UiLength.Px(42f), HAlign = 0.5f
+                Width = UiLength.Pct(1f), Height = UiLength.Px(16f), Top = UiLength.Px(47f + bodyHeight), HAlign = 0.5f
             }) { Scale = 0.65f, Color = new UiColor(160, 168, 186) });
-        var top = 58f;
+        // The panel fits its rows (short lists get a short panel), up to the window's height.
+        var shown = _entries.Skip(firstVisible).Take(visibleRows).Sum(entry => cards && entry.Tag is not null ? 81f : 32f);
+        var content = 66f + bodyHeight + shown + (lastVisible < _entries.Count ? 18f : 0f) + 104f;
+        _menuPanel.Style = _menuPanel.Style with { MaxHeight = Math.Max(_menuPanel.Style.MinHeight, Math.Min(640f, content)) };
+        var top = 66f;
+        if (bodyHeight > 0f)
+        {
+            _menuPanel.Add(new UiTextElement(Body!, $"{Id}-body", new UiStyle
+            {
+                Width = UiLength.Pct(0.92f), Height = UiLength.Px(bodyHeight), Top = UiLength.Px(top - 12f), HAlign = 0.5f
+            }) { Color = new UiColor(226, 230, 238), Align = UiTextAlign.Center, Wrap = true });
+            top += bodyHeight;
+        }
         for (var index = firstVisible; index < lastVisible; index++)
         {
             var entry = _entries[index];
             var entryIndex = index;
             var isCard = cards && entry.Tag is not null;
-            var height = isCard ? 64f : 36f;
+            var height = isCard ? 78f : 30f;
             var hasActions = isCard && entry.RowActions is { Count: > 0 };
             var button = new UiButtonElement(entry.Label, () => ActivateEntry(entryIndex), $"{Id}-entry-{index}", new UiStyle
             {
-                Width = UiLength.Pct(hasActions ? 0.74f : isCard ? 0.92f : 0.72f), Height = UiLength.Px(height),
+                Width = UiLength.Pct(hasActions ? 0.74f : isCard ? 0.92f : 0.94f), Height = UiLength.Px(height),
                 Top = UiLength.Px(top), HAlign = hasActions ? 0.04f : 0.5f,
                 Padding = new UiThickness(10f, 5f, 10f, 5f)
             })
@@ -206,12 +267,12 @@ public sealed class MenuScreen : UiState
                     var rowAction = entry.RowActions[action];
                     _menuPanel.Add(new UiButtonElement(rowAction.Label, rowAction.Activate, $"{Id}-entry-{index}-action-{action}", new UiStyle
                     {
-                        Width = UiLength.Px(84f), Height = UiLength.Px(19f),
-                        Top = UiLength.Px(top + action * 21.5f), HAlign = 0.97f
+                        Width = UiLength.Px(96f), Height = UiLength.Px(24f),
+                        Top = UiLength.Px(top + action * 27f), HAlign = 0.97f
                     }) { Color = new UiColor(46, 52, 60) });
                 }
             }
-            top += height + 3f;
+            top += height + (isCard ? 3f : 2f);
         }
 
         if (lastVisible < _entries.Count)
@@ -226,16 +287,16 @@ public sealed class MenuScreen : UiState
             {
                 Width = UiLength.Pct(0.92f), Height = UiLength.Px(26f),
                 Top = UiLength.Mixed(-64f, 1f), HAlign = 0.5f
-            }) { Scale = 0.75f, Color = new UiColor(242, 176, 64) });
+            }) { Scale = 0.75f, Color = new UiColor(196, 202, 214), Align = UiTextAlign.Center });
         }
 
-        var footerText = _entries.Count > visibleRows ? $"{Footer}  •  ↑/↓ scroll" : Footer;
-        _menuPanel.Add(new UiTextElement(string.IsNullOrWhiteSpace(StatusMessage) ? footerText : $"{footerText}  •  {StatusMessage}",
-            $"{Id}-footer", new UiStyle
-            {
-                Width = UiLength.Pct(1f), Height = UiLength.Px(28f),
-                Top = UiLength.Mixed(-32f, 1f), HAlign = 0.5f
-            }) { Scale = 0.75f });
+        // The status line (what the last action did) replaces the key hints until the next change.
+        var status = !string.IsNullOrWhiteSpace(StatusMessage);
+        _menuPanel.Add(new UiTextElement(status ? StatusMessage : Footer, $"{Id}-footer", new UiStyle
+        {
+            Width = UiLength.Pct(1f), Height = UiLength.Px(28f),
+            Top = UiLength.Mixed(-32f, 1f), HAlign = 0.5f
+        }) { Scale = 0.75f, Align = UiTextAlign.Center, Color = status ? new UiColor(242, 176, 64) : new UiColor(150, 160, 172) });
     }
 }
 
@@ -464,7 +525,7 @@ public sealed class MenuFlow
             "Character name",
             "Shown on the colonist sheet, save list, and in-world label.",
             _characterDraft.Name,
-            "Enter confirms  ·  Esc cancels  ·  32 characters",
+            "Enter  confirm      Esc  cancel      up to 32 characters",
             32);
         prompt.Accepted += value =>
         {
@@ -486,7 +547,7 @@ public sealed class MenuFlow
             "World name",
             "Shown on the load list and in this world's save envelope.",
             _worldDraft,
-            "Enter confirms  ·  Esc cancels  ·  32 characters",
+            "Enter  confirm      Esc  cancel      up to 32 characters",
             32);
         prompt.Accepted += value =>
         {
@@ -542,7 +603,7 @@ public sealed class MenuFlow
         {
             if (Ui.CurrentState is MenuScreen screen)
             {
-                screen.SetStatus("Menu navigation uses the arrow keys; WASD is reserved for gameplay.");
+                screen.SetStatus("Menus use the arrow keys. W, A, S and D are kept for moving.");
                 screen.FocusSelection(Ui);
             }
             return;
@@ -591,19 +652,19 @@ public sealed class MenuFlow
             entries.Add(new MenuEntry("Crew", openColonist));
         if (openCreative is not null)
             entries.Add(new MenuEntry("Creative Powers", openCreative));
-        if (save is not null)
-            entries.Add(new MenuEntry("Save Game", save));
+        entries.Add(new MenuEntry("— Settings —", Enabled: false));
         entries.AddRange(SettingsCategoryEntries());
-        if (openFeats is not null)
-            entries.Add(new MenuEntry("Feats", openFeats));
+        entries.Add(new MenuEntry("— Game —", Enabled: false));
+        if (save is not null)
+            entries.Add(new MenuEntry("Save Game", save, Description: "Saves the world and your character now."));
         if (quitToTitle is not null)
-            entries.Add(new MenuEntry("Save & Exit to Main Menu", quitToTitle));
+            entries.Add(new MenuEntry("Save & Exit to Title", quitToTitle, Description: "Saves, then goes back to the title screen."));
         else
             entries.Add(new MenuEntry("Save & Exit", saveAndExit));
         if (exitGame is not null)
-            entries.Add(new MenuEntry("Save & Exit Game", exitGame));
+            entries.Add(new MenuEntry("Save & Quit Game", exitGame, Description: "Saves, then closes the game."));
 
-        var screen = new MenuScreen("pause-menu", "Settings", entries, "Esc closes  ·  the world waits while this is open");
+        var screen = new MenuScreen("pause-menu", "Settings", entries, "Esc  close      ↑ ↓  move      Enter  choose");
         Ui.ClearHistory();
         Ui.SetState(screen, saveCurrent: false);
         screen.FocusSelection(Ui);
@@ -618,13 +679,13 @@ public sealed class MenuFlow
                 OptionsCategory.Interface => "Zoom, UI scale and health bars.",
                 OptionsCategory.Video => "Window mode, resolution, frame skip and lighting.",
                 OptionsCategory.Volume => "Music, sound and ambient volume.",
-                OptionsCategory.Cursor => "Cursor colour, border and size; smart cursor toggle or hold.",
-                _ => "Every key, rebindable; Terraria's layout by default."
+                OptionsCategory.Cursor => "Cursor colour, border and size, and how the smart cursor switches on.",
+                _ => "Every key, and what it does. Any of them can be changed."
             }));
 
     /// <summary>The title screen's Settings: the same categories, then Back.</summary>
     private MenuScreen CreateSettingsMenu() =>
-        new("settings", "Settings", SettingsCategoryEntries().Append(new MenuEntry("Back", GoBack)), "Choose a category");
+        new("settings", "Settings", SettingsCategoryEntries().Append(new MenuEntry("Back", GoBack)), "Enter  choose      ↑ ↓  move      Esc  back");
 
     /// <summary>Shows a screen over the game (NPC talk, shop); Back closes it via <paramref name="onClose"/>.</summary>
     public void ShowDirect(MenuScreen screen, Action onClose)
@@ -678,7 +739,7 @@ public sealed class MenuFlow
             new MenuEntry("Single Player", () => Navigate(CreateCharacterSelectMenu())),
             new MenuEntry("Settings", () => Navigate(CreateSettingsMenu())),
             new MenuEntry("Exit Game", () => ExitRequested?.Invoke())
-        }, hasSave ? "Single Player lists your characters, then your worlds" : "Create a character and world to begin");
+        }, string.Empty);
     }
 
     /// <summary>Favourite / rename / delete buttons for the world list.</summary>
@@ -695,7 +756,7 @@ public sealed class MenuFlow
             catch (InvalidOperationException ex) { ReplaceCurrentWithStatus(rebuild(), ex.Message); }
         })),
         new("Delete", () => ConfirmDelete($"Delete {world.Name}?",
-            "The world leaves the list; its save file is moved to the saves 'deleted' folder.",
+            "The world leaves the list. Its save file moves to the 'deleted' folder inside saves.",
             () =>
             {
                 _saves.Delete(world.Id);
@@ -751,7 +812,7 @@ public sealed class MenuFlow
         entries.Add(new MenuEntry("Create Character", () => Navigate(BeginCharacterCreation()), SnapLabel: "New"));
         entries.Add(new MenuEntry("Back", GoBack, SnapLabel: "Back"));
         return new MenuScreen("character-select", "Select Character", entries,
-            "Choose a survivor or create a new one", MenuLayout.Cards);
+            "Choose a character or create a new one", MenuLayout.Cards);
     }
 
     private MenuScreen BeginCharacterCreation()
@@ -771,7 +832,7 @@ public sealed class MenuFlow
                 ReplaceCurrent(CreateCharacterCreationMenu());
             },
             Description: WorldSettings.Describe(_characterDraft.Difficulty)),
-        new MenuEntry($"Gender: {_characterDraft.Gender}",
+        new MenuEntry($"Gender: {GenderName(_characterDraft.Gender)}",
             Adjust: amount =>
             {
                 _characterDraft.Gender = Cycle(_characterDraft.Gender, amount);
@@ -789,8 +850,8 @@ public sealed class MenuFlow
             () => Navigate(CreateBackstoryMenu())),
         new MenuEntry($"Traits ({_characterDraft.Traits.Count}/3): {_characterDraft.TraitSummary}",
             () => Navigate(CreateTraitsMenu())),
-        new MenuEntry("Skills  •  levels, passions, and focus",
-            () => Navigate(CreateSkillsMenu())),
+        new MenuEntry($"Skills: {TopSkills(2)}",
+            () => Navigate(CreateSkillsMenu()), Description: "Levels and passions. Enter to change them."),
         new MenuEntry($"Focus: {_characterDraft.FocusName}",
             Adjust: amount =>
             {
@@ -798,12 +859,6 @@ public sealed class MenuFlow
                 var index = Array.IndexOf(values, _characterDraft.Focus);
                 _characterDraft.SetFocus(values[(index + Math.Sign(amount) + values.Length) % values.Length]);
                 ReplaceCurrent(CreateCharacterCreationMenu());
-            }),
-        new MenuEntry("Reroll skills",
-            () =>
-            {
-                _characterDraft.RerollSkills(Random.Shared.Next());
-                ReplaceCurrentWithStatus(CreateCharacterCreationMenu(), "Skill rolls refreshed.");
             }),
         new MenuEntry("Randomize colonist",
             () =>
@@ -824,7 +879,7 @@ public sealed class MenuFlow
             { ReplaceCurrentWithStatus(CreateCharacterCreationMenu(), ex.Message); }
         }),
         new MenuEntry("Back", GoBack)
-    }, CharacterCreationFooter(), preview: MenuPreview.Character);
+    }, "Enter  choose      ← →  change      Esc  back", preview: MenuPreview.Character);
 
     private MenuScreen CreateAppearanceMenu() => new("character-appearance", "Appearance", new[]
     {
@@ -934,8 +989,7 @@ public sealed class MenuFlow
     private MenuScreen CreateSkillsMenu()
     {
         var entries = Enum.GetValues<ColonistSkill>().Select(skill => new MenuEntry(
-            $"{ColonistCatalog.PassionMarker(_characterDraft.Passions[(int)skill])} " +
-            $"{ColonistCatalog.SkillName(skill)}: {_characterDraft.SkillLevels[(int)skill]}",
+            $"{ColonistCatalog.SkillName(skill)}: {SkillValue(_characterDraft.Passions[(int)skill], _characterDraft.SkillLevels[(int)skill])}",
             () =>
             {
                 _characterDraft.CyclePassion(skill);
@@ -955,18 +1009,25 @@ public sealed class MenuFlow
             }));
         entries.Add(new MenuEntry("Back", GoBack));
         return new MenuScreen("character-skills", "Skills", entries,
-            "←/→ level   Enter cycles passion   ▲▲ burning   ▲ interested");
+            "← →  level      Enter  passion      ▲  interested      ▲▲  burning");
     }
 
-    private string CharacterCreationFooter()
+    /// <summary>A skill's level with its passion beside it: "7", "▲  3", "▲▲  5".</summary>
+    private static string SkillValue(PassionLevel passion, int level) =>
+        passion == PassionLevel.None ? $"{level}" : $"{ColonistCatalog.PassionMarker(passion)}  {level}";
+
+    /// <summary>The draft's best skills, "Intellectual 7 · Construction 3".</summary>
+    private string TopSkills(int count) => string.Join(" · ", _characterDraft.Stats.SkillLevels
+        .Select((level, index) => (Level: level, Skill: (ColonistSkill)index))
+        .OrderByDescending(item => item.Level)
+        .Take(count)
+        .Select(item => $"{ColonistCatalog.SkillName(item.Skill)} {item.Level}"));
+
+    private static string GenderName<TGender>(TGender gender) where TGender : struct, Enum => gender.ToString() switch
     {
-        var top = _characterDraft.Stats.SkillLevels
-            .Select((level, index) => (Level: level, Skill: (ColonistSkill)index))
-            .OrderByDescending(item => item.Level)
-            .Take(3)
-            .Select(item => $"{ColonistCatalog.SkillName(item.Skill)} {item.Level}");
-        return $"{_characterDraft.BackstoryName}  •  {_characterDraft.TraitSummary}  •  {string.Join(" · ", top)}";
-    }
+        "NonBinary" => "Non-binary",
+        var name => name
+    };
 
     private static string BackstorySkills(BackstoryDefinition backstory) =>
         string.Join(" · ", backstory.SkillBonuses
@@ -1015,7 +1076,7 @@ public sealed class MenuFlow
         entries.Add(new MenuEntry("Create World", () => Navigate(BeginWorldCreation()), SnapLabel: "New"));
         entries.Add(new MenuEntry("Back", GoBack, SnapLabel: "Back"));
         return new MenuScreen("world-select", "Select World", entries,
-            $"Playing as {_selectedCharacter?.Name ?? "no character"}  •  choose or create a world", MenuLayout.Cards);
+            _selectedCharacter is { } player ? $"Playing as {player.Name}" : "Choose a world or create one", MenuLayout.Cards);
     }
 
     private MenuScreen BeginWorldCreation()
@@ -1064,7 +1125,7 @@ public sealed class MenuFlow
                 _worldSeed = unchecked(_worldSeed + amount * 101);
                 ReplaceCurrent(CreateWorldCreationMenu());
             },
-            Description: "Enter to type a seed (text is hashed); left/right steps it."),
+            Description: "Enter to type a seed (any text works). Left and right step it."),
         new MenuEntry("Random seed", () =>
         {
             _worldSeed = Random.Shared.Next();
@@ -1081,7 +1142,7 @@ public sealed class MenuFlow
             { ReplaceCurrentWithStatus(CreateWorldCreationMenu(), ex.Message); }
         }, Description: "Generate the world and land your colonist."),
         new MenuEntry("Back", GoBack)
-    }, $"Playing as {_selectedCharacter?.Name ?? "no character"}  •  choose options, then create", preview: MenuPreview.World);
+    }, _selectedCharacter is { } creator ? $"Playing as {creator.Name}" : "Choose the options, then Create & Play", preview: MenuPreview.World);
 
     /// <summary>FNV-1a so text seeds map to the same world on every machine.</summary>
     private static uint StableHash(string text)
@@ -1094,7 +1155,7 @@ public sealed class MenuFlow
 
     public void PromptForText(string title, string detail, string initial, Action<string> accepted, int maxLength = 32)
     {
-        var prompt = new TextPromptState(title, detail, initial, $"Enter confirms  ·  Esc cancels  ·  {maxLength} characters", maxLength);
+        var prompt = new TextPromptState(title, detail, initial, $"Enter  confirm      Esc  cancel      up to {maxLength} characters", maxLength);
         prompt.Accepted += value =>
         {
             if (Ui.CurrentState == prompt)
@@ -1118,9 +1179,10 @@ public sealed class MenuFlow
     private MenuScreen CreateOptionsMenu(OptionsCategory category)
     {
         MenuEntry Percent(string name, Func<float> get, Action<float> set, float step, float min, float max, string? description = null) => new(
-            $"{name}: {get():P0}",
+            $"{name}: {MathF.Round(get() * 100f):0}%",
             Adjust: amount => { set(Math.Clamp(get() + amount * step, min, max)); ApplyPreference(); },
-            Description: description);
+            Description: description,
+            Slider: (get() - min) / (max - min));
         MenuEntry Toggle(string name, Func<bool> get, Action<bool> set, string? description = null) => new(
             $"{name}: {(get() ? "On" : "Off")}",
             () => { set(!get()); ApplyPreference(); },
@@ -1169,7 +1231,7 @@ public sealed class MenuFlow
                     Preferences.DisplayWidth = sizes[index].Width;
                     Preferences.DisplayHeight = sizes[index].Height;
                     ApplyPreference();
-                }, Description: "Standard window sizes; applies immediately."));
+                }, Description: "Standard window sizes. Applies straight away."));
                 entries.Add(Choice("Frame skip", () => Preferences.FrameSkip, value => Preferences.FrameSkip = value, "On: the world keeps full speed on a slow PC. Subtle: only small hitches are caught up. Off: the world slows down instead."));
                 entries.Add(Choice("Lighting", () => Preferences.Lighting, value => Preferences.Lighting = value, "Low: blocky. Standard: smooth. High: smooth with coloured glow. Off: full bright."));
                 break;
@@ -1184,13 +1246,13 @@ public sealed class MenuFlow
                     amount => { Preferences.CursorColor = (Preferences.CursorColor + amount + GamePreferences.CursorColors.Length) % GamePreferences.CursorColors.Length; ApplyPreference(); },
                     Description: "Colour of the drawn cursor."));
                 entries.Add(Toggle("Cursor border", () => Preferences.CursorBorder, value => Preferences.CursorBorder = value, "Dark outline around the cursor."));
-                entries.Add(Percent("Cursor size", () => Preferences.CursorScale, value => Preferences.CursorScale = value, 0.05f, 0.75f, 1.5f));
+                entries.Add(Percent("Cursor size", () => Preferences.CursorScale, value => Preferences.CursorScale = value, 0.05f, 0.75f, 1.5f, "How big the mouse cursor is."));
                 entries.Add(Choice("Smart cursor", () => Preferences.SmartCursor, value => Preferences.SmartCursor = value, "Toggle: Ctrl switches it on and off. Hold: active while Ctrl is held."));
                 break;
         }
 
         entries.Add(new MenuEntry("Back", GoBack));
-        return new MenuScreen("options", category.ToString(), entries, "←/→ adjust  ·  changes apply and persist immediately");
+        return new MenuScreen("options", category.ToString(), entries, "← →  change      ↑ ↓  move      Esc  back");
     }
 
     /// <summary>
@@ -1201,17 +1263,17 @@ public sealed class MenuFlow
     {
         var entries = new List<MenuEntry>
         {
-            new("Mouse: left use · right interact · wheel hotbar · Ctrl+wheel zoom", Enabled: false)
+            new("Left click uses   ·   Right click interacts   ·   Wheel picks a hotbar slot   ·   Ctrl + wheel zooms", Enabled: false)
         };
         foreach (var group in ControlCatalog.All.GroupBy(action => action.Group))
         {
             entries.Add(new MenuEntry($"— {ControlCatalog.GroupName(group.Key)} —", Enabled: false));
-            foreach (var action in group)
+            foreach (var action in group.Where(action => !action.Label.Contains("(debug)", StringComparison.Ordinal)))
             {
                 var keys = InputProfile.KeyLabel(action.Id);
                 entries.Add(new MenuEntry($"{action.Label}: {(keys.Length > 0 ? keys : "unbound")}",
                     () => PromptForBinding(action.Id), Tag: action.Id,
-                    Description: action.Hint.Length > 0 ? action.Hint : "Enter to change the main key; other keys stay."));
+                    Description: action.Hint.Length > 0 ? action.Hint : "Press Enter, then the new key."));
             }
         }
         entries.Add(new MenuEntry("Reset to defaults", () =>
@@ -1219,10 +1281,10 @@ public sealed class MenuFlow
             InputProfile = Rimtera.UI.InputProfile.CreateDefault();
             SavePreferences();
             ReplaceCurrent(CreateControlsMenu());
-            CurrentScreen.SetStatus("Controls reset to the Terraria-style defaults.");
-        }, Description: "Restores every key to the defaults (Terraria's layout)."));
+            CurrentScreen.SetStatus("Every key is back to its default.");
+        }, Description: "Puts every key back to its default."));
         entries.Add(new MenuEntry("Back", GoBack));
-        var screen = new MenuScreen("controls", "Controls", entries, "Enter rebind   ↑/↓ navigate   Esc back");
+        var screen = new MenuScreen("controls", "Controls", entries, "Enter  change key      ↑ ↓  move      Esc  back");
         if (focus is not null && entries.FindIndex(entry => Equals(entry.Tag, focus)) is >= 0 and var index)
             screen.SelectIndex(index);
         return screen;
