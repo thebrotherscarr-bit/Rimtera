@@ -133,7 +133,12 @@ public sealed record GamePreferences
         if (!Enum.IsDefined(FrameSkip)) FrameSkip = FrameSkipMode.On;
         if (!Enum.IsDefined(Lighting)) Lighting = LightingQuality.Standard;
         if (!Enum.IsDefined(EnemyHealthBars)) EnemyHealthBars = HealthBarPlacement.Above;
-        if (!Enum.IsDefined(Particles)) Particles = ParticleAmount.High;
+        // These no longer have menu entries, so a value saved by an older build can't strand anyone with them off.
+        BackgroundEnabled = true;
+        WeatherEffects = true;
+        FlashyEffects = true;
+        BackgroundParallax = 1f;
+        Particles = ParticleAmount.High;
         if (!Enum.IsDefined(SmartCursor)) SmartCursor = SmartCursorMode.Toggle;
         CursorColor = Math.Clamp(CursorColor, 0, CursorColors.Length - 1);
         CursorScale = ClampFinite(CursorScale, 1f, 0.75f, 1.5f);

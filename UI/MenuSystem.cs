@@ -37,6 +37,7 @@ public sealed class MenuScreen : UiState
     private readonly List<UiButtonElement> _buttons = new();
     private readonly List<int> _buttonEntryIndices = new();
     private readonly UiPanelElement _menuPanel;
+    private int _firstVisible;
 
     public MenuScreen(string id, string title, IEnumerable<MenuEntry> entries, string? footer = null,
         MenuLayout layout = MenuLayout.List, MenuPreview preview = MenuPreview.None)
@@ -87,10 +88,13 @@ public sealed class MenuScreen : UiState
     {
         if (direction == 0 || _entries.Count == 0)
             return;
+        // The list stops at its ends rather than wrapping round, so the bottom is easy to find.
         var current = SelectedIndex;
-        for (var attempt = 0; attempt < _entries.Count; attempt++)
+        while (true)
         {
-            current = (current + Math.Sign(direction) + _entries.Count) % _entries.Count;
+            current += Math.Sign(direction);
+            if (current < 0 || current >= _entries.Count)
+                return;
             if (!_entries[current].Enabled)
                 continue;
             SelectedIndex = current;
@@ -159,8 +163,19 @@ public sealed class MenuScreen : UiState
         // Cards are taller (portrait + details) so fewer fit; plain rows keep the original geometry.
         var cards = ListLayout == MenuLayout.Cards;
         var visibleRows = cards ? 5 : 8;
-        var firstVisible = Math.Clamp(SelectedIndex - visibleRows + 1, 0, Math.Max(0, _entries.Count - visibleRows));
+        // The view only moves when the selection would leave it, instead of pinning the selection to the bottom row.
+        if (SelectedIndex >= 0 && SelectedIndex < _firstVisible)
+            _firstVisible = SelectedIndex;
+        else if (SelectedIndex >= _firstVisible + visibleRows)
+            _firstVisible = SelectedIndex - visibleRows + 1;
+        _firstVisible = Math.Clamp(_firstVisible, 0, Math.Max(0, _entries.Count - visibleRows));
+        var firstVisible = _firstVisible;
         var lastVisible = Math.Min(_entries.Count, firstVisible + visibleRows);
+        if (firstVisible > 0)
+            _menuPanel.Add(new UiTextElement($"↑  {firstVisible} more above", $"{Id}-more-above", new UiStyle
+            {
+                Width = UiLength.Pct(1f), Height = UiLength.Px(16f), Top = UiLength.Px(42f), HAlign = 0.5f
+            }) { Scale = 0.65f, Color = new UiColor(160, 168, 186) });
         var top = 58f;
         for (var index = firstVisible; index < lastVisible; index++)
         {
@@ -198,6 +213,12 @@ public sealed class MenuScreen : UiState
             }
             top += height + 3f;
         }
+
+        if (lastVisible < _entries.Count)
+            _menuPanel.Add(new UiTextElement($"↓  {_entries.Count - lastVisible} more below", $"{Id}-more-below", new UiStyle
+            {
+                Width = UiLength.Pct(1f), Height = UiLength.Px(16f), Top = UiLength.Px(top), HAlign = 0.5f
+            }) { Scale = 0.65f, Color = new UiColor(160, 168, 186) });
 
         if (SelectedEntry?.Description is { Length: > 0 } description)
         {
@@ -595,7 +616,7 @@ public sealed class MenuFlow
             {
                 OptionsCategory.General => "Autosave, autopause, map, placement preview, item and damage text.",
                 OptionsCategory.Interface => "Zoom, UI scale and health bars.",
-                OptionsCategory.Video => "Window mode, resolution, frame skip, lighting, background and effects.",
+                OptionsCategory.Video => "Window mode, resolution, frame skip and lighting.",
                 OptionsCategory.Volume => "Music, sound and ambient volume.",
                 OptionsCategory.Cursor => "Cursor colour, border and size; smart cursor toggle or hold.",
                 _ => "Every key, rebindable; Terraria's layout by default."
@@ -1151,11 +1172,6 @@ public sealed class MenuFlow
                 }, Description: "Standard window sizes; applies immediately."));
                 entries.Add(Choice("Frame skip", () => Preferences.FrameSkip, value => Preferences.FrameSkip = value, "On: the world keeps full speed on a slow PC. Subtle: only small hitches are caught up. Off: the world slows down instead."));
                 entries.Add(Choice("Lighting", () => Preferences.Lighting, value => Preferences.Lighting = value, "Low: blocky. Standard: smooth. High: smooth with coloured glow. Off: full bright."));
-                entries.Add(Toggle("Background", () => Preferences.BackgroundEnabled, value => Preferences.BackgroundEnabled = value, "Sky gradient, stars and planets behind the world."));
-                entries.Add(Percent("Parallax", () => Preferences.BackgroundParallax, value => Preferences.BackgroundParallax = value, 0.1f, 0f, 2f, "How fast the backdrop drifts."));
-                entries.Add(Toggle("Weather effects", () => Preferences.WeatherEffects, value => Preferences.WeatherEffects = value, "Biome sky tints, toxic fallout and solar flare overlays."));
-                entries.Add(Toggle("Flashing effects", () => Preferences.FlashyEffects, value => Preferences.FlashyEffects = value, "Hit flashes and muzzle flashes."));
-                entries.Add(Choice("Particles", () => Preferences.Particles, value => Preferences.Particles = value, "Debris and death bursts."));
                 break;
             case OptionsCategory.Volume:
                 entries.Add(Percent("Music", () => Preferences.MusicVolume, value => Preferences.MusicVolume = value, 0.05f, 0f, 1f, "The soundtrack."));
