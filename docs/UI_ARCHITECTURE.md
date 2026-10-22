@@ -11,7 +11,7 @@ This is an original implementation guided by the bounded structural findings in 
 `UI/MenuSystem.cs` builds these navigable states:
 
 - Main menu, Continue/World selection, Character selection/creation, and World creation.
-- Options for volume scalars, window mode (Windowed / Borderless / Fullscreen), resolution (standard sizes from 1024×768 to 1920×1080), frame skip (Off / On / Subtle, as Terraria), background toggle, lighting, placement preview, UI scale, and autosave. F10 shows the frame rate.
+- Options for volume scalars, window mode (Windowed / Borderless / Fullscreen), resolution (standard sizes from 1024×768 to 1920×1080), frame skip (Off / On / Subtle, as Terraria), lighting, placement preview, UI scale, and autosave. F10 shows the frame rate.
 - A rebindable controls list with semantic action names.
 - Pause and inventory entry points used by the interactive simulation.
 

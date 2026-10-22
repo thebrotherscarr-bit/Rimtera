@@ -495,6 +495,15 @@ public static class CoreSelfTests
         Check(hubUi.IsOverInterface(new System.Numerics.Vector2(40f, 80f)) && !hubUi.IsOverInterface(new System.Numerics.Vector2(700f, 500f)),
             "the inventory covers only its panels: a click on the world beside them reaches the world, as in Terraria");
 
+        var longMenu = new MenuScreen("long", "Long", Enumerable.Range(0, 12).Select(i => new MenuEntry($"Row {i}", () => { })));
+        longMenu.SelectIndex(0);
+        longMenu.MoveSelection(-1);
+        var stayedAtTop = longMenu.SelectedIndex == 0;
+        for (var i = 0; i < 20; i++)
+            longMenu.MoveSelection(1);
+        Check(stayedAtTop && longMenu.SelectedIndex == 11 && longMenu.Entries.Count == 12,
+            "menus stop at their first and last rows instead of wrapping round");
+
         var saveGame = new GameSimulation(seed: 789, width: 80, height: 48);
         saveGame.Player.Motion.Position = new System.Numerics.Vector2(20.5f, 15f);
         saveGame.Player.Motion.Velocity = new System.Numerics.Vector2(2f, -1f);
