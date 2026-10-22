@@ -1,0 +1,66 @@
+{
+ "name": "weapon_tome_1",
+ "size": 48,
+ "items": [
+  [
+   "tech_ferrite_codex",
+   "Ferrite codex: a glowing datapad tablet used as a spellbook, rust grey colours."
+  ],
+  [
+   "tech_cobalt_codex",
+   "Cobalt codex: a glowing datapad tablet used as a spellbook, deep blue colours."
+  ],
+  [
+   "tech_codex_ember_swarm",
+   "Codex: Ember swarm: a glowing datapad tablet used as a spellbook, ember red colours."
+  ],
+  [
+   "tech_codex_frost_nova",
+   "Codex: Frost nova: a glowing datapad tablet used as a spellbook, ice cyan colours."
+  ],
+  [
+   "tech_codex_toxic_cloud",
+   "Codex: Toxic cloud: a glowing datapad tablet used as a spellbook, toxic green colours."
+  ],
+  [
+   "tech_pyrocite_codex",
+   "Pyrocite codex: a glowing datapad tablet used as a spellbook, molten orange colours."
+  ],
+  [
+   "tech_codex_tidal_surge",
+   "Codex: Tidal surge: a glowing datapad tablet used as a spellbook, sea teal colours."
+  ],
+  [
+   "tech_viridium_codex",
+   "Viridium codex: a glowing datapad tablet used as a spellbook, jungle green colours."
+  ],
+  [
+   "tech_codex_precursor",
+   "Codex: Precursor: a glowing datapad tablet used as a spellbook, precursor bronze colours."
+  ],
+  [
+   "tech_codex_shard_storm",
+   "Codex: Shard storm: a glowing datapad tablet used as a spellbook, prismatic colours."
+  ],
+  [
+   "tech_lumenite_codex",
+   "Lumenite codex: a glowing datapad tablet used as a spellbook, pearl white / prism colours."
+  ],
+  [
+   "tech_codex_event_horizon",
+   "Codex: Event horizon: a glowing datapad tablet used as a spellbook, void black colours."
+  ],
+  [
+   "tech_voidsteel_codex",
+   "Voidsteel codex: a glowing datapad tablet used as a spellbook, violet black colours."
+  ],
+  [
+   "tech_astral_codex",
+   "Astral codex: a glowing datapad tablet used as a spellbook, starfield gold colours."
+  ],
+  [
+   "tech_codex_supernova",
+   "Codex: Supernova: a glowing datapad tablet used as a spellbook, starfield gold colours."
+  ]
+ ]
+}

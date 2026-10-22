@@ -1,0 +1,66 @@
+{
+ "name": "weapon_whip_1",
+ "size": 48,
+ "items": [
+  [
+   "weapon_ferrite_signal_lash",
+   "Ferrite signal lash: a coiled energy whip with handle, rust grey colours."
+  ],
+  [
+   "weapon_cobalt_signal_lash",
+   "Cobalt signal lash: a coiled energy whip with handle, deep blue colours."
+  ],
+  [
+   "weapon_vine_lash",
+   "Vine lash: a coiled energy whip with handle, vine green colours."
+  ],
+  [
+   "weapon_glacial_signal_lash",
+   "Glacial signal lash: a coiled energy whip with handle, ice cyan colours."
+  ],
+  [
+   "weapon_pyrocite_signal_lash",
+   "Pyrocite signal lash: a coiled energy whip with handle, molten orange colours."
+  ],
+  [
+   "weapon_spore_tendril",
+   "Spore tendril: a coiled energy whip with handle, spore blue colours."
+  ],
+  [
+   "weapon_uranium_signal_lash",
+   "Uranium signal lash: a coiled energy whip with handle, toxic green colours."
+  ],
+  [
+   "weapon_hive_lash",
+   "Hive lash: a coiled energy whip with handle, honey amber colours."
+  ],
+  [
+   "weapon_viridium_signal_lash",
+   "Viridium signal lash: a coiled energy whip with handle, jungle green colours."
+  ],
+  [
+   "weapon_lumenite_signal_lash",
+   "Lumenite signal lash: a coiled energy whip with handle, pearl white / prism colours."
+  ],
+  [
+   "weapon_prism_ribbon",
+   "Prism ribbon: a coiled energy whip with handle, prismatic colours."
+  ],
+  [
+   "weapon_void_tether",
+   "Void tether: a coiled energy whip with handle, void violet colours."
+  ],
+  [
+   "weapon_voidsteel_signal_lash",
+   "Voidsteel signal lash: a coiled energy whip with handle, violet black colours."
+  ],
+  [
+   "weapon_astral_signal_lash",
+   "Astral signal lash: a coiled energy whip with handle, starfield gold colours."
+  ],
+  [
+   "weapon_starlash",
+   "Starlash: a coiled energy whip with handle, starfield gold colours."
+  ]
+ ]
+}

@@ -1,0 +1,70 @@
+{
+ "name": "tool_pick_1",
+ "size": 48,
+ "items": [
+  [
+   "tool_ferrite_pick",
+   "Ferrite pick: a mining drill or pickaxe, diagonal, rust grey colours."
+  ],
+  [
+   "tool_prospector_pick",
+   "Prospector's pick: a mining drill or pickaxe, diagonal, brass colours."
+  ],
+  [
+   "tool_cobalt_pick",
+   "Cobalt pick: a mining drill or pickaxe, diagonal, deep blue colours."
+  ],
+  [
+   "tool_coral_pick",
+   "Coral pick: a mining drill or pickaxe, diagonal, coral pink colours."
+  ],
+  [
+   "tool_dronecore_drill",
+   "Drone-core drill: a mining drill or pickaxe, diagonal, mining yellow colours."
+  ],
+  [
+   "tool_glacial_pick",
+   "Glacial pick: a mining drill or pickaxe, diagonal, ice cyan colours."
+  ],
+  [
+   "tool_meteorite_pick",
+   "Meteorite pick: a mining drill or pickaxe, diagonal, charred crimson colours."
+  ],
+  [
+   "tool_pyrocite_pick",
+   "Pyrocite pick: a mining drill or pickaxe, diagonal, molten orange colours."
+  ],
+  [
+   "tool_uranium_pick",
+   "Uranium pick: a mining drill or pickaxe, diagonal, toxic green colours."
+  ],
+  [
+   "tool_viridium_pick",
+   "Viridium pick: a mining drill or pickaxe, diagonal, jungle green colours."
+  ],
+  [
+   "tool_claimjumper_drill",
+   "Claim-jumper drill: a mining drill or pickaxe, diagonal, mining yellow colours."
+  ],
+  [
+   "tool_lumenite_pick",
+   "Lumenite pick: a mining drill or pickaxe, diagonal, pearl white / prism colours."
+  ],
+  [
+   "tool_prism_bore",
+   "Prism bore: a mining drill or pickaxe, diagonal, prismatic colours."
+  ],
+  [
+   "tool_void_auger",
+   "Void auger: a mining drill or pickaxe, diagonal, void violet colours."
+  ],
+  [
+   "tool_voidsteel_pick",
+   "Voidsteel pick: a mining drill or pickaxe, diagonal, violet black colours."
+  ],
+  [
+   "tool_astral_pick",
+   "Astral pick: a mining drill or pickaxe, diagonal, starfield gold colours."
+  ]
+ ]
+}

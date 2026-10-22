@@ -1,0 +1,70 @@
+{
+ "name": "weapon_thrown_1",
+ "size": 48,
+ "items": [
+  [
+   "weapon_ferrite_javelin",
+   "Ferrite javelin: a throwing weapon (knife, star or grenade), rust grey colours."
+  ],
+  [
+   "weapon_ferrite_throwing_knife",
+   "Ferrite throwing knife: a throwing weapon (knife, star or grenade), rust grey colours."
+  ],
+  [
+   "weapon_frag_grenade",
+   "Frag grenade: a throwing weapon (knife, star or grenade), olive colours."
+  ],
+  [
+   "weapon_acid_flask",
+   "Acid flask: a throwing weapon (knife, star or grenade), acid green colours."
+  ],
+  [
+   "weapon_cobalt_javelin",
+   "Cobalt javelin: a throwing weapon (knife, star or grenade), deep blue colours."
+  ],
+  [
+   "weapon_cobalt_throwing_knife",
+   "Cobalt throwing knife: a throwing weapon (knife, star or grenade), deep blue colours."
+  ],
+  [
+   "weapon_emp_charge",
+   "EMP charge: a throwing weapon (knife, star or grenade), electric blue colours."
+  ],
+  [
+   "weapon_razor_star",
+   "Razor star: a throwing weapon (knife, star or grenade), steel blue colours."
+  ],
+  [
+   "weapon_sticky_mine",
+   "Sticky mine: a throwing weapon (knife, star or grenade), hazard orange colours."
+  ],
+  [
+   "weapon_cryo_grenade",
+   "Cryo grenade: a throwing weapon (knife, star or grenade), ice cyan colours."
+  ],
+  [
+   "weapon_glacial_javelin",
+   "Glacial javelin: a throwing weapon (knife, star or grenade), ice cyan colours."
+  ],
+  [
+   "weapon_glacial_throwing_knife",
+   "Glacial throwing knife: a throwing weapon (knife, star or grenade), ice cyan colours."
+  ],
+  [
+   "weapon_incendiary_grenade",
+   "Incendiary grenade: a throwing weapon (knife, star or grenade), fire red colours."
+  ],
+  [
+   "weapon_pyrocite_javelin",
+   "Pyrocite javelin: a throwing weapon (knife, star or grenade), molten orange colours."
+  ],
+  [
+   "weapon_pyrocite_throwing_knife",
+   "Pyrocite throwing knife: a throwing weapon (knife, star or grenade), molten orange colours."
+  ],
+  [
+   "weapon_spore_bomb",
+   "Spore bomb: a throwing weapon (knife, star or grenade), spore blue colours."
+  ]
+ ]
+}

@@ -1,0 +1,70 @@
+{
+ "name": "weapon_summonstaff_1",
+ "size": 48,
+ "items": [
+  [
+   "cmd_ferrite_drone_uplink",
+   "Ferrite drone uplink: a drone control remote with antenna, rust grey colours."
+  ],
+  [
+   "cmd_ferrite_familiar_core",
+   "Ferrite familiar core: a drone control remote with antenna, rust grey colours."
+  ],
+  [
+   "cmd_cobalt_drone_uplink",
+   "Cobalt drone uplink: a drone control remote with antenna, deep blue colours."
+  ],
+  [
+   "cmd_cobalt_familiar_core",
+   "Cobalt familiar core: a drone control remote with antenna, deep blue colours."
+  ],
+  [
+   "cmd_coral_bell",
+   "Coral jelly bell: a drone control remote with antenna, coral pink colours."
+  ],
+  [
+   "cmd_glacial_drone_uplink",
+   "Glacial drone uplink: a drone control remote with antenna, ice cyan colours."
+  ],
+  [
+   "cmd_glacial_familiar_core",
+   "Glacial familiar core: a drone control remote with antenna, ice cyan colours."
+  ],
+  [
+   "cmd_pyrocite_drone_uplink",
+   "Pyrocite drone uplink: a drone control remote with antenna, molten orange colours."
+  ],
+  [
+   "cmd_pyrocite_familiar_core",
+   "Pyrocite familiar core: a drone control remote with antenna, molten orange colours."
+  ],
+  [
+   "cmd_spore_lantern",
+   "Spore lantern: a drone control remote with antenna, spore blue colours."
+  ],
+  [
+   "cmd_uranium_drone_uplink",
+   "Uranium drone uplink: a drone control remote with antenna, toxic green colours."
+  ],
+  [
+   "cmd_uranium_familiar_core",
+   "Uranium familiar core: a drone control remote with antenna, toxic green colours."
+  ],
+  [
+   "cmd_hive_scepter",
+   "Hive scepter: a drone control remote with antenna, honey amber colours."
+  ],
+  [
+   "cmd_swarm_crown",
+   "Swarm crown: a drone control remote with antenna, hazard yellow colours."
+  ],
+  [
+   "cmd_viridium_drone_uplink",
+   "Viridium drone uplink: a drone control remote with antenna, jungle green colours."
+  ],
+  [
+   "cmd_viridium_familiar_core",
+   "Viridium familiar core: a drone control remote with antenna, jungle green colours."
+  ]
+ ]
+}

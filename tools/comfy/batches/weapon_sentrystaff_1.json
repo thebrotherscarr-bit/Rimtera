@@ -1,0 +1,46 @@
+{
+ "name": "weapon_sentrystaff_1",
+ "size": 48,
+ "items": [
+  [
+   "cmd_cobalt_sentry_kit",
+   "Cobalt sentry kit: a folded turret deployment kit, deep blue colours."
+  ],
+  [
+   "cmd_furnace_sentry_kit",
+   "Furnace sentry kit: a folded turret deployment kit, basalt / lava colours."
+  ],
+  [
+   "cmd_pyrocite_sentry_kit",
+   "Pyrocite sentry kit: a folded turret deployment kit, molten orange colours."
+  ],
+  [
+   "cmd_overseer_watchtower",
+   "Overseer watchtower: a folded turret deployment kit, officer red colours."
+  ],
+  [
+   "cmd_viridium_sentry_kit",
+   "Viridium sentry kit: a folded turret deployment kit, jungle green colours."
+  ],
+  [
+   "cmd_lumenite_sentry_kit",
+   "Lumenite sentry kit: a folded turret deployment kit, pearl white / prism colours."
+  ],
+  [
+   "cmd_warship_flak_kit",
+   "Warship flak kit: a folded turret deployment kit, navy grey colours."
+  ],
+  [
+   "cmd_mothership_pylon",
+   "Mothership pylon: a folded turret deployment kit, alien chrome colours."
+  ],
+  [
+   "cmd_voidsteel_sentry_kit",
+   "Voidsteel sentry kit: a folded turret deployment kit, violet black colours."
+  ],
+  [
+   "cmd_astral_sentry_kit",
+   "Astral sentry kit: a folded turret deployment kit, starfield gold colours."
+  ]
+ ]
+}

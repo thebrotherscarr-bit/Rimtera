@@ -1,0 +1,70 @@
+{
+ "name": "weapon_gun_1",
+ "size": 48,
+ "items": [
+  [
+   "weapon_ferrite_battle_rifle",
+   "Ferrite battle rifle: a sci-fi blaster gun, side view facing right, rust grey colours."
+  ],
+  [
+   "weapon_ferrite_sidearm",
+   "Ferrite sidearm: a sci-fi blaster gun, side view facing right, rust grey colours."
+  ],
+  [
+   "weapon_sentinel_handcannon",
+   "Sentinel hand-cannon: a sci-fi blaster gun, side view facing right, basalt grey colours."
+  ],
+  [
+   "weapon_cobalt_battle_rifle",
+   "Cobalt battle rifle: a sci-fi blaster gun, side view facing right, deep blue colours."
+  ],
+  [
+   "weapon_cobalt_sidearm",
+   "Cobalt sidearm: a sci-fi blaster gun, side view facing right, deep blue colours."
+  ],
+  [
+   "weapon_scout_autopistol",
+   "Scout autopistol: a sci-fi blaster gun, side view facing right, olive drab colours."
+  ],
+  [
+   "weapon_geiger_rifle",
+   "Geiger rifle: a sci-fi blaster gun, side view facing right, toxic green colours."
+  ],
+  [
+   "weapon_glacial_sidearm",
+   "Glacial sidearm: a sci-fi blaster gun, side view facing right, ice cyan colours."
+  ],
+  [
+   "weapon_pyrocite_battle_rifle",
+   "Pyrocite battle rifle: a sci-fi blaster gun, side view facing right, molten orange colours."
+  ],
+  [
+   "weapon_pyrocite_sidearm",
+   "Pyrocite sidearm: a sci-fi blaster gun, side view facing right, molten orange colours."
+  ],
+  [
+   "weapon_uranium_sidearm",
+   "Uranium sidearm: a sci-fi blaster gun, side view facing right, toxic green colours."
+  ],
+  [
+   "weapon_overseer_pistol",
+   "Overseer's service pistol: a sci-fi blaster gun, side view facing right, officer red colours."
+  ],
+  [
+   "weapon_viridium_battle_rifle",
+   "Viridium battle rifle: a sci-fi blaster gun, side view facing right, jungle green colours."
+  ],
+  [
+   "weapon_viridium_sidearm",
+   "Viridium sidearm: a sci-fi blaster gun, side view facing right, jungle green colours."
+  ],
+  [
+   "weapon_captains_blaster",
+   "Captain's blaster: a sci-fi blaster gun, side view facing right, pirate gold colours."
+  ],
+  [
+   "weapon_lumenite_battle_rifle",
+   "Lumenite battle rifle: a sci-fi blaster gun, side view facing right, pearl white / prism colours."
+  ]
+ ]
+}

@@ -1,0 +1,18 @@
+{
+ "name": "armor_canopy_stalker_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_canopy_stalker_leggings",
+   "Canopy stalker leggings: a sci-fi armor piece: canopy-stalker, leaf green colours."
+  ],
+  [
+   "armor_canopy_stalker_vest",
+   "Canopy stalker flak vest: a sci-fi armor piece: canopy-stalker, leaf green colours."
+  ],
+  [
+   "armor_canopy_stalker_visor",
+   "Canopy stalker visor: a sci-fi armor piece: canopy-stalker, leaf green colours."
+  ]
+ ]
+}

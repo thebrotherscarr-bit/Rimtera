@@ -1,0 +1,18 @@
+{
+ "name": "armor_uranium_swarmlord_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_uranium_swarmlord_boots",
+   "Uranium swarmlord boots: a sci-fi armor piece: uranium-swarmlord, toxic green colours."
+  ],
+  [
+   "armor_uranium_swarmlord_headset",
+   "Uranium swarmlord headset: a sci-fi armor piece: uranium-swarmlord, toxic green colours."
+  ],
+  [
+   "armor_uranium_swarmlord_mantle",
+   "Uranium swarmlord mantle: a sci-fi armor piece: uranium-swarmlord, toxic green colours."
+  ]
+ ]
+}

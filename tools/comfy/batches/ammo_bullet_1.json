@@ -1,0 +1,66 @@
+{
+ "name": "ammo_bullet_1",
+ "size": 48,
+ "items": [
+  [
+   "ammo_tracer_rounds",
+   "Tracer rounds: a small stack of bullets, tracer orange colours."
+  ],
+  [
+   "ammo_cobalt_rounds",
+   "Cobalt rounds: a small stack of bullets, deep blue colours."
+  ],
+  [
+   "ammo_hollow_point_rounds",
+   "Hollow-point rounds: a small stack of bullets, gunmetal colours."
+  ],
+  [
+   "ammo_cryo_slugs",
+   "Cryo slugs: a small stack of bullets, ice cyan colours."
+  ],
+  [
+   "ammo_incendiary_rounds",
+   "Incendiary rounds: a small stack of bullets, fire red colours."
+  ],
+  [
+   "ammo_meteorite_rounds",
+   "Meteorite rounds: a small stack of bullets, charred crimson colours."
+  ],
+  [
+   "ammo_purifier_rounds",
+   "Purifier rounds: a small stack of bullets, clean white colours."
+  ],
+  [
+   "ammo_venom_rounds",
+   "Venom rounds: a small stack of bullets, toxic green colours."
+  ],
+  [
+   "ammo_flechette_rounds",
+   "Flechette rounds: a small stack of bullets, needle steel colours."
+  ],
+  [
+   "ammo_viridium_rounds",
+   "Viridium rounds: a small stack of bullets, jungle green colours."
+  ],
+  [
+   "ammo_explosive_rounds",
+   "Explosive rounds: a small stack of bullets, hazard orange colours."
+  ],
+  [
+   "ammo_lumenite_rounds",
+   "Lumenite rounds: a small stack of bullets, pearl white colours."
+  ],
+  [
+   "ammo_seeker_rounds",
+   "Seeker rounds: a small stack of bullets, signal red colours."
+  ],
+  [
+   "ammo_voidsteel_rounds",
+   "Voidsteel rounds: a small stack of bullets, violet black colours."
+  ],
+  [
+   "ammo_astral_rounds",
+   "Astral rounds: a small stack of bullets, starfield gold colours."
+  ]
+ ]
+}

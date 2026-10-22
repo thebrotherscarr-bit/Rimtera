@@ -1,0 +1,70 @@
+{
+ "name": "weapon_broadsword_2",
+ "size": 64,
+ "items": [
+  [
+   "weapon_pyrocite_greatblade",
+   "Pyrocite greatblade: a sci-fi broadsword, blade pointing up-right diagonally, molten orange colours."
+  ],
+  [
+   "weapon_pyrocite_longblade",
+   "Pyrocite longblade: a sci-fi broadsword, blade pointing up-right diagonally, molten orange colours."
+  ],
+  [
+   "weapon_rimeheart_blade",
+   "Rimeheart blade: a sci-fi broadsword, blade pointing up-right diagonally, frost white colours."
+  ],
+  [
+   "weapon_uranium_arc_saber",
+   "Uranium arc-saber: a sci-fi broadsword, blade pointing up-right diagonally, toxic green colours."
+  ],
+  [
+   "weapon_uranium_greatblade",
+   "Uranium greatblade: a sci-fi broadsword, blade pointing up-right diagonally, toxic green colours."
+  ],
+  [
+   "weapon_uranium_longblade",
+   "Uranium longblade: a sci-fi broadsword, blade pointing up-right diagonally, toxic green colours."
+  ],
+  [
+   "weapon_warlords_headsman",
+   "Warlord's headsman: a sci-fi broadsword, blade pointing up-right diagonally, scrap iron colours."
+  ],
+  [
+   "weapon_hivequeen_carver",
+   "Hive-queen's carver: a sci-fi broadsword, blade pointing up-right diagonally, honey amber colours."
+  ],
+  [
+   "weapon_viridium_arc_saber",
+   "Viridium arc-saber: a sci-fi broadsword, blade pointing up-right diagonally, jungle green colours."
+  ],
+  [
+   "weapon_viridium_greatblade",
+   "Viridium greatblade: a sci-fi broadsword, blade pointing up-right diagonally, jungle green colours."
+  ],
+  [
+   "weapon_viridium_longblade",
+   "Viridium longblade: a sci-fi broadsword, blade pointing up-right diagonally, jungle green colours."
+  ],
+  [
+   "weapon_eclipse_reaver",
+   "Eclipse reaver: a sci-fi broadsword, blade pointing up-right diagonally, eclipse black / corona colours."
+  ],
+  [
+   "weapon_lumenite_arc_saber",
+   "Lumenite arc-saber: a sci-fi broadsword, blade pointing up-right diagonally, pearl white / prism colours."
+  ],
+  [
+   "weapon_lumenite_greatblade",
+   "Lumenite greatblade: a sci-fi broadsword, blade pointing up-right diagonally, pearl white / prism colours."
+  ],
+  [
+   "weapon_lumenite_longblade",
+   "Lumenite longblade: a sci-fi broadsword, blade pointing up-right diagonally, pearl white / prism colours."
+  ],
+  [
+   "weapon_prism_razor",
+   "Prism razor: a sci-fi broadsword, blade pointing up-right diagonally, prismatic colours."
+  ]
+ ]
+}

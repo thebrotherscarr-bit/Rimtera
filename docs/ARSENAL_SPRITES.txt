@@ -1,0 +1,802 @@
+Rimtera arsenal pass: sprite names for every new item (kitbash list; no art exists yet).
+Convention: SpriteCatalog.ForItem -> snake_case of the ItemId; art may live under the listed prefix
+(weapon_/tool_/armor_/ammo_/item_/tech_/cmd_) - the base name is the snake_case id.
+Columns: tier | sprite base name | suggested prefixed file | display name | material / tier colour
+
+== weapon/Broadsword (40) ==
+  T1 | ferrite_arc_saber                | weapon_ferrite_arc_saber               | Ferrite arc-saber              | rust grey
+  T1 | ferrite_greatblade               | weapon_ferrite_greatblade              | Ferrite greatblade             | rust grey
+  T1 | ferrite_longblade                | weapon_ferrite_longblade               | Ferrite longblade              | rust grey
+  T1 | rustfang_cleaver                 | weapon_rustfang_cleaver                | Rustfang cleaver               | rusted orange
+  T1 | sentinel_edge                    | weapon_sentinel_edge                   | Sentinel's edge                | basalt grey, cyan runes
+  T2 | cobalt_arc_saber                 | weapon_cobalt_arc_saber                | Cobalt arc-saber               | deep blue
+  T2 | cobalt_greatblade                | weapon_cobalt_greatblade               | Cobalt greatblade              | deep blue
+  T2 | cobalt_longblade                 | weapon_cobalt_longblade                | Cobalt longblade               | deep blue
+  T2 | skitterscale_sword               | weapon_skitterscale_sword              | Skitterscale sword             | chitin brown
+  T2 | thornvine_blade                  | weapon_thornvine_blade                 | Thornvine blade                | vine green
+  T3 | glacial_arc_saber                | weapon_glacial_arc_saber               | Glacial arc-saber              | ice cyan
+  T3 | glacial_greatblade               | weapon_glacial_greatblade              | Glacial greatblade             | ice cyan
+  T3 | glacial_longblade                | weapon_glacial_longblade               | Glacial longblade              | ice cyan
+  T3 | magma_brand                      | weapon_magma_brand                     | Magma brand                    | lava orange
+  T3 | mycelium_greatblade              | weapon_mycelium_greatblade             | Mycelium greatblade            | spore blue
+  T3 | pyrocite_arc_saber               | weapon_pyrocite_arc_saber              | Pyrocite arc-saber             | molten orange
+  T3 | pyrocite_greatblade              | weapon_pyrocite_greatblade             | Pyrocite greatblade            | molten orange
+  T3 | pyrocite_longblade               | weapon_pyrocite_longblade              | Pyrocite longblade             | molten orange
+  T3 | rimeheart_blade                  | weapon_rimeheart_blade                 | Rimeheart blade                | frost white
+  T3 | uranium_arc_saber                | weapon_uranium_arc_saber               | Uranium arc-saber              | toxic green
+  T3 | uranium_greatblade               | weapon_uranium_greatblade              | Uranium greatblade             | toxic green
+  T3 | uranium_longblade                | weapon_uranium_longblade               | Uranium longblade              | toxic green
+  T3 | warlords_headsman                | weapon_warlords_headsman               | Warlord's headsman             | scrap iron
+  T4 | hivequeen_carver                 | weapon_hivequeen_carver                | Hive-queen's carver            | honey amber
+  T4 | viridium_arc_saber               | weapon_viridium_arc_saber              | Viridium arc-saber             | jungle green
+  T4 | viridium_greatblade              | weapon_viridium_greatblade             | Viridium greatblade            | jungle green
+  T4 | viridium_longblade               | weapon_viridium_longblade              | Viridium longblade             | jungle green
+  T5 | eclipse_reaver                   | weapon_eclipse_reaver                  | Eclipse reaver                 | eclipse black / corona
+  T5 | lumenite_arc_saber               | weapon_lumenite_arc_saber              | Lumenite arc-saber             | pearl white / prism
+  T5 | lumenite_greatblade              | weapon_lumenite_greatblade             | Lumenite greatblade            | pearl white / prism
+  T5 | lumenite_longblade               | weapon_lumenite_longblade              | Lumenite longblade             | pearl white / prism
+  T5 | prism_razor                      | weapon_prism_razor                     | Prism razor                    | prismatic
+  T6 | vaultbreaker                     | weapon_vaultbreaker                    | Vaultbreaker                   | precursor bronze
+  T6 | voidsteel_arc_saber              | weapon_voidsteel_arc_saber             | Voidsteel arc-saber            | violet black
+  T6 | voidsteel_greatblade             | weapon_voidsteel_greatblade            | Voidsteel greatblade           | violet black
+  T6 | voidsteel_longblade              | weapon_voidsteel_longblade             | Voidsteel longblade            | violet black
+  T7 | astral_arc_saber                 | weapon_astral_arc_saber                | Astral arc-saber               | starfield gold
+  T7 | astral_greatblade                | weapon_astral_greatblade               | Astral greatblade              | starfield gold
+  T7 | astral_longblade                 | weapon_astral_longblade                | Astral longblade               | starfield gold
+  T7 | starforged_claymore              | weapon_starforged_claymore             | Starforged claymore            | starfield gold
+
+== weapon/Shortsword (10) ==
+  T1 | ferrite_stiletto                 | weapon_ferrite_stiletto                | Ferrite stiletto               | rust grey
+  T2 | cobalt_stiletto                  | weapon_cobalt_stiletto                 | Cobalt stiletto                | deep blue
+  T2 | coral_fang                       | weapon_coral_fang                      | Coral fang                     | coral pink
+  T3 | pyrocite_stiletto                | weapon_pyrocite_stiletto               | Pyrocite stiletto              | molten orange
+  T4 | splice_needle                    | weapon_splice_needle                   | Splice needle                  | bio green
+  T4 | viridium_stiletto                | weapon_viridium_stiletto               | Viridium stiletto              | jungle green
+  T5 | lumenite_stiletto                | weapon_lumenite_stiletto               | Lumenite stiletto              | pearl white / prism
+  T6 | phase_dirk                       | weapon_phase_dirk                      | Phase dirk                     | spectral violet
+  T6 | voidsteel_stiletto               | weapon_voidsteel_stiletto              | Voidsteel stiletto             | violet black
+  T7 | astral_stiletto                  | weapon_astral_stiletto                 | Astral stiletto                | starfield gold
+
+== weapon/Spear (15) ==
+  T1 | ferrite_arc_spear                | weapon_ferrite_arc_spear               | Ferrite arc-spear              | rust grey
+  T2 | cobalt_arc_spear                 | weapon_cobalt_arc_spear                | Cobalt arc-spear               | deep blue
+  T2 | harpoon_lance                    | weapon_harpoon_lance                   | Harpoon lance                  | brass and rope
+  T2 | scoutmech_pike                   | weapon_scoutmech_pike                  | Scout-mech pike                | olive drab
+  T3 | glacial_arc_spear                | weapon_glacial_arc_spear               | Glacial arc-spear              | ice cyan
+  T3 | pyrocite_arc_spear               | weapon_pyrocite_arc_spear              | Pyrocite arc-spear             | molten orange
+  T3 | uranium_arc_spear                | weapon_uranium_arc_spear               | Uranium arc-spear              | toxic green
+  T4 | overseer_halberd                 | weapon_overseer_halberd                | Overseer halberd               | officer red
+  T4 | viridium_arc_spear               | weapon_viridium_arc_spear              | Viridium arc-spear             | jungle green
+  T5 | lumenite_arc_spear               | weapon_lumenite_arc_spear              | Lumenite arc-spear             | pearl white / prism
+  T5 | protocol_glaive                  | weapon_protocol_glaive                 | Protocol glaive                | circuit teal
+  T5 | solar_partisan                   | weapon_solar_partisan                  | Solar partisan                 | solar yellow
+  T6 | leviathan_tine                   | weapon_leviathan_tine                  | Leviathan's tine               | abyss blue
+  T6 | voidsteel_arc_spear              | weapon_voidsteel_arc_spear             | Voidsteel arc-spear            | violet black
+  T7 | astral_arc_spear                 | weapon_astral_arc_spear                | Astral arc-spear               | starfield gold
+
+== weapon/Yoyo (18) ==
+  T1 | ferrite_spinner                  | weapon_ferrite_spinner                 | Ferrite spinner                | rust grey
+  T1 | silkspool                        | weapon_silkspool                       | Silkspool                      | silk white
+  T2 | cobalt_spinner                   | weapon_cobalt_spinner                  | Cobalt spinner                 | deep blue
+  T2 | geode_gyro                       | weapon_geode_gyro                      | Geode gyro                     | amethyst
+  T3 | glacial_spinner                  | weapon_glacial_spinner                 | Glacial spinner                | ice cyan
+  T3 | meteorite_spinner                | weapon_meteorite_spinner               | Meteorite spinner              | charred crimson
+  T3 | pyrocite_spinner                 | weapon_pyrocite_spinner                | Pyrocite spinner               | molten orange
+  T3 | sporepuff_gyro                   | weapon_sporepuff_gyro                  | Spore-puff gyro                | spore blue
+  T3 | uranium_spinner                  | weapon_uranium_spinner                 | Uranium spinner                | toxic green
+  T4 | flora_gyre                       | weapon_flora_gyre                      | Flora gyre                     | mutant magenta
+  T4 | swarm_gyro                       | weapon_swarm_gyro                      | Swarm gyro                     | hazard yellow
+  T4 | viridium_spinner                 | weapon_viridium_spinner                | Viridium spinner               | jungle green
+  T5 | corsair_top                      | weapon_corsair_top                     | Corsair's top                  | pirate red
+  T5 | halo_gyre                        | weapon_halo_gyre                       | Halo gyre                      | halo gold
+  T5 | lumenite_spinner                 | weapon_lumenite_spinner                | Lumenite spinner               | pearl white / prism
+  T6 | singularity_spinner              | weapon_singularity_spinner             | Singularity spinner            | void black
+  T6 | voidsteel_spinner                | weapon_voidsteel_spinner               | Voidsteel spinner              | violet black
+  T7 | astral_spinner                   | weapon_astral_spinner                  | Astral spinner                 | starfield gold
+
+== weapon/Boomerang (10) ==
+  T1 | ferrite_glaive_disc              | weapon_ferrite_glaive_disc             | Ferrite glaive-disc            | rust grey
+  T1 | scrap_chakram                    | weapon_scrap_chakram                   | Scrap chakram                  | scrap iron
+  T2 | cobalt_glaive_disc               | weapon_cobalt_glaive_disc              | Cobalt glaive-disc             | deep blue
+  T3 | frost_crescent                   | weapon_frost_crescent                  | Frost crescent                 | ice cyan
+  T3 | pyrocite_glaive_disc             | weapon_pyrocite_glaive_disc            | Pyrocite glaive-disc           | molten orange
+  T4 | viridium_glaive_disc             | weapon_viridium_glaive_disc            | Viridium glaive-disc           | jungle green
+  T5 | aurora_ring                      | weapon_aurora_ring                     | Aurora ring                    | aurora green-violet
+  T5 | lumenite_glaive_disc             | weapon_lumenite_glaive_disc            | Lumenite glaive-disc           | pearl white / prism
+  T6 | voidsteel_glaive_disc            | weapon_voidsteel_glaive_disc           | Voidsteel glaive-disc          | violet black
+  T7 | astral_glaive_disc               | weapon_astral_glaive_disc              | Astral glaive-disc             | starfield gold
+
+== weapon/Flail (12) ==
+  T1 | ferrite_chain_mace               | weapon_ferrite_chain_mace              | Ferrite chain-mace             | rust grey
+  T2 | cobalt_chain_mace                | weapon_cobalt_chain_mace               | Cobalt chain-mace              | deep blue
+  T2 | wrecking_orb                     | weapon_wrecking_orb                    | Wrecking orb                   | mining yellow
+  T3 | glacial_chain_mace               | weapon_glacial_chain_mace              | Glacial chain-mace             | ice cyan
+  T3 | magma_flail                      | weapon_magma_flail                     | Magma flail                    | lava orange
+  T3 | pyrocite_chain_mace              | weapon_pyrocite_chain_mace             | Pyrocite chain-mace            | molten orange
+  T3 | uranium_chain_mace               | weapon_uranium_chain_mace              | Uranium chain-mace             | toxic green
+  T4 | viridium_chain_mace              | weapon_viridium_chain_mace             | Viridium chain-mace            | jungle green
+  T5 | lumenite_chain_mace              | weapon_lumenite_chain_mace             | Lumenite chain-mace            | pearl white / prism
+  T5 | meteor_chain                     | weapon_meteor_chain                    | Meteor chain                   | meteor crimson
+  T6 | voidsteel_chain_mace             | weapon_voidsteel_chain_mace            | Voidsteel chain-mace           | violet black
+  T7 | astral_chain_mace                | weapon_astral_chain_mace               | Astral chain-mace              | starfield gold
+
+== weapon/Whip (15) ==
+  T1 | ferrite_signal_lash              | weapon_ferrite_signal_lash             | Ferrite signal lash            | rust grey
+  T2 | cobalt_signal_lash               | weapon_cobalt_signal_lash              | Cobalt signal lash             | deep blue
+  T2 | vine_lash                        | weapon_vine_lash                       | Vine lash                      | vine green
+  T3 | glacial_signal_lash              | weapon_glacial_signal_lash             | Glacial signal lash            | ice cyan
+  T3 | pyrocite_signal_lash             | weapon_pyrocite_signal_lash            | Pyrocite signal lash           | molten orange
+  T3 | spore_tendril                    | weapon_spore_tendril                   | Spore tendril                  | spore blue
+  T3 | uranium_signal_lash              | weapon_uranium_signal_lash             | Uranium signal lash            | toxic green
+  T4 | hive_lash                        | weapon_hive_lash                       | Hive lash                      | honey amber
+  T4 | viridium_signal_lash             | weapon_viridium_signal_lash            | Viridium signal lash           | jungle green
+  T5 | lumenite_signal_lash             | weapon_lumenite_signal_lash            | Lumenite signal lash           | pearl white / prism
+  T5 | prism_ribbon                     | weapon_prism_ribbon                    | Prism ribbon                   | prismatic
+  T5 | void_tether                      | weapon_void_tether                     | Void tether                    | void violet
+  T6 | voidsteel_signal_lash            | weapon_voidsteel_signal_lash           | Voidsteel signal lash          | violet black
+  T7 | astral_signal_lash               | weapon_astral_signal_lash              | Astral signal lash             | starfield gold
+  T7 | starlash                         | weapon_starlash                        | Starlash                       | starfield gold
+
+== weapon/Bow (30) ==
+  T1 | ferrite_pulse_repeater           | weapon_ferrite_pulse_repeater          | Ferrite pulse repeater         | rust grey
+  T1 | ferrite_rail_bow                 | weapon_ferrite_rail_bow                | Ferrite rail-bow               | rust grey
+  T1 | hunters_recurve                  | weapon_hunters_recurve                 | Hunter's recurve               | timber brown
+  T2 | cobalt_pulse_repeater            | weapon_cobalt_pulse_repeater           | Cobalt pulse repeater          | deep blue
+  T2 | cobalt_rail_bow                  | weapon_cobalt_rail_bow                 | Cobalt rail-bow                | deep blue
+  T2 | thornshot                        | weapon_thornshot                       | Thornshot                      | vine green
+  T3 | cinder_repeater                  | weapon_cinder_repeater                 | Cinder repeater                | ember red
+  T3 | frostbite_longbow                | weapon_frostbite_longbow               | Frostbite longbow              | ice cyan
+  T3 | glacial_pulse_repeater           | weapon_glacial_pulse_repeater          | Glacial pulse repeater         | ice cyan
+  T3 | glacial_rail_bow                 | weapon_glacial_rail_bow                | Glacial rail-bow               | ice cyan
+  T3 | pyrocite_pulse_repeater          | weapon_pyrocite_pulse_repeater         | Pyrocite pulse repeater        | molten orange
+  T3 | pyrocite_rail_bow                | weapon_pyrocite_rail_bow               | Pyrocite rail-bow              | molten orange
+  T3 | uranium_pulse_repeater           | weapon_uranium_pulse_repeater          | Uranium pulse repeater         | toxic green
+  T3 | uranium_rail_bow                 | weapon_uranium_rail_bow                | Uranium rail-bow               | toxic green
+  T4 | canopy_longbow                   | weapon_canopy_longbow                  | Canopy longbow                 | leaf green
+  T4 | stinger_bow                      | weapon_stinger_bow                     | Stinger bow                    | honey amber
+  T4 | viridium_pulse_repeater          | weapon_viridium_pulse_repeater         | Viridium pulse repeater        | jungle green
+  T4 | viridium_rail_bow                | weapon_viridium_rail_bow               | Viridium rail-bow              | jungle green
+  T5 | corsair_crossbow                 | weapon_corsair_crossbow                | Corsair crossbow               | pirate red
+  T5 | crystal_harpbow                  | weapon_crystal_harpbow                 | Crystal harp-bow               | prismatic
+  T5 | eclipse_longbow                  | weapon_eclipse_longbow                 | Eclipse longbow                | eclipse black
+  T5 | lumenite_pulse_repeater          | weapon_lumenite_pulse_repeater         | Lumenite pulse repeater        | pearl white / prism
+  T5 | lumenite_rail_bow                | weapon_lumenite_rail_bow               | Lumenite rail-bow              | pearl white / prism
+  T5 | storm_repeater                   | weapon_storm_repeater                  | Storm repeater                 | storm blue
+  T6 | vault_ballista                   | weapon_vault_ballista                  | Vault ballista                 | precursor bronze
+  T6 | voidsteel_pulse_repeater         | weapon_voidsteel_pulse_repeater        | Voidsteel pulse repeater       | violet black
+  T6 | voidsteel_rail_bow               | weapon_voidsteel_rail_bow              | Voidsteel rail-bow             | violet black
+  T7 | astral_pulse_repeater            | weapon_astral_pulse_repeater           | Astral pulse repeater          | starfield gold
+  T7 | astral_rail_bow                  | weapon_astral_rail_bow                 | Astral rail-bow                | starfield gold
+  T7 | nova_arc                         | weapon_nova_arc                        | Nova arc                       | starfield gold
+
+== weapon/Gun (22) ==
+  T1 | ferrite_battle_rifle             | weapon_ferrite_battle_rifle            | Ferrite battle rifle           | rust grey
+  T1 | ferrite_sidearm                  | weapon_ferrite_sidearm                 | Ferrite sidearm                | rust grey
+  T1 | sentinel_handcannon              | weapon_sentinel_handcannon             | Sentinel hand-cannon           | basalt grey
+  T2 | cobalt_battle_rifle              | weapon_cobalt_battle_rifle             | Cobalt battle rifle            | deep blue
+  T2 | cobalt_sidearm                   | weapon_cobalt_sidearm                  | Cobalt sidearm                 | deep blue
+  T2 | scout_autopistol                 | weapon_scout_autopistol                | Scout autopistol               | olive drab
+  T3 | geiger_rifle                     | weapon_geiger_rifle                    | Geiger rifle                   | toxic green
+  T3 | glacial_sidearm                  | weapon_glacial_sidearm                 | Glacial sidearm                | ice cyan
+  T3 | pyrocite_battle_rifle            | weapon_pyrocite_battle_rifle           | Pyrocite battle rifle          | molten orange
+  T3 | pyrocite_sidearm                 | weapon_pyrocite_sidearm                | Pyrocite sidearm               | molten orange
+  T3 | uranium_sidearm                  | weapon_uranium_sidearm                 | Uranium sidearm                | toxic green
+  T4 | overseer_pistol                  | weapon_overseer_pistol                 | Overseer's service pistol      | officer red
+  T4 | viridium_battle_rifle            | weapon_viridium_battle_rifle           | Viridium battle rifle          | jungle green
+  T4 | viridium_sidearm                 | weapon_viridium_sidearm                | Viridium sidearm               | jungle green
+  T5 | captains_blaster                 | weapon_captains_blaster                | Captain's blaster              | pirate gold
+  T5 | lumenite_battle_rifle            | weapon_lumenite_battle_rifle           | Lumenite battle rifle          | pearl white / prism
+  T5 | lumenite_sidearm                 | weapon_lumenite_sidearm                | Lumenite sidearm               | pearl white / prism
+  T6 | mothership_railcannon            | weapon_mothership_railcannon           | Mothership railcannon          | alien chrome
+  T6 | voidsteel_battle_rifle           | weapon_voidsteel_battle_rifle          | Voidsteel battle rifle         | violet black
+  T6 | voidsteel_sidearm                | weapon_voidsteel_sidearm               | Voidsteel sidearm              | violet black
+  T7 | astral_battle_rifle              | weapon_astral_battle_rifle             | Astral battle rifle            | starfield gold
+  T7 | astral_sidearm                   | weapon_astral_sidearm                  | Astral sidearm                 | starfield gold
+
+== weapon/Shotgun (8) ==
+  T2 | cobalt_scattergun                | weapon_cobalt_scattergun               | Cobalt scattergun              | deep blue
+  T3 | pyrocite_scattergun              | weapon_pyrocite_scattergun             | Pyrocite scattergun            | molten orange
+  T4 | swarmbuster                      | weapon_swarmbuster                     | Swarmbuster                    | hazard yellow
+  T4 | viridium_scattergun              | weapon_viridium_scattergun             | Viridium scattergun            | jungle green
+  T5 | abomination_maw                  | weapon_abomination_maw                 | Abomination's maw              | flesh red
+  T5 | boarding_blunderbuss             | weapon_boarding_blunderbuss            | Boarding blunderbuss           | pirate brass
+  T6 | voidsteel_scattergun             | weapon_voidsteel_scattergun            | Voidsteel scattergun           | violet black
+  T7 | astral_scattergun                | weapon_astral_scattergun               | Astral scattergun              | starfield gold
+
+== weapon/Launcher (12) ==
+  T2 | cobalt_launcher                  | weapon_cobalt_launcher                 | Cobalt launcher                | deep blue
+  T3 | demolition_tube                  | weapon_demolition_tube                 | Demolition tube                | hazard orange
+  T3 | meteorite_launcher               | weapon_meteorite_launcher              | Meteorite launcher             | charred crimson
+  T3 | pyrocite_launcher                | weapon_pyrocite_launcher               | Pyrocite launcher              | molten orange
+  T4 | viridium_launcher                | weapon_viridium_launcher               | Viridium launcher              | jungle green
+  T5 | dreadnought_broadside            | weapon_dreadnought_broadside           | Dreadnought broadside          | pirate brass
+  T5 | lumenite_launcher                | weapon_lumenite_launcher               | Lumenite launcher              | pearl white / prism
+  T5 | miners_blaster                   | weapon_miners_blaster                  | Miner's blaster                | mining yellow
+  T5 | warship_cannon                   | weapon_warship_cannon                  | Warship cannon                 | navy grey
+  T6 | voidsteel_launcher               | weapon_voidsteel_launcher              | Voidsteel launcher             | violet black
+  T7 | astral_launcher                  | weapon_astral_launcher                 | Astral launcher                | starfield gold
+  T7 | starfall_launcher                | weapon_starfall_launcher               | Starfall launcher              | starfield gold
+
+== weapon/Thrown (30) ==
+  T1 | ferrite_javelin                  | weapon_ferrite_javelin                 | Ferrite javelin                | rust grey
+  T1 | ferrite_throwing_knife           | weapon_ferrite_throwing_knife          | Ferrite throwing knife         | rust grey
+  T1 | frag_grenade                     | weapon_frag_grenade                    | Frag grenade                   | olive
+  T2 | acid_flask                       | weapon_acid_flask                      | Acid flask                     | acid green
+  T2 | cobalt_javelin                   | weapon_cobalt_javelin                  | Cobalt javelin                 | deep blue
+  T2 | cobalt_throwing_knife            | weapon_cobalt_throwing_knife           | Cobalt throwing knife          | deep blue
+  T2 | emp_charge                       | weapon_emp_charge                      | EMP charge                     | electric blue
+  T2 | razor_star                       | weapon_razor_star                      | Razor star                     | steel blue
+  T2 | sticky_mine                      | weapon_sticky_mine                     | Sticky mine                    | hazard orange
+  T3 | cryo_grenade                     | weapon_cryo_grenade                    | Cryo grenade                   | ice cyan
+  T3 | glacial_javelin                  | weapon_glacial_javelin                 | Glacial javelin                | ice cyan
+  T3 | glacial_throwing_knife           | weapon_glacial_throwing_knife          | Glacial throwing knife         | ice cyan
+  T3 | incendiary_grenade               | weapon_incendiary_grenade              | Incendiary grenade             | fire red
+  T3 | pyrocite_javelin                 | weapon_pyrocite_javelin                | Pyrocite javelin               | molten orange
+  T3 | pyrocite_throwing_knife          | weapon_pyrocite_throwing_knife         | Pyrocite throwing knife        | molten orange
+  T3 | spore_bomb                       | weapon_spore_bomb                      | Spore bomb                     | spore blue
+  T3 | uranium_javelin                  | weapon_uranium_javelin                 | Uranium javelin                | toxic green
+  T3 | uranium_throwing_knife           | weapon_uranium_throwing_knife          | Uranium throwing knife         | toxic green
+  T4 | viridium_javelin                 | weapon_viridium_javelin                | Viridium javelin               | jungle green
+  T4 | viridium_throwing_knife          | weapon_viridium_throwing_knife         | Viridium throwing knife        | jungle green
+  T5 | lumenite_javelin                 | weapon_lumenite_javelin                | Lumenite javelin               | pearl white / prism
+  T5 | lumenite_throwing_knife          | weapon_lumenite_throwing_knife         | Lumenite throwing knife        | pearl white / prism
+  T5 | plasma_grenade                   | weapon_plasma_grenade                  | Plasma grenade                 | plasma pink
+  T5 | shard_caltrops                   | weapon_shard_caltrops                  | Shard caltrops                 | prismatic
+  T6 | void_grenade                     | weapon_void_grenade                    | Void grenade                   | void violet
+  T6 | voidsteel_javelin                | weapon_voidsteel_javelin               | Voidsteel javelin              | violet black
+  T6 | voidsteel_throwing_knife         | weapon_voidsteel_throwing_knife        | Voidsteel throwing knife       | violet black
+  T7 | astral_javelin                   | weapon_astral_javelin                  | Astral javelin                 | starfield gold
+  T7 | astral_throwing_knife            | weapon_astral_throwing_knife           | Astral throwing knife          | starfield gold
+  T7 | star_shuriken                    | weapon_star_shuriken                   | Star shuriken                  | starfield gold
+
+== weapon/Staff (35) ==
+  T1 | ferrite_emitter_staff            | tech_ferrite_emitter_staff             | Ferrite emitter staff          | rust grey
+  T1 | ferrite_focus_rod                | tech_ferrite_focus_rod                 | Ferrite focus rod              | rust grey
+  T1 | sentinel_sceptre                 | tech_sentinel_sceptre                  | Sentinel's sceptre             | basalt grey
+  T2 | cobalt_emitter_staff             | tech_cobalt_emitter_staff              | Cobalt emitter staff           | deep blue
+  T2 | cobalt_focus_rod                 | tech_cobalt_focus_rod                  | Cobalt focus rod               | deep blue
+  T2 | drillcore_rod                    | tech_drillcore_rod                     | Drill-core rod                 | mining yellow
+  T2 | overgrowth_staff                 | tech_overgrowth_staff                  | Overgrowth staff               | vine green
+  T3 | cryolance_staff                  | tech_cryolance_staff                   | Cryolance staff                | ice cyan
+  T3 | glacial_emitter_staff            | tech_glacial_emitter_staff             | Glacial emitter staff          | ice cyan
+  T3 | glacial_focus_rod                | tech_glacial_focus_rod                 | Glacial focus rod              | ice cyan
+  T3 | meteorite_emitter_staff          | tech_meteorite_emitter_staff           | Meteorite emitter staff        | charred crimson
+  T3 | meteorite_focus_rod              | tech_meteorite_focus_rod               | Meteorite focus rod            | charred crimson
+  T3 | mycelium_staff                   | tech_mycelium_staff                    | Mycelium staff                 | spore blue
+  T3 | pyrocite_emitter_staff           | tech_pyrocite_emitter_staff            | Pyrocite emitter staff         | molten orange
+  T3 | pyrocite_focus_rod               | tech_pyrocite_focus_rod                | Pyrocite focus rod             | molten orange
+  T3 | scrap_tesla_rod                  | tech_scrap_tesla_rod                   | Scrap tesla rod                | scrap iron
+  T3 | uranium_emitter_staff            | tech_uranium_emitter_staff             | Uranium emitter staff          | toxic green
+  T3 | uranium_focus_rod                | tech_uranium_focus_rod                 | Uranium focus rod              | toxic green
+  T4 | bloom_wand                       | tech_bloom_wand                        | Bloom wand                     | mutant magenta
+  T4 | mooneater_staff                  | tech_mooneater_staff                   | Moon-eater staff               | lunar silver
+  T4 | swarm_sceptre                    | tech_swarm_sceptre                     | Swarm sceptre                  | hazard yellow
+  T4 | viridium_emitter_staff           | tech_viridium_emitter_staff            | Viridium emitter staff         | jungle green
+  T4 | viridium_focus_rod               | tech_viridium_focus_rod                | Viridium focus rod             | jungle green
+  T5 | lumenite_emitter_staff           | tech_lumenite_emitter_staff            | Lumenite emitter staff         | pearl white / prism
+  T5 | lumenite_focus_rod               | tech_lumenite_focus_rod                | Lumenite focus rod             | pearl white / prism
+  T5 | protocol_staff                   | tech_protocol_staff                    | Protocol staff                 | circuit teal
+  T5 | solar_sceptre                    | tech_solar_sceptre                     | Solar sceptre                  | solar yellow
+  T5 | warp_staff                       | tech_warp_staff                        | Warp staff                     | void violet
+  T5 | wisp_staff                       | tech_wisp_staff                        | Wisp staff                     | spectral violet
+  T6 | vault_resonator                  | tech_vault_resonator                   | Vault resonator                | precursor bronze
+  T6 | voidsteel_emitter_staff          | tech_voidsteel_emitter_staff           | Voidsteel emitter staff        | violet black
+  T6 | voidsteel_focus_rod              | tech_voidsteel_focus_rod               | Voidsteel focus rod            | violet black
+  T7 | astral_emitter_staff             | tech_astral_emitter_staff              | Astral emitter staff           | starfield gold
+  T7 | astral_focus_rod                 | tech_astral_focus_rod                  | Astral focus rod               | starfield gold
+  T7 | cosmos_staff                     | tech_cosmos_staff                      | Cosmos staff                   | starfield gold
+
+== weapon/Tome (15) ==
+  T1 | ferrite_codex                    | tech_ferrite_codex                     | Ferrite codex                  | rust grey
+  T2 | cobalt_codex                     | tech_cobalt_codex                      | Cobalt codex                   | deep blue
+  T3 | codex_ember_swarm                | tech_codex_ember_swarm                 | Codex: Ember swarm             | ember red
+  T3 | codex_frost_nova                 | tech_codex_frost_nova                  | Codex: Frost nova              | ice cyan
+  T3 | codex_toxic_cloud                | tech_codex_toxic_cloud                 | Codex: Toxic cloud             | toxic green
+  T3 | pyrocite_codex                   | tech_pyrocite_codex                    | Pyrocite codex                 | molten orange
+  T4 | codex_tidal_surge                | tech_codex_tidal_surge                 | Codex: Tidal surge             | sea teal
+  T4 | viridium_codex                   | tech_viridium_codex                    | Viridium codex                 | jungle green
+  T5 | codex_precursor                  | tech_codex_precursor                   | Codex: Precursor               | precursor bronze
+  T5 | codex_shard_storm                | tech_codex_shard_storm                 | Codex: Shard storm             | prismatic
+  T5 | lumenite_codex                   | tech_lumenite_codex                    | Lumenite codex                 | pearl white / prism
+  T6 | codex_event_horizon              | tech_codex_event_horizon               | Codex: Event horizon           | void black
+  T6 | voidsteel_codex                  | tech_voidsteel_codex                   | Voidsteel codex                | violet black
+  T7 | astral_codex                     | tech_astral_codex                      | Astral codex                   | starfield gold
+  T7 | codex_supernova                  | tech_codex_supernova                   | Codex: Supernova               | starfield gold
+
+== weapon/Beam (10) ==
+  T2 | cobalt_beam_projector            | tech_cobalt_beam_projector             | Cobalt beam projector          | deep blue
+  T3 | gamma_ray                        | tech_gamma_ray                         | Gamma ray                      | toxic green
+  T3 | pyrocite_beam_projector          | tech_pyrocite_beam_projector           | Pyrocite beam projector        | molten orange
+  T4 | viridium_beam_projector          | tech_viridium_beam_projector           | Viridium beam projector        | jungle green
+  T5 | lumenite_beam_projector          | tech_lumenite_beam_projector           | Lumenite beam projector        | pearl white / prism
+  T5 | prism_lance                      | tech_prism_lance                       | Prism lance                    | prismatic
+  T5 | solar_ray                        | tech_solar_ray                         | Solar ray                      | solar yellow
+  T6 | mothership_lance                 | tech_mothership_lance                  | Mothership lance               | alien chrome
+  T6 | voidsteel_beam_projector         | tech_voidsteel_beam_projector          | Voidsteel beam projector       | violet black
+  T7 | astral_beam_projector            | tech_astral_beam_projector             | Astral beam projector          | starfield gold
+
+== weapon/SummonStaff (25) ==
+  T1 | ferrite_drone_uplink             | cmd_ferrite_drone_uplink               | Ferrite drone uplink           | rust grey
+  T1 | ferrite_familiar_core            | cmd_ferrite_familiar_core              | Ferrite familiar core          | rust grey
+  T2 | cobalt_drone_uplink              | cmd_cobalt_drone_uplink                | Cobalt drone uplink            | deep blue
+  T2 | cobalt_familiar_core             | cmd_cobalt_familiar_core               | Cobalt familiar core           | deep blue
+  T2 | coral_bell                       | cmd_coral_bell                         | Coral jelly bell               | coral pink
+  T3 | glacial_drone_uplink             | cmd_glacial_drone_uplink               | Glacial drone uplink           | ice cyan
+  T3 | glacial_familiar_core            | cmd_glacial_familiar_core              | Glacial familiar core          | ice cyan
+  T3 | pyrocite_drone_uplink            | cmd_pyrocite_drone_uplink              | Pyrocite drone uplink          | molten orange
+  T3 | pyrocite_familiar_core           | cmd_pyrocite_familiar_core             | Pyrocite familiar core         | molten orange
+  T3 | spore_lantern                    | cmd_spore_lantern                      | Spore lantern                  | spore blue
+  T3 | uranium_drone_uplink             | cmd_uranium_drone_uplink               | Uranium drone uplink           | toxic green
+  T3 | uranium_familiar_core            | cmd_uranium_familiar_core              | Uranium familiar core          | toxic green
+  T4 | hive_scepter                     | cmd_hive_scepter                       | Hive scepter                   | honey amber
+  T4 | swarm_crown                      | cmd_swarm_crown                        | Swarm crown                    | hazard yellow
+  T4 | viridium_drone_uplink            | cmd_viridium_drone_uplink              | Viridium drone uplink          | jungle green
+  T4 | viridium_familiar_core           | cmd_viridium_familiar_core             | Viridium familiar core         | jungle green
+  T5 | corsair_drone_deck               | cmd_corsair_drone_deck                 | Corsair drone deck             | pirate red
+  T5 | lumenite_drone_uplink            | cmd_lumenite_drone_uplink              | Lumenite drone uplink          | pearl white / prism
+  T5 | lumenite_familiar_core           | cmd_lumenite_familiar_core             | Lumenite familiar core         | pearl white / prism
+  T5 | prism_lantern                    | cmd_prism_lantern                      | Prism lantern                  | prismatic
+  T6 | voidsteel_drone_uplink           | cmd_voidsteel_drone_uplink             | Voidsteel drone uplink         | violet black
+  T6 | voidsteel_familiar_core          | cmd_voidsteel_familiar_core            | Voidsteel familiar core        | violet black
+  T7 | astral_drone_uplink              | cmd_astral_drone_uplink                | Astral drone uplink            | starfield gold
+  T7 | astral_familiar_core             | cmd_astral_familiar_core               | Astral familiar core           | starfield gold
+  T7 | guardian_array                   | cmd_guardian_array                     | Guardian array                 | starfield gold
+
+== weapon/SentryStaff (10) ==
+  T2 | cobalt_sentry_kit                | cmd_cobalt_sentry_kit                  | Cobalt sentry kit              | deep blue
+  T3 | furnace_sentry_kit               | cmd_furnace_sentry_kit                 | Furnace sentry kit             | basalt / lava
+  T3 | pyrocite_sentry_kit              | cmd_pyrocite_sentry_kit                | Pyrocite sentry kit            | molten orange
+  T4 | overseer_watchtower              | cmd_overseer_watchtower                | Overseer watchtower            | officer red
+  T4 | viridium_sentry_kit              | cmd_viridium_sentry_kit                | Viridium sentry kit            | jungle green
+  T5 | lumenite_sentry_kit              | cmd_lumenite_sentry_kit                | Lumenite sentry kit            | pearl white / prism
+  T5 | warship_flak_kit                 | cmd_warship_flak_kit                   | Warship flak kit               | navy grey
+  T6 | mothership_pylon                 | cmd_mothership_pylon                   | Mothership pylon               | alien chrome
+  T6 | voidsteel_sentry_kit             | cmd_voidsteel_sentry_kit               | Voidsteel sentry kit           | violet black
+  T7 | astral_sentry_kit                | cmd_astral_sentry_kit                  | Astral sentry kit              | starfield gold
+
+== tool/pick (16) ==
+  T1 | ferrite_pick                     | tool_ferrite_pick                      | Ferrite pick                   | rust grey
+  T1 | prospector_pick                  | tool_prospector_pick                   | Prospector's pick              | brass
+  T2 | cobalt_pick                      | tool_cobalt_pick                       | Cobalt pick                    | deep blue
+  T2 | coral_pick                       | tool_coral_pick                        | Coral pick                     | coral pink
+  T2 | dronecore_drill                  | tool_dronecore_drill                   | Drone-core drill               | mining yellow
+  T3 | glacial_pick                     | tool_glacial_pick                      | Glacial pick                   | ice cyan
+  T3 | meteorite_pick                   | tool_meteorite_pick                    | Meteorite pick                 | charred crimson
+  T3 | pyrocite_pick                    | tool_pyrocite_pick                     | Pyrocite pick                  | molten orange
+  T3 | uranium_pick                     | tool_uranium_pick                      | Uranium pick                   | toxic green
+  T4 | viridium_pick                    | tool_viridium_pick                     | Viridium pick                  | jungle green
+  T5 | claimjumper_drill                | tool_claimjumper_drill                 | Claim-jumper drill             | mining yellow
+  T5 | lumenite_pick                    | tool_lumenite_pick                     | Lumenite pick                  | pearl white / prism
+  T5 | prism_bore                       | tool_prism_bore                        | Prism bore                     | prismatic
+  T6 | void_auger                       | tool_void_auger                        | Void auger                     | void violet
+  T6 | voidsteel_pick                   | tool_voidsteel_pick                    | Voidsteel pick                 | violet black
+  T7 | astral_pick                      | tool_astral_pick                       | Astral pick                    | starfield gold
+
+== tool/hatchet (13) ==
+  T1 | ferrite_hatchet                  | tool_ferrite_hatchet                   | Ferrite hatchet                | rust grey
+  T2 | cobalt_hatchet                   | tool_cobalt_hatchet                    | Cobalt hatchet                 | deep blue
+  T2 | overgrowth_reaper                | tool_overgrowth_reaper                 | Overgrowth reaper              | vine green
+  T3 | chain_cutter                     | tool_chain_cutter                      | Chain cutter                   | hazard orange
+  T3 | glacial_hatchet                  | tool_glacial_hatchet                   | Glacial hatchet                | ice cyan
+  T3 | meteorite_hatchet                | tool_meteorite_hatchet                 | Meteorite hatchet              | charred crimson
+  T3 | pyrocite_hatchet                 | tool_pyrocite_hatchet                  | Pyrocite hatchet               | molten orange
+  T3 | uranium_hatchet                  | tool_uranium_hatchet                   | Uranium hatchet                | toxic green
+  T4 | viridium_hatchet                 | tool_viridium_hatchet                  | Viridium hatchet               | jungle green
+  T5 | lumenite_hatchet                 | tool_lumenite_hatchet                  | Lumenite hatchet               | pearl white / prism
+  T5 | plasma_saw                       | tool_plasma_saw                        | Plasma saw                     | plasma pink
+  T6 | voidsteel_hatchet                | tool_voidsteel_hatchet                 | Voidsteel hatchet              | violet black
+  T7 | astral_hatchet                   | tool_astral_hatchet                    | Astral hatchet                 | starfield gold
+
+== tool/breaker (8) ==
+  T3 | glacial_breaker                  | tool_glacial_breaker                   | Glacial breaker                | ice cyan
+  T3 | meteorite_breaker                | tool_meteorite_breaker                 | Meteorite breaker              | charred crimson
+  T3 | pyrocite_breaker                 | tool_pyrocite_breaker                  | Pyrocite breaker               | molten orange
+  T3 | uranium_breaker                  | tool_uranium_breaker                   | Uranium breaker                | toxic green
+  T3 | wreckers_maul                    | tool_wreckers_maul                     | Wrecker's maul                 | scrap iron
+  T4 | seismic_hammer                   | tool_seismic_hammer                    | Seismic hammer                 | jungle green
+  T6 | gravity_breaker                  | tool_gravity_breaker                   | Gravity breaker                | void violet
+  T7 | astral_sledge                    | tool_astral_sledge                     | Astral sledge                  | starfield gold
+
+== ammo/Arrow (11) ==
+  T1 | ferrite_bolts                    | ammo_ferrite_bolts                     | Ferrite bolts                  | rust grey
+  T2 | cobalt_bolts                     | ammo_cobalt_bolts                      | Cobalt bolts                   | deep blue
+  T3 | glacial_bolts                    | ammo_glacial_bolts                     | Glacial bolts                  | ice cyan
+  T3 | pyrocite_bolts                   | ammo_pyrocite_bolts                    | Pyrocite bolts                 | molten orange
+  T3 | uranium_bolts                    | ammo_uranium_bolts                     | Uranium bolts                  | toxic green
+  T4 | seeker_bolts                     | ammo_seeker_bolts                      | Seeker bolts                   | signal red
+  T4 | viridium_bolts                   | ammo_viridium_bolts                    | Viridium bolts                 | jungle green
+  T5 | lumenite_bolts                   | ammo_lumenite_bolts                    | Lumenite bolts                 | pearl white
+  T5 | shard_bolts                      | ammo_shard_bolts                       | Shard bolts                    | prismatic
+  T6 | voidsteel_bolts                  | ammo_voidsteel_bolts                   | Voidsteel bolts                | violet black
+  T7 | astral_bolts                     | ammo_astral_bolts                      | Astral bolts                   | starfield gold
+
+== ammo/Bullet (15) ==
+  T1 | tracer_rounds                    | ammo_tracer_rounds                     | Tracer rounds                  | tracer orange
+  T2 | cobalt_rounds                    | ammo_cobalt_rounds                     | Cobalt rounds                  | deep blue
+  T2 | hollow_point_rounds              | ammo_hollow_point_rounds               | Hollow-point rounds            | gunmetal
+  T3 | cryo_slugs                       | ammo_cryo_slugs                        | Cryo slugs                     | ice cyan
+  T3 | incendiary_rounds                | ammo_incendiary_rounds                 | Incendiary rounds              | fire red
+  T3 | meteorite_rounds                 | ammo_meteorite_rounds                  | Meteorite rounds               | charred crimson
+  T3 | purifier_rounds                  | ammo_purifier_rounds                   | Purifier rounds                | clean white
+  T3 | venom_rounds                     | ammo_venom_rounds                      | Venom rounds                   | toxic green
+  T4 | flechette_rounds                 | ammo_flechette_rounds                  | Flechette rounds               | needle steel
+  T4 | viridium_rounds                  | ammo_viridium_rounds                   | Viridium rounds                | jungle green
+  T5 | explosive_rounds                 | ammo_explosive_rounds                  | Explosive rounds               | hazard orange
+  T5 | lumenite_rounds                  | ammo_lumenite_rounds                   | Lumenite rounds                | pearl white
+  T6 | seeker_rounds                    | ammo_seeker_rounds                     | Seeker rounds                  | signal red
+  T6 | voidsteel_rounds                 | ammo_voidsteel_rounds                  | Voidsteel rounds               | violet black
+  T7 | astral_rounds                    | ammo_astral_rounds                     | Astral rounds                  | starfield gold
+
+== ammo/Rocket (7) ==
+  T3 | frag_rocket                      | ammo_frag_rocket                       | Frag rocket                    | olive
+  T4 | cryo_rocket                      | ammo_cryo_rocket                       | Cryo rocket                    | ice cyan
+  T4 | incendiary_rocket                | ammo_incendiary_rocket                 | Incendiary rocket              | fire red
+  T5 | breacher_rocket                  | ammo_breacher_rocket                   | Breacher rocket                | gunmetal
+  T5 | cluster_rocket                   | ammo_cluster_rocket                    | Cluster rocket                 | hazard orange
+  T6 | void_rocket                      | ammo_void_rocket                       | Void rocket                    | void violet
+  T7 | astral_rocket                    | ammo_astral_rocket                     | Astral rocket                  | starfield gold
+
+== ammo/Dart (6) ==
+  T1 | barbed_darts                     | ammo_barbed_darts                      | Barbed darts                   | timber brown
+  T3 | cryo_darts                       | ammo_cryo_darts                        | Cryo darts                     | ice cyan
+  T3 | ember_darts                      | ammo_ember_darts                       | Ember darts                    | ember red
+  T3 | venom_darts                      | ammo_venom_darts                       | Venom darts                    | toxic green
+  T5 | crystal_darts                    | ammo_crystal_darts                     | Crystal darts                  | prismatic
+  T6 | void_darts                       | ammo_void_darts                        | Void darts                     | void violet
+
+== ammo/Fuel (6) ==
+  T1 | gel_fuel                         | ammo_gel_fuel                          | Gel fuel                       | gel blue
+  T3 | cryo_coolant                     | ammo_cryo_coolant                      | Cryo coolant                   | ice cyan
+  T3 | pyro_gel                         | ammo_pyro_gel                          | Pyro gel                       | fire red
+  T5 | plasma_fuel                      | ammo_plasma_fuel                       | Plasma fuel                    | plasma pink
+  T6 | void_fuel                        | ammo_void_fuel                         | Void fuel                      | void violet
+  T7 | astral_fuel                      | ammo_astral_fuel                       | Astral fuel                    | starfield gold
+
+== ammo/Cell (2) ==
+  T4 | overcharged_cell                 | ammo_overcharged_cell                  | Overcharged cell               | electric blue
+  T5 | prism_cell                       | ammo_prism_cell                        | Prism cell                     | prismatic
+
+== armor/scrap-salvager (3) ==
+  T1 | scrap_salvager_boots             | armor_scrap_salvager_boots             | Scrap salvager boots           | scrap iron
+  T1 | scrap_salvager_mask              | armor_scrap_salvager_mask              | Scrap salvager mask            | scrap iron
+  T1 | scrap_salvager_suit              | armor_scrap_salvager_suit              | Scrap salvager suit            | scrap iron
+
+== armor/ferrite-brawler (3) ==
+  T1 | ferrite_brawler_cuirass          | armor_ferrite_brawler_cuirass          | Ferrite brawler cuirass        | rust grey
+  T1 | ferrite_brawler_greaves          | armor_ferrite_brawler_greaves          | Ferrite brawler greaves        | rust grey
+  T1 | ferrite_brawler_helm             | armor_ferrite_brawler_helm             | Ferrite brawler helm           | rust grey
+
+== armor/ferrite-gunner (3) ==
+  T1 | ferrite_gunner_leggings          | armor_ferrite_gunner_leggings          | Ferrite gunner leggings        | rust grey / khaki
+  T1 | ferrite_gunner_vest              | armor_ferrite_gunner_vest              | Ferrite gunner flak vest       | rust grey / khaki
+  T1 | ferrite_gunner_visor             | armor_ferrite_gunner_visor             | Ferrite gunner visor           | rust grey / khaki
+
+== armor/ferrite-tinker (3) ==
+  T1 | ferrite_tinker_coat              | armor_ferrite_tinker_coat              | Ferrite tinker coat            | rust grey / teal
+  T1 | ferrite_tinker_hood              | armor_ferrite_tinker_hood              | Ferrite tinker hood            | rust grey / teal
+  T1 | ferrite_tinker_treads            | armor_ferrite_tinker_treads            | Ferrite tinker treads          | rust grey / teal
+
+== armor/ferrite-wrangler (3) ==
+  T1 | ferrite_wrangler_boots           | armor_ferrite_wrangler_boots           | Ferrite wrangler boots         | rust grey / green
+  T1 | ferrite_wrangler_headset         | armor_ferrite_wrangler_headset         | Ferrite wrangler headset       | rust grey / green
+  T1 | ferrite_wrangler_mantle          | armor_ferrite_wrangler_mantle          | Ferrite wrangler mantle        | rust grey / green
+
+== armor/cobalt-vanguard (3) ==
+  T2 | cobalt_vanguard_cuirass          | armor_cobalt_vanguard_cuirass          | Cobalt vanguard cuirass        | deep blue
+  T2 | cobalt_vanguard_greaves          | armor_cobalt_vanguard_greaves          | Cobalt vanguard greaves        | deep blue
+  T2 | cobalt_vanguard_helm             | armor_cobalt_vanguard_helm             | Cobalt vanguard helm           | deep blue
+
+== armor/cobalt-sharpshooter (3) ==
+  T2 | cobalt_sharpshooter_leggings     | armor_cobalt_sharpshooter_leggings     | Cobalt sharpshooter leggings   | deep blue / khaki
+  T2 | cobalt_sharpshooter_vest         | armor_cobalt_sharpshooter_vest         | Cobalt sharpshooter flak vest  | deep blue / khaki
+  T2 | cobalt_sharpshooter_visor        | armor_cobalt_sharpshooter_visor        | Cobalt sharpshooter visor      | deep blue / khaki
+
+== armor/cobalt-arcanist (3) ==
+  T2 | cobalt_arcanist_coat             | armor_cobalt_arcanist_coat             | Cobalt arcanist coat           | deep blue / teal
+  T2 | cobalt_arcanist_hood             | armor_cobalt_arcanist_hood             | Cobalt arcanist hood           | deep blue / teal
+  T2 | cobalt_arcanist_treads           | armor_cobalt_arcanist_treads           | Cobalt arcanist treads         | deep blue / teal
+
+== armor/cobalt-conductor (3) ==
+  T2 | cobalt_conductor_boots           | armor_cobalt_conductor_boots           | Cobalt conductor boots         | deep blue / green
+  T2 | cobalt_conductor_headset         | armor_cobalt_conductor_headset         | Cobalt conductor headset       | deep blue / green
+  T2 | cobalt_conductor_mantle          | armor_cobalt_conductor_mantle          | Cobalt conductor mantle        | deep blue / green
+
+== armor/coral-diver (3) ==
+  T2 | coral_diver_boots                | armor_coral_diver_boots                | Coral diver boots              | coral pink
+  T2 | coral_diver_mask                 | armor_coral_diver_mask                 | Coral diver mask               | coral pink
+  T2 | coral_diver_suit                 | armor_coral_diver_suit                 | Coral diver suit               | coral pink
+
+== armor/meteorite-striker (3) ==
+  T3 | meteorite_striker_cuirass        | armor_meteorite_striker_cuirass        | Meteorite striker cuirass      | charred crimson
+  T3 | meteorite_striker_greaves        | armor_meteorite_striker_greaves        | Meteorite striker greaves      | charred crimson
+  T3 | meteorite_striker_helm           | armor_meteorite_striker_helm           | Meteorite striker helm         | charred crimson
+
+== armor/pyrocite-gunslinger (3) ==
+  T3 | pyrocite_gunslinger_leggings     | armor_pyrocite_gunslinger_leggings     | Pyrocite gunslinger leggings   | molten orange
+  T3 | pyrocite_gunslinger_vest         | armor_pyrocite_gunslinger_vest         | Pyrocite gunslinger flak vest  | molten orange
+  T3 | pyrocite_gunslinger_visor        | armor_pyrocite_gunslinger_visor        | Pyrocite gunslinger visor      | molten orange
+
+== armor/glacial-cryomancer (3) ==
+  T3 | glacial_cryomancer_coat          | armor_glacial_cryomancer_coat          | Glacial cryomancer coat        | ice cyan
+  T3 | glacial_cryomancer_hood          | armor_glacial_cryomancer_hood          | Glacial cryomancer hood        | ice cyan
+  T3 | glacial_cryomancer_treads        | armor_glacial_cryomancer_treads        | Glacial cryomancer treads      | ice cyan
+
+== armor/uranium-swarmlord (3) ==
+  T3 | uranium_swarmlord_boots          | armor_uranium_swarmlord_boots          | Uranium swarmlord boots        | toxic green
+  T3 | uranium_swarmlord_headset        | armor_uranium_swarmlord_headset        | Uranium swarmlord headset      | toxic green
+  T3 | uranium_swarmlord_mantle         | armor_uranium_swarmlord_mantle         | Uranium swarmlord mantle       | toxic green
+
+== armor/hive-sentinel (3) ==
+  T4 | hive_sentinel_cuirass            | armor_hive_sentinel_cuirass            | Hive sentinel cuirass          | honey amber
+  T4 | hive_sentinel_greaves            | armor_hive_sentinel_greaves            | Hive sentinel greaves          | honey amber
+  T4 | hive_sentinel_helm               | armor_hive_sentinel_helm               | Hive sentinel helm             | honey amber
+
+== armor/canopy-stalker (3) ==
+  T4 | canopy_stalker_leggings          | armor_canopy_stalker_leggings          | Canopy stalker leggings        | leaf green
+  T4 | canopy_stalker_vest              | armor_canopy_stalker_vest              | Canopy stalker flak vest       | leaf green
+  T4 | canopy_stalker_visor             | armor_canopy_stalker_visor             | Canopy stalker visor           | leaf green
+
+== armor/spore-mystic (3) ==
+  T4 | spore_mystic_coat                | armor_spore_mystic_coat                | Spore mystic coat              | spore blue
+  T4 | spore_mystic_hood                | armor_spore_mystic_hood                | Spore mystic hood              | spore blue
+  T4 | spore_mystic_treads              | armor_spore_mystic_treads              | Spore mystic treads            | spore blue
+
+== armor/coral-tidecaller (3) ==
+  T4 | coral_tidecaller_boots           | armor_coral_tidecaller_boots           | Coral tidecaller boots         | sea teal
+  T4 | coral_tidecaller_headset         | armor_coral_tidecaller_headset         | Coral tidecaller headset       | sea teal
+  T4 | coral_tidecaller_mantle          | armor_coral_tidecaller_mantle          | Coral tidecaller mantle        | sea teal
+
+== armor/prism-knight (3) ==
+  T5 | prism_knight_cuirass             | armor_prism_knight_cuirass             | Prism knight cuirass           | prismatic
+  T5 | prism_knight_greaves             | armor_prism_knight_greaves             | Prism knight greaves           | prismatic
+  T5 | prism_knight_helm                | armor_prism_knight_helm                | Prism knight helm              | prismatic
+
+== armor/crystal-deadeye (3) ==
+  T5 | crystal_deadeye_leggings         | armor_crystal_deadeye_leggings         | Crystal deadeye leggings       | crystal blue
+  T5 | crystal_deadeye_vest             | armor_crystal_deadeye_vest             | Crystal deadeye flak vest      | crystal blue
+  T5 | crystal_deadeye_visor            | armor_crystal_deadeye_visor            | Crystal deadeye visor          | crystal blue
+
+== armor/solar-adept (3) ==
+  T5 | solar_adept_coat                 | armor_solar_adept_coat                 | Solar adept coat               | solar yellow
+  T5 | solar_adept_hood                 | armor_solar_adept_hood                 | Solar adept hood               | solar yellow
+  T5 | solar_adept_treads               | armor_solar_adept_treads               | Solar adept treads             | solar yellow
+
+== armor/storm-marshal (3) ==
+  T5 | storm_marshal_boots              | armor_storm_marshal_boots              | Storm marshal boots            | storm blue
+  T5 | storm_marshal_headset            | armor_storm_marshal_headset            | Storm marshal headset          | storm blue
+  T5 | storm_marshal_mantle             | armor_storm_marshal_mantle             | Storm marshal mantle           | storm blue
+
+== armor/eclipse-revenant (3) ==
+  T6 | eclipse_revenant_cuirass         | armor_eclipse_revenant_cuirass         | Eclipse revenant cuirass       | eclipse black / corona
+  T6 | eclipse_revenant_greaves         | armor_eclipse_revenant_greaves         | Eclipse revenant greaves       | eclipse black / corona
+  T6 | eclipse_revenant_helm            | armor_eclipse_revenant_helm            | Eclipse revenant helm          | eclipse black / corona
+
+== armor/dreadnought-corsair (3) ==
+  T6 | dreadnought_corsair_leggings     | armor_dreadnought_corsair_leggings     | Dreadnought corsair leggings   | pirate red / brass
+  T6 | dreadnought_corsair_vest         | armor_dreadnought_corsair_vest         | Dreadnought corsair flak vest  | pirate red / brass
+  T6 | dreadnought_corsair_visor        | armor_dreadnought_corsair_visor        | Dreadnought corsair visor      | pirate red / brass
+
+== armor/rift-oracle (3) ==
+  T6 | rift_oracle_coat                 | armor_rift_oracle_coat                 | Rift oracle coat               | void violet
+  T6 | rift_oracle_hood                 | armor_rift_oracle_hood                 | Rift oracle hood               | void violet
+  T6 | rift_oracle_treads               | armor_rift_oracle_treads               | Rift oracle treads             | void violet
+
+== armor/mothership-overseer (3) ==
+  T6 | mothership_overseer_boots        | armor_mothership_overseer_boots        | Mothership overseer boots      | alien chrome
+  T6 | mothership_overseer_headset      | armor_mothership_overseer_headset      | Mothership overseer headset    | alien chrome
+  T6 | mothership_overseer_mantle       | armor_mothership_overseer_mantle       | Mothership overseer mantle     | alien chrome
+
+== armor/astral-paragon (3) ==
+  T7 | astral_paragon_boots             | armor_astral_paragon_boots             | Astral paragon boots           | starfield gold / white
+  T7 | astral_paragon_mask              | armor_astral_paragon_mask              | Astral paragon mask            | starfield gold / white
+  T7 | astral_paragon_suit              | armor_astral_paragon_suit              | Astral paragon suit            | starfield gold / white
+
+== accessory (114) ==
+  T1 | headlamp                         | item_headlamp                          | Headlamp                       | themed
+  T1 | kinetic_plate_mk_i               | item_kinetic_plate_mk_i                | Kinetic plate Mk I             | themed
+  T1 | miners_gauntlet                  | item_miners_gauntlet                   | Miner's gauntlet               | themed
+  T1 | sprint_servos_mk_i               | item_sprint_servos_mk_i                | Sprint servos Mk I             | themed
+  T2 | anglers_visor                    | item_anglers_visor                     | Angler's visor                 | themed
+  T2 | ballistics_emblem_mk_i           | item_ballistics_emblem_mk_i            | Ballistics emblem Mk I         | ranged accent
+  T2 | barb_mesh                        | item_barb_mesh                         | Barb mesh                      | themed
+  T2 | capacitor_bank                   | item_capacitor_bank                    | Capacitor bank                 | themed
+  T2 | close_quarters_emblem_mk_i       | item_close_quarters_emblem_mk_i        | Close-quarters emblem Mk I     | melee accent
+  T2 | command_emblem_mk_i              | item_command_emblem_mk_i               | Command emblem Mk I            | command accent
+  T2 | coral_pendant                    | item_coral_pendant                     | Coral pendant                  | coral pink
+  T2 | extender_arm                     | item_extender_arm                      | Extender arm                   | themed
+  T2 | geo_scanner                      | item_geo_scanner                       | Geo-scanner                    | themed
+  T2 | grav_anchor                      | item_grav_anchor                       | Grav anchor                    | themed
+  T2 | grav_damper                      | item_grav_damper                       | Grav damper                    | themed
+  T2 | hydro_skimmers                   | item_hydro_skimmers                    | Hydro skimmers                 | themed
+  T2 | miners_helmet_rig                | item_miners_helmet_rig                 | Miner's helmet rig             | combined: blend of component colours
+  T2 | nano_mender                      | item_nano_mender                       | Nano-mender                    | themed
+  T2 | oxygen_tank                      | item_oxygen_tank                       | Oxygen tank                    | themed
+  T2 | power_glove                      | item_power_glove                       | Power glove                    | themed
+  T2 | tackle_kit                       | item_tackle_kit                        | Tackle kit                     | themed
+  T2 | targeting_lens_mk_i              | item_targeting_lens_mk_i               | Targeting lens Mk I            | themed
+  T2 | tech_emblem_mk_i                 | item_tech_emblem_mk_i                  | Tech emblem Mk I               | tech accent
+  T2 | thermal_sleeve                   | item_thermal_sleeve                    | Thermal sleeve                 | themed
+  T2 | threat_radar                     | item_threat_radar                      | Threat radar                   | themed
+  T2 | tractor_coil                     | item_tractor_coil                      | Tractor coil                   | themed
+  T2 | vital_booster                    | item_vital_booster                     | Vital booster                  | themed
+  T3 | ablative_core                    | item_ablative_core                     | Ablative core                  | themed
+  T3 | blink_module                     | item_blink_module                      | Blink module                   | themed
+  T3 | charge_condenser                 | item_charge_condenser                  | Charge condenser               | themed
+  T3 | cryo_heart                       | item_cryo_heart                        | Cryo heart                     | ice cyan
+  T3 | divers_kit                       | item_divers_kit                        | Diver's kit                    | combined: blend of component colours
+  T3 | ember_heart                      | item_ember_heart                       | Ember heart                    | lava orange
+  T3 | filter_implant                   | item_filter_implant                    | Filter implant                 | themed
+  T3 | flood_visor                      | item_flood_visor                       | Flood visor                    | themed
+  T3 | gill_implant                     | item_gill_implant                      | Gill implant                   | themed
+  T3 | hunters_eye                      | item_hunters_eye                       | Hunter's eye                   | combined: blend of component colours
+  T3 | kinetic_plate_mk_ii              | item_kinetic_plate_mk_ii               | Kinetic plate Mk II            | themed
+  T3 | leech_coil                       | item_leech_coil                        | Leech coil                     | themed
+  T3 | pathfinder_boots                 | item_pathfinder_boots                  | Pathfinder boots               | combined: blend of component colours
+  T3 | rad_battery                      | item_rad_battery                       | Rad battery                    | toxic green
+  T3 | reflex_chip                      | item_reflex_chip                       | Reflex chip                    | themed
+  T3 | sentry_beacon                    | item_sentry_beacon                     | Sentry beacon                  | themed
+  T3 | siphon_coil                      | item_siphon_coil                       | Siphon coil                    | themed
+  T3 | spore_sac                        | item_spore_sac                         | Spore sac                      | spore blue
+  T3 | sprint_servos_mk_ii              | item_sprint_servos_mk_ii               | Sprint servos Mk II            | themed
+  T3 | survey_suite                     | item_survey_suite                      | Survey suite                   | combined: blend of component colours
+  T3 | thermal_regulator                | item_thermal_regulator                 | Thermal regulator              | themed
+  T3 | uplink_antenna                   | item_uplink_antenna                    | Uplink antenna                 | themed
+  T3 | warlords_medal                   | item_warlords_medal                    | Warlord's medal                | scrap iron
+  T4 | arcanists_circlet                | item_arcanists_circlet                 | Arcanist's circlet             | combined: blend of component colours
+  T4 | architects_frame                 | item_architects_frame                  | Architect's frame              | combined: blend of component colours
+  T4 | ballistics_emblem_mk_ii          | item_ballistics_emblem_mk_ii           | Ballistics emblem Mk II        | ranged accent
+  T4 | berserker_rig                    | item_berserker_rig                     | Berserker rig                  | combined: blend of component colours
+  T4 | bio_weave                        | item_bio_weave                         | Bio-weave                      | themed
+  T4 | bulwark_core                     | item_bulwark_core                      | Bulwark core                   | themed
+  T4 | close_quarters_emblem_mk_ii      | item_close_quarters_emblem_mk_ii       | Close-quarters emblem Mk II    | melee accent
+  T4 | command_emblem_mk_ii             | item_command_emblem_mk_ii              | Command emblem Mk II           | command accent
+  T4 | duelist_harness                  | item_duelist_harness                   | Duelist harness                | combined: blend of component colours
+  T4 | environmental_suit               | item_environmental_suit                | Environmental suit             | combined: blend of component colours
+  T4 | excavator_rig                    | item_excavator_rig                     | Excavator rig                  | themed
+  T4 | fortune_matrix                   | item_fortune_matrix                    | Fortune matrix                 | combined: blend of component colours
+  T4 | gunners_harness                  | item_gunners_harness                   | Gunner's harness               | combined: blend of component colours
+  T4 | heart_pump                       | item_heart_pump                        | Heart pump                     | themed
+  T4 | hivecomb_amulet                  | item_hivecomb_amulet                   | Hivecomb amulet                | honey amber
+  T4 | magma_skin                       | item_magma_skin                        | Magma skin                     | themed
+  T4 | master_tackle_kit                | item_master_tackle_kit                 | Master tackle kit              | combined: blend of component colours
+  T4 | mooneater_fang                   | item_mooneater_fang                    | Moon-eater fang                | lunar silver
+  T4 | overseers_monocle                | item_overseers_monocle                 | Overseer's monocle             | officer red
+  T4 | servo_grip                       | item_servo_grip                        | Servo grip                     | themed
+  T4 | spike_lattice                    | item_spike_lattice                     | Spike lattice                  | themed
+  T4 | targeting_lens_mk_ii             | item_targeting_lens_mk_ii              | Targeting lens Mk II           | themed
+  T4 | tech_emblem_mk_ii                | item_tech_emblem_mk_ii                 | Tech emblem Mk II              | tech accent
+  T4 | telescopic_arm                   | item_telescopic_arm                    | Telescopic arm                 | themed
+  T4 | wardens_uplink                   | item_wardens_uplink                    | Warden's uplink                | combined: blend of component colours
+  T5 | arc_battery                      | item_arc_battery                       | Arc battery                    | themed
+  T5 | bulwark_aegis                    | item_bulwark_aegis                     | Bulwark aegis                  | combined: blend of component colours
+  T5 | capacitor_tap                    | item_capacitor_tap                     | Capacitor tap                  | themed
+  T5 | eclipse_sigil                    | item_eclipse_sigil                     | Eclipse sigil                  | eclipse black
+  T5 | empress_tiara                    | item_empress_tiara                     | Empress tiara                  | prismatic
+  T5 | excavation_suite                 | item_excavation_suite                  | Excavation suite               | combined: blend of component colours
+  T5 | inferno_treads                   | item_inferno_treads                    | Inferno treads                 | combined: blend of component colours
+  T5 | kinetic_plate_mk_iii             | item_kinetic_plate_mk_iii              | Kinetic plate Mk III           | themed
+  T5 | lumen_halo                       | item_lumen_halo                        | Lumen halo                     | themed
+  T5 | mobility_rig                     | item_mobility_rig                      | Mobility rig                   | combined: blend of component colours
+  T5 | phase_cloak                      | item_phase_cloak                       | Phase cloak                    | themed
+  T5 | pirates_spyglass                 | item_pirates_spyglass                  | Pirate's spyglass              | pirate brass
+  T5 | prism_brooch                     | item_prism_brooch                      | Prism brooch                   | prismatic
+  T5 | protocol_shard                   | item_protocol_shard                    | Protocol shard                 | circuit teal
+  T5 | retribution_mesh                 | item_retribution_mesh                  | Retribution mesh               | combined: blend of component colours
+  T5 | sanguine_reactor                 | item_sanguine_reactor                  | Sanguine reactor               | combined: blend of component colours
+  T5 | shock_absorber                   | item_shock_absorber                    | Shock absorber                 | themed
+  T5 | sprint_servos_mk_iii             | item_sprint_servos_mk_iii              | Sprint servos Mk III           | themed
+  T5 | swarm_processor                  | item_swarm_processor                   | Swarm processor                | themed
+  T5 | vampiric_chip                    | item_vampiric_chip                     | Vampiric chip                  | themed
+  T5 | vital_core                       | item_vital_core                        | Vital core                     | combined: blend of component colours
+  T5 | void_eye                         | item_void_eye                          | Void eye                       | void violet
+  T6 | ballistics_emblem_mk_iii         | item_ballistics_emblem_mk_iii          | Ballistics emblem Mk III       | ranged accent
+  T6 | close_quarters_emblem_mk_iii     | item_close_quarters_emblem_mk_iii      | Close-quarters emblem Mk III   | melee accent
+  T6 | command_emblem_mk_iii            | item_command_emblem_mk_iii             | Command emblem Mk III          | command accent
+  T6 | ghost_cloak                      | item_ghost_cloak                       | Ghost cloak                    | combined: blend of component colours
+  T6 | hivemind_processor               | item_hivemind_processor                | Hivemind processor             | combined: blend of component colours
+  T6 | leviathan_scale                  | item_leviathan_scale                   | Leviathan scale                | abyss blue
+  T6 | mothership_chip                  | item_mothership_chip                   | Mothership chip                | alien chrome
+  T6 | overload_matrix                  | item_overload_matrix                   | Overload matrix                | combined: blend of component colours
+  T6 | paladins_ward                    | item_paladins_ward                     | Paladin's ward                 | combined: blend of component colours
+  T6 | sniper_scope_rig                 | item_sniper_scope_rig                  | Sniper scope rig               | combined: blend of component colours
+  T6 | storm_capacitor                  | item_storm_capacitor                   | Storm capacitor                | combined: blend of component colours
+  T6 | targeting_lens_mk_iii            | item_targeting_lens_mk_iii             | Targeting lens Mk III          | themed
+  T6 | tech_emblem_mk_iii               | item_tech_emblem_mk_iii                | Tech emblem Mk III             | tech accent
+  T7 | astral_compass                   | item_astral_compass                    | Astral compass                 | starfield gold
+  T7 | juggernaut_core                  | item_juggernaut_core                   | Juggernaut core                | combined: blend of component colours
+  T7 | nova_heart                       | item_nova_heart                        | Nova heart                     | combined: blend of component colours
+  T7 | omni_emblem                      | item_omni_emblem                       | Omni-emblem                    | combined: blend of component colours
+
+== wings (29) ==
+  T1 | ferrite_wingpack                 | item_ferrite_wingpack                  | Ferrite wingpack               | rust grey
+  T2 | cobalt_wingpack                  | item_cobalt_wingpack                   | Cobalt wingpack                | deep blue
+  T2 | mothsilk_wings                   | item_mothsilk_wings                    | Moth-silk wings                | silk white
+  T2 | scrap_wings                      | item_scrap_wings                       | Scrap wings                    | scrap iron
+  T3 | batsail_wings                    | item_batsail_wings                     | Bat-sail wings                 | dusk brown
+  T3 | coral_fin_wings                  | item_coral_fin_wings                   | Coral fin wings                | coral pink
+  T3 | ember_wings                      | item_ember_wings                       | Ember wings                    | ember red
+  T3 | frostfeather_wings               | item_frostfeather_wings                | Frost-feather wings            | ice cyan
+  T3 | glacial_wingpack                 | item_glacial_wingpack                  | Glacial wingpack               | ice cyan
+  T3 | leaf_wings                       | item_leaf_wings                        | Leaf wings                     | leaf green
+  T3 | meteorite_wingpack               | item_meteorite_wingpack                | Meteorite wingpack             | charred crimson
+  T3 | pyrocite_wingpack                | item_pyrocite_wingpack                 | Pyrocite wingpack              | molten orange
+  T3 | spore_wings                      | item_spore_wings                       | Spore wings                    | spore blue
+  T3 | uranium_wingpack                 | item_uranium_wingpack                  | Uranium wingpack               | toxic green
+  T4 | hive_wings                       | item_hive_wings                        | Hive wings                     | honey amber
+  T4 | skyray_wings                     | item_skyray_wings                      | Sky-ray wings                  | sky blue
+  T4 | viridium_wingpack                | item_viridium_wingpack                 | Viridium wingpack              | jungle green
+  T5 | dreadnought_wings                | item_dreadnought_wings                 | Dreadnought wings              | pirate red
+  T5 | eclipse_wings                    | item_eclipse_wings                     | Eclipse wings                  | eclipse black
+  T5 | lumenite_wingpack                | item_lumenite_wingpack                 | Lumenite wingpack              | pearl white / prism
+  T5 | prism_wings                      | item_prism_wings                       | Prism wings                    | prismatic
+  T5 | protocol_wings                   | item_protocol_wings                    | Protocol wings                 | circuit teal
+  T5 | solar_wings                      | item_solar_wings                       | Solar wings                    | solar yellow
+  T5 | storm_wings                      | item_storm_wings                       | Storm wings                    | storm blue
+  T5 | void_wings                       | item_void_wings                        | Void wings                     | void violet
+  T6 | mothership_wings                 | item_mothership_wings                  | Mothership wings               | alien chrome
+  T6 | voidsteel_wingpack               | item_voidsteel_wingpack                | Voidsteel wingpack             | violet black
+  T7 | astral_wingpack                  | item_astral_wingpack                   | Astral wingpack                | starfield gold
+  T7 | nova_wings                       | item_nova_wings                        | Nova wings                     | starfield gold
+
+== potion (39) ==
+  T1 | anglers_brew                     | item_anglers_brew                      | Angler's brew                  | sea blue
+  T1 | builders_brew                    | item_builders_brew                     | Builder's brew                 | timber
+  T1 | featherfall_mist                 | item_featherfall_mist                  | Featherfall mist               | feather white
+  T1 | glow_draught                     | item_glow_draught                      | Glow draught                   | glow white
+  T1 | guard_serum                      | item_guard_serum                       | Guard serum                    | slate
+  T1 | miners_draught                   | item_miners_draught                    | Miner's draught                | brown
+  T1 | night_sight_drops                | item_night_sight_drops                 | Night-sight drops              | night blue
+  T2 | ammo_reserve_tonic               | item_ammo_reserve_tonic                | Ammo-reserve tonic             | brass
+  T2 | ballistics_tonic                 | item_ballistics_tonic                  | Ballistics tonic               | yellow
+  T2 | close_quarters_tonic             | item_close_quarters_tonic              | Close-quarters tonic           | red
+  T2 | command_tonic                    | item_command_tonic                     | Command tonic                  | green
+  T2 | danger_sense_drops               | item_danger_sense_drops                | Danger-sense drops             | violet
+  T2 | deep_scan_vapor                  | item_deep_scan_vapor                   | Deep-scan vapor                | gold
+  T2 | fortify_stim                     | item_fortify_stim                      | Fortify stim                   | grey
+  T2 | gill_draught                     | item_gill_draught                      | Gill draught                   | sea green
+  T2 | inertia_stim                     | item_inertia_stim                      | Inertia stim                   | stone
+  T2 | magnetism_tonic                  | item_magnetism_tonic                   | Magnetism tonic                | magnet red
+  T2 | precision_draught                | item_precision_draught                 | Precision draught              | amber
+  T2 | sprint_stim                      | item_sprint_stim                       | Sprint stim                    | cyan
+  T2 | surface_tension_serum            | item_surface_tension_serum             | Surface-tension serum          | aqua
+  T2 | tech_tonic                       | item_tech_tonic                        | Tech tonic                     | blue
+  T2 | thornskin_serum                  | item_thornskin_serum                   | Thornskin serum                | thorn green
+  T2 | vitality_serum                   | item_vitality_serum                    | Vitality serum                 | pink
+  T3 | drone_link_stim                  | item_drone_link_stim                   | Drone-link stim                | green
+  T3 | endurance_stim                   | item_endurance_stim                    | Endurance stim                 | steel
+  T3 | evasion_serum                    | item_evasion_serum                     | Evasion serum                  | smoke
+  T3 | fireproof_salve                  | item_fireproof_salve                   | Fireproof salve                | obsidian
+  T3 | marathon_stim                    | item_marathon_stim                     | Marathon stim                  | bright cyan
+  T3 | overcharge_cell                  | item_overcharge_cell                   | Overcharge cell                | electric blue
+  T3 | rejuvenation_gel                 | item_rejuvenation_gel                  | Rejuvenation gel               | mint
+  T3 | sentry_link_stim                 | item_sentry_link_stim                  | Sentry-link stim               | olive
+  T4 | heavy_fortify_stim               | item_heavy_fortify_stim                | Heavy fortify stim             | dark grey
+  T4 | hunters_focus                    | item_hunters_focus                     | Hunter's focus                 | clear amber
+  T4 | lifeforce_serum                  | item_lifeforce_serum                   | Lifeforce serum                | rose
+  T4 | wrath_draught                    | item_wrath_draught                     | Wrath draught                  | crimson
+  T5 | greater_ballistics_tonic         | item_greater_ballistics_tonic          | Greater ballistics tonic       | deep yellow
+  T5 | greater_close_quarters_tonic     | item_greater_close_quarters_tonic      | Greater close-quarters tonic   | deep red
+  T5 | greater_command_tonic            | item_greater_command_tonic             | Greater command tonic          | deep green
+  T5 | greater_tech_tonic               | item_greater_tech_tonic                | Greater tech tonic             | deep blue
+
+== food (18) ==
+  T1 | grilled_skitter_leg              | item_grilled_skitter_leg               | Grilled skitter leg            | roast brown
+  T1 | protein_ration                   | item_protein_ration                    | Protein ration                 | khaki
+  T1 | root_stew                        | item_root_stew                         | Root stew                      | earthy
+  T1 | spore_bread                      | item_spore_bread                       | Spore bread                    | spore blue
+  T2 | cactus_jerky                     | item_cactus_jerky                      | Cactus jerky                   | desert green
+  T2 | coral_chowder                    | item_coral_chowder                     | Coral chowder                  | cream
+  T2 | ember_chili                      | item_ember_chili                       | Ember chili                    | chili red
+  T2 | frostberry_pie                   | item_frostberry_pie                    | Frostberry pie                 | frost purple
+  T2 | glowshroom_skewer                | item_glowshroom_skewer                 | Glowshroom skewer              | glow blue
+  T3 | frost_cod_fillet                 | item_frost_cod_fillet                  | Frost-cod fillet               | ice white
+  T3 | hive_honeycake                   | item_hive_honeycake                    | Hive honeycake                 | honey amber
+  T3 | nectar_dumplings                 | item_nectar_dumplings                  | Nectar dumplings               | honey
+  T4 | astro_burger                     | item_astro_burger                      | Astro-burger                   | grill brown
+  T4 | colony_feast                     | item_colony_feast                      | Colony feast                   | banquet
+  T4 | koi_flambe                       | item_koi_flambe                        | Koi flambe                     | flame orange
+  T5 | prism_sorbet                     | item_prism_sorbet                      | Prism sorbet                   | prismatic
+  T5 | void_noodles                     | item_void_noodles                      | Void noodles                   | void violet
+  T6 | starfruit_tart                   | item_starfruit_tart                    | Starfruit tart                 | starfield gold
+
+Total new items: 682

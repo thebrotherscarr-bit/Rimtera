@@ -1,0 +1,70 @@
+{
+ "name": "food_1",
+ "size": 48,
+ "items": [
+  [
+   "item_grilled_skitter_leg",
+   "Grilled skitter leg: a food item or meal, roast brown colours."
+  ],
+  [
+   "item_protein_ration",
+   "Protein ration: a food item or meal, khaki colours."
+  ],
+  [
+   "item_root_stew",
+   "Root stew: a food item or meal, earthy colours."
+  ],
+  [
+   "item_spore_bread",
+   "Spore bread: a food item or meal, spore blue colours."
+  ],
+  [
+   "item_cactus_jerky",
+   "Cactus jerky: a food item or meal, desert green colours."
+  ],
+  [
+   "item_coral_chowder",
+   "Coral chowder: a food item or meal, cream colours."
+  ],
+  [
+   "item_ember_chili",
+   "Ember chili: a food item or meal, chili red colours."
+  ],
+  [
+   "item_frostberry_pie",
+   "Frostberry pie: a food item or meal, frost purple colours."
+  ],
+  [
+   "item_glowshroom_skewer",
+   "Glowshroom skewer: a food item or meal, glow blue colours."
+  ],
+  [
+   "item_frost_cod_fillet",
+   "Frost-cod fillet: a food item or meal, ice white colours."
+  ],
+  [
+   "item_hive_honeycake",
+   "Hive honeycake: a food item or meal, honey amber colours."
+  ],
+  [
+   "item_nectar_dumplings",
+   "Nectar dumplings: a food item or meal, honey colours."
+  ],
+  [
+   "item_astro_burger",
+   "Astro-burger: a food item or meal, grill brown colours."
+  ],
+  [
+   "item_colony_feast",
+   "Colony feast: a food item or meal, banquet colours."
+  ],
+  [
+   "item_koi_flambe",
+   "Koi flambe: a food item or meal, flame orange colours."
+  ],
+  [
+   "item_prism_sorbet",
+   "Prism sorbet: a food item or meal, prismatic colours."
+  ]
+ ]
+}

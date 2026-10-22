@@ -1,0 +1,30 @@
+{
+ "name": "weapon_gun_2",
+ "size": 48,
+ "items": [
+  [
+   "weapon_lumenite_sidearm",
+   "Lumenite sidearm: a sci-fi blaster gun, side view facing right, pearl white / prism colours."
+  ],
+  [
+   "weapon_mothership_railcannon",
+   "Mothership railcannon: a sci-fi blaster gun, side view facing right, alien chrome colours."
+  ],
+  [
+   "weapon_voidsteel_battle_rifle",
+   "Voidsteel battle rifle: a sci-fi blaster gun, side view facing right, violet black colours."
+  ],
+  [
+   "weapon_voidsteel_sidearm",
+   "Voidsteel sidearm: a sci-fi blaster gun, side view facing right, violet black colours."
+  ],
+  [
+   "weapon_astral_battle_rifle",
+   "Astral battle rifle: a sci-fi blaster gun, side view facing right, starfield gold colours."
+  ],
+  [
+   "weapon_astral_sidearm",
+   "Astral sidearm: a sci-fi blaster gun, side view facing right, starfield gold colours."
+  ]
+ ]
+}

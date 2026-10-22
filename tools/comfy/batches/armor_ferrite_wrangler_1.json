@@ -1,0 +1,18 @@
+{
+ "name": "armor_ferrite_wrangler_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_ferrite_wrangler_boots",
+   "Ferrite wrangler boots: a sci-fi armor piece: ferrite-wrangler, rust grey / green colours."
+  ],
+  [
+   "armor_ferrite_wrangler_headset",
+   "Ferrite wrangler headset: a sci-fi armor piece: ferrite-wrangler, rust grey / green colours."
+  ],
+  [
+   "armor_ferrite_wrangler_mantle",
+   "Ferrite wrangler mantle: a sci-fi armor piece: ferrite-wrangler, rust grey / green colours."
+  ]
+ ]
+}

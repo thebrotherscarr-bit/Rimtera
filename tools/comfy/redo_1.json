@@ -1,0 +1,26 @@
+{
+ "name": "redo_1",
+ "size": 56,
+ "items": [
+  [
+   "tech_prism_lance",
+   "Prism lance: a beam emitter rod with a glowing tip, diagonal, prismatic colours, drawn large and bold, filling most of its cell, thick readable shapes."
+  ],
+  [
+   "tech_mothership_lance",
+   "Mothership lance: a beam emitter rod with a glowing tip, diagonal, alien chrome colours, drawn large and bold, filling most of its cell, thick readable shapes."
+  ],
+  [
+   "tech_voidsteel_beam_projector",
+   "Voidsteel beam projector: a beam emitter rod with a glowing tip, diagonal, violet black colours, drawn large and bold, filling most of its cell, thick readable shapes."
+  ],
+  [
+   "tech_astral_beam_projector",
+   "Astral beam projector: a beam emitter rod with a glowing tip, diagonal, starfield gold colours, drawn large and bold, filling most of its cell, thick readable shapes."
+  ],
+  [
+   "weapon_astral_arc_spear",
+   "Astral arc-spear: a long sci-fi spear, pointing up-right diagonally, starfield gold colours, drawn large and bold, filling most of its cell, thick readable shapes."
+  ]
+ ]
+}

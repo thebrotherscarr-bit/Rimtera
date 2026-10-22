@@ -1,0 +1,58 @@
+{
+ "name": "wings_2",
+ "size": 64,
+ "items": [
+  [
+   "item_viridium_wingpack",
+   "Viridium wingpack: a pair of mechanical or organic wings spread open, seen from behind, jungle green colours."
+  ],
+  [
+   "item_dreadnought_wings",
+   "Dreadnought wings: a pair of mechanical or organic wings spread open, seen from behind, pirate red colours."
+  ],
+  [
+   "item_eclipse_wings",
+   "Eclipse wings: a pair of mechanical or organic wings spread open, seen from behind, eclipse black colours."
+  ],
+  [
+   "item_lumenite_wingpack",
+   "Lumenite wingpack: a pair of mechanical or organic wings spread open, seen from behind, pearl white / prism colours."
+  ],
+  [
+   "item_prism_wings",
+   "Prism wings: a pair of mechanical or organic wings spread open, seen from behind, prismatic colours."
+  ],
+  [
+   "item_protocol_wings",
+   "Protocol wings: a pair of mechanical or organic wings spread open, seen from behind, circuit teal colours."
+  ],
+  [
+   "item_solar_wings",
+   "Solar wings: a pair of mechanical or organic wings spread open, seen from behind, solar yellow colours."
+  ],
+  [
+   "item_storm_wings",
+   "Storm wings: a pair of mechanical or organic wings spread open, seen from behind, storm blue colours."
+  ],
+  [
+   "item_void_wings",
+   "Void wings: a pair of mechanical or organic wings spread open, seen from behind, void violet colours."
+  ],
+  [
+   "item_mothership_wings",
+   "Mothership wings: a pair of mechanical or organic wings spread open, seen from behind, alien chrome colours."
+  ],
+  [
+   "item_voidsteel_wingpack",
+   "Voidsteel wingpack: a pair of mechanical or organic wings spread open, seen from behind, violet black colours."
+  ],
+  [
+   "item_astral_wingpack",
+   "Astral wingpack: a pair of mechanical or organic wings spread open, seen from behind, starfield gold colours."
+  ],
+  [
+   "item_nova_wings",
+   "Nova wings: a pair of mechanical or organic wings spread open, seen from behind, starfield gold colours."
+  ]
+ ]
+}

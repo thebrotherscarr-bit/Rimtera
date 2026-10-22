@@ -1,0 +1,70 @@
+{
+ "name": "potion_2",
+ "size": 48,
+ "items": [
+  [
+   "item_magnetism_tonic",
+   "Magnetism tonic: a small glass vial or stim injector with coloured liquid, magnet red colours."
+  ],
+  [
+   "item_precision_draught",
+   "Precision draught: a small glass vial or stim injector with coloured liquid, amber colours."
+  ],
+  [
+   "item_sprint_stim",
+   "Sprint stim: a small glass vial or stim injector with coloured liquid, cyan colours."
+  ],
+  [
+   "item_surface_tension_serum",
+   "Surface-tension serum: a small glass vial or stim injector with coloured liquid, aqua colours."
+  ],
+  [
+   "item_tech_tonic",
+   "Tech tonic: a small glass vial or stim injector with coloured liquid, blue colours."
+  ],
+  [
+   "item_thornskin_serum",
+   "Thornskin serum: a small glass vial or stim injector with coloured liquid, thorn green colours."
+  ],
+  [
+   "item_vitality_serum",
+   "Vitality serum: a small glass vial or stim injector with coloured liquid, pink colours."
+  ],
+  [
+   "item_drone_link_stim",
+   "Drone-link stim: a small glass vial or stim injector with coloured liquid, green colours."
+  ],
+  [
+   "item_endurance_stim",
+   "Endurance stim: a small glass vial or stim injector with coloured liquid, steel colours."
+  ],
+  [
+   "item_evasion_serum",
+   "Evasion serum: a small glass vial or stim injector with coloured liquid, smoke colours."
+  ],
+  [
+   "item_fireproof_salve",
+   "Fireproof salve: a small glass vial or stim injector with coloured liquid, obsidian colours."
+  ],
+  [
+   "item_marathon_stim",
+   "Marathon stim: a small glass vial or stim injector with coloured liquid, bright cyan colours."
+  ],
+  [
+   "item_overcharge_cell",
+   "Overcharge cell: a small glass vial or stim injector with coloured liquid, electric blue colours."
+  ],
+  [
+   "item_rejuvenation_gel",
+   "Rejuvenation gel: a small glass vial or stim injector with coloured liquid, mint colours."
+  ],
+  [
+   "item_sentry_link_stim",
+   "Sentry-link stim: a small glass vial or stim injector with coloured liquid, olive colours."
+  ],
+  [
+   "item_heavy_fortify_stim",
+   "Heavy fortify stim: a small glass vial or stim injector with coloured liquid, dark grey colours."
+  ]
+ ]
+}

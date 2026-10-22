@@ -1,0 +1,18 @@
+{
+ "name": "armor_storm_marshal_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_storm_marshal_boots",
+   "Storm marshal boots: a sci-fi armor piece: storm-marshal, storm blue colours."
+  ],
+  [
+   "armor_storm_marshal_headset",
+   "Storm marshal headset: a sci-fi armor piece: storm-marshal, storm blue colours."
+  ],
+  [
+   "armor_storm_marshal_mantle",
+   "Storm marshal mantle: a sci-fi armor piece: storm-marshal, storm blue colours."
+  ]
+ ]
+}

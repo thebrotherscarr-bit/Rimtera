@@ -1,0 +1,18 @@
+{
+ "name": "armor_mothership_overseer_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_mothership_overseer_boots",
+   "Mothership overseer boots: a sci-fi armor piece: mothership-overseer, alien chrome colours."
+  ],
+  [
+   "armor_mothership_overseer_headset",
+   "Mothership overseer headset: a sci-fi armor piece: mothership-overseer, alien chrome colours."
+  ],
+  [
+   "armor_mothership_overseer_mantle",
+   "Mothership overseer mantle: a sci-fi armor piece: mothership-overseer, alien chrome colours."
+  ]
+ ]
+}

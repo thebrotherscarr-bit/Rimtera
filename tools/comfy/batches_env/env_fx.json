@@ -1,0 +1,46 @@
+{
+ "name": "env_fx",
+ "size": 20,
+ "items": [
+  [
+   "fx_raindrop",
+   "a single falling raindrop streak, pale blue"
+  ],
+  [
+   "fx_snowflake",
+   "a single small snowflake crystal, white"
+  ],
+  [
+   "fx_ash",
+   "a single drifting flake of grey ash"
+  ],
+  [
+   "fx_rad_mote",
+   "a single glowing green radioactive mote"
+  ],
+  [
+   "fx_spore",
+   "a single glowing teal spore particle"
+  ],
+  [
+   "fx_star",
+   "a single small twinkling star sparkle"
+  ],
+  [
+   "fx_splash",
+   "a small water splash"
+  ],
+  [
+   "fx_lightning",
+   "a jagged vertical lightning bolt, white-violet"
+  ],
+  [
+   "fx_ember",
+   "a single glowing green ember spark"
+  ],
+  [
+   "fx_leaf",
+   "a single falling green leaf"
+  ]
+ ]
+}

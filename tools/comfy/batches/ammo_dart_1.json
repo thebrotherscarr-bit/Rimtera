@@ -1,0 +1,30 @@
+{
+ "name": "ammo_dart_1",
+ "size": 48,
+ "items": [
+  [
+   "ammo_barbed_darts",
+   "Barbed darts: a bundle of darts, timber brown colours."
+  ],
+  [
+   "ammo_cryo_darts",
+   "Cryo darts: a bundle of darts, ice cyan colours."
+  ],
+  [
+   "ammo_ember_darts",
+   "Ember darts: a bundle of darts, ember red colours."
+  ],
+  [
+   "ammo_venom_darts",
+   "Venom darts: a bundle of darts, toxic green colours."
+  ],
+  [
+   "ammo_crystal_darts",
+   "Crystal darts: a bundle of darts, prismatic colours."
+  ],
+  [
+   "ammo_void_darts",
+   "Void darts: a bundle of darts, void violet colours."
+  ]
+ ]
+}

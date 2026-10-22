@@ -1,0 +1,66 @@
+{
+ "name": "weapon_spear_1",
+ "size": 64,
+ "items": [
+  [
+   "weapon_ferrite_arc_spear",
+   "Ferrite arc-spear: a long sci-fi spear, pointing up-right diagonally, rust grey colours."
+  ],
+  [
+   "weapon_cobalt_arc_spear",
+   "Cobalt arc-spear: a long sci-fi spear, pointing up-right diagonally, deep blue colours."
+  ],
+  [
+   "weapon_harpoon_lance",
+   "Harpoon lance: a long sci-fi spear, pointing up-right diagonally, brass and rope colours."
+  ],
+  [
+   "weapon_scoutmech_pike",
+   "Scout-mech pike: a long sci-fi spear, pointing up-right diagonally, olive drab colours."
+  ],
+  [
+   "weapon_glacial_arc_spear",
+   "Glacial arc-spear: a long sci-fi spear, pointing up-right diagonally, ice cyan colours."
+  ],
+  [
+   "weapon_pyrocite_arc_spear",
+   "Pyrocite arc-spear: a long sci-fi spear, pointing up-right diagonally, molten orange colours."
+  ],
+  [
+   "weapon_uranium_arc_spear",
+   "Uranium arc-spear: a long sci-fi spear, pointing up-right diagonally, toxic green colours."
+  ],
+  [
+   "weapon_overseer_halberd",
+   "Overseer halberd: a long sci-fi spear, pointing up-right diagonally, officer red colours."
+  ],
+  [
+   "weapon_viridium_arc_spear",
+   "Viridium arc-spear: a long sci-fi spear, pointing up-right diagonally, jungle green colours."
+  ],
+  [
+   "weapon_lumenite_arc_spear",
+   "Lumenite arc-spear: a long sci-fi spear, pointing up-right diagonally, pearl white / prism colours."
+  ],
+  [
+   "weapon_protocol_glaive",
+   "Protocol glaive: a long sci-fi spear, pointing up-right diagonally, circuit teal colours."
+  ],
+  [
+   "weapon_solar_partisan",
+   "Solar partisan: a long sci-fi spear, pointing up-right diagonally, solar yellow colours."
+  ],
+  [
+   "weapon_leviathan_tine",
+   "Leviathan's tine: a long sci-fi spear, pointing up-right diagonally, abyss blue colours."
+  ],
+  [
+   "weapon_voidsteel_arc_spear",
+   "Voidsteel arc-spear: a long sci-fi spear, pointing up-right diagonally, violet black colours."
+  ],
+  [
+   "weapon_astral_arc_spear",
+   "Astral arc-spear: a long sci-fi spear, pointing up-right diagonally, starfield gold colours."
+  ]
+ ]
+}

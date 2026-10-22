@@ -1,0 +1,70 @@
+{
+ "name": "accessory_1",
+ "size": 48,
+ "items": [
+  [
+   "item_headlamp",
+   "Headlamp: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_kinetic_plate_mk_i",
+   "Kinetic plate Mk I: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_miners_gauntlet",
+   "Miner's gauntlet: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_sprint_servos_mk_i",
+   "Sprint servos Mk I: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_anglers_visor",
+   "Angler's visor: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_ballistics_emblem_mk_i",
+   "Ballistics emblem Mk I: a small wearable gadget or charm icon, ranged accent colours."
+  ],
+  [
+   "item_barb_mesh",
+   "Barb mesh: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_capacitor_bank",
+   "Capacitor bank: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_close_quarters_emblem_mk_i",
+   "Close-quarters emblem Mk I: a small wearable gadget or charm icon, melee accent colours."
+  ],
+  [
+   "item_command_emblem_mk_i",
+   "Command emblem Mk I: a small wearable gadget or charm icon, command accent colours."
+  ],
+  [
+   "item_coral_pendant",
+   "Coral pendant: a small wearable gadget or charm icon, coral pink colours."
+  ],
+  [
+   "item_extender_arm",
+   "Extender arm: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_geo_scanner",
+   "Geo-scanner: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_grav_anchor",
+   "Grav anchor: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_grav_damper",
+   "Grav damper: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_hydro_skimmers",
+   "Hydro skimmers: a small wearable gadget or charm icon."
+  ]
+ ]
+}

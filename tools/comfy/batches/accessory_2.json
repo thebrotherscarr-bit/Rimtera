@@ -1,0 +1,70 @@
+{
+ "name": "accessory_2",
+ "size": 48,
+ "items": [
+  [
+   "item_miners_helmet_rig",
+   "Miner's helmet rig: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_nano_mender",
+   "Nano-mender: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_oxygen_tank",
+   "Oxygen tank: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_power_glove",
+   "Power glove: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_tackle_kit",
+   "Tackle kit: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_targeting_lens_mk_i",
+   "Targeting lens Mk I: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_tech_emblem_mk_i",
+   "Tech emblem Mk I: a small wearable gadget or charm icon, tech accent colours."
+  ],
+  [
+   "item_thermal_sleeve",
+   "Thermal sleeve: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_threat_radar",
+   "Threat radar: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_tractor_coil",
+   "Tractor coil: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_vital_booster",
+   "Vital booster: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_ablative_core",
+   "Ablative core: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_blink_module",
+   "Blink module: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_charge_condenser",
+   "Charge condenser: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_cryo_heart",
+   "Cryo heart: a small wearable gadget or charm icon, ice cyan colours."
+  ],
+  [
+   "item_divers_kit",
+   "Diver's kit: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ]
+ ]
+}

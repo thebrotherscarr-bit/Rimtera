@@ -1,0 +1,14 @@
+{
+ "name": "ammo_cell_1",
+ "size": 48,
+ "items": [
+  [
+   "ammo_overcharged_cell",
+   "Overcharged cell: an energy cell battery, electric blue colours."
+  ],
+  [
+   "ammo_prism_cell",
+   "Prism cell: an energy cell battery, prismatic colours."
+  ]
+ ]
+}

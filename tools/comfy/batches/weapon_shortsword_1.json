@@ -1,0 +1,46 @@
+{
+ "name": "weapon_shortsword_1",
+ "size": 48,
+ "items": [
+  [
+   "weapon_ferrite_stiletto",
+   "Ferrite stiletto: a short sci-fi dagger, blade pointing up-right diagonally, rust grey colours."
+  ],
+  [
+   "weapon_cobalt_stiletto",
+   "Cobalt stiletto: a short sci-fi dagger, blade pointing up-right diagonally, deep blue colours."
+  ],
+  [
+   "weapon_coral_fang",
+   "Coral fang: a short sci-fi dagger, blade pointing up-right diagonally, coral pink colours."
+  ],
+  [
+   "weapon_pyrocite_stiletto",
+   "Pyrocite stiletto: a short sci-fi dagger, blade pointing up-right diagonally, molten orange colours."
+  ],
+  [
+   "weapon_splice_needle",
+   "Splice needle: a short sci-fi dagger, blade pointing up-right diagonally, bio green colours."
+  ],
+  [
+   "weapon_viridium_stiletto",
+   "Viridium stiletto: a short sci-fi dagger, blade pointing up-right diagonally, jungle green colours."
+  ],
+  [
+   "weapon_lumenite_stiletto",
+   "Lumenite stiletto: a short sci-fi dagger, blade pointing up-right diagonally, pearl white / prism colours."
+  ],
+  [
+   "weapon_phase_dirk",
+   "Phase dirk: a short sci-fi dagger, blade pointing up-right diagonally, spectral violet colours."
+  ],
+  [
+   "weapon_voidsteel_stiletto",
+   "Voidsteel stiletto: a short sci-fi dagger, blade pointing up-right diagonally, violet black colours."
+  ],
+  [
+   "weapon_astral_stiletto",
+   "Astral stiletto: a short sci-fi dagger, blade pointing up-right diagonally, starfield gold colours."
+  ]
+ ]
+}

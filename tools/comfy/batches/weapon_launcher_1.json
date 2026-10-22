@@ -1,0 +1,54 @@
+{
+ "name": "weapon_launcher_1",
+ "size": 64,
+ "items": [
+  [
+   "weapon_cobalt_launcher",
+   "Cobalt launcher: a shoulder rocket launcher, side view facing right, deep blue colours."
+  ],
+  [
+   "weapon_demolition_tube",
+   "Demolition tube: a shoulder rocket launcher, side view facing right, hazard orange colours."
+  ],
+  [
+   "weapon_meteorite_launcher",
+   "Meteorite launcher: a shoulder rocket launcher, side view facing right, charred crimson colours."
+  ],
+  [
+   "weapon_pyrocite_launcher",
+   "Pyrocite launcher: a shoulder rocket launcher, side view facing right, molten orange colours."
+  ],
+  [
+   "weapon_viridium_launcher",
+   "Viridium launcher: a shoulder rocket launcher, side view facing right, jungle green colours."
+  ],
+  [
+   "weapon_dreadnought_broadside",
+   "Dreadnought broadside: a shoulder rocket launcher, side view facing right, pirate brass colours."
+  ],
+  [
+   "weapon_lumenite_launcher",
+   "Lumenite launcher: a shoulder rocket launcher, side view facing right, pearl white / prism colours."
+  ],
+  [
+   "weapon_miners_blaster",
+   "Miner's blaster: a shoulder rocket launcher, side view facing right, mining yellow colours."
+  ],
+  [
+   "weapon_warship_cannon",
+   "Warship cannon: a shoulder rocket launcher, side view facing right, navy grey colours."
+  ],
+  [
+   "weapon_voidsteel_launcher",
+   "Voidsteel launcher: a shoulder rocket launcher, side view facing right, violet black colours."
+  ],
+  [
+   "weapon_astral_launcher",
+   "Astral launcher: a shoulder rocket launcher, side view facing right, starfield gold colours."
+  ],
+  [
+   "weapon_starfall_launcher",
+   "Starfall launcher: a shoulder rocket launcher, side view facing right, starfield gold colours."
+  ]
+ ]
+}

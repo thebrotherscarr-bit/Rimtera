@@ -1,0 +1,18 @@
+{
+ "name": "armor_meteorite_striker_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_meteorite_striker_cuirass",
+   "Meteorite striker cuirass: a sci-fi armor piece: meteorite-striker, charred crimson colours."
+  ],
+  [
+   "armor_meteorite_striker_greaves",
+   "Meteorite striker greaves: a sci-fi armor piece: meteorite-striker, charred crimson colours."
+  ],
+  [
+   "armor_meteorite_striker_helm",
+   "Meteorite striker helm: a sci-fi armor piece: meteorite-striker, charred crimson colours."
+  ]
+ ]
+}

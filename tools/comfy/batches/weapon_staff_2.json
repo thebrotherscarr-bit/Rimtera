@@ -1,0 +1,70 @@
+{
+ "name": "weapon_staff_2",
+ "size": 48,
+ "items": [
+  [
+   "tech_uranium_emitter_staff",
+   "Uranium emitter staff: a tech staff with a glowing crystal head, diagonal, toxic green colours."
+  ],
+  [
+   "tech_uranium_focus_rod",
+   "Uranium focus rod: a tech staff with a glowing crystal head, diagonal, toxic green colours."
+  ],
+  [
+   "tech_bloom_wand",
+   "Bloom wand: a tech staff with a glowing crystal head, diagonal, mutant magenta colours."
+  ],
+  [
+   "tech_mooneater_staff",
+   "Moon-eater staff: a tech staff with a glowing crystal head, diagonal, lunar silver colours."
+  ],
+  [
+   "tech_swarm_sceptre",
+   "Swarm sceptre: a tech staff with a glowing crystal head, diagonal, hazard yellow colours."
+  ],
+  [
+   "tech_viridium_emitter_staff",
+   "Viridium emitter staff: a tech staff with a glowing crystal head, diagonal, jungle green colours."
+  ],
+  [
+   "tech_viridium_focus_rod",
+   "Viridium focus rod: a tech staff with a glowing crystal head, diagonal, jungle green colours."
+  ],
+  [
+   "tech_lumenite_emitter_staff",
+   "Lumenite emitter staff: a tech staff with a glowing crystal head, diagonal, pearl white / prism colours."
+  ],
+  [
+   "tech_lumenite_focus_rod",
+   "Lumenite focus rod: a tech staff with a glowing crystal head, diagonal, pearl white / prism colours."
+  ],
+  [
+   "tech_protocol_staff",
+   "Protocol staff: a tech staff with a glowing crystal head, diagonal, circuit teal colours."
+  ],
+  [
+   "tech_solar_sceptre",
+   "Solar sceptre: a tech staff with a glowing crystal head, diagonal, solar yellow colours."
+  ],
+  [
+   "tech_warp_staff",
+   "Warp staff: a tech staff with a glowing crystal head, diagonal, void violet colours."
+  ],
+  [
+   "tech_wisp_staff",
+   "Wisp staff: a tech staff with a glowing crystal head, diagonal, spectral violet colours."
+  ],
+  [
+   "tech_vault_resonator",
+   "Vault resonator: a tech staff with a glowing crystal head, diagonal, precursor bronze colours."
+  ],
+  [
+   "tech_voidsteel_emitter_staff",
+   "Voidsteel emitter staff: a tech staff with a glowing crystal head, diagonal, violet black colours."
+  ],
+  [
+   "tech_voidsteel_focus_rod",
+   "Voidsteel focus rod: a tech staff with a glowing crystal head, diagonal, violet black colours."
+  ]
+ ]
+}

@@ -1,0 +1,50 @@
+{
+ "name": "flora_4",
+ "size": 40,
+ "items": [
+  [
+   "flora_shelf_fungus",
+   "shelf fungus: a glowing fungal plant or ground debris that grows on Glowshroom grass, standing upright on the ground"
+  ],
+  [
+   "flora_spore_puffball",
+   "spore puffball: a glowing fungal plant or ground debris that grows on Glowshroom grass, standing upright on the ground"
+  ],
+  [
+   "flora_glow_vine",
+   "glow vine: a glowing fungal plant or ground debris that grows on Glowshroom grass, standing upright on the ground"
+  ],
+  [
+   "flora_biolum_moss",
+   "biolum moss: a glowing fungal plant or ground debris that grows on Glowshroom grass, standing upright on the ground"
+  ],
+  [
+   "flora_mycelium_tendrils",
+   "mycelium tendrils: a glowing fungal plant or ground debris that grows on Glowshroom grass, standing upright on the ground"
+  ],
+  [
+   "deco_mite_silk_cocoon",
+   "mite silk cocoon: a overgrown plant or ground debris that grows on Mite silk, standing upright on the ground"
+  ],
+  [
+   "flora_canopy_tree",
+   "canopy tree: a jungle canopy plant or ground debris that grows on Canopy grass, standing upright on the ground"
+  ],
+  [
+   "flora_hanging_vines",
+   "hanging vines: a jungle canopy plant or ground debris that grows on Canopy grass, standing upright on the ground"
+  ],
+  [
+   "deco_precursor_statue",
+   "precursor statue: a ancient ruin plant or ground debris that grows on Precursor brick, standing upright on the ground"
+  ],
+  [
+   "deco_energy_pylon",
+   "energy pylon: a ancient ruin plant or ground debris that grows on Precursor brick, standing upright on the ground"
+  ],
+  [
+   "deco_glyph_tablet",
+   "glyph tablet: a ancient ruin plant or ground debris that grows on Precursor brick, standing upright on the ground"
+  ]
+ ]
+}

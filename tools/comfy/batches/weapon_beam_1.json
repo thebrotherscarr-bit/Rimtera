@@ -1,0 +1,46 @@
+{
+ "name": "weapon_beam_1",
+ "size": 48,
+ "items": [
+  [
+   "tech_cobalt_beam_projector",
+   "Cobalt beam projector: a beam emitter rod with a glowing tip, diagonal, deep blue colours."
+  ],
+  [
+   "tech_gamma_ray",
+   "Gamma ray: a beam emitter rod with a glowing tip, diagonal, toxic green colours."
+  ],
+  [
+   "tech_pyrocite_beam_projector",
+   "Pyrocite beam projector: a beam emitter rod with a glowing tip, diagonal, molten orange colours."
+  ],
+  [
+   "tech_viridium_beam_projector",
+   "Viridium beam projector: a beam emitter rod with a glowing tip, diagonal, jungle green colours."
+  ],
+  [
+   "tech_lumenite_beam_projector",
+   "Lumenite beam projector: a beam emitter rod with a glowing tip, diagonal, pearl white / prism colours."
+  ],
+  [
+   "tech_prism_lance",
+   "Prism lance: a beam emitter rod with a glowing tip, diagonal, prismatic colours."
+  ],
+  [
+   "tech_solar_ray",
+   "Solar ray: a beam emitter rod with a glowing tip, diagonal, solar yellow colours."
+  ],
+  [
+   "tech_mothership_lance",
+   "Mothership lance: a beam emitter rod with a glowing tip, diagonal, alien chrome colours."
+  ],
+  [
+   "tech_voidsteel_beam_projector",
+   "Voidsteel beam projector: a beam emitter rod with a glowing tip, diagonal, violet black colours."
+  ],
+  [
+   "tech_astral_beam_projector",
+   "Astral beam projector: a beam emitter rod with a glowing tip, diagonal, starfield gold colours."
+  ]
+ ]
+}

@@ -1,0 +1,70 @@
+{
+ "name": "potion_1",
+ "size": 48,
+ "items": [
+  [
+   "item_anglers_brew",
+   "Angler's brew: a small glass vial or stim injector with coloured liquid, sea blue colours."
+  ],
+  [
+   "item_builders_brew",
+   "Builder's brew: a small glass vial or stim injector with coloured liquid, timber colours."
+  ],
+  [
+   "item_featherfall_mist",
+   "Featherfall mist: a small glass vial or stim injector with coloured liquid, feather white colours."
+  ],
+  [
+   "item_glow_draught",
+   "Glow draught: a small glass vial or stim injector with coloured liquid, glow white colours."
+  ],
+  [
+   "item_guard_serum",
+   "Guard serum: a small glass vial or stim injector with coloured liquid, slate colours."
+  ],
+  [
+   "item_miners_draught",
+   "Miner's draught: a small glass vial or stim injector with coloured liquid, brown colours."
+  ],
+  [
+   "item_night_sight_drops",
+   "Night-sight drops: a small glass vial or stim injector with coloured liquid, night blue colours."
+  ],
+  [
+   "item_ammo_reserve_tonic",
+   "Ammo-reserve tonic: a small glass vial or stim injector with coloured liquid, brass colours."
+  ],
+  [
+   "item_ballistics_tonic",
+   "Ballistics tonic: a small glass vial or stim injector with coloured liquid, yellow colours."
+  ],
+  [
+   "item_close_quarters_tonic",
+   "Close-quarters tonic: a small glass vial or stim injector with coloured liquid, red colours."
+  ],
+  [
+   "item_command_tonic",
+   "Command tonic: a small glass vial or stim injector with coloured liquid, green colours."
+  ],
+  [
+   "item_danger_sense_drops",
+   "Danger-sense drops: a small glass vial or stim injector with coloured liquid, violet colours."
+  ],
+  [
+   "item_deep_scan_vapor",
+   "Deep-scan vapor: a small glass vial or stim injector with coloured liquid, gold colours."
+  ],
+  [
+   "item_fortify_stim",
+   "Fortify stim: a small glass vial or stim injector with coloured liquid, grey colours."
+  ],
+  [
+   "item_gill_draught",
+   "Gill draught: a small glass vial or stim injector with coloured liquid, sea green colours."
+  ],
+  [
+   "item_inertia_stim",
+   "Inertia stim: a small glass vial or stim injector with coloured liquid, stone colours."
+  ]
+ ]
+}

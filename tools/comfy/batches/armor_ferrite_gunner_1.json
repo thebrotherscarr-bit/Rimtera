@@ -1,0 +1,18 @@
+{
+ "name": "armor_ferrite_gunner_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_ferrite_gunner_leggings",
+   "Ferrite gunner leggings: a sci-fi armor piece: ferrite-gunner, rust grey / khaki colours."
+  ],
+  [
+   "armor_ferrite_gunner_vest",
+   "Ferrite gunner flak vest: a sci-fi armor piece: ferrite-gunner, rust grey / khaki colours."
+  ],
+  [
+   "armor_ferrite_gunner_visor",
+   "Ferrite gunner visor: a sci-fi armor piece: ferrite-gunner, rust grey / khaki colours."
+  ]
+ ]
+}

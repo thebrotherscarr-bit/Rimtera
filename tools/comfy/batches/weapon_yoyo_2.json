@@ -1,0 +1,14 @@
+{
+ "name": "weapon_yoyo_2",
+ "size": 48,
+ "items": [
+  [
+   "weapon_voidsteel_spinner",
+   "Voidsteel spinner: a round mechanical yo-yo disc with a short string, violet black colours."
+  ],
+  [
+   "weapon_astral_spinner",
+   "Astral spinner: a round mechanical yo-yo disc with a short string, starfield gold colours."
+  ]
+ ]
+}

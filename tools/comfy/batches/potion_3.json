@@ -1,0 +1,34 @@
+{
+ "name": "potion_3",
+ "size": 48,
+ "items": [
+  [
+   "item_hunters_focus",
+   "Hunter's focus: a small glass vial or stim injector with coloured liquid, clear amber colours."
+  ],
+  [
+   "item_lifeforce_serum",
+   "Lifeforce serum: a small glass vial or stim injector with coloured liquid, rose colours."
+  ],
+  [
+   "item_wrath_draught",
+   "Wrath draught: a small glass vial or stim injector with coloured liquid, crimson colours."
+  ],
+  [
+   "item_greater_ballistics_tonic",
+   "Greater ballistics tonic: a small glass vial or stim injector with coloured liquid, deep yellow colours."
+  ],
+  [
+   "item_greater_close_quarters_tonic",
+   "Greater close-quarters tonic: a small glass vial or stim injector with coloured liquid, deep red colours."
+  ],
+  [
+   "item_greater_command_tonic",
+   "Greater command tonic: a small glass vial or stim injector with coloured liquid, deep green colours."
+  ],
+  [
+   "item_greater_tech_tonic",
+   "Greater tech tonic: a small glass vial or stim injector with coloured liquid, deep blue colours."
+  ]
+ ]
+}

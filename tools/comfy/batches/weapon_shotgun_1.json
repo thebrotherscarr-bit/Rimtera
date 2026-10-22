@@ -1,0 +1,38 @@
+{
+ "name": "weapon_shotgun_1",
+ "size": 48,
+ "items": [
+  [
+   "weapon_cobalt_scattergun",
+   "Cobalt scattergun: a sci-fi shotgun, side view facing right, deep blue colours."
+  ],
+  [
+   "weapon_pyrocite_scattergun",
+   "Pyrocite scattergun: a sci-fi shotgun, side view facing right, molten orange colours."
+  ],
+  [
+   "weapon_swarmbuster",
+   "Swarmbuster: a sci-fi shotgun, side view facing right, hazard yellow colours."
+  ],
+  [
+   "weapon_viridium_scattergun",
+   "Viridium scattergun: a sci-fi shotgun, side view facing right, jungle green colours."
+  ],
+  [
+   "weapon_abomination_maw",
+   "Abomination's maw: a sci-fi shotgun, side view facing right, flesh red colours."
+  ],
+  [
+   "weapon_boarding_blunderbuss",
+   "Boarding blunderbuss: a sci-fi shotgun, side view facing right, pirate brass colours."
+  ],
+  [
+   "weapon_voidsteel_scattergun",
+   "Voidsteel scattergun: a sci-fi shotgun, side view facing right, violet black colours."
+  ],
+  [
+   "weapon_astral_scattergun",
+   "Astral scattergun: a sci-fi shotgun, side view facing right, starfield gold colours."
+  ]
+ ]
+}

@@ -1,0 +1,70 @@
+{
+ "name": "accessory_5",
+ "size": 48,
+ "items": [
+  [
+   "item_hivecomb_amulet",
+   "Hivecomb amulet: a small wearable gadget or charm icon, honey amber colours."
+  ],
+  [
+   "item_magma_skin",
+   "Magma skin: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_master_tackle_kit",
+   "Master tackle kit: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_mooneater_fang",
+   "Moon-eater fang: a small wearable gadget or charm icon, lunar silver colours."
+  ],
+  [
+   "item_overseers_monocle",
+   "Overseer's monocle: a small wearable gadget or charm icon, officer red colours."
+  ],
+  [
+   "item_servo_grip",
+   "Servo grip: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_spike_lattice",
+   "Spike lattice: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_targeting_lens_mk_ii",
+   "Targeting lens Mk II: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_tech_emblem_mk_ii",
+   "Tech emblem Mk II: a small wearable gadget or charm icon, tech accent colours."
+  ],
+  [
+   "item_telescopic_arm",
+   "Telescopic arm: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_wardens_uplink",
+   "Warden's uplink: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_arc_battery",
+   "Arc battery: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_bulwark_aegis",
+   "Bulwark aegis: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_capacitor_tap",
+   "Capacitor tap: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_eclipse_sigil",
+   "Eclipse sigil: a small wearable gadget or charm icon, eclipse black colours."
+  ],
+  [
+   "item_empress_tiara",
+   "Empress tiara: a small wearable gadget or charm icon, prismatic colours."
+  ]
+ ]
+}

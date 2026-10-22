@@ -1,0 +1,46 @@
+{
+ "name": "weapon_boomerang_1",
+ "size": 48,
+ "items": [
+  [
+   "weapon_ferrite_glaive_disc",
+   "Ferrite glaive-disc: a curved throwing boomerang blade, rust grey colours."
+  ],
+  [
+   "weapon_scrap_chakram",
+   "Scrap chakram: a curved throwing boomerang blade, scrap iron colours."
+  ],
+  [
+   "weapon_cobalt_glaive_disc",
+   "Cobalt glaive-disc: a curved throwing boomerang blade, deep blue colours."
+  ],
+  [
+   "weapon_frost_crescent",
+   "Frost crescent: a curved throwing boomerang blade, ice cyan colours."
+  ],
+  [
+   "weapon_pyrocite_glaive_disc",
+   "Pyrocite glaive-disc: a curved throwing boomerang blade, molten orange colours."
+  ],
+  [
+   "weapon_viridium_glaive_disc",
+   "Viridium glaive-disc: a curved throwing boomerang blade, jungle green colours."
+  ],
+  [
+   "weapon_aurora_ring",
+   "Aurora ring: a curved throwing boomerang blade, aurora green-violet colours."
+  ],
+  [
+   "weapon_lumenite_glaive_disc",
+   "Lumenite glaive-disc: a curved throwing boomerang blade, pearl white / prism colours."
+  ],
+  [
+   "weapon_voidsteel_glaive_disc",
+   "Voidsteel glaive-disc: a curved throwing boomerang blade, violet black colours."
+  ],
+  [
+   "weapon_astral_glaive_disc",
+   "Astral glaive-disc: a curved throwing boomerang blade, starfield gold colours."
+  ]
+ ]
+}

@@ -1,0 +1,18 @@
+{
+ "name": "armor_glacial_cryomancer_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_glacial_cryomancer_coat",
+   "Glacial cryomancer coat: a sci-fi armor piece: glacial-cryomancer, ice cyan colours."
+  ],
+  [
+   "armor_glacial_cryomancer_hood",
+   "Glacial cryomancer hood: a sci-fi armor piece: glacial-cryomancer, ice cyan colours."
+  ],
+  [
+   "armor_glacial_cryomancer_treads",
+   "Glacial cryomancer treads: a sci-fi armor piece: glacial-cryomancer, ice cyan colours."
+  ]
+ ]
+}

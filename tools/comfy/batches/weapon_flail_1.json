@@ -1,0 +1,54 @@
+{
+ "name": "weapon_flail_1",
+ "size": 48,
+ "items": [
+  [
+   "weapon_ferrite_chain_mace",
+   "Ferrite chain-mace: a spiked flail ball on a short chain with handle, rust grey colours."
+  ],
+  [
+   "weapon_cobalt_chain_mace",
+   "Cobalt chain-mace: a spiked flail ball on a short chain with handle, deep blue colours."
+  ],
+  [
+   "weapon_wrecking_orb",
+   "Wrecking orb: a spiked flail ball on a short chain with handle, mining yellow colours."
+  ],
+  [
+   "weapon_glacial_chain_mace",
+   "Glacial chain-mace: a spiked flail ball on a short chain with handle, ice cyan colours."
+  ],
+  [
+   "weapon_magma_flail",
+   "Magma flail: a spiked flail ball on a short chain with handle, lava orange colours."
+  ],
+  [
+   "weapon_pyrocite_chain_mace",
+   "Pyrocite chain-mace: a spiked flail ball on a short chain with handle, molten orange colours."
+  ],
+  [
+   "weapon_uranium_chain_mace",
+   "Uranium chain-mace: a spiked flail ball on a short chain with handle, toxic green colours."
+  ],
+  [
+   "weapon_viridium_chain_mace",
+   "Viridium chain-mace: a spiked flail ball on a short chain with handle, jungle green colours."
+  ],
+  [
+   "weapon_lumenite_chain_mace",
+   "Lumenite chain-mace: a spiked flail ball on a short chain with handle, pearl white / prism colours."
+  ],
+  [
+   "weapon_meteor_chain",
+   "Meteor chain: a spiked flail ball on a short chain with handle, meteor crimson colours."
+  ],
+  [
+   "weapon_voidsteel_chain_mace",
+   "Voidsteel chain-mace: a spiked flail ball on a short chain with handle, violet black colours."
+  ],
+  [
+   "weapon_astral_chain_mace",
+   "Astral chain-mace: a spiked flail ball on a short chain with handle, starfield gold colours."
+  ]
+ ]
+}

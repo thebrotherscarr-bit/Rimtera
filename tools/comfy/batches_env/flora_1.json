@@ -1,0 +1,70 @@
+{
+ "name": "flora_1",
+ "size": 40,
+ "items": [
+  [
+   "mossy_stone",
+   "mossy stone: a junk desert plant or ground debris that grows on Basalt, standing upright on the ground"
+  ],
+  [
+   "spore_crystal",
+   "spore crystal: a junk desert plant or ground debris that grows on Basalt, standing upright on the ground"
+  ],
+  [
+   "fern_plant",
+   "fern plant: a temperate alien plant or ground debris that grows on Regolith moss, standing upright on the ground"
+  ],
+  [
+   "luminous_spores",
+   "luminous spores: a temperate alien plant or ground debris that grows on Regolith moss, standing upright on the ground"
+  ],
+  [
+   "crystalline_flora",
+   "crystalline flora: a temperate alien plant or ground debris that grows on Regolith moss, standing upright on the ground"
+  ],
+  [
+   "astro_timber",
+   "astro timber: a temperate alien plant or ground debris that grows on Regolith moss, standing upright on the ground"
+  ],
+  [
+   "snow_rocks_a",
+   "snow rocks a: a frozen plant or ground debris that grows on Ice, standing upright on the ground"
+  ],
+  [
+   "snow_rocks_b",
+   "snow rocks b: a frozen plant or ground debris that grows on Ice, standing upright on the ground"
+  ],
+  [
+   "tundra_lichen_a",
+   "tundra lichen a: a frozen plant or ground debris that grows on Ice, standing upright on the ground"
+  ],
+  [
+   "tundra_lichen_b",
+   "tundra lichen b: a frozen plant or ground debris that grows on Ice, standing upright on the ground"
+  ],
+  [
+   "saxifrage_plant",
+   "saxifrage plant: a frozen plant or ground debris that grows on Ice, standing upright on the ground"
+  ],
+  [
+   "frost_crystal",
+   "frost crystal: a frozen plant or ground debris that grows on Ice, standing upright on the ground"
+  ],
+  [
+   "snow_bank",
+   "snow bank: a frozen plant or ground debris that grows on Ice, standing upright on the ground"
+  ],
+  [
+   "broken_girder",
+   "broken girder: a junk desert plant or ground debris that grows on Dune sand, standing upright on the ground"
+  ],
+  [
+   "junk_rock",
+   "junk rock: a junk desert plant or ground debris that grows on Dune sand, standing upright on the ground"
+  ],
+  [
+   "mutant_grass",
+   "mutant grass: a junk desert plant or ground debris that grows on Dune sand, standing upright on the ground"
+  ]
+ ]
+}

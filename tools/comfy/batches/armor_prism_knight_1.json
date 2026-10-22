@@ -1,0 +1,18 @@
+{
+ "name": "armor_prism_knight_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_prism_knight_cuirass",
+   "Prism knight cuirass: a sci-fi armor piece: prism-knight, prismatic colours."
+  ],
+  [
+   "armor_prism_knight_greaves",
+   "Prism knight greaves: a sci-fi armor piece: prism-knight, prismatic colours."
+  ],
+  [
+   "armor_prism_knight_helm",
+   "Prism knight helm: a sci-fi armor piece: prism-knight, prismatic colours."
+  ]
+ ]
+}

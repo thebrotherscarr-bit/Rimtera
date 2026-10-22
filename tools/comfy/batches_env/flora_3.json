@@ -1,0 +1,70 @@
+{
+ "name": "flora_3",
+ "size": 40,
+ "items": [
+  [
+   "flora_pitcher_plant",
+   "pitcher plant: a jungle canopy plant or ground debris that grows on Mud, standing upright on the ground"
+  ],
+  [
+   "flora_salt_spire",
+   "salt spire: a junk desert plant or ground debris that grows on Salt crust, standing upright on the ground"
+  ],
+  [
+   "flora_shell_pile",
+   "shell pile: a junk desert plant or ground debris that grows on Salt crust, standing upright on the ground"
+  ],
+  [
+   "flora_tube_coral",
+   "tube coral: a toxic irradiated plant or ground debris that grows on Acid sand, standing upright on the ground"
+  ],
+  [
+   "flora_kelp_strand",
+   "kelp strand: a toxic irradiated plant or ground debris that grows on Acid sand, standing upright on the ground"
+  ],
+  [
+   "flora_tide_pool",
+   "tide pool: a toxic irradiated plant or ground debris that grows on Acid sand, standing upright on the ground"
+  ],
+  [
+   "flora_driftwood",
+   "driftwood: a coastal plant or ground debris that grows on Shell sand, standing upright on the ground"
+  ],
+  [
+   "deco_geode_cluster",
+   "geode cluster: a ancient ruin plant or ground debris that grows on Alabaster, standing upright on the ground"
+  ],
+  [
+   "flora_bloom_flower",
+   "bloom flower: a jungle canopy plant or ground debris that grows on Hive comb, standing upright on the ground"
+  ],
+  [
+   "flora_singing_crystal",
+   "singing crystal: a crystal plant or ground debris that grows on Pearl stone, standing upright on the ground"
+  ],
+  [
+   "flora_pearl_shell_plant",
+   "pearl shell plant: a crystal plant or ground debris that grows on Pearl stone, standing upright on the ground"
+  ],
+  [
+   "flora_crystal_tree",
+   "crystal tree: a crystal plant or ground debris that grows on Prismatic grass, standing upright on the ground"
+  ],
+  [
+   "flora_prism_flower",
+   "prism flower: a crystal plant or ground debris that grows on Prismatic grass, standing upright on the ground"
+  ],
+  [
+   "flora_light_reed",
+   "light reed: a crystal plant or ground debris that grows on Prismatic grass, standing upright on the ground"
+  ],
+  [
+   "flora_halo_bush",
+   "halo bush: a crystal plant or ground debris that grows on Prismatic grass, standing upright on the ground"
+  ],
+  [
+   "flora_giant_glowshroom",
+   "giant glowshroom: a glowing fungal plant or ground debris that grows on Glowshroom grass, standing upright on the ground"
+  ]
+ ]
+}

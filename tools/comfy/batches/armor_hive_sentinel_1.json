@@ -1,0 +1,18 @@
+{
+ "name": "armor_hive_sentinel_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_hive_sentinel_cuirass",
+   "Hive sentinel cuirass: a sci-fi armor piece: hive-sentinel, honey amber colours."
+  ],
+  [
+   "armor_hive_sentinel_greaves",
+   "Hive sentinel greaves: a sci-fi armor piece: hive-sentinel, honey amber colours."
+  ],
+  [
+   "armor_hive_sentinel_helm",
+   "Hive sentinel helm: a sci-fi armor piece: hive-sentinel, honey amber colours."
+  ]
+ ]
+}

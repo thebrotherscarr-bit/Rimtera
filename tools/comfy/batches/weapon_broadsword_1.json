@@ -1,0 +1,70 @@
+{
+ "name": "weapon_broadsword_1",
+ "size": 64,
+ "items": [
+  [
+   "weapon_ferrite_arc_saber",
+   "Ferrite arc-saber: a sci-fi broadsword, blade pointing up-right diagonally, rust grey colours."
+  ],
+  [
+   "weapon_ferrite_greatblade",
+   "Ferrite greatblade: a sci-fi broadsword, blade pointing up-right diagonally, rust grey colours."
+  ],
+  [
+   "weapon_ferrite_longblade",
+   "Ferrite longblade: a sci-fi broadsword, blade pointing up-right diagonally, rust grey colours."
+  ],
+  [
+   "weapon_rustfang_cleaver",
+   "Rustfang cleaver: a sci-fi broadsword, blade pointing up-right diagonally, rusted orange colours."
+  ],
+  [
+   "weapon_sentinel_edge",
+   "Sentinel's edge: a sci-fi broadsword, blade pointing up-right diagonally, basalt grey, cyan runes colours."
+  ],
+  [
+   "weapon_cobalt_arc_saber",
+   "Cobalt arc-saber: a sci-fi broadsword, blade pointing up-right diagonally, deep blue colours."
+  ],
+  [
+   "weapon_cobalt_greatblade",
+   "Cobalt greatblade: a sci-fi broadsword, blade pointing up-right diagonally, deep blue colours."
+  ],
+  [
+   "weapon_cobalt_longblade",
+   "Cobalt longblade: a sci-fi broadsword, blade pointing up-right diagonally, deep blue colours."
+  ],
+  [
+   "weapon_skitterscale_sword",
+   "Skitterscale sword: a sci-fi broadsword, blade pointing up-right diagonally, chitin brown colours."
+  ],
+  [
+   "weapon_thornvine_blade",
+   "Thornvine blade: a sci-fi broadsword, blade pointing up-right diagonally, vine green colours."
+  ],
+  [
+   "weapon_glacial_arc_saber",
+   "Glacial arc-saber: a sci-fi broadsword, blade pointing up-right diagonally, ice cyan colours."
+  ],
+  [
+   "weapon_glacial_greatblade",
+   "Glacial greatblade: a sci-fi broadsword, blade pointing up-right diagonally, ice cyan colours."
+  ],
+  [
+   "weapon_glacial_longblade",
+   "Glacial longblade: a sci-fi broadsword, blade pointing up-right diagonally, ice cyan colours."
+  ],
+  [
+   "weapon_magma_brand",
+   "Magma brand: a sci-fi broadsword, blade pointing up-right diagonally, lava orange colours."
+  ],
+  [
+   "weapon_mycelium_greatblade",
+   "Mycelium greatblade: a sci-fi broadsword, blade pointing up-right diagonally, spore blue colours."
+  ],
+  [
+   "weapon_pyrocite_arc_saber",
+   "Pyrocite arc-saber: a sci-fi broadsword, blade pointing up-right diagonally, molten orange colours."
+  ]
+ ]
+}

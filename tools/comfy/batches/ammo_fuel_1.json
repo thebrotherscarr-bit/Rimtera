@@ -1,0 +1,30 @@
+{
+ "name": "ammo_fuel_1",
+ "size": 48,
+ "items": [
+  [
+   "ammo_gel_fuel",
+   "Gel fuel: a fuel canister, gel blue colours."
+  ],
+  [
+   "ammo_cryo_coolant",
+   "Cryo coolant: a fuel canister, ice cyan colours."
+  ],
+  [
+   "ammo_pyro_gel",
+   "Pyro gel: a fuel canister, fire red colours."
+  ],
+  [
+   "ammo_plasma_fuel",
+   "Plasma fuel: a fuel canister, plasma pink colours."
+  ],
+  [
+   "ammo_void_fuel",
+   "Void fuel: a fuel canister, void violet colours."
+  ],
+  [
+   "ammo_astral_fuel",
+   "Astral fuel: a fuel canister, starfield gold colours."
+  ]
+ ]
+}

@@ -1,0 +1,18 @@
+{
+ "name": "armor_cobalt_sharpshooter_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_cobalt_sharpshooter_leggings",
+   "Cobalt sharpshooter leggings: a sci-fi armor piece: cobalt-sharpshooter, deep blue / khaki colours."
+  ],
+  [
+   "armor_cobalt_sharpshooter_vest",
+   "Cobalt sharpshooter flak vest: a sci-fi armor piece: cobalt-sharpshooter, deep blue / khaki colours."
+  ],
+  [
+   "armor_cobalt_sharpshooter_visor",
+   "Cobalt sharpshooter visor: a sci-fi armor piece: cobalt-sharpshooter, deep blue / khaki colours."
+  ]
+ ]
+}

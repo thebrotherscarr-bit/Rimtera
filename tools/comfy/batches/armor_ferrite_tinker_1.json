@@ -1,0 +1,18 @@
+{
+ "name": "armor_ferrite_tinker_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_ferrite_tinker_coat",
+   "Ferrite tinker coat: a sci-fi armor piece: ferrite-tinker, rust grey / teal colours."
+  ],
+  [
+   "armor_ferrite_tinker_hood",
+   "Ferrite tinker hood: a sci-fi armor piece: ferrite-tinker, rust grey / teal colours."
+  ],
+  [
+   "armor_ferrite_tinker_treads",
+   "Ferrite tinker treads: a sci-fi armor piece: ferrite-tinker, rust grey / teal colours."
+  ]
+ ]
+}

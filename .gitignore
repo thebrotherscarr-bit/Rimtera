@@ -1,0 +1,32 @@
+# Build output
+bin/
+obj/
+publish/
+*.user
+*.suo
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# Local ComfyUI install used for art generation (not game code)
+Rimtera/
+
+# Third-party clones, tracked by their own remotes
+rea/
+tools/rea/
+
+# Large raw evidence dumps (kept local; one file exceeds GitHub's 100 MB limit)
+docs/terraria-evidence/
+docs/rimworld-evidence/
+
+# Generated art (kept local)
+art/
+
+# Logs and OS junk
+logs/
+*.log
+Thumbs.db
+desktop.ini
+.DS_Store

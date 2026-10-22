@@ -1,0 +1,38 @@
+{
+ "name": "env_sky",
+ "size": 96,
+ "items": [
+  [
+   "sky_cloud_1",
+   "a large soft cumulus cloud, white with pale blue shading"
+  ],
+  [
+   "sky_cloud_2",
+   "a long flat stratus cloud bank"
+  ],
+  [
+   "sky_cloud_3",
+   "a small puffy cloud"
+  ],
+  [
+   "sky_cloud_4",
+   "a wispy streaked cirrus cloud"
+  ],
+  [
+   "sky_cloud_5",
+   "a tall billowing cloud with a flat base"
+  ],
+  [
+   "sky_cloud_6",
+   "a pair of small drifting cloud puffs"
+  ],
+  [
+   "sky_sun",
+   "a bright alien sun, a glowing white-gold disc with a soft corona"
+  ],
+  [
+   "sky_moon",
+   "a large pale moon, full, with craters and a faint teal tint, round disc"
+  ]
+ ]
+}

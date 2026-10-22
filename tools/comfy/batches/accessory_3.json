@@ -1,0 +1,70 @@
+{
+ "name": "accessory_3",
+ "size": 48,
+ "items": [
+  [
+   "item_ember_heart",
+   "Ember heart: a small wearable gadget or charm icon, lava orange colours."
+  ],
+  [
+   "item_filter_implant",
+   "Filter implant: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_flood_visor",
+   "Flood visor: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_gill_implant",
+   "Gill implant: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_hunters_eye",
+   "Hunter's eye: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_kinetic_plate_mk_ii",
+   "Kinetic plate Mk II: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_leech_coil",
+   "Leech coil: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_pathfinder_boots",
+   "Pathfinder boots: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_rad_battery",
+   "Rad battery: a small wearable gadget or charm icon, toxic green colours."
+  ],
+  [
+   "item_reflex_chip",
+   "Reflex chip: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_sentry_beacon",
+   "Sentry beacon: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_siphon_coil",
+   "Siphon coil: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_spore_sac",
+   "Spore sac: a small wearable gadget or charm icon, spore blue colours."
+  ],
+  [
+   "item_sprint_servos_mk_ii",
+   "Sprint servos Mk II: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_survey_suite",
+   "Survey suite: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_thermal_regulator",
+   "Thermal regulator: a small wearable gadget or charm icon."
+  ]
+ ]
+}

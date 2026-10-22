@@ -1,0 +1,70 @@
+{
+ "name": "weapon_bow_1",
+ "size": 64,
+ "items": [
+  [
+   "weapon_ferrite_pulse_repeater",
+   "Ferrite pulse repeater: a sci-fi compound bow, vertical, rust grey colours."
+  ],
+  [
+   "weapon_ferrite_rail_bow",
+   "Ferrite rail-bow: a sci-fi compound bow, vertical, rust grey colours."
+  ],
+  [
+   "weapon_hunters_recurve",
+   "Hunter's recurve: a sci-fi compound bow, vertical, timber brown colours."
+  ],
+  [
+   "weapon_cobalt_pulse_repeater",
+   "Cobalt pulse repeater: a sci-fi compound bow, vertical, deep blue colours."
+  ],
+  [
+   "weapon_cobalt_rail_bow",
+   "Cobalt rail-bow: a sci-fi compound bow, vertical, deep blue colours."
+  ],
+  [
+   "weapon_thornshot",
+   "Thornshot: a sci-fi compound bow, vertical, vine green colours."
+  ],
+  [
+   "weapon_cinder_repeater",
+   "Cinder repeater: a sci-fi compound bow, vertical, ember red colours."
+  ],
+  [
+   "weapon_frostbite_longbow",
+   "Frostbite longbow: a sci-fi compound bow, vertical, ice cyan colours."
+  ],
+  [
+   "weapon_glacial_pulse_repeater",
+   "Glacial pulse repeater: a sci-fi compound bow, vertical, ice cyan colours."
+  ],
+  [
+   "weapon_glacial_rail_bow",
+   "Glacial rail-bow: a sci-fi compound bow, vertical, ice cyan colours."
+  ],
+  [
+   "weapon_pyrocite_pulse_repeater",
+   "Pyrocite pulse repeater: a sci-fi compound bow, vertical, molten orange colours."
+  ],
+  [
+   "weapon_pyrocite_rail_bow",
+   "Pyrocite rail-bow: a sci-fi compound bow, vertical, molten orange colours."
+  ],
+  [
+   "weapon_uranium_pulse_repeater",
+   "Uranium pulse repeater: a sci-fi compound bow, vertical, toxic green colours."
+  ],
+  [
+   "weapon_uranium_rail_bow",
+   "Uranium rail-bow: a sci-fi compound bow, vertical, toxic green colours."
+  ],
+  [
+   "weapon_canopy_longbow",
+   "Canopy longbow: a sci-fi compound bow, vertical, leaf green colours."
+  ],
+  [
+   "weapon_stinger_bow",
+   "Stinger bow: a sci-fi compound bow, vertical, honey amber colours."
+  ]
+ ]
+}

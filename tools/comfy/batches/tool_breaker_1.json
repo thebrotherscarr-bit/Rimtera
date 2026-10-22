@@ -1,0 +1,38 @@
+{
+ "name": "tool_breaker_1",
+ "size": 48,
+ "items": [
+  [
+   "tool_glacial_breaker",
+   "Glacial breaker: a heavy demolition hammer, diagonal, ice cyan colours."
+  ],
+  [
+   "tool_meteorite_breaker",
+   "Meteorite breaker: a heavy demolition hammer, diagonal, charred crimson colours."
+  ],
+  [
+   "tool_pyrocite_breaker",
+   "Pyrocite breaker: a heavy demolition hammer, diagonal, molten orange colours."
+  ],
+  [
+   "tool_uranium_breaker",
+   "Uranium breaker: a heavy demolition hammer, diagonal, toxic green colours."
+  ],
+  [
+   "tool_wreckers_maul",
+   "Wrecker's maul: a heavy demolition hammer, diagonal, scrap iron colours."
+  ],
+  [
+   "tool_seismic_hammer",
+   "Seismic hammer: a heavy demolition hammer, diagonal, jungle green colours."
+  ],
+  [
+   "tool_gravity_breaker",
+   "Gravity breaker: a heavy demolition hammer, diagonal, void violet colours."
+  ],
+  [
+   "tool_astral_sledge",
+   "Astral sledge: a heavy demolition hammer, diagonal, starfield gold colours."
+  ]
+ ]
+}

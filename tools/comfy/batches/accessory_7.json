@@ -1,0 +1,70 @@
+{
+ "name": "accessory_7",
+ "size": 48,
+ "items": [
+  [
+   "item_void_eye",
+   "Void eye: a small wearable gadget or charm icon, void violet colours."
+  ],
+  [
+   "item_ballistics_emblem_mk_iii",
+   "Ballistics emblem Mk III: a small wearable gadget or charm icon, ranged accent colours."
+  ],
+  [
+   "item_close_quarters_emblem_mk_iii",
+   "Close-quarters emblem Mk III: a small wearable gadget or charm icon, melee accent colours."
+  ],
+  [
+   "item_command_emblem_mk_iii",
+   "Command emblem Mk III: a small wearable gadget or charm icon, command accent colours."
+  ],
+  [
+   "item_ghost_cloak",
+   "Ghost cloak: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_hivemind_processor",
+   "Hivemind processor: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_leviathan_scale",
+   "Leviathan scale: a small wearable gadget or charm icon, abyss blue colours."
+  ],
+  [
+   "item_mothership_chip",
+   "Mothership chip: a small wearable gadget or charm icon, alien chrome colours."
+  ],
+  [
+   "item_overload_matrix",
+   "Overload matrix: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_paladins_ward",
+   "Paladin's ward: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_sniper_scope_rig",
+   "Sniper scope rig: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_storm_capacitor",
+   "Storm capacitor: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_targeting_lens_mk_iii",
+   "Targeting lens Mk III: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_tech_emblem_mk_iii",
+   "Tech emblem Mk III: a small wearable gadget or charm icon, tech accent colours."
+  ],
+  [
+   "item_astral_compass",
+   "Astral compass: a small wearable gadget or charm icon, starfield gold colours."
+  ],
+  [
+   "item_juggernaut_core",
+   "Juggernaut core: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ]
+ ]
+}

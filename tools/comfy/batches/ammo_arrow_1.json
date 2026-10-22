@@ -1,0 +1,50 @@
+{
+ "name": "ammo_arrow_1",
+ "size": 48,
+ "items": [
+  [
+   "ammo_ferrite_bolts",
+   "Ferrite bolts: a bundle of three bolts/arrows, rust grey colours."
+  ],
+  [
+   "ammo_cobalt_bolts",
+   "Cobalt bolts: a bundle of three bolts/arrows, deep blue colours."
+  ],
+  [
+   "ammo_glacial_bolts",
+   "Glacial bolts: a bundle of three bolts/arrows, ice cyan colours."
+  ],
+  [
+   "ammo_pyrocite_bolts",
+   "Pyrocite bolts: a bundle of three bolts/arrows, molten orange colours."
+  ],
+  [
+   "ammo_uranium_bolts",
+   "Uranium bolts: a bundle of three bolts/arrows, toxic green colours."
+  ],
+  [
+   "ammo_seeker_bolts",
+   "Seeker bolts: a bundle of three bolts/arrows, signal red colours."
+  ],
+  [
+   "ammo_viridium_bolts",
+   "Viridium bolts: a bundle of three bolts/arrows, jungle green colours."
+  ],
+  [
+   "ammo_lumenite_bolts",
+   "Lumenite bolts: a bundle of three bolts/arrows, pearl white colours."
+  ],
+  [
+   "ammo_shard_bolts",
+   "Shard bolts: a bundle of three bolts/arrows, prismatic colours."
+  ],
+  [
+   "ammo_voidsteel_bolts",
+   "Voidsteel bolts: a bundle of three bolts/arrows, violet black colours."
+  ],
+  [
+   "ammo_astral_bolts",
+   "Astral bolts: a bundle of three bolts/arrows, starfield gold colours."
+  ]
+ ]
+}

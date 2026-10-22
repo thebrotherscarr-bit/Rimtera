@@ -1,0 +1,58 @@
+{
+ "name": "tool_hatchet_1",
+ "size": 48,
+ "items": [
+  [
+   "tool_ferrite_hatchet",
+   "Ferrite hatchet: a cutting tool hatchet or saw, diagonal, rust grey colours."
+  ],
+  [
+   "tool_cobalt_hatchet",
+   "Cobalt hatchet: a cutting tool hatchet or saw, diagonal, deep blue colours."
+  ],
+  [
+   "tool_overgrowth_reaper",
+   "Overgrowth reaper: a cutting tool hatchet or saw, diagonal, vine green colours."
+  ],
+  [
+   "tool_chain_cutter",
+   "Chain cutter: a cutting tool hatchet or saw, diagonal, hazard orange colours."
+  ],
+  [
+   "tool_glacial_hatchet",
+   "Glacial hatchet: a cutting tool hatchet or saw, diagonal, ice cyan colours."
+  ],
+  [
+   "tool_meteorite_hatchet",
+   "Meteorite hatchet: a cutting tool hatchet or saw, diagonal, charred crimson colours."
+  ],
+  [
+   "tool_pyrocite_hatchet",
+   "Pyrocite hatchet: a cutting tool hatchet or saw, diagonal, molten orange colours."
+  ],
+  [
+   "tool_uranium_hatchet",
+   "Uranium hatchet: a cutting tool hatchet or saw, diagonal, toxic green colours."
+  ],
+  [
+   "tool_viridium_hatchet",
+   "Viridium hatchet: a cutting tool hatchet or saw, diagonal, jungle green colours."
+  ],
+  [
+   "tool_lumenite_hatchet",
+   "Lumenite hatchet: a cutting tool hatchet or saw, diagonal, pearl white / prism colours."
+  ],
+  [
+   "tool_plasma_saw",
+   "Plasma saw: a cutting tool hatchet or saw, diagonal, plasma pink colours."
+  ],
+  [
+   "tool_voidsteel_hatchet",
+   "Voidsteel hatchet: a cutting tool hatchet or saw, diagonal, violet black colours."
+  ],
+  [
+   "tool_astral_hatchet",
+   "Astral hatchet: a cutting tool hatchet or saw, diagonal, starfield gold colours."
+  ]
+ ]
+}

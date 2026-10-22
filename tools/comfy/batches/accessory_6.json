@@ -1,0 +1,70 @@
+{
+ "name": "accessory_6",
+ "size": 48,
+ "items": [
+  [
+   "item_excavation_suite",
+   "Excavation suite: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_inferno_treads",
+   "Inferno treads: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_kinetic_plate_mk_iii",
+   "Kinetic plate Mk III: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_lumen_halo",
+   "Lumen halo: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_mobility_rig",
+   "Mobility rig: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_phase_cloak",
+   "Phase cloak: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_pirates_spyglass",
+   "Pirate's spyglass: a small wearable gadget or charm icon, pirate brass colours."
+  ],
+  [
+   "item_prism_brooch",
+   "Prism brooch: a small wearable gadget or charm icon, prismatic colours."
+  ],
+  [
+   "item_protocol_shard",
+   "Protocol shard: a small wearable gadget or charm icon, circuit teal colours."
+  ],
+  [
+   "item_retribution_mesh",
+   "Retribution mesh: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_sanguine_reactor",
+   "Sanguine reactor: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_shock_absorber",
+   "Shock absorber: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_sprint_servos_mk_iii",
+   "Sprint servos Mk III: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_swarm_processor",
+   "Swarm processor: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_vampiric_chip",
+   "Vampiric chip: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_vital_core",
+   "Vital core: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ]
+ ]
+}

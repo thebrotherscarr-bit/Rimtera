@@ -1,0 +1,70 @@
+{
+ "name": "flora_2",
+ "size": 40,
+ "items": [
+  [
+   "mutant_flora",
+   "mutant flora: a junk desert plant or ground debris that grows on Dune sand, standing upright on the ground"
+  ],
+  [
+   "salvaged_electronics",
+   "salvaged electronics: a junk desert plant or ground debris that grows on Dune sand, standing upright on the ground"
+  ],
+  [
+   "vinelash",
+   "vinelash: a jungle canopy plant or ground debris that grows on Vine mat, standing upright on the ground"
+  ],
+  [
+   "radiant_fungus",
+   "radiant fungus: a glowing fungal plant or ground debris that grows on Spore mat, standing upright on the ground"
+  ],
+  [
+   "spore_tall",
+   "spore tall: a glowing fungal plant or ground debris that grows on Spore mat, standing upright on the ground"
+  ],
+  [
+   "spore_small",
+   "spore small: a glowing fungal plant or ground debris that grows on Spore mat, standing upright on the ground"
+  ],
+  [
+   "flora_uranium_crystal",
+   "uranium crystal: a irradiated core plant or ground debris that grows on Magma rock, standing upright on the ground"
+  ],
+  [
+   "flora_rad_lichen",
+   "rad lichen: a irradiated core plant or ground debris that grows on Magma rock, standing upright on the ground"
+  ],
+  [
+   "flora_glow_reeds",
+   "glow reeds: a irradiated core plant or ground debris that grows on Magma rock, standing upright on the ground"
+  ],
+  [
+   "flora_irradiated_boulder",
+   "irradiated boulder: a irradiated core plant or ground debris that grows on Magma rock, standing upright on the ground"
+  ],
+  [
+   "deco_core_vent",
+   "core vent: a irradiated core plant or ground debris that grows on Magma rock, standing upright on the ground"
+  ],
+  [
+   "mutant_vinelash",
+   "mutant vinelash: a toxic irradiated plant or ground debris that grows on Void rock, standing upright on the ground"
+  ],
+  [
+   "radiant_flora",
+   "radiant flora: a toxic irradiated plant or ground debris that grows on Void rock, standing upright on the ground"
+  ],
+  [
+   "caustic_rock",
+   "caustic rock: a toxic irradiated plant or ground debris that grows on Void rock, standing upright on the ground"
+  ],
+  [
+   "flora_giant_leaf",
+   "giant leaf: a jungle canopy plant or ground debris that grows on Mud, standing upright on the ground"
+  ],
+  [
+   "flora_thorn_bush",
+   "thorn bush: a jungle canopy plant or ground debris that grows on Mud, standing upright on the ground"
+  ]
+ ]
+}

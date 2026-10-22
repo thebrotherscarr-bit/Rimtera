@@ -1,0 +1,34 @@
+{
+ "name": "ammo_rocket_1",
+ "size": 48,
+ "items": [
+  [
+   "ammo_frag_rocket",
+   "Frag rocket: a small rocket shell, olive colours."
+  ],
+  [
+   "ammo_cryo_rocket",
+   "Cryo rocket: a small rocket shell, ice cyan colours."
+  ],
+  [
+   "ammo_incendiary_rocket",
+   "Incendiary rocket: a small rocket shell, fire red colours."
+  ],
+  [
+   "ammo_breacher_rocket",
+   "Breacher rocket: a small rocket shell, gunmetal colours."
+  ],
+  [
+   "ammo_cluster_rocket",
+   "Cluster rocket: a small rocket shell, hazard orange colours."
+  ],
+  [
+   "ammo_void_rocket",
+   "Void rocket: a small rocket shell, void violet colours."
+  ],
+  [
+   "ammo_astral_rocket",
+   "Astral rocket: a small rocket shell, starfield gold colours."
+  ]
+ ]
+}

@@ -1,0 +1,70 @@
+{
+ "name": "wings_1",
+ "size": 64,
+ "items": [
+  [
+   "item_ferrite_wingpack",
+   "Ferrite wingpack: a pair of mechanical or organic wings spread open, seen from behind, rust grey colours."
+  ],
+  [
+   "item_cobalt_wingpack",
+   "Cobalt wingpack: a pair of mechanical or organic wings spread open, seen from behind, deep blue colours."
+  ],
+  [
+   "item_mothsilk_wings",
+   "Moth-silk wings: a pair of mechanical or organic wings spread open, seen from behind, silk white colours."
+  ],
+  [
+   "item_scrap_wings",
+   "Scrap wings: a pair of mechanical or organic wings spread open, seen from behind, scrap iron colours."
+  ],
+  [
+   "item_batsail_wings",
+   "Bat-sail wings: a pair of mechanical or organic wings spread open, seen from behind, dusk brown colours."
+  ],
+  [
+   "item_coral_fin_wings",
+   "Coral fin wings: a pair of mechanical or organic wings spread open, seen from behind, coral pink colours."
+  ],
+  [
+   "item_ember_wings",
+   "Ember wings: a pair of mechanical or organic wings spread open, seen from behind, ember red colours."
+  ],
+  [
+   "item_frostfeather_wings",
+   "Frost-feather wings: a pair of mechanical or organic wings spread open, seen from behind, ice cyan colours."
+  ],
+  [
+   "item_glacial_wingpack",
+   "Glacial wingpack: a pair of mechanical or organic wings spread open, seen from behind, ice cyan colours."
+  ],
+  [
+   "item_leaf_wings",
+   "Leaf wings: a pair of mechanical or organic wings spread open, seen from behind, leaf green colours."
+  ],
+  [
+   "item_meteorite_wingpack",
+   "Meteorite wingpack: a pair of mechanical or organic wings spread open, seen from behind, charred crimson colours."
+  ],
+  [
+   "item_pyrocite_wingpack",
+   "Pyrocite wingpack: a pair of mechanical or organic wings spread open, seen from behind, molten orange colours."
+  ],
+  [
+   "item_spore_wings",
+   "Spore wings: a pair of mechanical or organic wings spread open, seen from behind, spore blue colours."
+  ],
+  [
+   "item_uranium_wingpack",
+   "Uranium wingpack: a pair of mechanical or organic wings spread open, seen from behind, toxic green colours."
+  ],
+  [
+   "item_hive_wings",
+   "Hive wings: a pair of mechanical or organic wings spread open, seen from behind, honey amber colours."
+  ],
+  [
+   "item_skyray_wings",
+   "Sky-ray wings: a pair of mechanical or organic wings spread open, seen from behind, sky blue colours."
+  ]
+ ]
+}

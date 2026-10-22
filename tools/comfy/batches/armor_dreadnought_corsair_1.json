@@ -1,0 +1,18 @@
+{
+ "name": "armor_dreadnought_corsair_1",
+ "size": 48,
+ "items": [
+  [
+   "armor_dreadnought_corsair_leggings",
+   "Dreadnought corsair leggings: a sci-fi armor piece: dreadnought-corsair, pirate red / brass colours."
+  ],
+  [
+   "armor_dreadnought_corsair_vest",
+   "Dreadnought corsair flak vest: a sci-fi armor piece: dreadnought-corsair, pirate red / brass colours."
+  ],
+  [
+   "armor_dreadnought_corsair_visor",
+   "Dreadnought corsair visor: a sci-fi armor piece: dreadnought-corsair, pirate red / brass colours."
+  ]
+ ]
+}

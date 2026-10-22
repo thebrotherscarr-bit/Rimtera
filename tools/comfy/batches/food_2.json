@@ -1,0 +1,14 @@
+{
+ "name": "food_2",
+ "size": 48,
+ "items": [
+  [
+   "item_void_noodles",
+   "Void noodles: a food item or meal, void violet colours."
+  ],
+  [
+   "item_starfruit_tart",
+   "Starfruit tart: a food item or meal, starfield gold colours."
+  ]
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "name": "weapon_thrown_2",
+ "size": 48,
+ "items": [
+  [
+   "weapon_uranium_javelin",
+   "Uranium javelin: a throwing weapon (knife, star or grenade), toxic green colours."
+  ],
+  [
+   "weapon_uranium_throwing_knife",
+   "Uranium throwing knife: a throwing weapon (knife, star or grenade), toxic green colours."
+  ],
+  [
+   "weapon_viridium_javelin",
+   "Viridium javelin: a throwing weapon (knife, star or grenade), jungle green colours."
+  ],
+  [
+   "weapon_viridium_throwing_knife",
+   "Viridium throwing knife: a throwing weapon (knife, star or grenade), jungle green colours."
+  ],
+  [
+   "weapon_lumenite_javelin",
+   "Lumenite javelin: a throwing weapon (knife, star or grenade), pearl white / prism colours."
+  ],
+  [
+   "weapon_lumenite_throwing_knife",
+   "Lumenite throwing knife: a throwing weapon (knife, star or grenade), pearl white / prism colours."
+  ],
+  [
+   "weapon_plasma_grenade",
+   "Plasma grenade: a throwing weapon (knife, star or grenade), plasma pink colours."
+  ],
+  [
+   "weapon_shard_caltrops",
+   "Shard caltrops: a throwing weapon (knife, star or grenade), prismatic colours."
+  ],
+  [
+   "weapon_void_grenade",
+   "Void grenade: a throwing weapon (knife, star or grenade), void violet colours."
+  ],
+  [
+   "weapon_voidsteel_javelin",
+   "Voidsteel javelin: a throwing weapon (knife, star or grenade), violet black colours."
+  ],
+  [
+   "weapon_voidsteel_throwing_knife",
+   "Voidsteel throwing knife: a throwing weapon (knife, star or grenade), violet black colours."
+  ],
+  [
+   "weapon_astral_javelin",
+   "Astral javelin: a throwing weapon (knife, star or grenade), starfield gold colours."
+  ],
+  [
+   "weapon_astral_throwing_knife",
+   "Astral throwing knife: a throwing weapon (knife, star or grenade), starfield gold colours."
+  ],
+  [
+   "weapon_star_shuriken",
+   "Star shuriken: a throwing weapon (knife, star or grenade), starfield gold colours."
+  ]
+ ]
+}

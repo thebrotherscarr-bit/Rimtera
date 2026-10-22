@@ -1,0 +1,70 @@
+{
+ "name": "weapon_staff_1",
+ "size": 48,
+ "items": [
+  [
+   "tech_ferrite_emitter_staff",
+   "Ferrite emitter staff: a tech staff with a glowing crystal head, diagonal, rust grey colours."
+  ],
+  [
+   "tech_ferrite_focus_rod",
+   "Ferrite focus rod: a tech staff with a glowing crystal head, diagonal, rust grey colours."
+  ],
+  [
+   "tech_sentinel_sceptre",
+   "Sentinel's sceptre: a tech staff with a glowing crystal head, diagonal, basalt grey colours."
+  ],
+  [
+   "tech_cobalt_emitter_staff",
+   "Cobalt emitter staff: a tech staff with a glowing crystal head, diagonal, deep blue colours."
+  ],
+  [
+   "tech_cobalt_focus_rod",
+   "Cobalt focus rod: a tech staff with a glowing crystal head, diagonal, deep blue colours."
+  ],
+  [
+   "tech_drillcore_rod",
+   "Drill-core rod: a tech staff with a glowing crystal head, diagonal, mining yellow colours."
+  ],
+  [
+   "tech_overgrowth_staff",
+   "Overgrowth staff: a tech staff with a glowing crystal head, diagonal, vine green colours."
+  ],
+  [
+   "tech_cryolance_staff",
+   "Cryolance staff: a tech staff with a glowing crystal head, diagonal, ice cyan colours."
+  ],
+  [
+   "tech_glacial_emitter_staff",
+   "Glacial emitter staff: a tech staff with a glowing crystal head, diagonal, ice cyan colours."
+  ],
+  [
+   "tech_glacial_focus_rod",
+   "Glacial focus rod: a tech staff with a glowing crystal head, diagonal, ice cyan colours."
+  ],
+  [
+   "tech_meteorite_emitter_staff",
+   "Meteorite emitter staff: a tech staff with a glowing crystal head, diagonal, charred crimson colours."
+  ],
+  [
+   "tech_meteorite_focus_rod",
+   "Meteorite focus rod: a tech staff with a glowing crystal head, diagonal, charred crimson colours."
+  ],
+  [
+   "tech_mycelium_staff",
+   "Mycelium staff: a tech staff with a glowing crystal head, diagonal, spore blue colours."
+  ],
+  [
+   "tech_pyrocite_emitter_staff",
+   "Pyrocite emitter staff: a tech staff with a glowing crystal head, diagonal, molten orange colours."
+  ],
+  [
+   "tech_pyrocite_focus_rod",
+   "Pyrocite focus rod: a tech staff with a glowing crystal head, diagonal, molten orange colours."
+  ],
+  [
+   "tech_scrap_tesla_rod",
+   "Scrap tesla rod: a tech staff with a glowing crystal head, diagonal, scrap iron colours."
+  ]
+ ]
+}

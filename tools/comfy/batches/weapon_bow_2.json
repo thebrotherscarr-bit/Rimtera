@@ -1,0 +1,62 @@
+{
+ "name": "weapon_bow_2",
+ "size": 64,
+ "items": [
+  [
+   "weapon_viridium_pulse_repeater",
+   "Viridium pulse repeater: a sci-fi compound bow, vertical, jungle green colours."
+  ],
+  [
+   "weapon_viridium_rail_bow",
+   "Viridium rail-bow: a sci-fi compound bow, vertical, jungle green colours."
+  ],
+  [
+   "weapon_corsair_crossbow",
+   "Corsair crossbow: a sci-fi compound bow, vertical, pirate red colours."
+  ],
+  [
+   "weapon_crystal_harpbow",
+   "Crystal harp-bow: a sci-fi compound bow, vertical, prismatic colours."
+  ],
+  [
+   "weapon_eclipse_longbow",
+   "Eclipse longbow: a sci-fi compound bow, vertical, eclipse black colours."
+  ],
+  [
+   "weapon_lumenite_pulse_repeater",
+   "Lumenite pulse repeater: a sci-fi compound bow, vertical, pearl white / prism colours."
+  ],
+  [
+   "weapon_lumenite_rail_bow",
+   "Lumenite rail-bow: a sci-fi compound bow, vertical, pearl white / prism colours."
+  ],
+  [
+   "weapon_storm_repeater",
+   "Storm repeater: a sci-fi compound bow, vertical, storm blue colours."
+  ],
+  [
+   "weapon_vault_ballista",
+   "Vault ballista: a sci-fi compound bow, vertical, precursor bronze colours."
+  ],
+  [
+   "weapon_voidsteel_pulse_repeater",
+   "Voidsteel pulse repeater: a sci-fi compound bow, vertical, violet black colours."
+  ],
+  [
+   "weapon_voidsteel_rail_bow",
+   "Voidsteel rail-bow: a sci-fi compound bow, vertical, violet black colours."
+  ],
+  [
+   "weapon_astral_pulse_repeater",
+   "Astral pulse repeater: a sci-fi compound bow, vertical, starfield gold colours."
+  ],
+  [
+   "weapon_astral_rail_bow",
+   "Astral rail-bow: a sci-fi compound bow, vertical, starfield gold colours."
+  ],
+  [
+   "weapon_nova_arc",
+   "Nova arc: a sci-fi compound bow, vertical, starfield gold colours."
+  ]
+ ]
+}

@@ -1,0 +1,70 @@
+{
+ "name": "weapon_yoyo_1",
+ "size": 48,
+ "items": [
+  [
+   "weapon_ferrite_spinner",
+   "Ferrite spinner: a round mechanical yo-yo disc with a short string, rust grey colours."
+  ],
+  [
+   "weapon_silkspool",
+   "Silkspool: a round mechanical yo-yo disc with a short string, silk white colours."
+  ],
+  [
+   "weapon_cobalt_spinner",
+   "Cobalt spinner: a round mechanical yo-yo disc with a short string, deep blue colours."
+  ],
+  [
+   "weapon_geode_gyro",
+   "Geode gyro: a round mechanical yo-yo disc with a short string, amethyst colours."
+  ],
+  [
+   "weapon_glacial_spinner",
+   "Glacial spinner: a round mechanical yo-yo disc with a short string, ice cyan colours."
+  ],
+  [
+   "weapon_meteorite_spinner",
+   "Meteorite spinner: a round mechanical yo-yo disc with a short string, charred crimson colours."
+  ],
+  [
+   "weapon_pyrocite_spinner",
+   "Pyrocite spinner: a round mechanical yo-yo disc with a short string, molten orange colours."
+  ],
+  [
+   "weapon_sporepuff_gyro",
+   "Spore-puff gyro: a round mechanical yo-yo disc with a short string, spore blue colours."
+  ],
+  [
+   "weapon_uranium_spinner",
+   "Uranium spinner: a round mechanical yo-yo disc with a short string, toxic green colours."
+  ],
+  [
+   "weapon_flora_gyre",
+   "Flora gyre: a round mechanical yo-yo disc with a short string, mutant magenta colours."
+  ],
+  [
+   "weapon_swarm_gyro",
+   "Swarm gyro: a round mechanical yo-yo disc with a short string, hazard yellow colours."
+  ],
+  [
+   "weapon_viridium_spinner",
+   "Viridium spinner: a round mechanical yo-yo disc with a short string, jungle green colours."
+  ],
+  [
+   "weapon_corsair_top",
+   "Corsair's top: a round mechanical yo-yo disc with a short string, pirate red colours."
+  ],
+  [
+   "weapon_halo_gyre",
+   "Halo gyre: a round mechanical yo-yo disc with a short string, halo gold colours."
+  ],
+  [
+   "weapon_lumenite_spinner",
+   "Lumenite spinner: a round mechanical yo-yo disc with a short string, pearl white / prism colours."
+  ],
+  [
+   "weapon_singularity_spinner",
+   "Singularity spinner: a round mechanical yo-yo disc with a short string, void black colours."
+  ]
+ ]
+}

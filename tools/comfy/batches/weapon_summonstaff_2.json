@@ -1,0 +1,42 @@
+{
+ "name": "weapon_summonstaff_2",
+ "size": 48,
+ "items": [
+  [
+   "cmd_corsair_drone_deck",
+   "Corsair drone deck: a drone control remote with antenna, pirate red colours."
+  ],
+  [
+   "cmd_lumenite_drone_uplink",
+   "Lumenite drone uplink: a drone control remote with antenna, pearl white / prism colours."
+  ],
+  [
+   "cmd_lumenite_familiar_core",
+   "Lumenite familiar core: a drone control remote with antenna, pearl white / prism colours."
+  ],
+  [
+   "cmd_prism_lantern",
+   "Prism lantern: a drone control remote with antenna, prismatic colours."
+  ],
+  [
+   "cmd_voidsteel_drone_uplink",
+   "Voidsteel drone uplink: a drone control remote with antenna, violet black colours."
+  ],
+  [
+   "cmd_voidsteel_familiar_core",
+   "Voidsteel familiar core: a drone control remote with antenna, violet black colours."
+  ],
+  [
+   "cmd_astral_drone_uplink",
+   "Astral drone uplink: a drone control remote with antenna, starfield gold colours."
+  ],
+  [
+   "cmd_astral_familiar_core",
+   "Astral familiar core: a drone control remote with antenna, starfield gold colours."
+  ],
+  [
+   "cmd_guardian_array",
+   "Guardian array: a drone control remote with antenna, starfield gold colours."
+  ]
+ ]
+}

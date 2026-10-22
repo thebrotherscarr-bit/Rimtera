@@ -1,0 +1,38 @@
+{
+ "name": "weapon_broadsword_3",
+ "size": 64,
+ "items": [
+  [
+   "weapon_vaultbreaker",
+   "Vaultbreaker: a sci-fi broadsword, blade pointing up-right diagonally, precursor bronze colours."
+  ],
+  [
+   "weapon_voidsteel_arc_saber",
+   "Voidsteel arc-saber: a sci-fi broadsword, blade pointing up-right diagonally, violet black colours."
+  ],
+  [
+   "weapon_voidsteel_greatblade",
+   "Voidsteel greatblade: a sci-fi broadsword, blade pointing up-right diagonally, violet black colours."
+  ],
+  [
+   "weapon_voidsteel_longblade",
+   "Voidsteel longblade: a sci-fi broadsword, blade pointing up-right diagonally, violet black colours."
+  ],
+  [
+   "weapon_astral_arc_saber",
+   "Astral arc-saber: a sci-fi broadsword, blade pointing up-right diagonally, starfield gold colours."
+  ],
+  [
+   "weapon_astral_greatblade",
+   "Astral greatblade: a sci-fi broadsword, blade pointing up-right diagonally, starfield gold colours."
+  ],
+  [
+   "weapon_astral_longblade",
+   "Astral longblade: a sci-fi broadsword, blade pointing up-right diagonally, starfield gold colours."
+  ],
+  [
+   "weapon_starforged_claymore",
+   "Starforged claymore: a sci-fi broadsword, blade pointing up-right diagonally, starfield gold colours."
+  ]
+ ]
+}

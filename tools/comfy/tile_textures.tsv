@@ -1,0 +1,110 @@
+Soil	terrain_regolith	Regolith
+Rock	terrain_rock	Basalt
+CopperOre	terrain_ore_red	Ferrite ore
+Grass	tile_grassland	Regolith moss
+Sand	terrain_sand	Silica sand
+Wood	wall_panel	Hull panel
+Bedrock	terrain_bedrock	Bedrock
+Snow	tile_icy_soil	Ice
+DesertSand	tile_scrap_heap	Dune sand
+JungleGrass	terrain_vine	Vine mat
+FungalSoil	terrain_fungal	Spore mat
+EmberRock	tile_obsidian	Magma rock
+CorruptRock	tile_caustic_crystal	Void rock
+CrimsonSoil	tile_radiated_soil	Rift soil
+HallowGrass	terrain_prism	Prism moss
+DungeonBrick	wall_cracked	Derelict plating
+CobaltOre	terrain_ore_blue	Cobalt ore
+ViridiumOre	terrain_ore_green	Viridium ore
+EnergyCrystal	terrain_crystal	Energy crystal
+GlacialOre	terrain_glacial_ore	Glacial ore
+UraniumOre	terrain_uranium_ore	Uranium ore
+PyrociteOre	terrain_pyrocite_ore	Pyrocite ore
+ScrapIronOre	terrain_scrap_iron_ore	Scrap-iron ore
+RadiatedSand	tile_radiated_sand	Irradiated sand
+RadiatedIce	tile_radiated_ice	Glowing ice
+OvergrowthSoil	tile_overgrowth_soil	Overgrown soil
+OvergrowthRock	tile_overgrowth_rock	Mossy rock
+OvergrowthSand	tile_overgrowth_sand	Root-choked sand
+OvergrowthIce	tile_overgrowth_ice	Vine-veined ice
+Ash	tile_ash	Ash
+Mud	tile_mud	Mud
+Clay	tile_clay	Clay
+Gravel	tile_gravel	Gravel
+Silt	tile_silt	Silt
+SaltCrust	tile_salt_crust	Salt crust
+AcidSand	tile_acid_sand	Acid sand
+ShellSand	tile_shell_sand	Shell sand
+CoralReef	tile_coral_reef	Coral reef
+Slate	tile_slate	Slate
+Alabaster	tile_alabaster	Alabaster
+BasaltColumn	tile_basalt_column	Basalt column
+HiveComb	tile_hive_comb	Hive comb
+Nectar	tile_nectar	Nectar
+PearlStone	tile_pearl_stone	Pearl stone
+PrismaticGrass	tile_prismatic_grass	Prismatic grass
+GlowshroomGrass	tile_glowshroom_grass	Glowshroom grass
+ThinIce	tile_thin_ice	Thin ice
+Meteorite	tile_meteorite	Meteorite
+MossBlue	tile_moss_blue	Blue moss
+MossGold	tile_moss_gold	Gold moss
+MossRed	tile_moss_red	Red moss
+MossViolet	tile_moss_violet	Violet moss
+LumeniteOre	terrain_lumenite_ore	Lumenite ore
+VoidsteelOre	terrain_voidsteel_ore	Voidsteel ore
+FerriteBrick	tile_ferrite_brick	Ferrite brick
+CobaltBrick	tile_cobalt_brick	Cobalt brick
+ViridiumBrick	tile_viridium_brick	Viridium brick
+LumeniteBrick	tile_lumenite_brick	Lumenite brick
+VoidsteelBrick	tile_voidsteel_brick	Voidsteel brick
+AstralBrick	tile_astral_brick	Astral brick
+SlateBrick	tile_slate_brick	Slate brick
+AlabasterBrick	tile_alabaster_brick	Alabaster brick
+BasaltBrick	tile_basalt_brick	Basalt brick
+PearlBrick	tile_pearl_brick	Pearl brick
+HiveBrick	tile_hive_brick	Hive brick
+CoralBrick	tile_coral_brick	Coral brick
+Glass	tile_glass	Glass
+ReinforcedGlass	tile_reinforced_glass	Reinforced glass
+HullPlatingGrey	tile_hull_plating_grey	Grey hull plating
+HullPlatingBlue	tile_hull_plating_blue	Blue hull plating
+HullPlatingGreen	tile_hull_plating_green	Green hull plating
+HullPlatingRed	tile_hull_plating_red	Red hull plating
+HullPlatingHazard	tile_hull_plating_hazard	Hazard-striped plating
+AstroTimberPlanks	tile_astro_timber_planks	Astro-timber planks
+CharredPlanks	tile_charred_planks	Charred planks
+CrystalBlock	tile_crystal_block	Crystal block
+CircuitPanel	tile_circuit_panel	Circuit panel
+Conveyor	tile_conveyor	Conveyor
+Grate	tile_grate	Grate
+Plate	tile_plate	Steel plate
+Vent	tile_vent	Vent block
+ShellBeach	tile_shell_beach	Shell beach
+MyceliumStone	tile_mycelium_stone	Mycelium stone
+SporeBlock	tile_spore_block	Spore block
+MushroomCap	tile_mushroom_cap	Mushroom cap
+CrystalSpire	tile_crystal_spire	Crystal spire
+PearlSand	tile_pearl_sand	Pearl sand
+CanopyGrass	tile_canopy_grass	Canopy grass
+PrecursorBrick	tile_precursor_brick	Precursor brick
+PrecursorGlyph	tile_precursor_glyph	Precursor glyph
+GeodeCyan	tile_geode_cyan	Cyan geode
+GeodeMagenta	tile_geode_magenta	Magenta geode
+DartTrap	tile_dart_trap	Dart trap
+ExplosiveTrap	tile_explosive_trap	Explosive trap
+GiantTrunk	tile_giant_trunk	Living wood
+DungeonBrickPrecursor	tile_dungeon_brick_precursor	Precursor dungeon brick
+ScrapSandstone	tile_scrap_sandstone	Hardened dune sand
+Slush	tile_slush	Slush
+GemAmethyst	tile_gem_amethyst	Amethyst-studded rock
+GemTopaz	tile_gem_topaz	Topaz-studded rock
+GemSapphire	tile_gem_sapphire	Sapphire-studded rock
+GemEmerald	tile_gem_emerald	Emerald-studded rock
+GemRuby	tile_gem_ruby	Ruby-studded rock
+GemDiamond	tile_gem_diamond	Diamond-studded rock
+Boulder	tile_boulder	Boulder
+MudBrick	tile_mud_brick	Mud brick
+IrradiatedRock	tile_irradiated_rock	Irradiated core rock
+CoreCrust	tile_core_crust	Cracked core crust
+VitrifiedGlass	tile_vitrified_glass	Vitrified core glass
+CharSlag	tile_char_slag	Char slag

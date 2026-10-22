@@ -1,0 +1,70 @@
+{
+ "name": "accessory_4",
+ "size": 48,
+ "items": [
+  [
+   "item_uplink_antenna",
+   "Uplink antenna: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_warlords_medal",
+   "Warlord's medal: a small wearable gadget or charm icon, scrap iron colours."
+  ],
+  [
+   "item_arcanists_circlet",
+   "Arcanist's circlet: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_architects_frame",
+   "Architect's frame: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_ballistics_emblem_mk_ii",
+   "Ballistics emblem Mk II: a small wearable gadget or charm icon, ranged accent colours."
+  ],
+  [
+   "item_berserker_rig",
+   "Berserker rig: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_bio_weave",
+   "Bio-weave: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_bulwark_core",
+   "Bulwark core: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_close_quarters_emblem_mk_ii",
+   "Close-quarters emblem Mk II: a small wearable gadget or charm icon, melee accent colours."
+  ],
+  [
+   "item_command_emblem_mk_ii",
+   "Command emblem Mk II: a small wearable gadget or charm icon, command accent colours."
+  ],
+  [
+   "item_duelist_harness",
+   "Duelist harness: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_environmental_suit",
+   "Environmental suit: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_excavator_rig",
+   "Excavator rig: a small wearable gadget or charm icon."
+  ],
+  [
+   "item_fortune_matrix",
+   "Fortune matrix: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_gunners_harness",
+   "Gunner's harness: a small wearable gadget or charm icon, combined: blend of component colours colours."
+  ],
+  [
+   "item_heart_pump",
+   "Heart pump: a small wearable gadget or charm icon."
+  ]
+ ]
+}
