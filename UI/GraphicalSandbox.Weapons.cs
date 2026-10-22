@@ -20,21 +20,22 @@ public static partial class GraphicalSandbox
 
         private PointF Screen(Vector2 world, int startX, int startY) => new((world.X - startX) * TileSize, (world.Y - startY) * TileSize);
 
-        /// <summary>True when the style drawing already shows the weapon (the held-item sprite is skipped).</summary>
-        private static bool StyleDrawsWeapon(GameSimulation game) =>
-            game.PlayerSwing is not null || game.PlayerWhip is not null || game.PlayerBeam is not null ||
-            game.Projectiles.Any(projectile => projectile.Team == ProjectileTeam.Player &&
-                                               projectile.Style is WeaponStyle.Yoyo or WeaponStyle.Boomerang or WeaponStyle.Flail);
-
         private void DrawWeaponStyles(Graphics g, GameSimulation game, int startX, int startY, double now)
         {
-            var hand = game.Player.Motion.Position + new Vector2(game.Player.Motion.Size.X / 2f, game.Player.Motion.Size.Y * 0.55f);
+            // Strings, chains and lashes leave the colonist's hand (the rig in GraphicalSandbox.HeldItems.cs); melee
+            // swings and thrusts are drawn there with the arm.
+            var hand = _heldHand ?? _rig.RestHand;
             DrawStyledProjectiles(g, game, hand, startX, startY, now);
-            if (game.PlayerSwing is { } swing)
-                DrawSwing(g, swing, startX, startY);
             if (game.PlayerWhip is { } whip && whip.Points.Count > 1)
             {
                 var points = whip.Points.Select(point => Screen(point, startX, startY)).ToArray();
+                // The simulation's lash starts at the body centre; ease it onto the hand toward the tip.
+                var shift = new SizeF(hand.X - points[0].X, hand.Y - points[0].Y);
+                for (var i = 0; i < points.Length; i++)
+                {
+                    var keep = 1f - i / (float)(points.Length - 1);
+                    points[i] = new PointF(points[i].X + shift.Width * keep, points[i].Y + shift.Height * keep);
+                }
                 for (var i = 1; i < points.Length; i++)
                 {
                     var thickness = MathF.Max(1.5f, 5f * (1f - i / (float)points.Length));
@@ -46,7 +47,7 @@ public static partial class GraphicalSandbox
             }
             if (game.PlayerBeam is { } beam)
             {
-                var a = Screen(beam.Start, startX, startY);
+                var a = _beamTip ?? Screen(beam.Start, startX, startY);
                 var b = Screen(beam.End, startX, startY);
                 var width = MathF.Max(3f, beam.Width * TileSize);
                 var flicker = 0.85f + 0.15f * MathF.Sin((float)now * 40f);
@@ -127,44 +128,8 @@ public static partial class GraphicalSandbox
             return _weaponAxes[art] = new WeaponAxis(ux, uy, max - min, (float)cx + ux * (max + min) / 2f, (float)cy + uy * (max + min) / 2f);
         }
 
-        /// <summary>
-        /// Broadswords sweep the blade through the arc; shortswords and spears push it out along the aim line
-        /// and pull it back. The sprite's own axis is turned onto the swing angle with its grip at the hand.
-        /// </summary>
-        private void DrawSwing(Graphics g, MeleeSwingView swing, int startX, int startY)
+        private void DrawStyledProjectiles(Graphics g, GameSimulation game, PointF handScreen, int startX, int startY, double now)
         {
-            var origin = Screen(swing.Origin, startX, startY);
-            var reach = Math.Max(TileSize, swing.Reach * TileSize);
-            if (_sprites.GetFitted(SpriteCatalog.ForItem(swing.Item), (int)reach * 2, (int)reach * 2) is not { } art)
-                return;
-            var axis = AxisOf(art);
-            var thrust = swing.Style is WeaponStyle.Spear or WeaponStyle.Shortsword;
-            // Blade length on screen: the whole reach for swords; a spear's shaft is most of it, the thrust covers the rest.
-            var bladeLength = thrust ? reach * (swing.Style == WeaponStyle.Spear ? 0.7f : 0.8f) : reach;
-            var scale = bladeLength / Math.Max(1f, axis.Length);
-            var push = thrust ? MathF.Sin(MathF.PI * Math.Clamp(swing.Progress, 0f, 1f)) * (reach - bladeLength) : 0f;
-            var artDegrees = MathF.Atan2(axis.TipY, axis.TipX) * 180f / MathF.PI;
-            var aimDegrees = swing.AngleRadians * 180f / MathF.PI;
-            var state = g.Save();
-            g.TranslateTransform(origin.X + MathF.Cos(swing.AngleRadians) * push, origin.Y + MathF.Sin(swing.AngleRadians) * push);
-            g.RotateTransform(aimDegrees - artDegrees);
-            g.ScaleTransform(scale, scale);
-            // Put the grip end (opposite the tip) on the hand.
-            var gripX = axis.CenterX - axis.TipX * axis.Length / 2f;
-            var gripY = axis.CenterY - axis.TipY * axis.Length / 2f;
-            g.DrawImage(art, -gripX, -gripY, art.Width, art.Height);
-            g.Restore(state);
-            if (swing.Style == WeaponStyle.Broadsword && _menu.Preferences.FlashyEffects)
-            {
-                using var arc = new Pen(Color.FromArgb(70, 255, 255, 255), 3f);
-                var r = reach * 0.95f;
-                g.DrawArc(arc, origin.X - r, origin.Y - r, r * 2, r * 2, aimDegrees - 40f, 40f);
-            }
-        }
-
-        private void DrawStyledProjectiles(Graphics g, GameSimulation game, Vector2 hand, int startX, int startY, double now)
-        {
-            var handScreen = Screen(hand, startX, startY);
             foreach (var projectile in game.Projectiles)
             {
                 if (projectile.Style == WeaponStyle.None || projectile.SourceItem is not { } item)

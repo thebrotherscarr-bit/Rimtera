@@ -102,6 +102,7 @@ public sealed partial class GameSimulation
         }
         if (item.StartsEvent is { } eventKind)
         {
+            if (CoverageStarterRefusal(eventKind) is { } starterRefusal) { PostMessage(starterRefusal); return true; } // creature coverage: night/day starters
             if (eventKind == WorldEventKind.DefenseProtocol && !IsNearGuide(PlayerCenter) &&
                 !_townNpcs.Any(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound &&
                                       Vector2.Distance(npc.Motion.Position, PlayerCenter) < 8f))
@@ -542,12 +543,27 @@ public sealed partial class GameSimulation
             case ItemId.TeleportBeacon:
                 RespawnPlayerAtLanding();
                 break;
+            case ItemId.CompanionPermit:
+                // Filing happens on its own while carried; using it files it now or says why it cannot.
+                if (!FileCompanionPermit())
+                    PostMessage("No companion can move in: every town pet already lives here, or no house is free.");
+                break;
             default:
                 if (UseBatchBUtility(item, point))
                     return;
+                NoDirectUse();
                 break;
         }
         SetPlayerCooldown(Math.Max(6, item.UseCooldownTicks));
+    }
+
+    /// <summary>Uses that reached no handler (the item audit's probe reads this; see Systems/ItemAudit.cs).</summary>
+    public int UnhandledUses { get; private set; }
+
+    private void NoDirectUse()
+    {
+        UnhandledUses++;
+        PostMessage("That item has no direct use.");
     }
 
     private void RespawnPlayerAtLanding()

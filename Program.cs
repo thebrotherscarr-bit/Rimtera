@@ -56,6 +56,9 @@ if (args.Contains("--balance", StringComparer.OrdinalIgnoreCase))
 if (args.Contains("--item-census", StringComparer.OrdinalIgnoreCase))
     return ItemCensus.Run();
 
+if (args.Contains("--item-audit", StringComparer.OrdinalIgnoreCase))
+    return ItemAudit.Report(args);
+
 if (args.Contains("--engine-bench", StringComparer.OrdinalIgnoreCase))
     return EngineBenchmark.Run(args);
 

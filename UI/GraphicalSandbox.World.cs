@@ -314,16 +314,7 @@ public static partial class GraphicalSandbox
                 DrawSpriteActor(g, "mount_hover_bike", position, size, 1f, motion.Facing < 0, startX, startY,
                     bob: (float)Math.Sin(now * 5) * 1.5f);
             }
-            foreach (var hook in new[] { game.Grapple, game.GrappleSpare })
-            {
-                if (hook is null)
-                    continue;
-                var hand = game.Player.Motion.Position + game.Player.Motion.Size / 2f;
-                var a = new PointF((hand.X - startX) * TileSize, (hand.Y - startY) * TileSize);
-                var b = new PointF((hook.Position.X - startX) * TileSize, (hook.Position.Y - startY) * TileSize);
-                g.DrawLine(_grapplePen, a, b);
-                g.FillEllipse(hook.Latched ? _amberBrush : _hudBrush, b.X - 4, b.Y - 4, 8, 8);
-            }
+            // Grapple hooks are fired from the hand: drawn with the arm in DrawHeldItem (GraphicalSandbox.HeldItems.cs).
         }
 
         /// <summary>Segmented bodies drawn tail first so the head (the enemy sprite) sits on top.</summary>

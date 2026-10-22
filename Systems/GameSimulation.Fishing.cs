@@ -121,7 +121,8 @@ public sealed partial class GameSimulation
         if (bobber.BiteTimer > 0f)
             return;
         bobber.Biting = true;
-        bobber.ReelWindow = ReelWindowSeconds;
+        // A braided fishing line holds a hooked fish twice as long before it gets away.
+        bobber.ReelWindow = ReelWindowSeconds * (Player.Stats.ImmunityTags.Contains("fishing-line") ? 2f : 1f);
         // Bait is used up on a bite, less often for stronger bait.
         if (CurrentBait is { } bait && FishingRandom.NextDouble() < BaitConsumeChance(Items[bait].BaitPower))
             Player.Inventory.TryConsume(bait);

@@ -281,6 +281,10 @@ public static class BiomeSpawnTables
             if (HardTables.TryGetValue(zone, out var hard))
                 HardTables[zone] = hard.Concat(FillEntries(roster, hard: true)).ToArray();
         }
+        // Creature coverage: hardmode extras for the thinnest hard rosters (mite warrens, bloom hives).
+        foreach (var (zone, extras) in CreatureCoverage.HardExtras())
+            if (HardTables.TryGetValue(zone, out var hard))
+                HardTables[zone] = hard.Concat(extras.Select(entry => new Entry(entry.Kind, entry.Day, entry.Night))).ToArray();
     }
 
     private static double Fraction(double value) => value - Math.Floor(value);

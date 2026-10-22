@@ -1632,10 +1632,13 @@ public static class CoreSelfTests
         GrowthSelfTests.Run(Check); // character growth: lifebloom, sixth slot, upgrades, glide rigs, hooks, creative kit (G3, G7-G11)
         StarterKitSelfTests.Run(Check); // the Terraria-style starting kit (Classic ferrite trio, Creative cobalt drop)
         SpawnSafetySelfTests.Run(Check); // no sky island over the landing site, no spawning into a cave under a plant
+        ToolCombatSelfTests.Run(Check); // tools are melee weapons too: picks, hatchets and hammers hurt creatures in their swing
         GearCurveSelfTests.Run(Check); // Terraria-shaped gear tiers: drills open the next ore, armour and weapon curves, copper-tier starting kit
         StatParitySelfTests.Run(Check); // stat formulas and tool mechanics (docs/GEAR_DIFF_MECHANICS.md)
         ToolParitySelfTests.Run(Check); // tool rules matched to the reference (docs/TOOLS_PARITY.md)
         FloraParitySelfTests.Run(Check); // flora rules matched to the reference (docs/FLORA_PARITY.md)
+        ItemAuditSelfTests.Run(Check); // every item has a function and a sprite of its own (docs/ITEM_AUDIT.md)
+        CreatureCoverageSelfTests.Run(Check); // every biome, event and boss has its creatures, leaders and summons (docs/CREATURE_COVERAGE.md)
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }

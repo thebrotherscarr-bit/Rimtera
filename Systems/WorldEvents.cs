@@ -28,7 +28,9 @@ public enum WorldEventKind : byte
     HollowMoon,
     RimeMoon,
     CryoBrigade,
-    WindyDay
+    WindyDay,
+    // ---- Creature coverage (Systems/CreatureCoverage.cs): the light-hoard event (append-only) ----
+    LumenTempest
 }
 
 public enum WorldEventCategory : byte
@@ -415,7 +417,9 @@ public sealed class WorldEventSystem
     {
         static bool Always(IWorldEventHost _) => true;
         foreach (var seasonal in SeasonalEvents.Specs()) yield return seasonal; // GameSimulation.Seasons.cs
-        yield return new(WorldEventKind.Rain, "Rainfall", WorldEventCategory.Weather, WorldEventMoment.Never, 0f, 8f, Always, [],
+        // Creature coverage: rain brings its own creatures (Terraria's umbrella slimes, flying fish and raincoat zombies).
+        yield return new(WorldEventKind.Rain, "Rainfall", WorldEventCategory.Weather, WorldEventMoment.Never, 0f, 8f, Always,
+            [(EnemyKind.DrizzleGel, 0.4f), (EnemyKind.RainSkipper, 0.35f), (EnemyKind.SlickerHusk, 0.25f)],
             SpawnMultiplier: 1.1f, CooldownDays: 0);
         yield return new(WorldEventKind.AcidRain, "Acid rain", WorldEventCategory.Weather, WorldEventMoment.Never, 0f, 6f, Always,
             [(EnemyKind.EventAcidSlime, 0.5f), (EnemyKind.EventAcidBird, 0.3f), (EnemyKind.EventToxicCloud, 0.2f)],
@@ -424,7 +428,9 @@ public sealed class WorldEventSystem
             [(EnemyKind.EventDustDevil, 0.3f), (EnemyKind.EventSandRay, 0.25f), (EnemyKind.EventScrapElemental, 0.15f), (EnemyKind.EventDustRaider, 0.3f)],
             SpawnMultiplier: 1.35f, PopulationMultiplier: 1.25f, CooldownDays: 0);
         yield return new(WorldEventKind.Blizzard, "Blizzard", WorldEventCategory.Weather, WorldEventMoment.Never, 0f, 6f, Always,
-            [(EnemyKind.SnowWolf, 0.5f), (EnemyKind.Cryopterous, 0.3f), (EnemyKind.GlacialGolem, 0.2f)], SpawnMultiplier: 1.15f,
+            // Creature coverage: whiteout wisps and drift stalkers ride the storm beside the frozen natives.
+            [(EnemyKind.WhiteoutWisp, 0.3f), (EnemyKind.DriftStalker, 0.25f), (EnemyKind.SnowWolf, 0.25f), (EnemyKind.Cryopterous, 0.2f)],
+            SpawnMultiplier: 1.15f,
             CooldownDays: 0, SheltersTown: true);
         yield return new(WorldEventKind.RustMoon, "Rust Moon", WorldEventCategory.Night, WorldEventMoment.Dusk, 0.12f, 11f,
             host => host.Flags.IsSet("player.health.120") || host.Flags.IsSet("boss.stone_sentinel.down"),
@@ -439,7 +445,8 @@ public sealed class WorldEventSystem
             Rewards: [(ItemId.Credits, 250), (ItemId.VoidEssence, 5)], CooldownDays: 4, SheltersTown: true);
         yield return new(WorldEventKind.SwarmRain, "Swarm Rain", WorldEventCategory.Day, WorldEventMoment.Dawn, 0.08f, 8f,
             host => host.Flags.IsSet("boss.stone_sentinel.down") && host.Weather.Rain > 0.2f,
-            [(EnemyKind.EventSwarmer, 0.8f), (EnemyKind.EventSwarmQueen, 0.05f), (EnemyKind.MossSlime, 0.15f)],
+            // Creature coverage: armored swarmers join the falling swarm (prism swarmers after the Fracture, GameSimulation.Hardmode.cs).
+            [(EnemyKind.EventSwarmer, 0.65f), (EnemyKind.ArmoredSwarmer, 0.2f), (EnemyKind.EventSwarmQueen, 0.05f), (EnemyKind.MossSlime, 0.1f)],
             SpawnMultiplier: 2.6f, PopulationMultiplier: 2f, KillsPerWave: 30, FinalBoss: EnemyKind.AlphaSkitter,
             Rewards: [(ItemId.Credits, 80), (ItemId.SummonSwarmPheromone, 1)], CooldownDays: 3);
         yield return new(WorldEventKind.ScavengerRaid, "Scavenger Raid", WorldEventCategory.Invasion, WorldEventMoment.Dusk, 0.1f, 12f,
@@ -474,20 +481,26 @@ public sealed class WorldEventSystem
             [(EnemyKind.EventFestivalBalloonDrone, 1f)], NoHostileSpawns: true,
             Rewards: [(ItemId.FestivalMask, 1), (ItemId.NanoBananaSplit, 3), (ItemId.Credits, 50)], CooldownDays: 5);
         // The obelisk sieges: started together when the Void Cantor falls; each obelisk's shield holds until
-        // ObeliskShieldKills of its roster die (kill quota, no final boss — the obelisk itself ends the event).
+        // ObeliskShieldKills of its roster die (kill quota, no final boss — the obelisk itself ends the event). Creature coverage:
+        // each siege fields three natives of its own (Terraria's pillars each have their own roster).
         static bool CantorDown(IWorldEventHost host) => host.Flags.IsSet("boss.void_cantor.down");
         yield return new(WorldEventKind.EmberObelisk, "Ember obelisk siege", WorldEventCategory.Invasion, WorldEventMoment.Never, 0f, 48f,
-            CantorDown, [(EnemyKind.EventMeteorHead, 0.35f), (EnemyKind.EventMeteorCrawler, 0.35f), (EnemyKind.BasaltGolem, 0.3f)],
+            CantorDown, [(EnemyKind.CinderImp, 0.4f), (EnemyKind.SlagCentipede, 0.25f), (EnemyKind.PyreLancer, 0.35f)],
             SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0);
         yield return new(WorldEventKind.RiftObelisk, "Rift obelisk siege", WorldEventCategory.Invasion, WorldEventMoment.Never, 0f, 48f,
-            CantorDown, [(EnemyKind.EventVoidSiphon, 0.35f), (EnemyKind.RiftCaster, 0.3f), (EnemyKind.VengefulWisp, 0.35f)],
+            CantorDown, [(EnemyKind.RiftSeer, 0.3f), (EnemyKind.MindLeech, 0.4f), (EnemyKind.RiftFloater, 0.3f)],
             SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0);
         yield return new(WorldEventKind.GaleObelisk, "Gale obelisk siege", WorldEventCategory.Invasion, WorldEventMoment.Never, 0f, 48f,
-            CantorDown, [(EnemyKind.StormRay, 0.35f), (EnemyKind.DiveKite, 0.35f), (EnemyKind.EventProtocolWyvern, 0.3f)],
+            CantorDown, [(EnemyKind.GaleDiver, 0.35f), (EnemyKind.SquallHornet, 0.35f), (EnemyKind.TempestLarva, 0.3f)],
             SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0);
         yield return new(WorldEventKind.ShardObelisk, "Shard obelisk siege", WorldEventCategory.Invasion, WorldEventMoment.Never, 0f, 48f,
-            CantorDown, [(EnemyKind.PrismKnight, 0.35f), (EnemyKind.CrystalWraith, 0.35f), (EnemyKind.HaloBat, 0.3f)],
+            CantorDown, [(EnemyKind.StarCell, 0.4f), (EnemyKind.LatticeWeaver, 0.2f), (EnemyKind.ShardInvader, 0.4f)],
             SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0);
+        // Creature coverage: the Lumen Tempest (torch-god analog). A light hoard deep underground calls swarms of light
+        // creatures; clearing the swarm grants the Lumen accord the first time (GameSimulation.CreatureCoverage.cs).
+        yield return new(WorldEventKind.LumenTempest, "Lumen Tempest", WorldEventCategory.World, WorldEventMoment.Never, 0f, 2f, Always,
+            [(EnemyKind.LumenFlare, 0.6f), (EnemyKind.GlareMote, 0.4f)], SpawnMultiplier: 1.5f,
+            Waves: 1, KillsPerWave: 12, Rewards: [(ItemId.GlowSpore, 10), (ItemId.Credits, 40)], CooldownDays: 1);
         yield return new(WorldEventKind.MeteorFall, "Meteor fall", WorldEventCategory.World, WorldEventMoment.Dusk, 0f, 2f,
             Always, [(EnemyKind.EventMeteorHead, 0.6f), (EnemyKind.EventMeteorCrawler, 0.4f)], SpawnMultiplier: 1.4f, CooldownDays: 0);
     }

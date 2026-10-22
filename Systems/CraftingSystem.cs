@@ -153,6 +153,7 @@ public sealed class CraftingSystem
         PlayerSystemsContent.RegisterRecipes(this);
         TravelContent.RegisterRecipes(this);
         ContentFillItems.RegisterRecipes(this);
+        CreatureCoverage.RegisterRecipes(this); // creature coverage: summon and starter recipes
         ArsenalRecipes.RegisterAll(this, _items);
     }
 

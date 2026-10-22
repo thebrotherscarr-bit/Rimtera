@@ -222,6 +222,41 @@ public static class GearCurve
     /// <summary>Rimtera knockback per Terraria knockBack (Rimtera's push model; the broadsword's 3.5 came from Terraria's ~6).</summary>
     public const float KnockbackScale = 0.6f;
 
+    // ---- Tool damage: every pick, axe and hammer is also a melee weapon, as in Terraria ----
+    // Terraria tool damage per tier (tools.csv: copper/iron/gold picks 4/5/6, axes 3/5/7, hammers 4/7/9; hardmode
+    // cobalt/mythril/adamantite picks 10/15/20, war-axes 33/39/43, Pwnhammer 26 and hallowed-era hammers ~30-35; luminite
+    // picks ~60, Solar Flare axe 100 and hammer 110), scaled per tier by Rimtera's melee base over Terraria's matching sword
+    // (copper 8, iron 10, gold 15, cobalt 39, mythril 47, adamantite 50, luminite ~100) so tools keep Terraria's share of a
+    // sword's hit.
+    private static readonly int[] PickDamage = [0, 6, 12, 16, 15, 25, 42, 102];
+    private static readonly int[] AxeDamage = [0, 5, 12, 19, 48, 65, 90, 170];
+    private static readonly int[] HammerDamage = [0, 6, 16, 24, 38, 50, 74, 187];
+
+    /// <summary>Melee damage of a tool of <paramref name="kind"/> at <paramref name="tier"/> (0 for non-tools).</summary>
+    public static int ToolDamage(ItemUseKind kind, int tier)
+    {
+        var t = Math.Clamp(tier, 1, 7);
+        return kind switch
+        {
+            ItemUseKind.Pickaxe => PickDamage[t],
+            ItemUseKind.Cutter => AxeDamage[t],
+            ItemUseKind.Demolisher => HammerDamage[t],
+            _ => 0
+        };
+    }
+
+    /// <summary>
+    /// Tool knockback (Terraria × <see cref="KnockbackScale"/>): picks 2, drills 0.5, axes 4.5 (war-axes 6 from hardmode),
+    /// hammers 5.5 (7.5 from hardmode).
+    /// </summary>
+    public static float ToolKnockback(ItemUseKind kind, int tier, bool channel) => KnockbackScale * kind switch
+    {
+        ItemUseKind.Pickaxe => channel ? 0.5f : 2f,
+        ItemUseKind.Cutter => tier >= 4 ? 6f : 4.5f,
+        ItemUseKind.Demolisher => tier >= 4 ? 7.5f : 5.5f,
+        _ => 0f
+    };
+
     /// <summary>Style knockback = Terraria style median × <see cref="KnockbackScale"/>.</summary>
     public static float StyleKnockback(WeaponStyle style, bool explosive = false) => KnockbackScale * style switch
     {

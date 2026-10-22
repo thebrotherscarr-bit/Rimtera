@@ -196,3 +196,7 @@ Blocks keep Rimtera's fill-spot strategy, now inside the reach box. Walls use `W
   - A surrounded plank wall is knocked out and drops its item.
 - `BatchASelfTests` shaping-hammer and save checks: with ground on both sides the first slope is `SlopeUpLeft` (5.4).
 - `CoreSelfTests` "integrated tool-gated replacement": waits out the 10-tick block placement (2.6).
+
+## Tools as weapons (2026-10-22)
+
+As in Terraria, every pickaxe, drill, axe, cutter and hammer is also a melee weapon. Each use swings a melee arc that strikes the creatures it passes through (once per swing), with the tool's damage, crit and knockback, while the tile work happens as usual. Tool damage per tier comes from Terraria's tools.csv (copper pick 4, axe 3, hammer 4 ... Solar Flare hammer 110), scaled by Rimtera's melee base over Terraria's matching sword (`GearCurve.ToolDamage`). Knockback is Terraria's × 0.6: picks 2, drills 0.5, axes 4.5 (war-axes 6), hammers 5.5 (7.5). Tools carry the melee class, so melee gear boosts them. Code: `Systems/Content/ToolCombat.cs`, `Systems/GameSimulation.ToolCombat.cs`; tests: `Systems/ToolCombatSelfTests.cs`.

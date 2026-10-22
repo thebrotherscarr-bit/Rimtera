@@ -107,6 +107,7 @@ public sealed class AchievementTracker
     /// <summary>State-based checks (run every half second by the simulation).</summary>
     internal void Evaluate(GameSimulation game)
     {
+        game.UpdateInfoGear(); // compass, depth meter, ore scanner, life monitor (Systems/GameSimulation.InfoGear.cs)
         game.UpdateTownContent(); // G13 town tracks share this half-second pass (Systems/Content/TownContent.cs)
         var flags = game.Flags;
         var player = game.Player;

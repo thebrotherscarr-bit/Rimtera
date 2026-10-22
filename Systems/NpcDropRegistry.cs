@@ -103,7 +103,7 @@ public static class NpcDropRegistry
     public static IReadOnlyList<NpcDropDefinition> GetDrops(EnemyKind kind) =>
         _drops.TryGetValue(kind, out var drops) ? drops
         : _contentDrops.TryGetValue(kind, out var content) ? content
-        : ContentFillCreatures.Drops(kind) ?? Array.Empty<NpcDropDefinition>();
+        : ContentFillCreatures.Drops(kind) ?? CreatureCoverage.Drops(kind) ?? Array.Empty<NpcDropDefinition>();
 
     /// <summary>Content-expansion creature drops (biome materials, boss loot and summons).</summary>
     private static readonly Dictionary<EnemyKind, NpcDropDefinition[]> _contentDrops = new()

@@ -1368,6 +1368,14 @@ public enum ItemId : ushort
     LifebloomPod = 9100, AuxiliarySocket = 9101, NaniteMarrow = 9102, CoolantPearl = 9103, FortuneLattice = 9104,
     BaitGland = 9105, ServoGrease = 9106, FabricatorManual = 9107, LumenAccord = 9108, SalvagedThrusterFins = 9109,
     ScrapTether = 9110, TwinLash = 9111, PhaseTether = 9112,
+    // ---- Creature coverage (explicit band 9400-9499; Systems/CreatureCoverage.cs; docs/CREATURE_COVERAGE.md) ----
+    // Boss summons and event starters.
+    FrostbittenLure = 9400, PrismGelLattice = 9401, RegentWick = 9402, SeraphFrostCore = 9403, CorrodedFlare = 9404, UmbralLens = 9405,
+    // Boss and mini-boss loot: arsenal rows (Systems/Content/ArsenalItems.Coverage.cs), so they sit in the arsenal band (6000-6999).
+    RegentScythe = 6900, EmberLanternStaff = 6901, SeraphIcicleBow = 6902, FrostChoirStaff = 6903, BehemothMaul = 6904,
+    HoarfrostFang = 6905, SovereignGyro = 6906, GelburstLauncher = 6907, PaladinWarhammer = 6908, ColossusFrostlance = 6909,
+    GritStormRod = 6910, NautilusHarpoonGun = 6911, HexerSceptre = 6912, LancerJoust = 6913, RootwalkerBranch = 6914,
+    PineNeedleRepeater = 6915, CryoTankCannon = 6916,
     // Kill banners use dynamic ids: PlayerItems.BannerBase + (int)EnemyKind.
 }
 
@@ -1622,8 +1630,10 @@ public sealed class ItemCatalog
         PlayerSystemsContent.RegisterAll(_items);
         LeisureContent.RegisterItems(_items);
         TownContent.RegisterItems(_items); // town & modes: companion permit (Systems/Content/TownContent.cs)
+        CreatureCoverage.RegisterItems(_items); // creature coverage: boss summons and event starters (Systems/CreatureCoverage.cs)
         WeaponStyleAssignments.Apply(_items);
         DefenseBalance.Apply(_items);
+        ToolCombat.Apply(_items); // tools are melee weapons too: tier damage, knockback and the melee class
     }
 
     private readonly Dictionary<ItemId, ItemDefinition> _items = new()
