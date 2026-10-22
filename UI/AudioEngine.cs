@@ -235,7 +235,8 @@ internal sealed class AudioEngine : IDisposable
     /// <item>Funk: a resonant filtered slap bass with ghost notes and octave pops, wah-swept clav stabs, and
     ///   call-and-response horn riffs with a pitch scoop, over Dorian/Mixolydian seventh-chord vamps.</item>
     /// </list>
-    /// Each biome has its own key, mode, tempo, swing, harmony, meter and drum groove (four-on-the-floor, disco,
+    /// Each biome has its own key, mode (major, minor, Dorian, Mixolydian, Lydian, Phrygian dominant), tempo, swing,
+    /// harmony, meter, funk kit and drum groove (four-on-the-floor, disco,
     /// breakbeat, half-time, tribal toms, waltz, syncopated funk), with open hats, claps, a fill every fourth bar and
     /// a crash every eighth. A sustained pad and a stereo echo add ambience; drums and density grow with tension.
     /// All material is original and generated live.
@@ -257,7 +258,13 @@ internal sealed class AudioEngine : IDisposable
 
         /// <summary>Swing delays every off-sixteenth by that fraction of a sixteenth (0 straight, 0.33 full shuffle).</summary>
         private readonly record struct Style(int Root, int Bpm, int[] Progression, int[] Scale, float Brightness,
-            Composer Composer, int Meter, Groove Groove, float Pad, float Swing);
+            Composer Composer, int Meter, Groove Groove, float Pad, float Swing, int Kit = 0);
+
+        /// <summary>
+        /// A funk band's personality: its bass lines, clav patterns and horn riffs, plus how squelchy (low damping)
+        /// and overdriven the bass is, how fast the wah sweeps (cycles per two beats), and how deep the horns scoop.
+        /// </summary>
+        private sealed record FunkKit(int[][] Bass, float[][] Scratch, int[][] Riffs, float Damping, float Drive, float WahRate, float Scoop);
 
         // Lead strings (two detuned voices), the imitating second voice (Bach), harpsichord/harp plucks, bass, pad.
         private float _leadFreq, _leadPhaseA, _leadPhaseB, _leadEnv, _vibrato;
@@ -292,6 +299,8 @@ internal sealed class AudioEngine : IDisposable
         private static readonly int[] Mixolydian = [0, 2, 4, 5, 7, 9, 10];
         private static readonly int[] MinorPentatonic = [0, 3, 5, 7, 10];
         private static readonly int[] MajorPentatonic = [0, 2, 4, 7, 9];
+        private static readonly int[] Lydian = [0, 2, 4, 6, 7, 9, 11];
+        private static readonly int[] PhrygianDominant = [0, 1, 4, 5, 7, 8, 10];
 
         // Harmony: a circle-of-fifths sequence, a bright cadence loop, a driving minor sequence, and a romantic
         // loop with a lift to the relative minor.
@@ -303,6 +312,12 @@ internal sealed class AudioEngine : IDisposable
         private static readonly int[] DorianVamp = [0, 0, 3, 3, 0, 0, 3, 4];
         private static readonly int[] MixoVamp = [0, 0, 6, 6, 3, 3, 0, 4];
         private static readonly int[] Strut = [0, 3, 0, 3, 0, 3, 4, 4];
+        // Biome colours: a floating Lydian sway, a descending cave line, a Phrygian lurch between I and bII,
+        // and a climbing jungle loop.
+        private static readonly int[] Drift = [0, 1, 0, 1, 4, 3, 1, 4];
+        private static readonly int[] Descent = [0, 6, 5, 4, 3, 2, 3, 4];
+        private static readonly int[] Lurch = [0, 1, 0, 6, 0, 1, 5, 1];
+        private static readonly int[] Climb = [0, 1, 3, 4, 5, 4, 3, 4];
 
         // Sixteenth-note figurations over six chord tones; -1 = rest.
         private static readonly int[][] Figures =
@@ -314,51 +329,92 @@ internal sealed class AudioEngine : IDisposable
             [0, -1, 2, -1, 4, -1, 2, -1, 1, -1, 3, -1, 5, -1, 3, -1],
         ];
 
-        // Funk bass lines in semitones over the chord root; Rest and Ghost (a muted dead note) are markers,
-        // and anything an octave up is popped. The first is the disco octave bounce.
+        // Funk material. Bass lines are semitones over the chord root; Rest and Ghost (a muted dead note) are
+        // markers, and anything an octave up is popped. Clav patterns are stab velocities per sixteenth. Horn riffs
+        // are indices into the pentatonic (5+ climbs an octave), -1 = rest.
         private const int Rest = 99, Ghost = 98;
-        private static readonly int[][] FunkBass =
-        [
-            [0, Rest, 12, Rest, 0, Rest, 12, Rest, 0, Rest, 12, Rest, 0, Ghost, 12, 10],
-            [0, Rest, Ghost, 12, Rest, 0, Ghost, Rest, 0, Rest, 12, Ghost, 10, Rest, 7, Ghost],
-            [0, Ghost, Rest, 0, 12, Rest, Ghost, 7, Rest, 0, Ghost, 12, Rest, 10, 12, Ghost],
-            [0, Rest, Rest, Ghost, 0, Rest, 10, 12, Rest, Ghost, 7, Rest, 5, Rest, 3, 2],
-        ];
 
-        // Clav "chicken scratch" velocities per sixteenth (the last is the disco off-beat stab).
-        private static readonly float[][] Scratch =
+        private static readonly FunkKit[] FunkKits =
         [
-            [0, 0, 1, 0, 0, 0.45f, 0, 0.8f, 0, 0, 1, 0, 0.45f, 0, 0.8f, 0.35f],
-            [1, 0, 0, 0.4f, 0, 0, 0.9f, 0, 0, 0.4f, 0, 0, 0.9f, 0, 0.4f, 0],
-            [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-        ];
-
-        // Horn riffs as indices into the pentatonic (5+ climbs an octave); -1 = rest.
-        private static readonly int[][] FunkRiffs =
-        [
-            [5, -1, -1, 7, -1, 5, -1, -1, 3, -1, 4, -1, 5, -1, -1, -1],
-            [-1, -1, 7, -1, 8, 7, -1, 5, -1, -1, -1, -1, 4, -1, 5, -1],
-            [-1, -1, 5, -1, -1, -1, 5, -1, -1, 5, -1, -1, 7, -1, -1, -1],
-            [3, 4, 5, 7, 8, 7, 5, 4, 5, -1, -1, -1, -1, -1, -1, -1],
+            // 0 Disco: octave-bounce bass, off-beat skank, bright riffs, a round bass and a lazy wah.
+            new(
+                [
+                    [0, Rest, 12, Rest, 0, Rest, 12, Rest, 0, Rest, 12, Rest, 0, Ghost, 12, 10],
+                    [0, Rest, 12, Rest, 7, Rest, 12, Rest, 0, Rest, 12, Rest, 5, Ghost, 12, 7],
+                ],
+                [
+                    [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+                    [0, 0, 1, 0.35f, 0, 0, 1, 0, 0, 0, 1, 0.35f, 0, 0, 1, 0.5f],
+                ],
+                [
+                    [7, -1, 8, -1, 9, -1, 7, -1, -1, -1, 5, -1, 7, -1, -1, -1],
+                    [-1, -1, -1, -1, 9, 9, -1, 10, -1, 9, -1, 7, -1, -1, -1, -1],
+                ],
+                0.5f, 1f, 1f, 0.97f),
+            // 1 Classic: syncopated sixteenth bass, chicken scratch, call-and-response horns.
+            new(
+                [
+                    [0, Rest, Ghost, 12, Rest, 0, Ghost, Rest, 0, Rest, 12, Ghost, 10, Rest, 7, Ghost],
+                    [0, Ghost, Rest, 0, 12, Rest, Ghost, 7, Rest, 0, Ghost, 12, Rest, 10, 12, Ghost],
+                ],
+                [
+                    [0, 0, 1, 0, 0, 0.45f, 0, 0.8f, 0, 0, 1, 0, 0.45f, 0, 0.8f, 0.35f],
+                    [1, 0, 0, 0.4f, 0, 0, 0.9f, 0, 0, 0.4f, 0, 0, 0.9f, 0, 0.4f, 0],
+                ],
+                [
+                    [5, -1, -1, 7, -1, 5, -1, -1, 3, -1, 4, -1, 5, -1, -1, -1],
+                    [-1, -1, 7, -1, 8, 7, -1, 5, -1, -1, -1, -1, 4, -1, 5, -1],
+                ],
+                0.4f, 1f, 0.5f, 0.94f),
+            // 2 Grit: relentless ghosted sixteenths, an overdriven squelchy bass, fast wah, punchy unison stabs.
+            new(
+                [
+                    [0, Ghost, 0, Ghost, 12, Ghost, 0, 10, Ghost, 0, Ghost, 7, 0, Ghost, 12, Ghost],
+                    [0, Rest, Rest, Ghost, 0, Rest, 10, 12, Rest, Ghost, 7, Rest, 5, Rest, 3, 2],
+                ],
+                [
+                    [0.8f, 0.3f, 0.3f, 0.3f, 0.8f, 0.3f, 0.3f, 0.3f, 0.8f, 0.3f, 0.3f, 0.3f, 0.8f, 0.3f, 0.6f, 0.3f],
+                    [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+                ],
+                [
+                    [0, -1, 0, -1, -1, 3, -1, 4, -1, -1, 0, -1, -1, -1, -1, -1],
+                    [-1, -1, 5, -1, -1, -1, 5, -1, -1, 5, -1, -1, 7, -1, -1, -1],
+                ],
+                0.18f, 2.6f, 2f, 0.9f),
+            // 3 Swamp: a loping walk under a heavy shuffle, sparse lazy horns, a slow wah and deep scoops.
+            new(
+                [
+                    [0, Rest, Rest, 7, Rest, Rest, 10, Rest, 12, Rest, Rest, 10, Rest, 7, Rest, 5],
+                    [0, Rest, 0, Rest, Ghost, Rest, 7, Rest, 10, Rest, Rest, 12, Ghost, 10, 7, Rest],
+                ],
+                [
+                    [1, 0, 0, 0.4f, 0, 0, 0.9f, 0, 0, 0.4f, 0, 0, 0.9f, 0, 0.4f, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0.5f, 0, 0, 0, 0, 1, 0, 0, 0],
+                ],
+                [
+                    [-1, -1, -1, -1, 7, -1, -1, 5, -1, -1, 4, -1, 3, -1, -1, -1],
+                    [3, 4, 5, 7, 8, 7, 5, 4, 5, -1, -1, -1, -1, -1, -1, -1],
+                ],
+                0.6f, 1.3f, 0.25f, 0.9f),
         ];
 
         private Style CurrentStyle() => Theme switch
         {
-            "title" => new(55, 92, Romantic, Major, 0.8f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.9f, 0f),
-            "grassland" => new(57, 116, MixoVamp, Mixolydian, 1f, Composer.Funk, 4, Groove.Disco, 0.45f, 0.06f),
-            "canopy" => new(59, 128, FifthsCircle, Major, 1f, Composer.Vivaldi, 4, Groove.Tribal, 0.55f, 0.1f),
-            "coast" or "ocean" => new(60, 104, Romantic, Major, 0.85f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.85f, 0f),
-            "frozen" => new(62, 112, FifthsCircle, Major, 1.1f, Composer.Bach, 4, Groove.Half, 0.7f, 0.12f),
-            "crystal" => new(64, 120, FifthsCircle, Major, 1.15f, Composer.Bach, 4, Groove.Break, 0.6f, 0.1f),
-            "fungal" => new(58, 96, Romantic, Major, 0.85f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.9f, 0f),
-            "junk" => new(57, 112, Strut, Dorian, 1.05f, Composer.Funk, 4, Groove.Break, 0.35f, 0.14f),
-            "forest" => new(49, 100, DorianVamp, Dorian, 0.9f, Composer.Funk, 4, Groove.Funk, 0.5f, 0.2f),
-            "overgrowth" => new(53, 94, DorianVamp, Dorian, 0.85f, Composer.Funk, 4, Groove.Funk, 0.7f, 0.24f),
-            "radiated" => new(62, 124, MinorDrive, HarmonicMinor, 1f, Composer.Bach, 4, Groove.Break, 0.6f, 0.08f),
-            "underground" => new(55, 110, FifthsCircle, Major, 0.85f, Composer.Bach, 4, Groove.Half, 0.75f, 0.14f),
-            "molten" or "core" => new(52, 136, MinorDrive, HarmonicMinor, 1f, Composer.Vivaldi, 4, Groove.Four, 0.6f, 0f),
-            "boss" => new(52, 150, MinorDrive, HarmonicMinor, 1.1f, Composer.Vivaldi, 4, Groove.Break, 0.5f, 0f),
-            _ => new(57, 116, MixoVamp, Mixolydian, 1f, Composer.Funk, 4, Groove.Disco, 0.45f, 0.06f)
+            "title" => new(55, 96, Romantic, Major, 0.8f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.9f, 0f),
+            "grassland" => new(57, 126, MixoVamp, Mixolydian, 1f, Composer.Funk, 4, Groove.Disco, 0.45f, 0.04f, 0),
+            "canopy" => new(59, 136, Climb, Mixolydian, 1f, Composer.Vivaldi, 4, Groove.Tribal, 0.55f, 0.1f),
+            "coast" or "ocean" => new(60, 112, Romantic, Major, 0.85f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.85f, 0f),
+            "frozen" => new(62, 120, Drift, Lydian, 1.15f, Composer.Bach, 4, Groove.Half, 0.75f, 0.12f),
+            "crystal" => new(64, 130, FifthsCircle, Major, 1.15f, Composer.Bach, 4, Groove.Break, 0.6f, 0.06f),
+            "fungal" => new(58, 104, Romantic, Dorian, 0.85f, Composer.Tchaikovsky, 3, Groove.Waltz, 0.9f, 0f),
+            "junk" => new(57, 124, Strut, Dorian, 1.1f, Composer.Funk, 4, Groove.Break, 0.3f, 0.1f, 2),
+            "forest" => new(49, 112, DorianVamp, Dorian, 0.9f, Composer.Funk, 4, Groove.Funk, 0.5f, 0.18f, 1),
+            "overgrowth" => new(53, 104, DorianVamp, Dorian, 0.85f, Composer.Funk, 4, Groove.Funk, 0.7f, 0.3f, 3),
+            "radiated" => new(62, 134, MinorDrive, HarmonicMinor, 1f, Composer.Bach, 4, Groove.Break, 0.6f, 0.08f),
+            "underground" => new(55, 118, Descent, Dorian, 0.85f, Composer.Bach, 4, Groove.Half, 0.75f, 0.16f),
+            "molten" or "core" => new(52, 144, Lurch, PhrygianDominant, 1f, Composer.Vivaldi, 4, Groove.Four, 0.6f, 0f),
+            "boss" => new(52, 160, MinorDrive, HarmonicMinor, 1.1f, Composer.Vivaldi, 4, Groove.Break, 0.5f, 0f),
+            _ => new(57, 126, MixoVamp, Mixolydian, 1f, Composer.Funk, 4, Groove.Disco, 0.45f, 0.04f, 0)
         };
 
         public void Render(float[] left, float[] right, float volume)
@@ -366,7 +422,7 @@ internal sealed class AudioEngine : IDisposable
             if (volume <= 0.001f)
                 return;
             var style = CurrentStyle();
-            var bpm = Night && Theme != "boss" ? (int)(style.Bpm * 0.9f) : style.Bpm;
+            var bpm = Night && Theme != "boss" ? (int)(style.Bpm * 0.94f) : style.Bpm;
             var scale = style.Scale;
             var stepsPerBar = style.Meter * 4;
             var sixteenth = Math.Max(1, (long)(SampleRate * 60.0 / bpm / 4));
@@ -376,6 +432,7 @@ internal sealed class AudioEngine : IDisposable
             var drums = Theme != "title" || Tension > 0.2f;
             var lyrical = style.Composer == Composer.Tchaikovsky;
             var funk = style.Composer == Composer.Funk;
+            var kit = FunkKits[style.Kit];
             var echoLeft = (int)Math.Min(_echoLeft.Length - 1, sixteenth * 3);
             var echoRight = (int)Math.Min(_echoRight.Length - 1, sixteenth * 4);
             for (var i = 0; i < left.Length; i++)
@@ -439,7 +496,7 @@ internal sealed class AudioEngine : IDisposable
                 {
                     _slapPhase = Wrap(_slapPhase + _slapFreq / SampleRate);
                     var cutoff = 110f + 2600f * _slapFilterEnv * _slapFilterEnv;
-                    var growl = _slapFilter.LowPass(2f * _slapPhase - 1f, cutoff, 0.4f);
+                    var growl = MathF.Tanh(_slapFilter.LowPass(2f * _slapPhase - 1f, cutoff, kit.Damping) * kit.Drive) / MathF.Tanh(kit.Drive);
                     bass = (growl * 0.75f + MathF.Sin(_slapPhase * MathF.Tau) * 0.6f) * _slapEnv * 0.21f;
                     _slapEnv *= _slapDecay;
                     _slapFilterEnv *= 0.9988f;
@@ -453,7 +510,7 @@ internal sealed class AudioEngine : IDisposable
 
                 // Clav: a narrow pulse chord through a band-pass that the stab opens and a beat-synced wah sweeps.
                 var clav = 0f;
-                _wahPhase = Wrap(_wahPhase + bpm / 120f / SampleRate);
+                _wahPhase = Wrap(_wahPhase + bpm / 120f * kit.WahRate / SampleRate);
                 if (_clavEnv > 0.001f)
                 {
                     for (var n = 0; n < _clavFreq.Length; n++)
@@ -527,14 +584,15 @@ internal sealed class AudioEngine : IDisposable
                 var call = _bar % 2 == 1;
                 if (!call && Tension < 0.35f)
                     return;
-                var riff = FunkRiffs[_pattern % FunkRiffs.Length][step % 16];
+                var riffs = FunkKits[style.Kit].Riffs;
+                var riff = riffs[_pattern % riffs.Length][step % 16];
                 if (riff < 0)
                     return;
                 var pentatonic = scale[2] == 3 ? MinorPentatonic : MajorPentatonic;
                 var degree = Math.Max(0, call ? riff : riff - 2);
                 _leadFreq = Midi(style.Root + 12 + pentatonic[degree % 5] + 12 * (degree / 5));
                 _leadEnv = 1f;
-                _leadBend = 0.94f;
+                _leadBend = FunkKits[style.Kit].Scoop;
                 return;
             }
             if (style.Composer == Composer.Tchaikovsky)
@@ -580,8 +638,9 @@ internal sealed class AudioEngine : IDisposable
             {
                 case Composer.Funk:
                 {
-                    // Slap bass: disco octaves on the disco groove, otherwise a syncopated line chosen with the riff.
-                    var line = style.Groove == Groove.Disco ? FunkBass[0] : FunkBass[1 + _pattern % (FunkBass.Length - 1)];
+                    // Slap bass and clav from the biome's kit, the line and pattern changing along with the riff.
+                    var kit = FunkKits[style.Kit];
+                    var line = kit.Bass[_pattern % kit.Bass.Length];
                     var cell = line[step % 16];
                     if (cell == Ghost)
                         Slap(Midi(chord[0] - 24), 0.45f, 0.9982f, 0.15f);
@@ -593,8 +652,7 @@ internal sealed class AudioEngine : IDisposable
                         else
                             Slap(Midi(note), 1f, 0.99984f, 0.65f);
                     }
-                    // Clav stabs on the seventh chord; the disco groove skanks the off-beats.
-                    var scratch = style.Groove == Groove.Disco ? Scratch[2] : Scratch[_pattern % 2];
+                    var scratch = kit.Scratch[(_pattern / 2) % kit.Scratch.Length];
                     var velocity = scratch[step % 16];
                     if (velocity > 0f && (Tension > 0.15f || step % 4 != 3))
                     {
