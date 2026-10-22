@@ -233,11 +233,16 @@ internal sealed class AudioEngine : IDisposable
 
     // ---------------------------------------------------------------- recorded sounds
 
+    /// <summary>Perceived loudness every recorded clip is levelled to (LUFS, measured by <see cref="Loudness"/>).</summary>
+    public const float RecordedLoudness = -16f;
+
     /// <summary>
     /// Loads every WAV in <paramref name="folder"/> as a replacement for the effect it is named after
     /// (<c>jump.wav</c> replaces "jump"). Numbered takes (<c>jump_2.wav</c>, <c>jump_3.wav</c>) join it as
-    /// variations, one picked at random per play. A clip with no matching effect still loads, ready for a
-    /// trigger to play it by name. Unreadable files are skipped. Returns how many clips loaded.
+    /// variations, one picked at random per play. Every clip is levelled to the same perceived loudness
+    /// (plus a small per-sound offset, see <see cref="LoudnessOffset"/>), so takes and sounds match however
+    /// they were recorded. A clip with no matching effect still loads, ready for a trigger to play it by
+    /// name. Unreadable files are skipped. Returns how many clips loaded.
     /// </summary>
     public int LoadRecordedSounds(string folder)
     {
@@ -253,12 +258,92 @@ internal sealed class AudioEngine : IDisposable
             var cut = name.LastIndexOf('_');
             if (cut > 0 && int.TryParse(name[(cut + 1)..], out _))
                 name = name[..cut];
+            Level(samples, RecordedLoudness + LoudnessOffset(name));
             if (!_recorded.TryGetValue(name, out var takes))
                 _recorded[name] = takes = new List<float[]>();
             takes.Add(samples);
             loaded++;
         }
         return loaded;
+    }
+
+    /// <summary>
+    /// How far a sound sits from the common loudness: menu blips stay discreet, the constant actions sit a
+    /// touch under, and the big moments land a little over.
+    /// </summary>
+    internal static float LoudnessOffset(string name) => name.ToLowerInvariant() switch
+    {
+        "hover" => -12f,
+        "click" => -8f,
+        "jump" or "land" or "pickup" or "dig" or "place" => -2f,
+        "boss" or "thunder" or "explosion" => 3f,
+        _ => 0f
+    };
+
+    /// <summary>
+    /// Brings a clip to the target loudness. Spiky clips whose peaks would pass 0.95 first are rounded off by a
+    /// soft limiter (a knee from 0.5 easing into 0.95) and re-measured, so they reach the target without clipping.
+    /// </summary>
+    internal static void Level(float[] samples, float targetLufs)
+    {
+        const float knee = 0.5f, ceiling = 0.95f;
+        for (var pass = 0; pass < 4; pass++)
+        {
+            var loudness = Loudness(samples);
+            if (float.IsNegativeInfinity(loudness) || MathF.Abs(loudness - targetLufs) < 0.1f)
+                return;
+            var gain = MathF.Pow(10f, (targetLufs - loudness) / 20f);
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var x = samples[i] * gain;
+                var size = MathF.Abs(x);
+                if (size > knee)
+                    x = MathF.CopySign(knee + (ceiling - knee) * MathF.Tanh((size - knee) / (ceiling - knee)), x);
+                samples[i] = x;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Perceived loudness in LUFS (ITU BS.1770 K-weighting) of a clip's body: the mean power of its 50 ms blocks
+    /// within 20 dB of the loudest, so silence and fading tails don't drag a short sound's reading down.
+    /// </summary>
+    internal static float Loudness(float[] samples)
+    {
+        // K-weighting: a +4 dB high shelf around 1.7 kHz (the head), then a 38 Hz high-pass (the ear).
+        var k = MathF.Tan(MathF.PI * 1681.9745f / SampleRate);
+        const float q = 0.70717525f;
+        var vh = MathF.Pow(10f, 3.9998438f / 20f);
+        var vb = MathF.Pow(vh, 0.49966677f);
+        var a0 = 1f + k / q + k * k;
+        float b0 = (vh + vb * k / q + k * k) / a0, b1 = 2f * (k * k - vh) / a0, b2 = (vh - vb * k / q + k * k) / a0;
+        float a1 = 2f * (k * k - 1f) / a0, a2 = (1f - k / q + k * k) / a0;
+        var kh = MathF.Tan(MathF.PI * 38.135471f / SampleRate);
+        const float qh = 0.50032704f;
+        var h0 = 1f + kh / qh + kh * kh;
+        float c1 = 2f * (kh * kh - 1f) / h0, c2 = (1f - kh / qh + kh * kh) / h0;
+        float x1 = 0, x2 = 0, y1 = 0, y2 = 0, z1 = 0, z2 = 0;
+        const int block = SampleRate / 20;
+        var powers = new List<double>();
+        double sum = 0;
+        for (var i = 0; i < samples.Length; i++)
+        {
+            var x = samples[i];
+            var y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+            var z = y - 2f * y1 + y2 - c1 * z1 - c2 * z2;
+            x2 = x1; x1 = x; y2 = y1; y1 = y; z2 = z1; z1 = z;
+            sum += z * z;
+            if ((i + 1) % block == 0 || i == samples.Length - 1)
+            {
+                powers.Add(sum / ((i % block) + 1));
+                sum = 0;
+            }
+        }
+        var loudest = powers.Count == 0 ? 0 : powers.Max();
+        if (loudest <= 1e-12)
+            return float.NegativeInfinity;
+        var body = powers.Where(power => power >= loudest * 0.01).Average();
+        return (float)(-0.691 + 10 * Math.Log10(body));
     }
 
     /// <summary>
