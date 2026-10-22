@@ -6,7 +6,8 @@ namespace Rimtera.UI;
 /// Dependency-free audio: a software mixer streaming 16-bit stereo PCM to the Windows waveOut API.
 /// Sound effects are synthesised once at startup (no audio files), music is generated live as a
 /// grooving generative score whose key, style and mood follow the biome and time of day, and
-/// rain plays as a filtered-noise ambience loop. If no audio device is available everything is a
+/// rain plays as a filtered-noise ambience loop. Recorded clips in Assets/Sounds replace synthesised
+/// effects by name (see <see cref="LoadRecordedSounds"/>). If no audio device is available everything is a
 /// silent no-op.
 /// </summary>
 internal sealed class AudioEngine : IDisposable
@@ -17,6 +18,7 @@ internal sealed class AudioEngine : IDisposable
 
     private readonly object _gate = new();
     private readonly Dictionary<string, float[]> _effects = new();
+    private readonly Dictionary<string, List<float[]>> _recorded = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<Voice> _voices = new();
     private readonly Thread? _thread;
     private readonly IntPtr _device;
@@ -58,7 +60,12 @@ internal sealed class AudioEngine : IDisposable
 
     public void Play(string name, float volume = 1f, float pan = 0f)
     {
-        if (!Available || !_effects.TryGetValue(name, out var samples))
+        if (!Available)
+            return;
+        float[]? samples;
+        if (_recorded.TryGetValue(name, out var takes))
+            samples = takes[_random.Next(takes.Count)];
+        else if (!_effects.TryGetValue(name, out samples))
             return;
         lock (_gate)
         {
@@ -72,6 +79,7 @@ internal sealed class AudioEngine : IDisposable
     public AudioEngine()
     {
         Synthesize();
+        LoadRecordedSounds(Path.Combine(AppContext.BaseDirectory, "Assets", "Sounds"));
         try
         {
             var format = new WaveFormat
@@ -221,6 +229,106 @@ internal sealed class AudioEngine : IDisposable
         _effects["event"] = Make(0.8f, (t, p) => (Sine(t, 392) * 0.4f + Sine(t, 523) * 0.3f + Sine(t, 659) * 0.3f) * Env(p, 0.05f) * 0.45f);
         _effects["bite"] = Make(0.15f, (t, p) => (Sine(t, 1200 + MathF.Sin(t * 60) * 200) * 0.3f) * Env(p, 0.01f));
         _effects["door"] = Make(0.2f, (t, p) => (Filtered(Noise(), 0.1f) * 0.8f + Sine(t, 70) * 0.4f) * Env(p, 0.02f));
+    }
+
+    // ---------------------------------------------------------------- recorded sounds
+
+    /// <summary>
+    /// Loads every WAV in <paramref name="folder"/> as a replacement for the effect it is named after
+    /// (<c>jump.wav</c> replaces "jump"). Numbered takes (<c>jump_2.wav</c>, <c>jump_3.wav</c>) join it as
+    /// variations, one picked at random per play. A clip with no matching effect still loads, ready for a
+    /// trigger to play it by name. Unreadable files are skipped. Returns how many clips loaded.
+    /// </summary>
+    public int LoadRecordedSounds(string folder)
+    {
+        if (!Directory.Exists(folder))
+            return 0;
+        var loaded = 0;
+        foreach (var path in Directory.EnumerateFiles(folder, "*.wav"))
+        {
+            var samples = DecodeWav(File.ReadAllBytes(path));
+            if (samples is null || samples.Length == 0)
+                continue;
+            var name = Path.GetFileNameWithoutExtension(path);
+            var cut = name.LastIndexOf('_');
+            if (cut > 0 && int.TryParse(name[(cut + 1)..], out _))
+                name = name[..cut];
+            if (!_recorded.TryGetValue(name, out var takes))
+                _recorded[name] = takes = new List<float[]>();
+            takes.Add(samples);
+            loaded++;
+        }
+        return loaded;
+    }
+
+    /// <summary>
+    /// Decodes a RIFF WAV (8/16/24/32-bit PCM or 32-bit float, any channel count, any rate) to mono floats
+    /// at <see cref="SampleRate"/>, resampling linearly. Returns null for anything it cannot read.
+    /// </summary>
+    internal static float[]? DecodeWav(byte[] data)
+    {
+        if (data.Length < 44 || data[0] != 'R' || data[1] != 'I' || data[2] != 'F' || data[3] != 'F' ||
+            data[8] != 'W' || data[9] != 'A' || data[10] != 'V' || data[11] != 'E')
+            return null;
+        int format = 0, channels = 0, rate = 0, bits = 0, dataStart = -1, dataLength = 0;
+        for (var at = 12; at + 8 <= data.Length;)
+        {
+            var id = System.Text.Encoding.ASCII.GetString(data, at, 4);
+            var size = BitConverter.ToInt32(data, at + 4);
+            if (size < 0)
+                return null;
+            var body = at + 8;
+            if (id == "fmt " && body + 16 <= data.Length)
+            {
+                format = BitConverter.ToInt16(data, body);
+                channels = BitConverter.ToInt16(data, body + 2);
+                rate = BitConverter.ToInt32(data, body + 4);
+                bits = BitConverter.ToInt16(data, body + 14);
+                // WAVE_FORMAT_EXTENSIBLE keeps the real format tag at the start of its sub-format GUID.
+                if (format == unchecked((short)0xFFFE) && size >= 40 && body + 26 <= data.Length)
+                    format = BitConverter.ToInt16(data, body + 24);
+            }
+            else if (id == "data")
+            {
+                dataStart = body;
+                dataLength = Math.Min(size, data.Length - body);
+                break;
+            }
+            at = body + size + (size & 1);
+        }
+        var bytes = bits / 8;
+        if (dataStart < 0 || channels < 1 || rate < 1000 || !(format == 1 && bytes is 1 or 2 or 3 or 4 || format == 3 && bytes == 4))
+            return null;
+        var frames = dataLength / (bytes * channels);
+        var mono = new float[frames];
+        for (var f = 0; f < frames; f++)
+        {
+            var sum = 0f;
+            for (var c = 0; c < channels; c++)
+            {
+                var at = dataStart + (f * channels + c) * bytes;
+                sum += format == 3 ? BitConverter.ToSingle(data, at) : bytes switch
+                {
+                    1 => (data[at] - 128) / 128f,
+                    2 => BitConverter.ToInt16(data, at) / 32768f,
+                    3 => ((data[at] | data[at + 1] << 8 | (sbyte)data[at + 2] << 16)) / 8388608f,
+                    _ => BitConverter.ToInt32(data, at) / 2147483648f
+                };
+            }
+            mono[f] = sum / channels;
+        }
+        if (rate == SampleRate)
+            return mono;
+        var resampled = new float[(int)((long)frames * SampleRate / rate)];
+        for (var i = 0; i < resampled.Length; i++)
+        {
+            var position = i * (double)rate / SampleRate;
+            var index = (int)position;
+            var next = Math.Min(index + 1, frames - 1);
+            var t = (float)(position - index);
+            resampled[i] = mono[index] * (1f - t) + mono[next] * t;
+        }
+        return resampled;
     }
 
     // ---------------------------------------------------------------- generative music

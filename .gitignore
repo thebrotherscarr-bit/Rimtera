@@ -30,3 +30,7 @@ logs/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Audacity project scratch files (SQLite write-ahead log)
+*.aup4-shm
+*.aup4-wal

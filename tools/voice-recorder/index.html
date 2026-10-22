@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rimtera Voice Booth</title>
+<style>
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1f24; --muted: #686c75; --line: #e2e0d8;
+  --accent: #2f7d6d; --accent-ink: #ffffff; --rec: #c8402f; --ok: #2f7d6d; --warn: #a86a12;
+  --wave: #2f7d6d; --wave-bg: #eef3f1; --chip: #efeee8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171b; --panel: #1d2026; --ink: #e9e7e1; --muted: #9a9ea8; --line: #2d313a;
+    --accent: #5cc2a9; --accent-ink: #0f1513; --rec: #ef6a55; --ok: #5cc2a9; --warn: #e3a64a;
+    --wave: #5cc2a9; --wave-bg: #182421; --chip: #262a32;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { padding: 20px 16px 8px; max-width: 980px; margin: 0 auto; }
+h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin: 0; }
+main { max-width: 980px; margin: 0 auto; padding: 8px 16px 64px; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 12px 0 18px; position: sticky; top: 8px; z-index: 2; }
+.bar .status { flex: 1 1 240px; color: var(--muted); font-size: 14px; }
+.status b { color: var(--ink); font-weight: 600; }
+button { font: inherit; border: 1px solid var(--line); background: var(--chip); color: var(--ink); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button:disabled { opacity: 0.45; cursor: default; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+button.rec { background: var(--rec); color: #fff; border-color: transparent; min-width: 92px; }
+button.rec.on { animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: 0.7; } }
+button.small { padding: 4px 9px; font-size: 13px; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 22px 0 8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+.slot { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.slot.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.slot-head { display: flex; align-items: baseline; gap: 8px; }
+.slot-name { font-weight: 650; font-family: ui-monospace, Consolas, monospace; }
+.slot-tag { margin-left: auto; font-size: 12px; padding: 1px 8px; border-radius: 99px; background: var(--chip); color: var(--muted); white-space: nowrap; }
+.slot-tag.ingame { color: var(--ok); }
+.slot-tag.unsaved { color: var(--warn); }
+.hint { color: var(--muted); font-size: 13px; margin: 0; }
+.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.meter { flex: 1; height: 8px; background: var(--wave-bg); border-radius: 99px; overflow: hidden; min-width: 60px; }
+.meter i { display: block; height: 100%; width: 0; background: var(--rec); transition: width 60ms linear; }
+.takes { display: flex; flex-direction: column; gap: 6px; }
+.take { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; }
+.take canvas { width: 100%; height: 34px; background: var(--wave-bg); border-radius: 6px; display: block; }
+.take label { font-size: 13px; color: var(--muted); display: flex; gap: 4px; align-items: center; cursor: pointer; white-space: nowrap; }
+.take .tools { display: flex; gap: 4px; align-items: center; }
+.pitch { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.pitch input { width: 110px; }
+.custom { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.custom input { font: inherit; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); min-width: 0; flex: 1 1 200px; }
+details { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-top: 8px; }
+summary { cursor: pointer; font-weight: 600; }
+details ol { padding-left: 20px; margin: 8px 0 4px; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: 0.92em; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity 200ms; pointer-events: none; max-width: calc(100% - 32px); }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Rimtera Voice Booth</h1>
+  <p class="sub">Record your own sounds for the game. Clips are trimmed, levelled and saved as <code>Assets/Sounds/&lt;name&gt;.wav</code>, where the game picks them up in place of its built-in sound.</p>
+</header>
+<main>
+  <div class="bar">
+    <button id="connect" class="primary">Connect Rimtera folder</button>
+    <button id="saveAll" disabled>Save all</button>
+    <span class="status" id="status">Not connected. Pick your Rimtera folder (the one with <b>Rimtera.csproj</b>) so clips save straight into the game.</span>
+  </div>
+
+  <details>
+    <summary>How this works</summary>
+    <ol>
+      <li>Click <b>Connect Rimtera folder</b> and choose your local Rimtera repo folder. (In Chrome or Edge. Other browsers download the files instead, and you move them into <code>Assets/Sounds</code> yourself.)</li>
+      <li>Pick a sound, hit <b>Record</b> (or press <code>R</code>), make the noise, stop. Do a few takes.</li>
+      <li>Tick <b>keep</b> on the takes you like. Keep several and the game picks one at random each time, so it doesn't get repetitive.</li>
+      <li>Optional: slide <b>pitch</b> to make a take deeper (monsters, death) or higher (pickups, squeaks).</li>
+      <li><b>Save</b>, then commit and push <code>Assets/Sounds</code> with git.</li>
+    </ol>
+    <p class="hint">Tips: quiet room, a hand's width from the mic, short and punchy for action sounds. Silence at the start and end is trimmed automatically.</p>
+  </details>
+
+  <div id="groups"></div>
+
+  <h2>Your own sound</h2>
+  <div class="custom">
+    <input id="customName" placeholder="name, e.g. taunt or worldstart (letters, digits, dashes)" maxlength="40">
+    <button id="addCustom">Add slot</button>
+  </div>
+  <p class="hint" style="margin-top:6px">Custom names load into the game too, but need a trigger in the code before they play. Tell Claude when to play them.</p>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const RATE = 44100;
+const MAX_SECONDS = 10;
+
+const GROUPS = [
+  ["Player", [
+    ["jump", "You jump.", "a short \"hup!\""],
+    ["land", "You land from a jump or fall.", "an \"oof\""],
+    ["hurt", "You take damage.", "\"ow!\" or a grunt"],
+  ]],
+  ["Tools and combat", [
+    ["dig", "Each pickaxe swing.", "a crunchy \"chk\""],
+    ["place", "Placing a block.", "a soft \"tok\""],
+    ["swing", "Melee weapon swing.", "a \"whoosh\""],
+    ["shoot", "Firing a ranged weapon.", "\"pew\""],
+    ["zap", "Firing a tech weapon.", "\"bzzt\""],
+    ["hit", "You hit an enemy.", "a punchy \"thwack\""],
+    ["death", "An enemy dies.", "a dramatic groan"],
+  ]],
+  ["World and moments", [
+    ["pickup", "You pick up items.", "a happy \"bip\""],
+    ["bite", "A fish bites your line.", "\"ooh!\""],
+    ["thunder", "Lightning strikes.", "a big rumble"],
+    ["boss", "A boss arrives.", "a menacing line"],
+    ["event", "An event starts (also on some menu actions).", "an announcer call"],
+  ]],
+  ["Menus", [
+    ["click", "Confirming a menu choice.", "a tiny \"tk\""],
+    ["hover", "Moving over a menu item.", "a very soft blip"],
+  ]],
+  ["Not hooked up yet (Claude can wire these)", [
+    ["break", "A block breaks.", ""],
+    ["explosion", "Explosions.", ""],
+    ["coin", "Coins.", ""],
+    ["craft", "Crafting something.", ""],
+    ["splash", "Entering water.", ""],
+    ["door", "Opening a door.", ""],
+  ]],
+];
+
+// ---------- state
+const slots = new Map();            // name -> { hint, idea, takes: [{ raw, pitch, keep }], saved: n, dirty }
+let selected = null;
+let dirHandle = null;               // Assets/Sounds directory handle
+let recorder = null;                // active recording
+const canPick = "showDirectoryPicker" in window;
+
+const $ = (id) => document.getElementById(id);
+function toast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+// ---------- rendering
+function buildGroups() {
+  const root = $("groups");
+  for (const [title, entries] of GROUPS) {
+    const h = document.createElement("h2");
+    h.textContent = title;
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    root.append(h, grid);
+    for (const [name, hint, idea] of entries) addSlot(name, hint, idea, grid);
+  }
+}
+
+function addSlot(name, hint, idea, grid) {
+  if (slots.has(name)) return slots.get(name);
+  const slot = { name, hint, idea, takes: [], saved: 0, dirty: false, el: document.createElement("div") };
+  slot.el.className = "slot";
+  slot.el.addEventListener("pointerdown", () => select(slot));
+  slots.set(name, slot);
+  grid.append(slot.el);
+  renderSlot(slot);
+  return slot;
+}
+
+function customGrid() {
+  let grid = $("customGrid");
+  if (!grid) {
+    const h = document.createElement("h2");
+    h.textContent = "Custom";
+    grid = document.createElement("div");
+    grid.className = "grid";
+    grid.id = "customGrid";
+    $("groups").append(h, grid);
+  }
+  return grid;
+}
+
+function select(slot) {
+  if (selected === slot) return;
+  if (selected) selected.el.classList.remove("selected");
+  selected = slot;
+  slot.el.classList.add("selected");
+}
+
+function renderSlot(slot) {
+  const el = slot.el;
+  el.replaceChildren();
+  const head = document.createElement("div");
+  head.className = "slot-head";
+  const name = document.createElement("span");
+  name.className = "slot-name";
+  name.textContent = slot.name;
+  const tag = document.createElement("span");
+  tag.className = "slot-tag";
+  if (slot.dirty) { tag.textContent = "unsaved"; tag.classList.add("unsaved"); }
+  else if (slot.saved) { tag.textContent = slot.saved === 1 ? "in game" : `in game · ${slot.saved} takes`; tag.classList.add("ingame"); }
+  else tag.textContent = "built-in sound";
+  head.append(name, tag);
+  el.append(head);
+
+  const hint = document.createElement("p");
+  hint.className = "hint";
+  hint.textContent = slot.idea ? `${slot.hint} Try ${slot.idea}.` : slot.hint;
+  el.append(hint);
+
+  const row = document.createElement("div");
+  row.className = "row";
+  const rec = document.createElement("button");
+  const live = recorder && recorder.slot === slot;
+  rec.className = "rec" + (live ? " on" : "");
+  rec.textContent = live ? "Stop" : "Record";
+  rec.disabled = !!recorder && !live;
+  rec.addEventListener("click", () => { select(slot); live ? stopRecording() : startRecording(slot); });
+  const meter = document.createElement("div");
+  meter.className = "meter";
+  meter.append(document.createElement("i"));
+  slot.meter = meter.firstChild;
+  row.append(rec, meter);
+  el.append(row);
+
+  if (slot.takes.length) {
+    const list = document.createElement("div");
+    list.className = "takes";
+    slot.takes.forEach((take, i) => list.append(renderTake(slot, take, i)));
+    el.append(list);
+    const actions = document.createElement("div");
+    actions.className = "row";
+    const save = document.createElement("button");
+    save.className = "small primary";
+    const kept = slot.takes.filter((t) => t.keep).length;
+    save.textContent = dirHandle ? `Save ${kept || ""} to game`.replace("  ", " ") : canPick ? "Connect folder to save" : `Download ${kept || ""}`.replace("  ", " ");
+    save.disabled = !kept && !!dirHandle;
+    save.addEventListener("click", () => saveSlot(slot));
+    actions.append(save);
+    el.append(actions);
+  }
+  updateSaveAll();
+}
+
+function renderTake(slot, take, i) {
+  const row = document.createElement("div");
+  row.className = "take";
+  const play = document.createElement("button");
+  play.className = "small";
+  play.textContent = "▶";
+  play.title = "Play this take as it will sound in game";
+  play.addEventListener("click", () => playTake(take));
+  const canvas = document.createElement("canvas");
+  canvas.width = 300; canvas.height = 34;
+  requestAnimationFrame(() => drawWave(canvas, processTake(take)));
+  const tools = document.createElement("div");
+  tools.className = "tools";
+  const keep = document.createElement("label");
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.checked = take.keep;
+  box.addEventListener("change", () => { take.keep = box.checked; slot.dirty = true; renderSlot(slot); });
+  keep.append(box, "keep");
+  const del = document.createElement("button");
+  del.className = "small";
+  del.textContent = "✕";
+  del.title = "Delete take";
+  del.addEventListener("click", () => { slot.takes.splice(i, 1); slot.dirty = true; renderSlot(slot); });
+  tools.append(keep, del);
+  row.append(play, canvas, tools);
+
+  const pitch = document.createElement("div");
+  pitch.className = "pitch";
+  pitch.style.gridColumn = "1 / -1";
+  const slider = document.createElement("input");
+  slider.type = "range"; slider.min = -12; slider.max = 12; slider.step = 1; slider.value = take.pitch;
+  const label = document.createElement("span");
+  const show = () => label.textContent = take.pitch === 0 ? "natural" : `${take.pitch > 0 ? "+" : ""}${take.pitch} semitones`;
+  show();
+  slider.addEventListener("input", () => { take.pitch = +slider.value; show(); drawWave(canvas, processTake(take)); });
+  slider.addEventListener("change", () => { slot.dirty = true; renderSlot(slot); });
+  pitch.append("pitch", slider, label);
+  const wrap = document.createElement("div");
+  wrap.append(row, pitch);
+  return wrap;
+}
+
+function drawWave(canvas, samples) {
+  const g = canvas.getContext("2d");
+  const style = getComputedStyle(document.documentElement);
+  g.clearRect(0, 0, canvas.width, canvas.height);
+  g.fillStyle = style.getPropertyValue("--wave").trim();
+  const mid = canvas.height / 2;
+  const per = Math.max(1, Math.floor(samples.length / canvas.width));
+  for (let x = 0; x < canvas.width; x++) {
+    let peak = 0;
+    for (let i = x * per; i < Math.min(samples.length, (x + 1) * per); i++) peak = Math.max(peak, Math.abs(samples[i]));
+    const h = Math.max(1, peak * mid);
+    g.fillRect(x, mid - h, 1, h * 2);
+  }
+}
+
+function updateSaveAll() {
+  const any = [...slots.values()].some((s) => s.dirty && (s.takes.some((t) => t.keep) || s.saved));
+  $("saveAll").disabled = !any;
+  $("saveAll").textContent = dirHandle || canPick ? "Save all" : "Download all";
+}
+
+// ---------- recording
+async function startRecording(slot) {
+  if (recorder) return;
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false, channelCount: 1 } });
+  } catch (error) {
+    toast("Microphone blocked. Allow mic access in the browser's address bar and try again.");
+    return;
+  }
+  const context = new AudioContext();
+  const source = context.createMediaStreamSource(stream);
+  const node = context.createScriptProcessor(4096, 1, 1);
+  const chunks = [];
+  let length = 0;
+  node.onaudioprocess = (event) => {
+    const input = event.inputBuffer.getChannelData(0);
+    chunks.push(new Float32Array(input));
+    length += input.length;
+    let peak = 0;
+    for (let i = 0; i < input.length; i++) peak = Math.max(peak, Math.abs(input[i]));
+    if (slot.meter) slot.meter.style.width = Math.min(100, Math.sqrt(peak) * 110) + "%";
+    if (length > context.sampleRate * MAX_SECONDS) stopRecording();
+  };
+  source.connect(node);
+  node.connect(context.destination);
+  recorder = { slot, stream, context, node, chunks, get length() { return length; } };
+  renderAll();
+}
+
+async function stopRecording() {
+  if (!recorder) return;
+  const { slot, stream, context, node, chunks } = recorder;
+  recorder = null;
+  node.disconnect();
+  stream.getTracks().forEach((t) => t.stop());
+  const total = chunks.reduce((n, c) => n + c.length, 0);
+  const joined = new Float32Array(total);
+  let at = 0;
+  for (const c of chunks) { joined.set(c, at); at += c.length; }
+  const raw = resample(joined, context.sampleRate, RATE);
+  context.close();
+  const trimmed = trim(raw);
+  if (!trimmed.length) {
+    toast("That take was silent. Check the mic and try again.");
+  } else {
+    slot.takes.push({ raw: trimmed, pitch: 0, keep: slot.takes.length < 3 });
+    slot.dirty = true;
+  }
+  renderAll();
+}
+
+function renderAll() { for (const s of slots.values()) renderSlot(s); }
+
+// ---------- processing: trim, fade, pitch, normalise
+function resample(input, from, to) {
+  if (from === to) return input;
+  const out = new Float32Array(Math.floor(input.length * to / from));
+  for (let i = 0; i < out.length; i++) {
+    const p = i * from / to, j = Math.floor(p), t = p - j;
+    out[i] = input[j] * (1 - t) + (input[Math.min(j + 1, input.length - 1)] || 0) * t;
+  }
+  return out;
+}
+
+function trim(samples) {
+  let peak = 0;
+  for (const s of samples) peak = Math.max(peak, Math.abs(s));
+  if (peak < 0.01) return new Float32Array(0);
+  // Gate at -36 dB under the peak, on 10 ms windows, keeping a little air either side.
+  const gate = peak * 0.016, win = Math.round(RATE * 0.01);
+  let start = -1, end = -1;
+  for (let i = 0; i + win <= samples.length; i += win) {
+    let p = 0;
+    for (let k = i; k < i + win; k++) p = Math.max(p, Math.abs(samples[k]));
+    if (p > gate) { if (start < 0) start = i; end = i + win; }
+  }
+  if (start < 0) return new Float32Array(0);
+  start = Math.max(0, start - Math.round(RATE * 0.02));
+  end = Math.min(samples.length, end + Math.round(RATE * 0.08));
+  return samples.slice(start, end);
+}
+
+function processTake(take) {
+  // Pitch by resampling: lower is deeper and longer, higher is brighter and shorter.
+  const ratio = Math.pow(2, take.pitch / 12);
+  const shifted = ratio === 1 ? Float32Array.from(take.raw) : resample(take.raw, RATE * ratio, RATE);
+  const fadeIn = Math.min(shifted.length, Math.round(RATE * 0.004));
+  const fadeOut = Math.min(shifted.length, Math.round(RATE * 0.025));
+  for (let i = 0; i < fadeIn; i++) shifted[i] *= i / fadeIn;
+  for (let i = 0; i < fadeOut; i++) shifted[shifted.length - 1 - i] *= i / fadeOut;
+  let peak = 0;
+  for (const s of shifted) peak = Math.max(peak, Math.abs(s));
+  const gain = peak > 0 ? 0.89 / peak : 1;   // -1 dBFS
+  for (let i = 0; i < shifted.length; i++) shifted[i] *= gain;
+  return shifted;
+}
+
+let playback = null;
+function playTake(take) {
+  playback ??= new AudioContext();
+  const samples = processTake(take);
+  const buffer = playback.createBuffer(1, samples.length, RATE);
+  buffer.copyToChannel(samples, 0);
+  const source = playback.createBufferSource();
+  source.buffer = buffer;
+  source.connect(playback.destination);
+  source.start();
+}
+
+function encodeWav(samples) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const v = new DataView(buffer);
+  const text = (at, s) => { for (let i = 0; i < s.length; i++) v.setUint8(at + i, s.charCodeAt(i)); };
+  text(0, "RIFF"); v.setUint32(4, 36 + samples.length * 2, true); text(8, "WAVE");
+  text(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, RATE, true); v.setUint32(28, RATE * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  text(36, "data"); v.setUint32(40, samples.length * 2, true);
+  for (let i = 0; i < samples.length; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
+const fileName = (name, index) => index === 0 ? `${name}.wav` : `${name}_${index + 1}.wav`;
+
+// ---------- saving
+async function connect() {
+  if (!canPick) { toast("This browser can't write to folders. Saves will download instead."); return false; }
+  try {
+    const picked = await window.showDirectoryPicker({ id: "rimtera", mode: "readwrite" });
+    let sounds;
+    if (await has(picked, "Rimtera.csproj")) {
+      const assets = await picked.getDirectoryHandle("Assets", { create: true });
+      sounds = await assets.getDirectoryHandle("Sounds", { create: true });
+    } else if (picked.name.toLowerCase() === "sounds") {
+      sounds = picked;
+    } else {
+      toast("That folder has no Rimtera.csproj. Pick the Rimtera repo folder.");
+      return false;
+    }
+    dirHandle = sounds;
+    await scanSaved();
+    $("connect").textContent = "Change folder";
+    $("status").innerHTML = `Saving to <b>${picked.name === "Sounds" ? "" : picked.name + "/"}Assets/Sounds</b>. Commit and push that folder when you're done.`;
+    renderAll();
+    return true;
+  } catch (error) {
+    if (error.name !== "AbortError") toast("Couldn't open that folder: " + error.message);
+    return false;
+  }
+}
+
+async function has(dir, name) {
+  try { await dir.getFileHandle(name); return true; } catch { return false; }
+}
+
+async function scanSaved() {
+  for (const s of slots.values()) s.saved = 0;
+  for await (const [entry, handle] of dirHandle.entries()) {
+    const match = handle.kind === "file" && /^([a-z0-9-]+?)(?:_(\d+))?\.wav$/i.exec(entry);
+    if (!match) continue;
+    const name = match[1].toLowerCase();
+    const slot = slots.get(name) || addSlot(name, "Custom sound.", "", customGrid());
+    slot.saved++;
+  }
+}
+
+async function saveSlot(slot) {
+  const kept = slot.takes.filter((t) => t.keep);
+  if (!dirHandle && canPick && !(await connect())) return;
+  if (!dirHandle) {
+    kept.forEach((take, i) => download(encodeWav(processTake(take)), fileName(slot.name, i)));
+    slot.dirty = false;
+    renderSlot(slot);
+    toast(`Downloaded ${kept.length} file${kept.length === 1 ? "" : "s"}. Move them into Assets/Sounds.`);
+    return;
+  }
+  // Write the kept takes as name.wav, name_2.wav, ... and clear out any older numbered takes beyond them.
+  for (let i = 0; i < kept.length; i++) {
+    const file = await dirHandle.getFileHandle(fileName(slot.name, i), { create: true });
+    const writer = await file.createWritable();
+    await writer.write(encodeWav(processTake(kept[i])));
+    await writer.close();
+  }
+  for await (const [entry] of dirHandle.entries()) {
+    const match = new RegExp(`^${slot.name}(?:_(\\d+))?\\.wav$`, "i").exec(entry);
+    if (!match) continue;
+    const index = match[1] ? +match[1] - 1 : 0;
+    if (index >= kept.length) await dirHandle.removeEntry(entry);
+  }
+  slot.saved = kept.length;
+  slot.dirty = false;
+  renderSlot(slot);
+  toast(kept.length ? `Saved ${slot.name} (${kept.length} take${kept.length === 1 ? "" : "s"}).` : `Removed ${slot.name}; the built-in sound is back.`);
+}
+
+function download(blob, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+async function saveAll() {
+  if (!dirHandle && canPick && !(await connect())) return;
+  for (const slot of slots.values())
+    if (slot.dirty && (slot.takes.some((t) => t.keep) || slot.saved)) await saveSlot(slot);
+}
+
+// ---------- wiring
+$("connect").addEventListener("click", connect);
+$("saveAll").addEventListener("click", saveAll);
+$("addCustom").addEventListener("click", () => {
+  const name = $("customName").value.trim().toLowerCase().replace(/\s+/g, "-");
+  if (!/^[a-z0-9-]{1,40}$/.test(name)) { toast("Use letters, digits and dashes only."); return; }
+  const slot = addSlot(name, "Custom sound.", "", customGrid());
+  select(slot);
+  slot.el.scrollIntoView({ behavior: "smooth", block: "center" });
+  $("customName").value = "";
+});
+document.addEventListener("keydown", (event) => {
+  if (event.target.tagName === "INPUT" || event.repeat) return;
+  if (event.key.toLowerCase() === "r" && selected) {
+    event.preventDefault();
+    recorder ? stopRecording() : startRecording(selected);
+  } else if (event.key === " " && selected?.takes.length) {
+    event.preventDefault();
+    playTake(selected.takes[selected.takes.length - 1]);
+  }
+});
+window.addEventListener("beforeunload", (event) => {
+  if ([...slots.values()].some((s) => s.dirty && s.takes.length)) event.preventDefault();
+});
+if (!canPick) {
+  $("connect").style.display = "none";
+  $("status").innerHTML = "This browser can't save into folders, so clips <b>download</b>. Move them into <b>Assets/Sounds</b> in your Rimtera folder. (Chrome or Edge can save straight in.)";
+}
+
+buildGroups();
+select(slots.get("jump"));
+</script>
+</body>
+</html>
