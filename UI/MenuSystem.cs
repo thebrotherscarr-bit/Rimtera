@@ -593,9 +593,9 @@ public sealed class MenuFlow
         new MenuEntry(category.ToString(), () => Navigate(category == OptionsCategory.Controls ? CreateControlsMenu() : CreateOptionsMenu(category)),
             Description: category switch
             {
-                OptionsCategory.General => "Autosave, autopause, item text, damage numbers, minimap, building grid.",
-                OptionsCategory.Interface => "UI scale, zoom, health bars, name tags, status panel, frame rate.",
-                OptionsCategory.Video => "Window mode and size, lighting, frame pacing, background and effects.",
+                OptionsCategory.General => "Autosave, autopause, map, placement preview, item and damage text.",
+                OptionsCategory.Interface => "Zoom, UI scale and health bars.",
+                OptionsCategory.Video => "Window mode, resolution, frame skip, lighting, background and effects.",
                 OptionsCategory.Volume => "Music, sound and ambient volume.",
                 OptionsCategory.Cursor => "Cursor colour, border and size; smart cursor toggle or hold.",
                 _ => "Every key, rebindable; Terraria's layout by default."
@@ -1123,18 +1123,15 @@ public sealed class MenuFlow
             case OptionsCategory.General:
                 entries.Add(Toggle("Autosave", () => Preferences.AutoSave, value => Preferences.AutoSave = value, "Save the world every 90 seconds and on exit."));
                 entries.Add(Toggle("Autopause", () => Preferences.AutoPause, value => Preferences.AutoPause = value, "Pause the world while the inventory or colonist sheet is open."));
-                entries.Add(Toggle("Item and event text", () => Preferences.ShowItemText, value => Preferences.ShowItemText = value, "Show the message log above the hotbar."));
-                entries.Add(Toggle("Damage numbers", () => Preferences.DamageNumbers, value => Preferences.DamageNumbers = value, "Floating numbers when anything takes damage."));
-                entries.Add(Toggle("Minimap", () => Preferences.MinimapEnabled, value => Preferences.MinimapEnabled = value, "Explored-area map in the top-right corner."));
-                entries.Add(Toggle("Building grid", () => Preferences.ShowBuildingGrid, value => Preferences.ShowBuildingGrid = value, "Grid around the cursor while holding a placeable block."));
+                entries.Add(Toggle("Map enabled", () => Preferences.MinimapEnabled, value => Preferences.MinimapEnabled = value, "The minimap and map overlay. The full map (M) is always there."));
+                entries.Add(Toggle("Placement preview", () => Preferences.PlacementPreview, value => Preferences.PlacementPreview = value, "A faint ghost of the block or wall where it will go."));
+                entries.Add(Toggle("Item text", () => Preferences.ShowItemText, value => Preferences.ShowItemText = value, "Pickup and event messages above the hotbar."));
+                entries.Add(Toggle("Damage text", () => Preferences.DamageNumbers, value => Preferences.DamageNumbers = value, "Floating numbers when anything takes damage."));
                 break;
             case OptionsCategory.Interface:
-                entries.Add(Percent("UI scale", () => Preferences.UiScale, value => Preferences.UiScale = value, 0.05f, 0.75f, 1.5f, "Size of menus and panels."));
                 entries.Add(Percent("Zoom", () => Preferences.Zoom, value => Preferences.Zoom = value, 0.1f, 0.6f, 2f, "How close the camera is to the world. In game, Ctrl + mouse wheel zooms too."));
-                entries.Add(Choice("Enemy health bars", () => Preferences.EnemyHealthBars, value => Preferences.EnemyHealthBars = value, "Above or below damaged creatures, or hidden."));
-                entries.Add(Toggle("Name tags", () => Preferences.NameTags, value => Preferences.NameTags = value, "Names over your colonist and crew."));
-                entries.Add(Toggle("Status panel", () => Preferences.StatusPanel, value => Preferences.StatusPanel = value, "Biome, temperature, shelter and incident readout."));
-                entries.Add(Toggle("Frame rate", () => Preferences.ShowFrameRate, value => Preferences.ShowFrameRate = value, "Show frames per second in the corner."));
+                entries.Add(Percent("UI scale", () => Preferences.UiScale, value => Preferences.UiScale = value, 0.05f, 0.75f, 1.5f, "Size of menus and panels."));
+                entries.Add(Choice("Health bars", () => Preferences.EnemyHealthBars, value => Preferences.EnemyHealthBars = value, "Above or below damaged creatures, or hidden."));
                 break;
             case OptionsCategory.Video:
                 entries.Add(new($"Window mode: {DisplayOptions.ModeLabel(Preferences.ScreenMode)}", Adjust: amount =>
@@ -1143,7 +1140,7 @@ public sealed class MenuFlow
                     Preferences.SetScreenMode(Preferences.ScreenMode);
                     ApplyPreference();
                 }, Description: "Windowed, borderless fullscreen, or exclusive fullscreen."));
-                entries.Add(new($"Window size: {Preferences.DisplayWidth}×{Preferences.DisplayHeight}", Adjust: amount =>
+                entries.Add(new($"Resolution: {Preferences.DisplayWidth}×{Preferences.DisplayHeight}", Adjust: amount =>
                 {
                     var sizes = DisplayOptions.StandardSizes;
                     var current = DisplayOptions.NearestSizeIndex(Preferences.DisplayWidth, Preferences.DisplayHeight);
@@ -1152,12 +1149,12 @@ public sealed class MenuFlow
                     Preferences.DisplayHeight = sizes[index].Height;
                     ApplyPreference();
                 }, Description: "Standard window sizes; applies immediately."));
+                entries.Add(Choice("Frame skip", () => Preferences.FrameSkip, value => Preferences.FrameSkip = value, "On: the world keeps full speed on a slow PC. Subtle: only small hitches are caught up. Off: the world slows down instead."));
                 entries.Add(Choice("Lighting", () => Preferences.Lighting, value => Preferences.Lighting = value, "Low: blocky. Standard: smooth. High: smooth with coloured glow. Off: full bright."));
-                entries.Add(Choice("Frame pacing", () => Preferences.FramePacing, value => Preferences.FramePacing = value, "Smooth uses the most CPU; Save power redraws less often."));
                 entries.Add(Toggle("Background", () => Preferences.BackgroundEnabled, value => Preferences.BackgroundEnabled = value, "Sky gradient, stars and planets behind the world."));
-                entries.Add(Percent("Parallax", () => Preferences.BackgroundParallax, value => Preferences.BackgroundParallax = value, 0.1f, 0f, 2f, "How fast the title backdrop drifts."));
+                entries.Add(Percent("Parallax", () => Preferences.BackgroundParallax, value => Preferences.BackgroundParallax = value, 0.1f, 0f, 2f, "How fast the backdrop drifts."));
                 entries.Add(Toggle("Weather effects", () => Preferences.WeatherEffects, value => Preferences.WeatherEffects = value, "Biome sky tints, toxic fallout and solar flare overlays."));
-                entries.Add(Toggle("Flashy effects", () => Preferences.FlashyEffects, value => Preferences.FlashyEffects = value, "Hit flashes and muzzle flashes."));
+                entries.Add(Toggle("Flashing effects", () => Preferences.FlashyEffects, value => Preferences.FlashyEffects = value, "Hit flashes and muzzle flashes."));
                 entries.Add(Choice("Particles", () => Preferences.Particles, value => Preferences.Particles = value, "Debris and death bursts."));
                 break;
             case OptionsCategory.Volume:

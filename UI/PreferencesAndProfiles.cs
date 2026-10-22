@@ -5,7 +5,8 @@ using Rimtera.Systems;
 
 namespace Rimtera.UI;
 
-public enum FramePacingMode : byte { Smooth, Balanced, SavePower }
+/// <summary>Terraria's Frame Skip: On catches the world up after a slow frame, Subtle only after small hitches, Off slows the world instead.</summary>
+public enum FrameSkipMode : byte { Off, On, Subtle }
 public enum LightingQuality : byte { Low, Standard, High, Off }
 public enum HealthBarPlacement : byte { Above, Below, Off }
 public enum ParticleAmount : byte { Off, Low, High }
@@ -68,7 +69,7 @@ public sealed record GamePreferences
     public bool Fullscreen { get; set; }
     public bool WindowMaximized { get; set; }
     public bool WindowBorderless { get; set; }
-    public FramePacingMode FramePacing { get; set; } = FramePacingMode.Balanced;
+    public FrameSkipMode FrameSkip { get; set; } = FrameSkipMode.On;
     public LightingQuality Lighting { get; set; } = LightingQuality.Standard;
     public void SetScreenMode(WindowMode mode)
     {
@@ -83,14 +84,13 @@ public sealed record GamePreferences
     public float MapScale { get; set; } = 1f;
     public bool AutoSave { get; set; } = true;
     public bool AutoPause { get; set; }
-    public bool ShowBuildingGrid { get; set; } = true;
+    /// <summary>A faint ghost of the block or wall where it would go, as Terraria's Placement Preview.</summary>
+    public bool PlacementPreview { get; set; } = true;
     public bool ShowItemText { get; set; } = true;
 
     // General / Interface
     public bool DamageNumbers { get; set; } = true;
     public bool MinimapEnabled { get; set; } = true;
-    public bool StatusPanel { get; set; } = true;
-    public bool NameTags { get; set; } = true;
     public bool ShowFrameRate { get; set; }
     public HealthBarPlacement EnemyHealthBars { get; set; } = HealthBarPlacement.Above;
 
@@ -130,7 +130,7 @@ public sealed record GamePreferences
         Zoom = ClampFinite(Zoom, 1f, 0.5f, 2.5f);
         UiScale = ClampFinite(UiScale, 1f, 0.75f, 1.5f);
         MapScale = ClampFinite(MapScale, 1f, 0.5f, 2f);
-        if (!Enum.IsDefined(FramePacing)) FramePacing = FramePacingMode.Balanced;
+        if (!Enum.IsDefined(FrameSkip)) FrameSkip = FrameSkipMode.On;
         if (!Enum.IsDefined(Lighting)) Lighting = LightingQuality.Standard;
         if (!Enum.IsDefined(EnemyHealthBars)) EnemyHealthBars = HealthBarPlacement.Above;
         if (!Enum.IsDefined(Particles)) Particles = ParticleAmount.High;
@@ -215,6 +215,7 @@ public static class ControlCatalog
         new("Bestiary", "Bestiary", ControlGroup.Panels, [], "Or the Bestiary tab in the inventory."),
         new("Achievements", "Feats", ControlGroup.Panels, [], "Or the Feats tab in the inventory, or Settings."),
         new("ControlsHelp", "Show / hide key help", ControlGroup.Panels, ["Oem2"]),
+        new("FrameRate", "Show / hide frame rate", ControlGroup.Panels, ["F10"], "Terraria's F10."),
 
         new("Sleep", "Sleep (near a bed, at night)", ControlGroup.World, [], "Or right-click a bed."),
         new("CheckHousing", "Check housing at cursor", ControlGroup.World, [], "Or the Housing tab in the inventory."),

@@ -610,7 +610,7 @@ public static class CoreSelfTests
                                  !menuFlow.Preferences.Fullscreen;
         var windowSizeIndex = menuFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))
-            .Single(item => item.entry.Label.StartsWith("Window size:", StringComparison.Ordinal)).index;
+            .Single(item => item.entry.Label.StartsWith("Resolution:", StringComparison.Ordinal)).index;
         menuFlow.CurrentScreen.SelectIndex(windowSizeIndex);
         menuFlow.Handle(new UiInputFrame(default, NavigationX: 1));
         var sizedWindowSelected = menuFlow.Preferences.DisplayWidth == 1366 &&
@@ -618,10 +618,11 @@ public static class CoreSelfTests
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
         Check(settingsCategories.SequenceEqual(["General", "Interface", "Video", "Volume", "Cursor", "Controls", "Back"]) &&
               optionLabels.Any(label => label == "Window mode: Windowed") &&
-              optionLabels.Any(label => label == "Window size: 1280×720") &&
+              optionLabels.Any(label => label == "Resolution: 1280×720") &&
+              optionLabels.Any(label => label == "Frame skip: On") && !optionLabels.Any(label => label.StartsWith("Frame pacing", StringComparison.Ordinal)) &&
               borderlessSelected && sizedWindowSelected &&
               menuFlow.CurrentScreen.Id == "settings",
-            "Settings lists Terraria's categories; Video exposes live window mode and standard window sizes");
+            "Settings lists Terraria's categories; Video exposes live window mode, standard resolutions and frame skip");
 
         var controlsIndex = menuFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))

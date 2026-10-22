@@ -424,6 +424,10 @@ public static partial class GraphicalSandbox
                 case "MinimapZoomIn": _canvas.ZoomMinimap(1); break;
                 case "MinimapZoomOut": _canvas.ZoomMinimap(-1); break;
                 case "ControlsHelp": _canvas.ShowControls = !_canvas.ShowControls; break;
+                case "FrameRate":
+                    _menu.Preferences.ShowFrameRate = !_menu.Preferences.ShowFrameRate;
+                    _menu.SavePreferences();
+                    break;
                 case "Craft": game.TryCraftNext(); break;
                 case "CraftPrevious": game.CycleCraftableRecipe(-1); break;
                 case "CraftNext": game.CycleCraftableRecipe(1); break;
@@ -1206,7 +1210,7 @@ public static partial class GraphicalSandbox
     {
         /// <summary>One simulation step: the game is tuned for 60 a second.</summary>
         private const double StepSeconds = 1.0 / 60.0;
-        /// <summary>Steps run back to back at most when catching up, so a long stall can't snowball.</summary>
+        /// <summary>Steps run back to back at most when catching up (frame skip On), so a long stall can't snowball.</summary>
         private const int MaximumCatchUpSteps = 4;
         private double _loopTime = -1;
         private double _stepDebt;
@@ -1227,13 +1231,15 @@ public static partial class GraphicalSandbox
                 _stepDebt += Math.Min(0.25, now - _loopTime);
                 _loopTime = now;
                 var steps = 0;
-                while (_stepDebt >= StepSeconds && steps < MaximumCatchUpSteps)
+                var catchUp = _menu.Preferences.FrameSkip switch { FrameSkipMode.Off => 1, FrameSkipMode.Subtle => 2, _ => MaximumCatchUpSteps };
+                while (_stepDebt >= StepSeconds && steps < catchUp)
                 {
                     Advance();
                     _stepDebt -= StepSeconds;
                     steps++;
                 }
-                if (steps == MaximumCatchUpSteps)
+                // Frame skip off (or a stall past the catch-up limit): the world slows down rather than jumping ahead.
+                if (steps == catchUp)
                     _stepDebt = Math.Min(_stepDebt, StepSeconds);
                 if (steps == 0)
                     Thread.Sleep(1);
@@ -2059,15 +2065,13 @@ public static partial class GraphicalSandbox
             if (MenuOpen)
                 return;
             DrawCursorHighlight(g, game, startX, startY);
-            DrawBuildingGrid(g, game, startX, startY);
             DrawHud(g, game);
             DrawBuffBar(g, game);
             if (MapView == MapStyle.Overlay)
                 DrawMapOverlay(g, game);
             else if (MapView == MapStyle.Minimap && _menu.Preferences.MinimapEnabled)
                 DrawMinimap(g, game);
-            if (_menu.Preferences.StatusPanel)
-                DrawStatusPanel(g, game);
+            DrawStatusPanel(g, game);
             DrawBossBar(g, game);
             DrawEventBars(g, game);
             DrawLeisureHud(g, game); // strokes, wave-moon score, creative (GraphicalSandbox.Leisure.cs)
@@ -2243,7 +2247,6 @@ public static partial class GraphicalSandbox
                 scaleX: pose.ScaleX, scaleY: pose.ScaleY, reference: reference);
             if (!pose.ShowsTool && !StyleDrawsWeapon(game))
                 DrawHeldItem(g, game, startX, startY, now);
-            DrawNameTag(g, game.Player.Colonist.Name, motion.Position, motion.Size, startX, startY);
         }
 
         /// <summary>
@@ -2313,10 +2316,13 @@ public static partial class GraphicalSandbox
 
         private void DrawNameTag(Graphics g, string? name, Vector2 position, Vector2 size, int startX, int startY)
         {
-            if (string.IsNullOrWhiteSpace(name) || !_menu.Preferences.NameTags)
+            if (string.IsNullOrWhiteSpace(name) || MousePosition is not { } mouse)
                 return;
             var x = (position.X - startX) * TileSize;
             var y = (position.Y - startY) * TileSize - size.Y * TileSize * 0.35f;
+            // As in Terraria, a resident's name shows while the mouse is over them.
+            if (!new RectangleF(x - 4f, (position.Y - startY) * TileSize - 4f, size.X * TileSize + 8f, size.Y * TileSize + 8f).Contains(mouse))
+                return;
             using var format = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
             var rect = new RectangleF(x - 40f, y - 16f, size.X * TileSize + 80f, 14f);
             g.DrawString(name, _small, Brushes.Black, new RectangleF(rect.X + 1, rect.Y + 1, rect.Width, rect.Height), format);
@@ -2514,7 +2520,9 @@ public static partial class GraphicalSandbox
         {
             if (CursorTile() is not { } tile)
                 return;
-            if (Smart.Enabled && Smart.Resolve(game, tile, useHeld: false) is { } target)
+            var smartTarget = Smart.Enabled ? Smart.Resolve(game, tile, useHeld: false) : null;
+            DrawPlacementPreview(g, game, smartTarget is { Enemy: null } placed ? placed.Tile : tile, startX, startY);
+            if (smartTarget is { } target)
             {
                 var pulse = 0.6f + 0.4f * MathF.Sin((float)(Environment.TickCount64 / 160.0));
                 using var smartPen = new Pen(Color.FromArgb((int)(255 * pulse), 90, 230, 255), 2f);
@@ -2545,16 +2553,34 @@ public static partial class GraphicalSandbox
                 _messageLog.RemoveAt(0);
         }
 
-        /// <summary>Faint grid inside reach while a placeable block is selected.</summary>
-        private void DrawBuildingGrid(Graphics g, GameSimulation game, int startX, int startY)
+        private static readonly ImageAttributes PreviewAlpha = CreateAlphaAttributes(0.45f);
+
+        private static ImageAttributes CreateAlphaAttributes(float alpha)
         {
-            if (!_menu.Preferences.ShowBuildingGrid || game.Player.Inventory.SelectedItem?.UseKind != ItemUseKind.PlaceTile)
+            var attributes = new ImageAttributes();
+            attributes.SetColorMatrix(new ColorMatrix { Matrix33 = alpha });
+            return attributes;
+        }
+
+        /// <summary>
+        /// Terraria's Placement Preview: a faint ghost of the held block or wall in the cell it would go into
+        /// (the smart cursor's cell when that is on), only where it can actually be placed from here.
+        /// </summary>
+        private void DrawPlacementPreview(Graphics g, GameSimulation game, GridPoint cell, int startX, int startY)
+        {
+            if (!_menu.Preferences.PlacementPreview || game.Player.Inventory.SelectedItem is not { } held || !game.World.Contains(cell) ||
+                !game.IsInToolReach(cell))
                 return;
-            using var pen = new Pen(Color.FromArgb(40, 255, 255, 255), 1f);
-            var box = game.ToolReachBox(); // the same reach box the simulation checks
-            for (var y = box.MinY; y <= box.MaxY; y++)
-            for (var x = box.MinX; x <= box.MaxX; x++)
-                g.DrawRectangle(pen, (x - startX) * TileSize, (y - startY) * TileSize, TileSize, TileSize);
+            var current = game.World.GetCell(cell);
+            string? sprite = null;
+            if (held.UseKind == ItemUseKind.PlaceTile && held.PlacedTile != TileId.Air && current.TileId == TileId.Air && PropFor(held.PlacedTile) is null)
+                sprite = SpriteCatalog.ForTile(held.PlacedTile);
+            else if (held.UseKind == ItemUseKind.PlaceWall && held.PlacedWall != 0 && current.WallId == 0)
+                sprite = SpriteCatalog.ForWall(held.PlacedWall);
+            if (sprite is null || _sprites.GetScaled(sprite, TileSize, TileSize) is not { } image)
+                return;
+            var rect = new Rectangle((cell.X - startX) * TileSize, (cell.Y - startY) * TileSize, TileSize, TileSize);
+            g.DrawImage(image, rect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, PreviewAlpha);
         }
 
         private readonly Dictionary<TileId, string?> _propCache = new();
