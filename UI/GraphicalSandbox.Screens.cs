@@ -52,7 +52,6 @@ public static partial class GraphicalSandbox
             var game = _game;
             var entries = new List<MenuEntry>
             {
-                new(text, () => { }),
                 new("Edit text", () => _menu.PromptForText("Edit sign", "What the sign says.", game.GetSignText(cell) ?? string.Empty, value =>
                 {
                     game.SetSignText(cell, value);
@@ -61,7 +60,7 @@ public static partial class GraphicalSandbox
                 new("Close", CloseMenu)
             };
             _down.Clear();
-            _menu.ShowDirect(new MenuScreen("sign", "Sign", entries), CloseMenu);
+            _menu.ShowDirect(new MenuScreen("sign", "Sign", entries, "Enter  choose      Esc  close", body: text), CloseMenu);
             _menuOpen = true;
             UpdateMenuViewport();
             SyncCanvas();
@@ -81,18 +80,18 @@ public static partial class GraphicalSandbox
                 var sprite = SpriteCatalog.ForEnemy(kind);
                 if (level == 0)
                 {
-                    entries.Add(new MenuEntry($"???  •  Entry {(int)kind + 1}: not yet encountered", () => { }, Tag: new CardIcon(sprite, Locked: true)));
+                    entries.Add(new MenuEntry($"Unknown  •  Entry {(int)kind + 1}  •  Not met yet", () => { }, Tag: new CardIcon(sprite, Locked: true)));
                     continue;
                 }
                 var parts = new List<string> { entry!.DisplayName };
                 parts.Add(level >= 2 ? $"{entry.Kills} defeated" : "Sighted");
                 if (entry.Biomes.Count > 0)
-                    parts.Add(string.Join(", ", entry.Biomes.Select(zone => zone.ToString())));
+                    parts.Add(string.Join(", ", entry.Biomes.Select(zone => SplitWords(zone.ToString()))));
                 if (level >= 3 && entry.DropsSeen.Count > 0)
                     parts.Add("Drops: " + string.Join(", ", entry.DropsSeen.Take(4).Select(item => _game.Items[item].Name)));
                 entries.Add(new MenuEntry(string.Join("  •  ", parts), () => { }, Tag: new CardIcon(sprite)));
             }
-            ShowGameList("bestiary", $"Bestiary  ·  {log.SeenCount} of {log.TotalKinds} found  ·  {log.Completion:P0} complete", entries);
+            ShowGameList("bestiary", "Bestiary", entries, $"{log.SeenCount} of {log.TotalKinds} creatures found  ·  {MathF.Round(log.Completion * 100f):0}% complete");
         }
 
         private void OpenAchievements()
@@ -110,19 +109,23 @@ public static partial class GraphicalSandbox
                         Tag: new CardIcon(definition.IconName, Locked: !unlocked));
                 })
                 .ToList();
-            ShowGameList("achievements", $"Achievements  ·  {tracker.UnlockedCount} / {tracker.TotalCount}", entries);
+            ShowGameList("achievements", "Feats", entries, $"{tracker.UnlockedCount} of {tracker.TotalCount} unlocked");
         }
 
-        private void ShowGameList(string id, string title, List<MenuEntry> entries)
+        private void ShowGameList(string id, string title, List<MenuEntry> entries, string summary)
         {
             entries.Add(new MenuEntry("Close", CloseMenu));
             _down.Clear();
             _menuDown.Clear();
-            _menu.ShowDirect(new MenuScreen(id, title, entries, layout: MenuLayout.Cards), CloseMenu);
+            _menu.ShowDirect(new MenuScreen(id, title, entries, "↑ ↓  move      Esc  close", MenuLayout.Cards, body: summary), CloseMenu);
             _menuOpen = true;
             UpdateMenuViewport();
             SyncCanvas();
         }
+
+        /// <summary>"FrozenWasteland" → "Frozen wasteland".</summary>
+        private static string SplitWords(string name) =>
+            string.Concat(name.Select((c, i) => i > 0 && char.IsUpper(c) ? " " + char.ToLowerInvariant(c) : c.ToString()));
 
         /// <summary>Toast and chime for achievements unlocked since the last frame.</summary>
         private void AnnounceAchievements()

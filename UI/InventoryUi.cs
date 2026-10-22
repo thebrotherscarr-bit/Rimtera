@@ -161,7 +161,7 @@ public sealed class InventoryUiState : UiState
     public string StatusText => _statusLabel?.Text ?? string.Empty;
 
     /// <summary>The click hints shown under the grid until an action reports something.</summary>
-    public const string ClickHints = "Shift+click move · Ctrl+click trash · Alt+click favorite · right-click equip";
+    public const string ClickHints = "Shift-click  move     Ctrl-click  trash     Alt-click  favorite     Right-click  equip";
 
     public void SelectHotbarSlot(int index) => PlayerInventory.Select(index);
 
@@ -185,8 +185,8 @@ public sealed class InventoryUiState : UiState
         _statusLabel = new UiTextElement(ClickHints, "inventory-status", new UiStyle
         {
             Left = UiLength.Px(InventoryLayout.Left - 10f), Top = UiLength.Px(InventoryLayout.HintTop(playerSlots)),
-            Width = UiLength.Px(InventoryLayout.Columns * InventoryLayout.Stride + 10f), Height = UiLength.Px(24f)
-        }) { Scale = 0.7f, Color = new UiColor(196, 204, 222) };
+            Width = UiLength.Px(InventoryLayout.Columns * InventoryLayout.Stride + 10f), Height = UiLength.Px(18f)
+        }) { Scale = 0.7f, Color = new UiColor(170, 178, 192) };
         Add(_statusLabel);
         if (ChestInventory is not null)
         {
@@ -300,10 +300,10 @@ public sealed class InventoryUiState : UiState
         const float gearTop = 206f;
         UiLength FromRight(float pixels) => UiLength.Mixed(-pixels, 1f);
         void Tab(string id, string text, int row, Action command, bool active = false) =>
-            Add(new UiButtonElement(active ? $"▸ {text}" : text, () => { command(); RefreshCursorLabel(); }, id, new UiStyle
+            Add(new UiButtonElement(text, () => { command(); RefreshCursorLabel(); }, id, new UiStyle
             {
                 Left = FromRight(258f), Top = UiLength.Px(gearTop + row * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
-            }) { TextScale = 0.75f });
+            }) { TextScale = 0.75f, Color = active ? UiColor.ButtonActive : UiColor.ButtonDefault });
 
         Tab("tab-gear", "Gear", 0, () => SwitchTab(InventoryUiState.Tab.Gear), _tab == InventoryUiState.Tab.Gear);
         Tab("tab-housing", "Housing", 1, () => SwitchTab(InventoryUiState.Tab.Housing), _tab == InventoryUiState.Tab.Housing);
@@ -313,14 +313,14 @@ public sealed class InventoryUiState : UiState
         for (var i = 0; i < GameSimulation.LoadoutCount; i++)
         {
             var index = i;
-            Add(new UiButtonElement(game.ActiveLoadout == i ? $"▸ Loadout {i + 1}" : $"Loadout {i + 1}", () =>
+            Add(new UiButtonElement($"Loadout {i + 1}", () =>
             {
                 Status(game.SwitchLoadout(index) ? $"Loadout {index + 1} equipped." : "Already wearing that loadout.");
                 Rebuild();
             }, $"loadout-{i + 1}", new UiStyle
             {
                 Left = FromRight(258f), Top = UiLength.Px(gearTop + (6 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
-            }) { TextScale = 0.75f });
+            }) { TextScale = 0.75f, Color = game.ActiveLoadout == i ? UiColor.ButtonActive : UiColor.ButtonDefault });
         }
 
         if (_tab == InventoryUiState.Tab.Housing)
@@ -351,11 +351,11 @@ public sealed class InventoryUiState : UiState
     {
         (EquipmentSlot Slot, string Label)[] functional =
         [
-            (EquipmentSlot.Head, "HEAD"), (EquipmentSlot.Body, "BODY"), (EquipmentSlot.Legs, "LEGS"),
-            (EquipmentSlot.Accessory, "ACC 1"), (EquipmentSlot.Accessory2, "ACC 2"), (EquipmentSlot.Accessory3, "ACC 3"),
-            (EquipmentSlot.Accessory4, "ACC 4"), (EquipmentSlot.Accessory5, "ACC 5"),
+            (EquipmentSlot.Head, "Head"), (EquipmentSlot.Body, "Body"), (EquipmentSlot.Legs, "Legs"),
+            (EquipmentSlot.Accessory, "Acc 1"), (EquipmentSlot.Accessory2, "Acc 2"), (EquipmentSlot.Accessory3, "Acc 3"),
+            (EquipmentSlot.Accessory4, "Acc 4"), (EquipmentSlot.Accessory5, "Acc 5"),
             // The sixth slot opens with the auxiliary socket or on Annihilation worlds.
-            (EquipmentSlot.Accessory6, game.AccessorySlot6Unlocked ? "ACC 6" : "LOCKED")
+            (EquipmentSlot.Accessory6, game.AccessorySlot6Unlocked ? "Acc 6" : "Locked")
         ];
         void Slot(EquipmentSlot slot, string label, bool vanity, float fromRight, int row)
         {
@@ -373,9 +373,9 @@ public sealed class InventoryUiState : UiState
         }
         for (var row = 0; row < functional.Length; row++)
             Slot(functional[row].Slot, functional[row].Label, vanity: false, 66f, row);
-        Slot(EquipmentSlot.Head, "VAN H", vanity: true, 120f, 0);
-        Slot(EquipmentSlot.Body, "VAN B", vanity: true, 120f, 1);
-        Slot(EquipmentSlot.Legs, "VAN L", vanity: true, 120f, 2);
+        Slot(EquipmentSlot.Head, "Vanity", vanity: true, 120f, 0);
+        Slot(EquipmentSlot.Body, "Vanity", vanity: true, 120f, 1);
+        Slot(EquipmentSlot.Legs, "Vanity", vanity: true, 120f, 2);
     }
 
     /// <summary>Terraria's housing panel: check the room you stand in, and who lives with you.</summary>

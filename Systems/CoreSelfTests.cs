@@ -457,10 +457,10 @@ public static class CoreSelfTests
         var pauseLabels = menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).ToArray();
         Check(pauseLabels.SequenceEqual(new[]
               {
-                  "Close Menu", "Save Game", "General", "Interface", "Video", "Volume", "Cursor", "Controls", "Feats",
-                  "Save & Exit to Main Menu", "Save & Exit Game"
+                  "Close Menu", "— Settings —", "General", "Interface", "Video", "Volume", "Cursor", "Controls",
+                  "— Game —", "Save Game", "Save & Exit to Title", "Save & Quit Game"
               }) && menuFlow.CurrentScreen.Title == "Settings",
-            "the in-game Settings menu follows Terraria: close, save, the settings categories, feats, then save & exit");
+            "the in-game Settings menu follows Terraria: close, the settings categories, then save and the exits");
         var videoIndex = Array.IndexOf(pauseLabels, "Video");
         menuFlow.CurrentScreen.SelectIndex(videoIndex);
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
@@ -480,7 +480,7 @@ public static class CoreSelfTests
             openColonist: () => { });
         var pauseWithColonist = menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).ToArray();
         Check(pauseWithColonist[1] == "Inventory" && pauseWithColonist[2] == "Crew" &&
-              pauseWithColonist[^1] == "Save & Exit Game",
+              pauseWithColonist[^1] == "Save & Quit Game",
             "hosts without the inventory hub (the terminal) still get Inventory and Crew in Settings");
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
         var inventoryClosed = false;
@@ -729,7 +729,7 @@ public static class CoreSelfTests
         creationFlow.ShowColonistSheet(createdCharacter!);
         Check(creationFlow.Ui.CurrentState is ColonistSheetState &&
               creationFlow.Ui.BuildDrawCommands().Any(command =>
-                  command.Kind == UiDrawKind.Text && command.Text.Contains("COLONIST", StringComparison.Ordinal)),
+                  command.Kind == UiDrawKind.Text && command.Text == "TOP SKILLS"),
             "character creation can preview the full colonist sheet");
         creationFlow.Handle(new UiInputFrame(default, BackPressed: true));
         Check(creationFlow.CurrentScreen.Id == "world-create",
@@ -743,7 +743,7 @@ public static class CoreSelfTests
         menuFlow.Handle(new UiInputFrame(default, NavigationX: 1));
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
         Check(menuFlow.Ui.BuildDrawCommands().Any(command =>
-                  command.Kind == UiDrawKind.Text && command.Text == "DERIVED WORK"),
+                  command.Kind == UiDrawKind.Text && command.Text == "WORK SPEED"),
             "colonist sheet page tabs respond to keyboard focus and confirm");
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
         Check(liveSheetClosed, "in-game colonist sheet closes back into the active simulation");

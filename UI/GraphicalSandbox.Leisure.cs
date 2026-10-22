@@ -153,30 +153,33 @@ public static partial class GraphicalSandbox
             {
                 new("Research selected item", () => { var status = game.ResearchSelected(); OpenCreativeMenu(); },
                     Description: "Submit copies of the selected item; once researched it can be duplicated freely."),
-                new(game.CreativeTimeFrozen ? "Time: frozen" : "Time: flowing", () => { game.CreativeTimeFrozen = !game.CreativeTimeFrozen; OpenCreativeMenu(); },
+                new(game.CreativeTimeFrozen ? "Time: Frozen" : "Time: Flowing", () => { game.CreativeTimeFrozen = !game.CreativeTimeFrozen; OpenCreativeMenu(); },
                     Description: "Freeze or release the clock."),
-                new("Set time: dawn", () => { game.SetTimeOfDay(6f); OpenCreativeMenu(); }),
-                new("Set time: noon", () => { game.SetTimeOfDay(12f); OpenCreativeMenu(); }),
-                new("Set time: dusk", () => { game.SetTimeOfDay(18.5f); OpenCreativeMenu(); }),
-                new("Set time: midnight", () => { game.SetTimeOfDay(0f); OpenCreativeMenu(); }),
+                new("Jump to dawn", () => { game.SetTimeOfDay(6f); OpenCreativeMenu(); }),
+                new("Jump to noon", () => { game.SetTimeOfDay(12f); OpenCreativeMenu(); }),
+                new("Jump to dusk", () => { game.SetTimeOfDay(18.5f); OpenCreativeMenu(); }),
+                new("Jump to midnight", () => { game.SetTimeOfDay(0f); OpenCreativeMenu(); }),
                 new($"Spawn rate: {game.CreativeSpawnRate:0.00}×", Adjust: amount =>
                 {
                     game.CreativeSpawnRate = Math.Clamp(game.CreativeSpawnRate + amount * 0.25f, 0f, 3f);
                     OpenCreativeMenu();
-                }, Description: "Left/right: 0× (none) to 3×."),
-                new(game.CreativeGodmode ? "Godmode: on" : "Godmode: off", () => { game.CreativeGodmode = !game.CreativeGodmode; OpenCreativeMenu(); }),
+                }, Description: "Left and right: from 0× (none) to 3×."),
+                new(game.CreativeGodmode ? "Godmode: On" : "Godmode: Off", () => { game.CreativeGodmode = !game.CreativeGodmode; OpenCreativeMenu(); }),
                 new($"World difficulty: {WorldSettings.Name(game.Difficulty)}", Adjust: amount =>
                 {
                     var values = Enum.GetValues<WorldDifficulty>();
                     var index = (Array.IndexOf(values, game.Difficulty) + amount + values.Length) % values.Length;
                     game.SetCreativeDifficulty(values[index]);
                     OpenCreativeMenu();
-                }, Description: "Left/right changes how hard creatures hit.")
+                }, Description: "Left and right change how hard creatures hit.")
             };
+            if (game.ResearchedItems.Any())
+                entries.Add(new MenuEntry("— Duplicate —", Enabled: false));
             foreach (var item in game.ResearchedItems.Take(40))
-                entries.Add(new MenuEntry($"Duplicate: {game.Items[item].Name}", () => { game.DuplicateItem(item); OpenCreativeMenu(); }));
+                entries.Add(new MenuEntry(game.Items[item].Name, () => { game.DuplicateItem(item); OpenCreativeMenu(); },
+                    Description: "Adds a full stack to your inventory."));
             entries.Add(new MenuEntry("Back", CloseMenu));
-            _menu.ShowDirect(new MenuScreen("creative", "Creative Powers", entries), CloseMenu);
+            _menu.ShowDirect(new MenuScreen("creative", "Creative Powers", entries, "Enter  choose      ← →  change      Esc  back"), CloseMenu);
             _menuOpen = true;
             UpdateMenuViewport();
             SyncCanvas();
