@@ -23,11 +23,24 @@ Three GitHub Actions workflows guard the repository:
 
 Release: bump `<Version>`, run **Version** on `main` to tag, and **Publish** takes it from there — or push the tag yourself (`git tag v0.1.0; git push origin v0.1.0`).
 
-No arguments (or `--graphics` / `--game`) opens the WinForms client at the title menu. From there: Single Player routes through character and world selection/creation; Continue resumes the most recently saved world; Load Game lists saved worlds; Options and Controls persist; Exit Game closes the app. While playing, `Esc` opens the inventory (as in Terraria); its **Settings** button opens the pause menu with Resume, Inventory, Save Game, Load Game, Settings, Save & Quit to Main Menu, and Save & Exit Game. Menus use the arrow keys or the mouse (hover, click, and wheel); `WASD` remains reserved for gameplay. Character names, world names, and key bindings are edited in retained in-game fields and key-capture panels, not native Windows dialogs. `--menu` is the terminal equivalent; `--play` starts directly in a terminal world.
+No arguments (or `--graphics` / `--game`) opens the WinForms client at the title menu. The title menu follows Terraria: **Single Player** lists your characters, then your worlds (saved ones marked, each launching with the character it was saved with), with creation for both; **Settings** holds General, Interface, Video, Volume, Cursor and Controls; **Exit Game** closes the app. While playing, `Esc` opens the inventory hub (below); its **Settings** button opens the in-game Settings: Close Menu, Save Game, the same categories, Feats, Save & Exit to Main Menu, and Save & Exit Game. Menus use the arrow keys or the mouse (hover, click, and wheel); `WASD` remains reserved for gameplay. Character names, world names, and key bindings are edited in retained in-game fields and key-capture panels, not native Windows dialogs. `--menu` is the terminal equivalent; `--play` starts directly in a terminal world.
+
+### The inventory hub
+
+As in Terraria 1.4, the inventory is where everything lives:
+
+- **Inventory**: ten columns by five rows, the top row being the hotbar (numbered 1-0). Left click picks up and places; right click takes half (or equips gear); **Shift+click** moves a stack to the open chest (or equips it, or trashes it); **Ctrl+click** trashes; **Alt+click** marks a favorite, which sort, deposit and quick stack leave alone.
+- Beside it: **Sort**, **Quick stack** (to nearby chests), the **Cargo pod** when you have one, the **Wires** builder toggle, and the **trash slot** (drop a held stack on it; click it empty-handed to take the stack back).
+- **Chests** open underneath with **Loot all**, **Deposit all**, **Quick stack**, **Restock** and **Sort**.
+- **Crafting** underneath that: everything craftable nearby as a grid; click a result to see its materials, click it again to craft; the wheel scrolls. **Ask station AI** suggests what your materials make.
+- Down the right: worn **gear** (armor, accessories, vanity), **Loadouts 1-3**, and tabs for **Housing** (check the room you stand in; see your crew), **Crew**, **Bestiary** and **Feats**.
+- **Settings** in the bottom-right corner.
+
+Right-click a **bed** to sleep and the **station AI** for guidance, as with Terraria's beds and Guide.
 
 ### Graphical gameplay controls
 
-Defaults follow Terraria's PC layout, and every key can be rebound under Options → Controls (Shift, Ctrl and Alt included; a key taken from another action moves and the screen says so). The `/` key toggles an on-screen key reference built from the current bindings. One list, `ControlCatalog` in `UI/PreferencesAndProfiles.cs`, drives gameplay input, the controls screen and that reference.
+Defaults follow Terraria's PC layout, and every key can be rebound under Settings → Controls (crafting, crew, bestiary, feats, sleep, housing, wires and eating start unbound since the inventory and right clicks cover them, but each can take a key) (Shift, Ctrl and Alt included; a key taken from another action moves and the screen says so). The `/` key toggles an on-screen key reference built from the current bindings. One list, `ControlCatalog` in `UI/PreferencesAndProfiles.cs`, drives gameplay input, the controls screen and that reference.
 
 | Key | Action |
 |---|---|
@@ -35,20 +48,16 @@ Defaults follow Terraria's PC layout, and every key can be rebound under Options
 | `Space` | Jump (also lets go of ropes) |
 | Double-tap `A` / `D` | Dash (a dash key can be bound too) |
 | Left mouse | Use the selected item; placing a block on another swaps it |
-| Right mouse | Interact: doors, chests, stations, people |
+| Right mouse | Interact: doors, chests, stations, people, beds (sleep), the station AI |
 | Mouse wheel / `1`–`0` | Hotbar (`Ctrl` + wheel zooms) |
-| `Esc` / `I` | Inventory (Settings, sort, quick stack, trash and loadouts live there) |
+| `Esc` / `I` | Inventory hub: crafting, chests, gear, crew, housing, bestiary, feats, settings |
 | `E` | Grappling hook |
 | `T` | Throw the held item |
 | `Shift` (hold) | Smart select: switch to the tool that fits what's under the cursor |
-| `Ctrl` | Smart cursor (toggle or hold, per Options → Cursor) |
+| `Ctrl` | Smart cursor (toggle or hold, per Settings → Cursor) |
 | `R` | Quick mount |
 | `H` / `J` / `B` | Quick heal / charge / buff |
-| `F` | Eat |
 | `M` / `Tab` | Full map / map style; `+` and `-` zoom the minimap |
-| `C`, `[` / `]` | Craft the selected recipe, cycle recipes |
-| `K` / `V` / `N` / `O` | Crew / station AI / bestiary / feats |
-| `Z` / `P` / `L` | Sleep / check housing / next wire layer |
 | `` ` `` (hold) + `1`–`8` | Emotes |
 
 ### Terminal gameplay controls
