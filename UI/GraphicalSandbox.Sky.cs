@@ -154,14 +154,39 @@ public static partial class GraphicalSandbox
                 var scroll = (int)(startX * TileSize * parallaxX) % drawW;
                 for (var x = -scroll - drawW; x < Width; x += drawW)
                     g.DrawImageUnscaled(art, x, baseY - drawH);
-                // The land runs on below the panorama's lower edge, so a rising camera never opens a gap of sky
-                // between the backdrop and the terrain.
-                if (baseY < height)
+                // The land runs on below the near panorama's foot in that foot's colour, so a rising camera, a valley or
+                // a dug-out pit never opens a strip of bare sky between the hills and the ground.
+                if (layer == "near" && baseY < height)
                 {
-                    using var ground = new SolidBrush(art.GetPixel(art.Width / 2, Math.Max(0, art.Height - 2)));
-                    g.FillRectangle(ground, 0, baseY - 1, Width, height - baseY + 1);
+                    using var foot = new SolidBrush(Color.FromArgb((int)(255 * fade), FootColor(art)));
+                    g.FillRectangle(foot, 0, baseY - 1, Width, height - baseY + 1);
                 }
             }
+        }
+
+        private readonly Dictionary<Bitmap, Color> _footColors = new();
+
+        /// <summary>The average colour along a panorama's bottom row (its solid foot), worked out once per image.</summary>
+        private Color FootColor(Bitmap art)
+        {
+            if (_footColors.TryGetValue(art, out var cached))
+                return cached;
+            if (_footColors.Count > 64)
+                _footColors.Clear();
+            long r = 0, g = 0, b = 0, a = 0;
+            var y = art.Height - 1;
+            for (var x = 0; x < art.Width; x += Math.Max(1, art.Width / 64))
+            {
+                var pixel = art.GetPixel(x, y);
+                r += pixel.R * pixel.A;
+                g += pixel.G * pixel.A;
+                b += pixel.B * pixel.A;
+                a += pixel.A;
+            }
+            var color = a == 0
+                ? Color.FromArgb(24, 22, 26)
+                : Color.FromArgb((int)(r / a), (int)(g / a), (int)(b / a));
+            return _footColors[art] = color;
         }
 
         private readonly Dictionary<(Bitmap Source, int Shade, int Alpha), Bitmap> _tinted = new();

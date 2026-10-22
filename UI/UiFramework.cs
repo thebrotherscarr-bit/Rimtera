@@ -399,7 +399,8 @@ public sealed class UserInterface
         if (element is UiPanelElement panel)
             output.Add(new UiDrawCommand(UiDrawKind.Panel, panel.Bounds, panel.Text ?? string.Empty, panel.Color, panel.IsFocused, panel.IsMouseHovering));
         else if (element is UiTextElement text)
-            output.Add(new UiDrawCommand(UiDrawKind.Text, text.Bounds, text.Text ?? string.Empty, text.Color, text.IsFocused, text.IsMouseHovering));
+            output.Add(new UiDrawCommand(UiDrawKind.Text, text.Bounds, text.Text ?? string.Empty, text.Color, text.IsFocused, text.IsMouseHovering,
+                Align: text.Align, Wrap: text.Wrap));
         else if (element is UiButtonElement button)
             output.Add(new UiDrawCommand(UiDrawKind.Button, button.Bounds, button.Text ?? string.Empty, button.Color, button.IsFocused, button.IsMouseHovering));
         else if (element is UiTextInputElement input)
@@ -425,6 +426,8 @@ public readonly record struct UiColor(byte R, byte G, byte B, byte A = 255)
     public static UiColor PanelBlue => new(33, 43, 79);
     public static UiColor HeaderBlue => new(73, 94, 171);
     public static UiColor ButtonDefault => new(56, 68, 105);
+    /// <summary>The chosen tab or option among buttons: drawn lit, without a marker in its text.</summary>
+    public static UiColor ButtonActive => new(196, 140, 52);
     public static UiColor ButtonHover => new(90, 112, 177);
 }
 public readonly record struct UiDrawCommand(
@@ -437,7 +440,12 @@ public readonly record struct UiDrawCommand(
     int CaretIndex = -1,
     ItemStack? Stack = null,
     bool Selected = false,
-    string? Badge = null);
+    string? Badge = null,
+    UiTextAlign Align = UiTextAlign.Left,
+    bool Wrap = false)
+{
+    public bool Centered => Align == UiTextAlign.Center;
+}
 
 public sealed class UiPanelElement(string? id = null, UiStyle? style = null) : UiElement(id, style)
 {
@@ -449,7 +457,13 @@ public sealed class UiTextElement(string text, string? id = null, UiStyle? style
     public UiColor Color { get; set; } = new(238, 240, 248);
     public float Scale { get; set; } = 1f;
     public override string? Text { get; set; } = text;
+    /// <summary>Where the text sits in its box (left by default).</summary>
+    public UiTextAlign Align { get; set; }
+    /// <summary>Wraps onto further lines inside its box instead of being cut off.</summary>
+    public bool Wrap { get; set; }
 }
+
+public enum UiTextAlign : byte { Left, Center, Right }
 
 public sealed class UiButtonElement : UiElement
 {

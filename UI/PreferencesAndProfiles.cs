@@ -133,7 +133,12 @@ public sealed record GamePreferences
         if (!Enum.IsDefined(FrameSkip)) FrameSkip = FrameSkipMode.On;
         if (!Enum.IsDefined(Lighting)) Lighting = LightingQuality.Standard;
         if (!Enum.IsDefined(EnemyHealthBars)) EnemyHealthBars = HealthBarPlacement.Above;
-        if (!Enum.IsDefined(Particles)) Particles = ParticleAmount.High;
+        // These no longer have menu entries, so a value saved by an older build can't strand anyone with them off.
+        BackgroundEnabled = true;
+        WeatherEffects = true;
+        FlashyEffects = true;
+        BackgroundParallax = 1f;
+        Particles = ParticleAmount.High;
         if (!Enum.IsDefined(SmartCursor)) SmartCursor = SmartCursorMode.Toggle;
         CursorColor = Math.Clamp(CursorColor, 0, CursorColors.Length - 1);
         CursorScale = ClampFinite(CursorScale, 1f, 0.75f, 1.5f);
@@ -183,7 +188,7 @@ public static class ControlCatalog
         new("MoveDown", "Down / drop through", ControlGroup.Movement, ["S"]),
         new("Jump", "Jump", ControlGroup.Movement, ["Spacebar"]),
         new("Dash", "Dash", ControlGroup.Movement, [], "Or double-tap left or right."),
-        new("Grapple", "Grapple", ControlGroup.Movement, ["E"], "Fires at the cursor; press again to let go."),
+        new("Grapple", "Grapple", ControlGroup.Movement, ["E"], "Fires at the cursor. Press again to let go."),
         new("Mount", "Quick mount", ControlGroup.Movement, ["R"]),
 
         new("SmartSelect", "Smart select (hold)", ControlGroup.Actions, ["Shift"], "Switches to the right tool for what's under the cursor while held."),
@@ -213,9 +218,9 @@ public static class ControlCatalog
         new("Colonist", "Crew", ControlGroup.Panels, [], "Or the Crew tab in the inventory."),
         new("Guide", "Ask the station AI", ControlGroup.Panels, [], "Or right-click the station AI, or Ask station AI under crafting."),
         new("Bestiary", "Bestiary", ControlGroup.Panels, [], "Or the Bestiary tab in the inventory."),
-        new("Achievements", "Feats", ControlGroup.Panels, [], "Or the Feats tab in the inventory, or Settings."),
+        new("Achievements", "Feats", ControlGroup.Panels, [], "Or the Feats tab in the inventory."),
         new("ControlsHelp", "Show / hide key help", ControlGroup.Panels, ["Oem2"]),
-        new("FrameRate", "Show / hide frame rate", ControlGroup.Panels, ["F10"], "Terraria's F10."),
+        new("FrameRate", "Show / hide frame rate", ControlGroup.Panels, ["F10"], "Frames per second and drawing time, in the corner."),
 
         new("Sleep", "Sleep (near a bed, at night)", ControlGroup.World, [], "Or right-click a bed."),
         new("CheckHousing", "Check housing at cursor", ControlGroup.World, [], "Or the Housing tab in the inventory."),
@@ -257,7 +262,7 @@ public static class ControlCatalog
         var move = moves.All(key => key.Length == 1) ? string.Concat(moves) : string.Join("/", moves);
         return
         [
-            $"{move} move   {K("Jump")} jump   LMB use   RMB interact   {K("Grapple")} grapple   {K("Mount")} mount   {K("ThrowItem")} throw   {K("SmartSelect")} smart select   {K("SmartCursor")} smart cursor",
+            $"{move} move   {K("Jump")} jump   Left click use   Right click interact   {K("Grapple")} grapple   {K("Mount")} mount   {K("ThrowItem")} throw   {K("SmartSelect")} smart select   {K("SmartCursor")} smart cursor",
             $"{K("QuickHeal")} heal   {K("QuickCharge")} charge   {K("QuickBuff")} buff   {K("Inventory")} inventory, crafting, crew, settings   {K("Map")} map   {K("MapStyle")} map style   {K("ControlsHelp")} hide"
         ];
     }
@@ -486,6 +491,19 @@ public static class InputBindingResolver
         var b when b.Equals("OemComma", StringComparison.OrdinalIgnoreCase) => ",",
         var b when b.Equals("OemPeriod", StringComparison.OrdinalIgnoreCase) => ".",
         var b when b.StartsWith("NumPad", StringComparison.OrdinalIgnoreCase) => "Num " + b[6..],
+        var b when b.Equals("Add", StringComparison.OrdinalIgnoreCase) => "Num +",
+        var b when b.Equals("Subtract", StringComparison.OrdinalIgnoreCase) => "Num -",
+        var b when b.Equals("Multiply", StringComparison.OrdinalIgnoreCase) => "Num *",
+        var b when b.Equals("Divide", StringComparison.OrdinalIgnoreCase) => "Num /",
+        var b when b.Equals("Decimal", StringComparison.OrdinalIgnoreCase) => "Num .",
+        var b when b.Equals("Menu", StringComparison.OrdinalIgnoreCase) || b.Equals("LMenu", StringComparison.OrdinalIgnoreCase) => "Alt",
+        var b when b.Equals("Back", StringComparison.OrdinalIgnoreCase) => "Backspace",
+        var b when b.Equals("Return", StringComparison.OrdinalIgnoreCase) => "Enter",
+        var b when b.Equals("Capital", StringComparison.OrdinalIgnoreCase) => "Caps Lock",
+        var b when b.Equals("Prior", StringComparison.OrdinalIgnoreCase) || b.Equals("PageUp", StringComparison.OrdinalIgnoreCase) => "Page Up",
+        var b when b.Equals("Next", StringComparison.OrdinalIgnoreCase) || b.Equals("PageDown", StringComparison.OrdinalIgnoreCase) => "Page Down",
+        var b when b.Equals("ControlKey", StringComparison.OrdinalIgnoreCase) => "Ctrl",
+        var b when b.Equals("ShiftKey", StringComparison.OrdinalIgnoreCase) => "Shift",
         var b => b
     };
 }

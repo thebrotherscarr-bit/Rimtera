@@ -37,7 +37,7 @@ public sealed class TextPromptState : UiState
         panel.Add(new UiTextElement(description, "text-prompt-description", new UiStyle
         {
             Width = UiLength.Pct(1f), Height = UiLength.Px(20f), Top = UiLength.Px(40f)
-        }));
+        }) { Align = UiTextAlign.Center, Color = new UiColor(196, 202, 214) });
 
         _input = new UiTextInputElement(title, initial, "text-prompt-input", new UiStyle
         {
@@ -58,7 +58,7 @@ public sealed class TextPromptState : UiState
         panel.Add(new UiTextElement(hint, "text-prompt-hint", new UiStyle
         {
             Width = UiLength.Pct(1f), Height = UiLength.Px(20f), Top = UiLength.Px(118f)
-        }) { Color = new UiColor(168, 178, 202) });
+        }) { Color = new UiColor(150, 160, 172), Align = UiTextAlign.Center });
 
         var accept = new UiButtonElement("OK", Submit, "text-prompt-accept", new UiStyle
         {
@@ -169,20 +169,20 @@ public sealed class BindingCaptureState : UiState
         });
         Add(panel);
 
-        panel.Add(new UiTextElement($"Bind {action}", "binding-capture-title", new UiStyle
+        panel.Add(new UiTextElement($"Change key: {action}", "binding-capture-title", new UiStyle
         {
             Width = UiLength.Pct(1f), Height = UiLength.Px(32f), Top = UiLength.Px(4f), HAlign = 0.5f
         }) { Color = UiColor.HeaderBlue });
 
-        panel.Add(new UiTextElement($"Current: {current}", "binding-capture-current", new UiStyle
+        panel.Add(new UiTextElement($"Now: {current}", "binding-capture-current", new UiStyle
         {
-            Width = UiLength.Pct(1f), Height = UiLength.Px(20f), Top = UiLength.Px(40f)
-        }));
+            Width = UiLength.Pct(1f), Height = UiLength.Px(20f), Top = UiLength.Px(40f), HAlign = 0.5f
+        }) { Align = UiTextAlign.Center, Color = new UiColor(242, 176, 64) });
 
-        panel.Add(new UiTextElement("Press a key to bind it (Shift, Ctrl and Alt work too). Escape cancels.", "binding-capture-hint", new UiStyle
+        panel.Add(new UiTextElement("Press the new key. Shift, Ctrl and Alt work too. Esc cancels.", "binding-capture-hint", new UiStyle
         {
-            Width = UiLength.Pct(1f), Height = UiLength.Px(20f), Top = UiLength.Px(68f)
-        }) { Color = new UiColor(168, 178, 202) });
+            Width = UiLength.Pct(1f), Height = UiLength.Px(20f), Top = UiLength.Px(68f), HAlign = 0.5f
+        }) { Color = new UiColor(168, 178, 202), Align = UiTextAlign.Center });
 
         panel.Add(new UiButtonElement("Cancel", Cancel, "binding-capture-cancel", new UiStyle
         {
