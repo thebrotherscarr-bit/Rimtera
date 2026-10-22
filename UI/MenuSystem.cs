@@ -335,7 +335,10 @@ public sealed class MenuFlow
             prompt.Cancel();
     }
 
-    public void CaptureBinding(ConsoleKey key)
+    public void CaptureBinding(ConsoleKey key) => CaptureBinding(key.ToString());
+
+    /// <summary>Finishes key capture with a binding name (a ConsoleKey name, or Shift / Ctrl / Alt).</summary>
+    public void CaptureBinding(string key)
     {
         if (Ui.CurrentState is BindingCaptureState capture)
             capture.Capture(key);
@@ -478,14 +481,16 @@ public sealed class MenuFlow
         Ui.SetState(prompt);
     }
 
-    private void PromptForBinding(string action, string current)
+    private void PromptForBinding(string action)
     {
-        var capture = new BindingCaptureState(action, current);
+        var label = ControlCatalog.Find(action)?.Label ?? action;
+        var current = InputProfile.KeyLabel(action);
+        var capture = new BindingCaptureState(label, current.Length > 0 ? current : "nothing");
         capture.Captured += key =>
         {
             if (Ui.CurrentState == capture)
                 Ui.GoBack();
-            SetBinding(action, key.ToString());
+            SetBinding(action, key);
         };
         capture.Cancelled += () =>
         {
@@ -495,21 +500,24 @@ public sealed class MenuFlow
         Ui.SetState(capture);
     }
 
+    /// <summary>
+    /// Makes <paramref name="key"/> the action's main key (alternates stay). A key taken from another action is
+    /// moved, and the screen says which; menu navigation keeps to the arrow keys.
+    /// </summary>
     public void SetBinding(string action, string key)
     {
         if (string.IsNullOrWhiteSpace(action) || string.IsNullOrWhiteSpace(key))
             return;
-        if (!InputBindingResolver.TryParseConsoleKey(key, out var parsed))
+        if (!InputBindingResolver.TryParseKeyCode(key, out var code) || InputBindingResolver.NameForKeyCode(code) is not { } name)
         {
             if (Ui.CurrentState is MenuScreen screen)
             {
-                screen.SetStatus("Enter a ConsoleKey name (for example J, Spacebar, or D1).");
+                screen.SetStatus("That key can't be bound.");
                 screen.FocusSelection(Ui);
             }
             return;
         }
-        if (action.StartsWith("Menu", StringComparison.OrdinalIgnoreCase) &&
-            parsed is ConsoleKey.W or ConsoleKey.A or ConsoleKey.S or ConsoleKey.D)
+        if (action.StartsWith("Menu", StringComparison.OrdinalIgnoreCase) && name is "W" or "A" or "S" or "D")
         {
             if (Ui.CurrentState is MenuScreen screen)
             {
@@ -518,9 +526,14 @@ public sealed class MenuFlow
             }
             return;
         }
-        InputProfile.Bindings[action] = [parsed.ToString()];
+        var displaced = InputProfile.Rebind(action, name);
         SavePreferences();
-        ReplaceCurrent(CreateControlsMenu());
+        var label = ControlCatalog.Find(action)?.Label ?? action;
+        var status = $"{label}: {InputBindingResolver.Describe(name)}.";
+        if (displaced is not null)
+            status += $" {InputBindingResolver.Describe(name)} was on {ControlCatalog.Find(displaced)?.Label ?? displaced}, which is now {(InputProfile.KeyLabel(displaced) is { Length: > 0 } rest ? rest : "unbound")}.";
+        ReplaceCurrent(CreateControlsMenu(action));
+        CurrentScreen.SetStatus(status);
     }
 
     public void SavePreferences()
@@ -1224,14 +1237,39 @@ public sealed class MenuFlow
         return new MenuScreen("options", "Options", entries, "←/→ adjust  ·  changes apply and persist immediately");
     }
 
-    private MenuScreen CreateControlsMenu()
+    /// <summary>
+    /// The controls screen: every action from <see cref="ControlCatalog"/> under its group, with its keys. Selecting
+    /// one captures a new main key; Terraria's defaults are one entry away.
+    /// </summary>
+    private MenuScreen CreateControlsMenu(string? focus = null)
     {
-        var entries = InputProfile.Bindings.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(pair => new MenuEntry($"{pair.Key}: {string.Join(" / ", pair.Value)}",
-                () => PromptForBinding(pair.Key, pair.Value.FirstOrDefault() ?? string.Empty))).ToList();
-        entries.Add(new MenuEntry("Reset defaults", () => { InputProfile = Rimtera.UI.InputProfile.CreateDefault(); SavePreferences(); ReplaceCurrent(CreateControlsMenu()); }));
+        var entries = new List<MenuEntry>
+        {
+            new("Mouse: left use · right interact · wheel hotbar · Ctrl+wheel zoom", Enabled: false)
+        };
+        foreach (var group in ControlCatalog.All.GroupBy(action => action.Group))
+        {
+            entries.Add(new MenuEntry($"— {ControlCatalog.GroupName(group.Key)} —", Enabled: false));
+            foreach (var action in group)
+            {
+                var keys = InputProfile.KeyLabel(action.Id);
+                entries.Add(new MenuEntry($"{action.Label}: {(keys.Length > 0 ? keys : "unbound")}",
+                    () => PromptForBinding(action.Id), Tag: action.Id,
+                    Description: action.Hint.Length > 0 ? action.Hint : "Enter to change the main key; other keys stay."));
+            }
+        }
+        entries.Add(new MenuEntry("Reset to defaults", () =>
+        {
+            InputProfile = Rimtera.UI.InputProfile.CreateDefault();
+            SavePreferences();
+            ReplaceCurrent(CreateControlsMenu());
+            CurrentScreen.SetStatus("Controls reset to the Terraria-style defaults.");
+        }, Description: "Restores every key to the defaults (Terraria's layout)."));
         entries.Add(new MenuEntry("Back", GoBack));
-        return new MenuScreen("controls", "Controls", entries, "Select an action to bind a key");
+        var screen = new MenuScreen("controls", "Controls", entries, "Enter rebind   ↑/↓ navigate   Esc back");
+        if (focus is not null && entries.FindIndex(entry => Equals(entry.Tag, focus)) is >= 0 and var index)
+            screen.SelectIndex(index);
+        return screen;
     }
 
     private void Launch(WorldProfile world)

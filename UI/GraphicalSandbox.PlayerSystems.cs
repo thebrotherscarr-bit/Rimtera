@@ -9,10 +9,9 @@ namespace Rimtera.UI;
 
 public static partial class GraphicalSandbox
 {
-    /// <summary>Emote input: hold the emote key (`) and press 1–8 to pick one; a tap on its own waves.</summary>
+    /// <summary>Emote input: hold the emote key (` by default) and press 1–8 to pick one; a tap on its own waves.</summary>
     private sealed partial class GameForm
     {
-        private const Keys EmoteKey = Keys.Oemtilde;
         private bool _emotePicked;
 
         /// <summary>Key-down hook: true when the key was an emote input.</summary>
@@ -20,7 +19,7 @@ public static partial class GraphicalSandbox
         {
             if (_game is null)
                 return false;
-            if (e.KeyCode == EmoteKey)
+            if (IsBoundTo("Emote", e.KeyCode))
             {
                 if (!_canvas.EmotePaletteOpen)
                     _emotePicked = false;
@@ -28,7 +27,7 @@ public static partial class GraphicalSandbox
                 e.Handled = true;
                 return true;
             }
-            if (!_down.Contains(EmoteKey) || e.KeyCode is < Keys.D1 or > Keys.D8)
+            if (!Held("Emote") || e.KeyCode is < Keys.D1 or > Keys.D8)
                 return false;
             _game.PlayerEmote((EmoteKind)(e.KeyCode - Keys.D1));
             _emotePicked = true;
@@ -40,7 +39,7 @@ public static partial class GraphicalSandbox
         /// <summary>Key-up hook: closes the emote palette (a bare tap waves).</summary>
         private void HandleEmoteKeyUp(Keys key)
         {
-            if (key != EmoteKey || !_canvas.EmotePaletteOpen)
+            if (!IsBoundTo("Emote", key) || !_canvas.EmotePaletteOpen)
                 return;
             _canvas.EmotePaletteOpen = false;
             if (!_emotePicked)

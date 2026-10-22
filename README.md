@@ -23,28 +23,55 @@ Three GitHub Actions workflows guard the repository:
 
 Release: bump `<Version>`, run **Version** on `main` to tag, and **Publish** takes it from there — or push the tag yourself (`git tag v0.1.0; git push origin v0.1.0`).
 
-No arguments (or `--graphics` / `--game`) opens the WinForms client at the title menu. From there: Single Player routes through character and world selection/creation; Continue resumes the most recently saved world; Load Game lists saved worlds; Options and Controls persist; Exit Game closes the app. While playing, `Esc` opens the pause menu with Resume, Inventory, Save Game, Load Game, Settings, Save & Quit to Main Menu, and Save & Exit Game. Menus use the arrow keys or the mouse (hover, click, and wheel); `WASD` remains reserved for gameplay. Character names, world names, and key bindings are edited in retained in-game fields and key-capture panels, not native Windows dialogs. `--menu` is the terminal equivalent; `--play` starts directly in a terminal world.
+No arguments (or `--graphics` / `--game`) opens the WinForms client at the title menu. From there: Single Player routes through character and world selection/creation; Continue resumes the most recently saved world; Load Game lists saved worlds; Options and Controls persist; Exit Game closes the app. While playing, `Esc` opens the inventory (as in Terraria); its **Settings** button opens the pause menu with Resume, Inventory, Save Game, Load Game, Settings, Save & Quit to Main Menu, and Save & Exit Game. Menus use the arrow keys or the mouse (hover, click, and wheel); `WASD` remains reserved for gameplay. Character names, world names, and key bindings are edited in retained in-game fields and key-capture panels, not native Windows dialogs. `--menu` is the terminal equivalent; `--play` starts directly in a terminal world.
+
+### Graphical gameplay controls
+
+Defaults follow Terraria's PC layout, and every key can be rebound under Options → Controls (Shift, Ctrl and Alt included; a key taken from another action moves and the screen says so). The `/` key toggles an on-screen key reference built from the current bindings. One list, `ControlCatalog` in `UI/PreferencesAndProfiles.cs`, drives gameplay input, the controls screen and that reference.
+
+| Key | Action |
+|---|---|
+| `W` `A` `S` `D` | Up / climb, left, down / drop through platforms, right |
+| `Space` | Jump (also lets go of ropes) |
+| Double-tap `A` / `D` | Dash (a dash key can be bound too) |
+| Left mouse | Use the selected item; placing a block on another swaps it |
+| Right mouse | Interact: doors, chests, stations, people |
+| Mouse wheel / `1`–`0` | Hotbar (`Ctrl` + wheel zooms) |
+| `Esc` / `I` | Inventory (Settings, sort, quick stack, trash and loadouts live there) |
+| `E` | Grappling hook |
+| `T` | Throw the held item |
+| `Shift` (hold) | Smart select: switch to the tool that fits what's under the cursor |
+| `Ctrl` | Smart cursor (toggle or hold, per Options → Cursor) |
+| `R` | Quick mount |
+| `H` / `J` / `B` | Quick heal / charge / buff |
+| `F` | Eat |
+| `M` / `Tab` | Full map / map style; `+` and `-` zoom the minimap |
+| `C`, `[` / `]` | Craft the selected recipe, cycle recipes |
+| `K` / `V` / `N` / `O` | Crew / station AI / bestiary / feats |
+| `Z` / `P` / `L` | Sleep / check housing / next wire layer |
+| `` ` `` (hold) + `1`–`8` | Emotes |
 
 ### Terminal gameplay controls
+
+The terminal reads the same bindings where they make sense and fixes a few keys of its own, since it has no mouse.
 
 | Key | Action |
 |---|---|
 | `A` / `D` | Move left/right |
-| `W` / `Space` | Jump |
+| `Space` | Jump |
 | `X` | Dash |
 | `1`–`0` | Select first ten inventory slots |
 | `Tab` | Cycle to the next non-empty slot |
 | `M` | Mine the facing tile with a selected pickaxe |
-| `E` / `Enter` | Use the selected item (place, melee, or fire) |
+| `E` | Use the selected item (place, melee, or fire) |
 | `R` | Replace the facing tile with the selected block (tool-gated; returns the old tile) |
 | `[` / `]` | Cycle through currently craftable recipes |
 | `C` | Craft the selected recipe (or the first available if none is selected) |
 | `V` | Consult the guide for recipes unlocked by carried materials |
 | `F` | Eat a berry |
-| `B` | Summon a Stone Sentinel encounter |
 | `K` | Open the colonist sheet |
-| `I` | Open inventory UI |
-| `Esc` | Pause / resume |
+| `Esc` / `I` | Open inventory UI |
+| `P` | Pause / resume |
 | `Q` | End the session and save |
 
 ## Integrated modules

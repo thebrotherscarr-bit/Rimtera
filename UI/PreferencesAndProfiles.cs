@@ -150,9 +150,123 @@ public sealed record GamePreferences
         float.IsFinite(value) ? Math.Clamp(value, min, max) : fallback;
 }
 
+/// <summary>How the controls screen and the help overlay group actions.</summary>
+public enum ControlGroup : byte { Movement, Actions, QuickUse, Panels, World, Hotbar, Menus }
+
+/// <summary>
+/// One rebindable action: its saved id, the name players see, its group, its default keys (binding names as
+/// <see cref="InputBindingResolver.TryParseKeyCode"/> reads them) and a short hint. Menu actions live in their
+/// own context, so a key may serve one menu action and one gameplay action at once.
+/// </summary>
+public sealed record ControlAction(string Id, string Label, ControlGroup Group, string[] Defaults, string Hint = "")
+{
+    /// <summary>Menu navigation keys work only while a menu is open, so they never clash with gameplay keys.</summary>
+    public bool IsMenu => Id.StartsWith("Menu", StringComparison.OrdinalIgnoreCase);
+}
+
+/// <summary>
+/// The single list of player controls. Gameplay input, the controls screen and the in-game help overlay all
+/// read it, so a key shown anywhere is the key that works. Defaults follow Terraria's PC layout (WASD, Space
+/// jump, Escape inventory, E grapple, T throw, Shift smart select, Ctrl smart cursor, R mount, H/J/B quick
+/// heal/charge/buff, M map, Tab map style); Rimtera's own panels take otherwise free keys. Mouse buttons stay
+/// fixed: left uses the selected item, right interacts, the wheel cycles the hotbar (Ctrl + wheel zooms).
+/// </summary>
+public static class ControlCatalog
+{
+    public static readonly ControlAction[] All =
+    [
+        new("MoveLeft", "Move left", ControlGroup.Movement, ["A"]),
+        new("MoveRight", "Move right", ControlGroup.Movement, ["D"]),
+        new("MoveUp", "Up / climb", ControlGroup.Movement, ["W"]),
+        new("MoveDown", "Down / drop through", ControlGroup.Movement, ["S"]),
+        new("Jump", "Jump", ControlGroup.Movement, ["Spacebar"]),
+        new("Dash", "Dash", ControlGroup.Movement, [], "Or double-tap left or right."),
+        new("Grapple", "Grapple", ControlGroup.Movement, ["E"], "Fires at the cursor; press again to let go."),
+        new("Mount", "Quick mount", ControlGroup.Movement, ["R"]),
+
+        new("SmartSelect", "Smart select (hold)", ControlGroup.Actions, ["Shift"], "Switches to the right tool for what's under the cursor while held."),
+        new("SmartCursor", "Smart cursor", ControlGroup.Actions, ["Ctrl"], "Toggle or hold, as set in Options > Cursor."),
+        new("ThrowItem", "Throw", ControlGroup.Actions, ["T"], "Drops the item in your hand."),
+        new("Interact", "Interact", ControlGroup.Actions, [], "Right click. Bind a key to interact from the keyboard too."),
+        new("UseSelected", "Use item", ControlGroup.Actions, [], "Left click. Bind a key to use from the keyboard too."),
+        new("ReplaceTile", "Replace block", ControlGroup.Actions, [], "Placing a block over another swaps it on its own."),
+        new("Emote", "Emotes (hold, then 1-8)", ControlGroup.Actions, ["Oem3"]),
+
+        new("QuickHeal", "Quick heal", ControlGroup.QuickUse, ["H"]),
+        new("QuickCharge", "Quick charge", ControlGroup.QuickUse, ["J"]),
+        new("QuickBuff", "Quick buff", ControlGroup.QuickUse, ["B"]),
+        new("Eat", "Eat", ControlGroup.QuickUse, ["F"]),
+        new("Loadout1", "Loadout 1", ControlGroup.QuickUse, [], "Or the loadout buttons in the inventory."),
+        new("Loadout2", "Loadout 2", ControlGroup.QuickUse, []),
+        new("Loadout3", "Loadout 3", ControlGroup.QuickUse, []),
+
+        new("Inventory", "Inventory", ControlGroup.Panels, ["Escape", "I"], "Settings are in the inventory."),
+        new("Map", "Full map", ControlGroup.Panels, ["M"]),
+        new("MapStyle", "Map style", ControlGroup.Panels, ["Tab"], "Minimap, overlay or off."),
+        new("MinimapZoomIn", "Map zoom in", ControlGroup.Panels, ["Add", "OemPlus"]),
+        new("MinimapZoomOut", "Map zoom out", ControlGroup.Panels, ["Subtract", "OemMinus"]),
+        new("Craft", "Craft selected recipe", ControlGroup.Panels, ["C"]),
+        new("CraftPrevious", "Previous recipe", ControlGroup.Panels, ["Oem4"]),
+        new("CraftNext", "Next recipe", ControlGroup.Panels, ["Oem6"]),
+        new("Colonist", "Crew", ControlGroup.Panels, ["K"]),
+        new("Guide", "Ask the station AI", ControlGroup.Panels, ["V"]),
+        new("Bestiary", "Bestiary", ControlGroup.Panels, ["N"]),
+        new("Achievements", "Feats", ControlGroup.Panels, ["O"]),
+        new("ControlsHelp", "Show / hide key help", ControlGroup.Panels, ["Oem2"]),
+
+        new("Sleep", "Sleep (near a bed, at night)", ControlGroup.World, ["Z"]),
+        new("CheckHousing", "Check housing at cursor", ControlGroup.World, ["P"]),
+        new("WireLayer", "Next wire layer", ControlGroup.World, ["L"]),
+        new("CycleInventory", "Next hotbar item", ControlGroup.World, [], "The mouse wheel does this."),
+        new("SummonBoss", "Summon next boss (debug)", ControlGroup.World, []),
+
+        new("Hotbar1", "Hotbar 1", ControlGroup.Hotbar, ["D1"]), new("Hotbar2", "Hotbar 2", ControlGroup.Hotbar, ["D2"]),
+        new("Hotbar3", "Hotbar 3", ControlGroup.Hotbar, ["D3"]), new("Hotbar4", "Hotbar 4", ControlGroup.Hotbar, ["D4"]),
+        new("Hotbar5", "Hotbar 5", ControlGroup.Hotbar, ["D5"]), new("Hotbar6", "Hotbar 6", ControlGroup.Hotbar, ["D6"]),
+        new("Hotbar7", "Hotbar 7", ControlGroup.Hotbar, ["D7"]), new("Hotbar8", "Hotbar 8", ControlGroup.Hotbar, ["D8"]),
+        new("Hotbar9", "Hotbar 9", ControlGroup.Hotbar, ["D9"]), new("Hotbar10", "Hotbar 10", ControlGroup.Hotbar, ["D0"]),
+
+        new("Pause", "Settings", ControlGroup.Menus, [], "Opens settings straight away. The inventory's Settings button does the same."),
+        new("MenuUp", "Menu up", ControlGroup.Menus, ["UpArrow"]),
+        new("MenuDown", "Menu down", ControlGroup.Menus, ["DownArrow"]),
+        new("MenuLeft", "Menu left / adjust", ControlGroup.Menus, ["LeftArrow"]),
+        new("MenuRight", "Menu right / adjust", ControlGroup.Menus, ["RightArrow"]),
+        new("MenuConfirm", "Menu select", ControlGroup.Menus, ["Enter", "Spacebar"]),
+        new("MenuBack", "Menu back", ControlGroup.Menus, ["Escape", "Backspace"]),
+    ];
+
+    private static readonly Dictionary<string, ControlAction> ById = All.ToDictionary(action => action.Id, StringComparer.OrdinalIgnoreCase);
+
+    public static ControlAction? Find(string id) => ById.GetValueOrDefault(id);
+
+    public static string GroupName(ControlGroup group) => group switch
+    {
+        ControlGroup.QuickUse => "Quick use",
+        ControlGroup.Panels => "Panels and map",
+        _ => group.ToString()
+    };
+
+    /// <summary>The two help-overlay lines, built from the player's current keys.</summary>
+    public static string[] HintLines(InputProfile profile)
+    {
+        string K(string id) => profile.KeyLabel(id, max: 1) is { Length: > 0 } label ? label : "—";
+        string[] moves = [K("MoveUp"), K("MoveLeft"), K("MoveDown"), K("MoveRight")];
+        var move = moves.All(key => key.Length == 1) ? string.Concat(moves) : string.Join("/", moves);
+        return
+        [
+            $"{move} move   {K("Jump")} jump   LMB use   RMB interact   {K("Grapple")} grapple   {K("Mount")} mount   {K("ThrowItem")} throw   {K("SmartSelect")} smart select   {K("SmartCursor")} smart cursor",
+            $"{K("QuickHeal")} heal   {K("QuickCharge")} charge   {K("QuickBuff")} buff   {K("Eat")} eat   {K("Inventory")} inventory   {K("Map")} map   {K("MapStyle")} map style   {K("Craft")} craft   {K("Colonist")} crew   {K("Bestiary")} bestiary   {K("ControlsHelp")} hide"
+        ];
+    }
+}
+
 public sealed class InputProfile
 {
-    public const int CurrentMenuBindingVersion = 2;
+    /// <summary>
+    /// Saved-profile format: 2 took WASD off menu navigation; 3 moved gameplay onto <see cref="ControlCatalog"/>
+    /// (bindings that still match the old defaults take the new ones; anything the player changed is kept).
+    /// </summary>
+    public const int CurrentMenuBindingVersion = 3;
 
     public string Name { get; set; } = "Keyboard + Mouse";
     public int MenuBindingVersion { get; set; } = CurrentMenuBindingVersion;
@@ -166,39 +280,44 @@ public sealed class InputProfile
     public static InputProfile CreateDefault()
     {
         var profile = new InputProfile();
-        profile.Bindings = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["MoveLeft"] = ["A", "LeftArrow"],
-            ["MoveRight"] = ["D", "RightArrow"],
-            ["Jump"] = ["W", "Spacebar", "UpArrow"],
-            ["Dash"] = ["X"],
-            ["Inventory"] = ["I"],
-            ["CycleInventory"] = ["Tab"],
-            ["Interact"] = ["E", "Enter"],
-            ["UseSelected"] = ["E", "Enter"],
-            ["Mine"] = ["M"],
-            ["Place"] = ["E", "Enter"],
-            ["ReplaceTile"] = ["R"],
-            ["Eat"] = ["F"],
-            ["Craft"] = ["C"],
-            ["CraftPrevious"] = ["Oem4"],
-            ["CraftNext"] = ["Oem6"],
-            ["Guide"] = ["V"],
-            ["Colonist"] = ["K"],
-            ["SummonBoss"] = ["B"],
-            ["Pause"] = ["Escape"],
-            ["Quit"] = ["Q"],
-            ["MenuUp"] = ["UpArrow"],
-            ["MenuDown"] = ["DownArrow"],
-            ["MenuLeft"] = ["LeftArrow"],
-            ["MenuRight"] = ["RightArrow"],
-            ["Hotbar1"] = ["D1"], ["Hotbar2"] = ["D2"], ["Hotbar3"] = ["D3"],
-            ["Hotbar4"] = ["D4"], ["Hotbar5"] = ["D5"], ["Hotbar6"] = ["D6"],
-            ["Hotbar7"] = ["D7"], ["Hotbar8"] = ["D8"], ["Hotbar9"] = ["D9"], ["Hotbar10"] = ["D0"],
-            ["MenuConfirm"] = ["Enter", "Spacebar"], ["MenuBack"] = ["Escape", "Backspace"]
-        };
+        profile.Bindings = ControlCatalog.All.ToDictionary(action => action.Id, action => action.Defaults.ToList(), StringComparer.OrdinalIgnoreCase);
         return profile;
     }
+
+    /// <summary>The keys bound to an action, for display: "Space / W / ↑". Empty when unbound.</summary>
+    public string KeyLabel(string action, int max = 3) =>
+        Bindings.TryGetValue(action, out var keys) ? string.Join(" / ", keys.Take(max).Select(InputBindingResolver.Describe)) : string.Empty;
+
+    /// <summary>
+    /// Makes <paramref name="key"/> the first key of <paramref name="action"/>, keeping its alternates. If another
+    /// action in the same context (gameplay or menu) had that key, it loses it, and its id is returned so the
+    /// screen can say so.
+    /// </summary>
+    public string? Rebind(string action, string key)
+    {
+        string? displaced = null;
+        var menu = ControlCatalog.Find(action)?.IsMenu ?? action.StartsWith("Menu", StringComparison.OrdinalIgnoreCase);
+        foreach (var (other, keys) in Bindings)
+        {
+            if (string.Equals(other, action, StringComparison.OrdinalIgnoreCase) ||
+                (ControlCatalog.Find(other)?.IsMenu ?? other.StartsWith("Menu", StringComparison.OrdinalIgnoreCase)) != menu)
+                continue;
+            if (keys.RemoveAll(existing => string.Equals(existing, key, StringComparison.OrdinalIgnoreCase)) > 0)
+                displaced = other;
+        }
+        var list = Bindings.TryGetValue(action, out var current) ? current : Bindings[action] = new List<string>();
+        list.RemoveAll(existing => string.Equals(existing, key, StringComparison.OrdinalIgnoreCase));
+        if (list.Count > 0)
+            list[0] = key;
+        else
+            list.Add(key);
+        Revision++;
+        return displaced;
+    }
+
+    /// <summary>Bumped whenever bindings change, so input code can rebuild its key lookup.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public int Revision { get; private set; }
 
     public void Normalize()
     {
@@ -214,14 +333,41 @@ public sealed class InputProfile
         }
         Bindings = normalized;
         var menuActionVersion = MenuBindingVersion;
-        if (menuActionVersion < CurrentMenuBindingVersion)
-        {
+        if (menuActionVersion < 2)
             StripGameplayKeysFromMenuNavigation();
-            MenuBindingVersion = CurrentMenuBindingVersion;
-        }
+        if (menuActionVersion < 3)
+            MigrateToCatalog();
+        MenuBindingVersion = CurrentMenuBindingVersion;
+        // New actions arrive with their defaults; a player's empty list (deliberately unbound) stays empty.
+        foreach (var action in ControlCatalog.All)
+            if (!Bindings.ContainsKey(action.Id))
+                Bindings[action.Id] = action.Defaults.ToList();
         TriggerDeadzone = ClampFinite(TriggerDeadzone, 0.18f, 0f, 0.95f);
         InterfaceDeadzone = ClampFinite(InterfaceDeadzone, 0.25f, 0f, 0.95f);
         InventoryRepeatSeconds = ClampFinite(InventoryRepeatSeconds, 0.12f, 0.03f, 1f);
+        Revision++;
+    }
+
+    /// <summary>
+    /// Version 3: the old profile listed keys the game never read (Mine on M, Quit on Q, arrow movement) while
+    /// the real keys were fixed in code. Actions still on their old defaults move to the catalog's; actions the
+    /// player rebound keep their keys; actions that no longer exist go.
+    /// </summary>
+    private void MigrateToCatalog()
+    {
+        var oldDefaults = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["MoveLeft"] = ["A", "LeftArrow"], ["MoveRight"] = ["D", "RightArrow"], ["Jump"] = ["W", "Spacebar", "UpArrow"],
+            ["Dash"] = ["X"], ["Inventory"] = ["I"], ["CycleInventory"] = ["Tab"], ["Interact"] = ["E", "Enter"],
+            ["UseSelected"] = ["E", "Enter"], ["ReplaceTile"] = ["R"], ["Eat"] = ["F"], ["Craft"] = ["C"],
+            ["CraftPrevious"] = ["Oem4"], ["CraftNext"] = ["Oem6"], ["Guide"] = ["V"], ["Colonist"] = ["K"],
+            ["SummonBoss"] = ["B"], ["Pause"] = ["Escape"]
+        };
+        foreach (var obsolete in new[] { "Mine", "Place", "Quit" })
+            Bindings.Remove(obsolete);
+        foreach (var (action, keys) in oldDefaults)
+            if (Bindings.TryGetValue(action, out var saved) && saved.SequenceEqual(keys, StringComparer.OrdinalIgnoreCase))
+                Bindings.Remove(action);
     }
 
     private void StripGameplayKeysFromMenuNavigation()
@@ -273,6 +419,56 @@ public static class InputBindingResolver
         if (string.Equals(normalized, "Return", StringComparison.OrdinalIgnoreCase)) normalized = nameof(ConsoleKey.Enter);
         return Enum.TryParse(normalized, ignoreCase: true, out key) && Enum.IsDefined(key);
     }
+
+    /// <summary>
+    /// The Windows virtual-key code for a binding: any <see cref="ConsoleKey"/> name (their values are virtual-key
+    /// codes) plus the modifiers Shift, Ctrl and Alt, which ConsoleKey has no names for.
+    /// </summary>
+    public static bool TryParseKeyCode(string binding, out int code)
+    {
+        code = binding.Trim().ToLowerInvariant() switch { "shift" => 16, "ctrl" or "control" => 17, "alt" => 18, _ => 0 };
+        if (code != 0)
+            return true;
+        if (!TryParseConsoleKey(binding, out var key))
+            return false;
+        code = (int)key;
+        return true;
+    }
+
+    /// <summary>The binding name for a virtual-key code, or null for keys that cannot be bound.</summary>
+    public static string? NameForKeyCode(int code) => code switch
+    {
+        16 or 160 or 161 => "Shift",
+        17 or 162 or 163 => "Ctrl",
+        18 or 164 or 165 => "Alt",
+        _ when Enum.IsDefined((ConsoleKey)code) => ((ConsoleKey)code).ToString(),
+        _ => null
+    };
+
+    /// <summary>How a binding reads on screen: "Space", "1", "[", "↑".</summary>
+    public static string Describe(string binding) => binding.Trim() switch
+    {
+        var b when b.Length == 2 && b[0] is 'D' or 'd' && char.IsDigit(b[1]) => b[1..],
+        var b when b.Equals("Spacebar", StringComparison.OrdinalIgnoreCase) => "Space",
+        var b when b.Equals("Escape", StringComparison.OrdinalIgnoreCase) => "Esc",
+        var b when b.Equals("LeftArrow", StringComparison.OrdinalIgnoreCase) => "←",
+        var b when b.Equals("RightArrow", StringComparison.OrdinalIgnoreCase) => "→",
+        var b when b.Equals("UpArrow", StringComparison.OrdinalIgnoreCase) => "↑",
+        var b when b.Equals("DownArrow", StringComparison.OrdinalIgnoreCase) => "↓",
+        var b when b.Equals("Oem1", StringComparison.OrdinalIgnoreCase) => ";",
+        var b when b.Equals("Oem2", StringComparison.OrdinalIgnoreCase) => "/",
+        var b when b.Equals("Oem3", StringComparison.OrdinalIgnoreCase) => "`",
+        var b when b.Equals("Oem4", StringComparison.OrdinalIgnoreCase) => "[",
+        var b when b.Equals("Oem5", StringComparison.OrdinalIgnoreCase) => "\\",
+        var b when b.Equals("Oem6", StringComparison.OrdinalIgnoreCase) => "]",
+        var b when b.Equals("Oem7", StringComparison.OrdinalIgnoreCase) => "'",
+        var b when b.Equals("OemPlus", StringComparison.OrdinalIgnoreCase) => "=",
+        var b when b.Equals("OemMinus", StringComparison.OrdinalIgnoreCase) => "-",
+        var b when b.Equals("OemComma", StringComparison.OrdinalIgnoreCase) => ",",
+        var b when b.Equals("OemPeriod", StringComparison.OrdinalIgnoreCase) => ".",
+        var b when b.StartsWith("NumPad", StringComparison.OrdinalIgnoreCase) => "Num " + b[6..],
+        var b => b
+    };
 }
 
 public sealed class InputTriggerSet

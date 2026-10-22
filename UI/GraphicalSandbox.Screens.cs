@@ -29,6 +29,7 @@ public static partial class GraphicalSandbox
                 if (game.OpenBank() is { } bank)
                     ShowStorage(bank, null, "Cargo pod");
             };
+            state.SettingsRequested += OpenPauseMenu;
             _menu.ShowInventory(state, onClose: () =>
             {
                 game.CloseBank();
