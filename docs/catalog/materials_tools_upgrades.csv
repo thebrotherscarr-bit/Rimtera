@@ -1,0 +1,394 @@
+terraria_id,name,category,stage,how_obtained,rimtera_equivalent_id,rimtera_name,match,notes
+19,Gold Bar,bar,P0,craft: 4 GoldOre @ Furnaces,UraniumRod,Uranium rod,partial,Uranium rod is the uranium bar; Rimtera: craft x-uraniumrod @ Ore Refinery @ P0 3 Built Ore Refinery
+20,Copper Bar,bar,P0,craft: 3 CopperOre @ Furnaces,FerriteBar,Ferrite bar,exact-role,"Rimtera also has Metal alloy (CopperBar id, tier 0) as a generic early bar; Rimtera: mine Supply cache @ P0 0 Start"
+21,Silver Bar,bar,P0,craft: 4 SilverOre @ Furnaces,GlacialBar,Glacial bar,partial,Rimtera: craft x-glacialbar @ Ore Refinery @ P0 3 Built Ore Refinery
+22,Iron Bar,bar,P0,craft: 3 IronOre @ Furnaces,CobaltBar,Cobalt bar,exact-role,Terraria RecipeGroups.IronBar (104 recipes accept iron or lead); Rimtera: open Alloy crate @ P0 0 Start
+703,Tin Bar,bar,P0,craft: 3 TinOre @ Furnaces,FerriteBar,Ferrite bar,merged-into,Rimtera: mine Supply cache @ P0 0 Start
+704,Lead Bar,bar,P0,craft: 3 LeadOre @ Furnaces,CobaltBar,Cobalt bar,merged-into,Rimtera: open Alloy crate @ P0 0 Start
+705,Tungsten Bar,bar,P0,craft: 4 TungstenOre @ Furnaces,GlacialBar,Glacial bar,merged-into,Rimtera: craft x-glacialbar @ Ore Refinery @ P0 3 Built Ore Refinery
+706,Platinum Bar,bar,P0,craft: 4 PlatinumOre @ Furnaces,UraniumRod,Uranium rod,merged-into,Rimtera: craft x-uraniumrod @ Ore Refinery @ P0 3 Built Ore Refinery
+57,Demonite Bar,bar,P1,craft: 3 DemoniteOre @ Furnaces,UraniumRod,Uranium rod,partial,No separate evil bar; Rimtera: craft x-uraniumrod @ Ore Refinery @ P0 3 Built Ore Refinery
+117,Meteorite Bar,bar,P1,craft: 3 Meteorite @ Furnaces,MeteoriteBar,Meteorite bar,exact-role,Rimtera: craft x-meteoritebar @ Ore Refinery @ P0 22 Hearts broken
+175,Hellstone Bar,bar,P1,craft: 3 Hellstone + 1 Obsidian @ Hellforge,PyrociteBar,Pyrocite bar,exact-role,Pyrocite 3 + obsidian at the Ore Refinery (Terraria: Hellforge); Rimtera: open Lead-lined reactor chest @ P0 0 Start
+1257,Crimtane Bar,bar,P1,craft: 3 CrimtaneOre @ Furnaces,UraniumRod,Uranium rod,merged-into,Rimtera: craft x-uraniumrod @ Ore Refinery @ P0 3 Built Ore Refinery
+381,Cobalt Bar,bar,P2,craft: 3 CobaltOre @ Furnaces,ViridiumBar,Viridium bar,exact-role,Smelted at Ore Refinery Mk2; Rimtera: craft x-viridiumbar @ Ore Refinery Mk2 @ P0 9 Built Ore Refinery Mk2
+382,Mythril Bar,bar,P2,craft: 4 MythrilOre @ Furnaces,LumeniteBar,Lumenite bar,exact-role,Rimtera: open Astral crate after the Fracture @ P2 43 Defeated Fission Tyrant
+391,Adamantite Bar,bar,P2,craft: 4 AdamantiteOre @ AdamantiteForge,VoidsteelBar,Voidsteel bar,exact-role,Rimtera: open Astral crate after the Fracture @ P2 43 Defeated Fission Tyrant
+1184,Palladium Bar,bar,P2,craft: 3 PalladiumOre @ Furnaces,ViridiumBar,Viridium bar,merged-into,Rimtera: craft x-viridiumbar @ Ore Refinery Mk2 @ P0 9 Built Ore Refinery Mk2
+1191,Orichalcum Bar,bar,P2,craft: 4 OrichalcumOre @ Furnaces,LumeniteBar,Lumenite bar,merged-into,Rimtera: open Astral crate after the Fracture @ P2 43 Defeated Fission Tyrant
+1198,Titanium Bar,bar,P2,craft: 4 TitaniumOre @ AdamantiteForge,VoidsteelBar,Voidsteel bar,merged-into,Rimtera: open Astral crate after the Fracture @ P2 43 Defeated Fission Tyrant
+1006,Chlorophyte Bar,bar,P3,craft: 5 ChlorophyteOre @ AdamantiteForge,,,missing,Post-mech tier absent
+1225,Hallowed Bar,bar,P3,mechanical bosses,VoidsteelBar,Voidsteel bar,merged-into,GearCurve folds hallowed into tier 6; mech bosses drop no bar (CR gap); Rimtera: open Astral crate after the Fracture @ P2 43 Defeated Fission Tyrant
+1552,Shroomite Bar,bar,P4,craft: 1 ChlorophyteBar + 15 GlowingMushroom @ Autohammer,,,missing,Autohammer tier absent
+3261,Spectre Bar,bar,P4,craft: 2 ChlorophyteBar + 1 Ectoplasm @ AdamantiteForge,,,missing,Ectoplasm tier absent
+3467,Luminite Bar,bar,P5,craft: 4 LunarOre @ LunarCraftingStation,AstralBar,Astral bar,exact-role,Astral bar = 2 astral ore + lumenite + voidsteel; Rimtera: craft x-astralbar @ Astral Assembler @ P5 71 Built Astral Assembler
+2,Dirt Block,biome-material,P0,not crafted (knowledge: world/drop/shop),SoilBlock,Regolith,exact-role,Rimtera: mine Regolith @ P0 0 Start
+3,Stone Block,biome-material,P0,not crafted (knowledge: world/drop/shop),RockBlock,Basalt,exact-role,Basalt (20 builds the refinery); Rimtera: mine Basalt @ P0 0 Start
+5,Mushroom,biome-material,P0,not crafted (knowledge: world/drop/shop),MushroomCapBlock,Mushroom cap,partial,Rimtera: mine Mushroom cap @ P0 0 Start
+60,Vile Mushroom,biome-material,P0,not crafted (knowledge: world/drop/shop),BlightBulb,Blight bulb,partial,Rimtera: mine Blight bulb @ P0 0 Start
+61,Ebonstone Block,biome-material,P0,not crafted (knowledge: world/drop/shop),,,missing,No blight stone item
+66,Purification Powder,biome-material,P0,not crafted (knowledge: world/drop/shop),PurifierGel,Purifier gel,partial,Purifier gel is ammo; Rimtera: mine Supply cache @ P0 0 Start
+67,Vile Powder,biome-material,P0,craft: 1 VileMushroom @ Bottles,,,missing,
+133,Clay Block,biome-material,P0,not crafted (knowledge: world/drop/shop),ClayBlock,Clay,exact-role,Rimtera: mine Clay @ P0 0 Start
+169,Sand Block,biome-material,P0,not crafted (knowledge: world/drop/shop),SandBlock,Silica sand,exact-role,Rimtera: mine Silica sand @ P0 0 Start
+170,Glass,biome-material,P0,craft: 2 SandBlock @ Furnaces,GlassBlock,Glass,exact-role,Rimtera: phase pool (Silica sand) @ P0 0 Start
+176,Mud Block,biome-material,P0,craft: 1 DirtBlock @ hand [needWater],MudBlock,Mud,exact-role,Rimtera: mine Mud @ P0 0 Start
+183,Glowing Mushroom,biome-material,P0,not crafted (knowledge: world/drop/shop),GlowcapCluster,Glowcap cluster,partial,Glowing mushroom biome material; Rimtera: mine Glowcap cluster @ P0 0 Start
+275,Coral,biome-material,P0,not crafted (knowledge: world/drop/shop),CoralShard,Coral shard,exact-role,Rimtera: mine Coastal hab pod @ P0 0 Start
+276,Cactus,biome-material,P0,not crafted (knowledge: world/drop/shop),CactusChunk,Cactus chunk,exact-role,Rimtera: cut Spine cactus @ P0 0 Start
+313,Daybloom,biome-material,P0,not crafted (knowledge: world/drop/shop),SunpetalHerb,Sunpetal,exact-role,Rimtera: mine Sunpetal @ P0 0 Start
+314,Moonglow,biome-material,P0,not crafted (knowledge: world/drop/shop),MoonglowHerb,Moonglow,exact-role,Rimtera: mine Moonglow @ P0 0 Start
+315,Blinkroot,biome-material,P0,not crafted (knowledge: world/drop/shop),SporecapHerb,Sporecap,partial,Rimtera: mine Sporecap @ P0 0 Start
+316,Deathweed,biome-material,P0,not crafted (knowledge: world/drop/shop),,,missing,Seventh herb (evil biome)
+317,Waterleaf,biome-material,P0,not crafted (knowledge: world/drop/shop),RainreedHerb,Rainreed,exact-role,Rimtera: mine Rainreed @ P0 0 Start
+318,Fireblossom,biome-material,P0,not crafted (knowledge: world/drop/shop),EmberrootHerb,Emberroot,exact-role,Rimtera: mine Emberroot @ P0 0 Start
+370,Ebonsand Block,biome-material,P0,not crafted (knowledge: world/drop/shop),AcidSandBlock,Acid sand,partial,Acid sand is made by hand near acid; Rimtera: craft phys-acid-sand (by hand) @ P0 0 Start
+424,Silt Block,biome-material,P0,not crafted (knowledge: world/drop/shop),SiltBlock,Silt,exact-role,Rimtera: mine Silt @ P0 0 Start
+593,Snow Block,biome-material,P0,not crafted (knowledge: world/drop/shop),SnowBlock,Ice block,partial,Rimtera SnowBlock is named Ice block; Rimtera: mine Ice @ P0 0 Start
+664,Ice Block,biome-material,P0,not crafted (knowledge: world/drop/shop),ThinIceBlock,Thin ice,partial,Rimtera: mine Thin ice @ P0 0 Start
+751,Cloud,biome-material,P0,not crafted (knowledge: world/drop/shop),,,missing,"Sky islands: cloud blocks, Skyware"
+765,Rain Cloud,biome-material,P0,craft: 1 Cloud @ SkyMill [needWater],,,missing,
+824,Sunplate Block,biome-material,P0,craft: 25 StoneBlock + 1 FallenStar @ SkyMill,,,missing,
+836,Crimstone Block,biome-material,P0,not crafted (knowledge: world/drop/shop),,,missing,
+1101,Lihzahrd Brick,biome-material,P0,not crafted (knowledge: world/drop/shop),PrecursorBrickBlock,Precursor brick,partial,"Vault (temple) brick, gated by tool power (D-35); Rimtera: mine Precursor brick @ P0 0 Start"
+1103,Slush Block,biome-material,P0,not crafted (knowledge: world/drop/shop),GravelBlock,Gravel,partial,Rimtera: mine Gravel @ P0 0 Start
+1107,Teal Mushroom,biome-material,P0,not crafted (knowledge: world/drop/shop),DyePetals,Dye petals,merged-into,All dye plants collapse into dye petals; Rimtera: mine Indigo dye blossom @ P0 0 Start
+1108,Green Mushroom,biome-material,P0,not crafted (knowledge: world/drop/shop),DyePetals,Dye petals,merged-into,Rimtera: mine Indigo dye blossom @ P0 0 Start
+1109,Sky Blue Flower,biome-material,P0,not crafted (knowledge: world/drop/shop),DyePetals,Dye petals,merged-into,Rimtera: mine Indigo dye blossom @ P0 0 Start
+1110,Yellow Marigold,biome-material,P0,not crafted (knowledge: world/drop/shop),DyePetals,Dye petals,merged-into,Rimtera: mine Indigo dye blossom @ P0 0 Start
+1111,Blue Berries,biome-material,P0,not crafted (knowledge: world/drop/shop),DyePetals,Dye petals,merged-into,Rimtera: mine Indigo dye blossom @ P0 0 Start
+1112,Lime Kelp,biome-material,P0,not crafted (knowledge: world/drop/shop),DyePetals,Dye petals,merged-into,Rimtera: mine Indigo dye blossom @ P0 0 Start
+1114,Orange Bloodroot,biome-material,P0,not crafted (knowledge: world/drop/shop),DyePetals,Dye petals,merged-into,Rimtera: mine Indigo dye blossom @ P0 0 Start
+1124,Hive,biome-material,P0,not crafted (knowledge: world/drop/shop),HiveCombBlock,Hive comb,exact-role,Rimtera: mine Hive comb @ P0 0 Start
+1125,Honey Block,biome-material,P0,not crafted (knowledge: world/drop/shop),NectarBlock,Nectar,exact-role,Rimtera: mine Nectar @ P0 0 Start
+1246,Crimsand Block,biome-material,P0,not crafted (knowledge: world/drop/shop),AcidSandBlock,Acid sand,merged-into,Rimtera: craft phys-acid-sand (by hand) @ P0 0 Start
+1725,Pumpkin,biome-material,P0,not crafted (knowledge: world/drop/shop),,,missing,Pumpkin furniture/pumpkin moon summon
+1727,Hay,biome-material,P0,not crafted (knowledge: world/drop/shop),,,missing,
+2358,Shiverthorn,biome-material,P0,not crafted (knowledge: world/drop/shop),FrostbellHerb,Frostbell,exact-role,Rimtera: mine Frostbell @ P0 0 Start
+2625,Seashell,biome-material,P0,not crafted (knowledge: world/drop/shop),ShellSandBlock,Shell sand,partial,Rimtera: mine Shell sand @ P0 0 Start
+2626,Starfish,biome-material,P0,not crafted (knowledge: world/drop/shop),CoralShard,Coral shard,merged-into,Rimtera: mine Coastal hab pod @ P0 0 Start
+2886,Vicious Powder,biome-material,P0,craft: 1 ViciousMushroom @ Bottles,,,missing,
+2887,Vicious Mushroom,biome-material,P0,not crafted (knowledge: world/drop/shop),BlightBulb,Blight bulb,merged-into,Rimtera: mine Blight bulb @ P0 0 Start
+3081,Marble Block,biome-material,P0,not crafted (knowledge: world/drop/shop),AlabasterBlock,Alabaster,exact-role,Alabaster vault = marble cave; Rimtera: mine Alabaster @ P0 0 Start
+3086,Granite Block,biome-material,P0,not crafted (knowledge: world/drop/shop),SlateBlock,Slate,partial,Rimtera: mine Slate @ P0 0 Start
+3271,Sandstone Block,biome-material,P0,craft: 1 SandBlock + 1 StoneBlock @ Solidifier,DesertGlassBlock,Dune block,partial,Dune block; Rimtera: mine Dune sand @ P0 0 Start
+3272,Hardened Sand Block,biome-material,P0,craft: 1 SandBlock + 1 DirtBlock @ Solidifier,DesertGlassBlock,Dune block,merged-into,Rimtera: mine Dune sand @ P0 0 Start
+4349,Green Moss,biome-material,P0,not crafted (knowledge: world/drop/shop),MossBlock,Moss clump,merged-into,Rimtera: mine Blue moss @ P0 0 Start
+4350,Brown Moss,biome-material,P0,not crafted (knowledge: world/drop/shop),MossBlock,Moss clump,merged-into,Rimtera: mine Blue moss @ P0 0 Start
+4351,Red Moss,biome-material,P0,not crafted (knowledge: world/drop/shop),MossBlock,Moss clump,merged-into,Rimtera: mine Blue moss @ P0 0 Start
+4352,Blue Moss,biome-material,P0,not crafted (knowledge: world/drop/shop),MossBlock,Moss clump,merged-into,Rimtera: mine Blue moss @ P0 0 Start
+4353,Purple Moss,biome-material,P0,not crafted (knowledge: world/drop/shop),MossBlock,Moss clump,merged-into,Rimtera: mine Blue moss @ P0 0 Start
+4354,Lava Moss,biome-material,P0,not crafted (knowledge: world/drop/shop),MossBlock,Moss clump,merged-into,Rimtera: mine Blue moss @ P0 0 Start
+172,Ash Block,biome-material,P1,craft: 5 Wood @ Hellforge,AshBlock,Core crust,exact-role,Rimtera: mine Cracked core crust @ P0 0 Start
+408,Pearlsand Block,biome-material,P2,not crafted (knowledge: world/drop/shop),PearlSandBlock,Pearl sand,exact-role,Rimtera: mine Pearl sand after the Fracture @ P2 43 Defeated Fission Tyrant
+409,Pearlstone Block,biome-material,P2,not crafted (knowledge: world/drop/shop),PearlStoneBlock,Pearl stone,exact-role,Rimtera: kill Pearl wyrm (in the wild) @ P0 0 Start
+502,Crystal Shard,biome-material,P2,not crafted (knowledge: world/drop/shop),PrismShard,Prism shard,partial,"Prism shard (sky chests, kiln); Rimtera: open Sky chest @ P0 0 Start"
+23,Gel,drop,P0,slimes,BioGel,Bio-gel,exact-role,Torches in Terraria need gel; Rimtera torches use ferrite ore; Rimtera: mine Salvage pod @ P0 0 Start
+31,Bottle,drop,P0,craft: 1 Glass @ Furnaces,GlassBlock,Glass,merged-into,Rimtera tonics consume glass directly; Rimtera: phase pool (Silica sand) @ P0 0 Start
+38,Lens,drop,P0,demon eyes,,,missing,"Demon eye drop: goggles, sunglasses, Suspicious Looking Eye (boss summon)"
+68,Rotten Chunk,drop,P0,corruption enemies,TaintedTissue,Tainted tissue,partial,"Tainted tissue is a consumable summon, not a crafting drop; Rimtera: craft x-taintedtissue @ Bio Lab @ P0 11 Built Bio Lab"
+69,Worm Tooth,drop,P0,devourers,,,missing,
+75,Fallen Star,drop,P0,falls at night,,,missing,"Night drop: mana crystal (5 stars), Starfury, star cannon ammo. Rimtera Starfall season has no star item"
+85,Chain,drop,P0,craft: 1 IronBar @ Anvils,,,missing,Sawmill and hook ingredient
+118,Hook,drop,P0,skeletons,,,missing,Grappling hook part (skeletons)
+126,Bottled Water,drop,P0,craft: 1 Bottle @ hand [needWater],,,missing,Potion base made near water
+149,Book,drop,P0,dungeon shelves,,,missing,Dungeon book: spell tomes
+150,Cobweb,drop,P0,craft: 1 CobwebReplica @ Loom [needGraveyardBiome],SilkThread,Mite silk thread,exact-role,Mite silk thread from silk tiles; Rimtera: mine Mite silk @ P0 0 Start
+225,Silk,drop,P0,craft: 7 Cobweb @ Loom,ClothRoll,Cloth roll,exact-role,Cloth roll at the Loom; Rimtera: kill Canopy ape (in the wild) @ P0 0 Start
+236,Black Lens,drop,P0,demon eyes (rare),,,missing,
+259,Leather,drop,P0,craft: 5 RottenChunk @ WorkBenches,,,missing,Rotten chunk -> leather at the Work Bench
+319,Shark Fin,drop,P0,sharks,,,missing,Minishark
+320,Feather,drop,P0,harpies,,,missing,"Harpy feather: Skyware, wings"
+323,Antlion Mandible,drop,P0,antlions,,,missing,Antlion armour
+324,Illegal Gun Parts,drop,P0,Arms Dealer shop,,,missing,Flintlock/Minishark
+331,Jungle Spores,drop,P0,jungle plants,GlowSpore,Glow spore,partial,Rimtera: mine Fungal hab ruin @ P0 0 Start
+362,Tattered Cloth,drop,P0,goblins,ClothRoll,Cloth roll,merged-into,Rimtera: kill Canopy ape (in the wild) @ P0 0 Start
+530,Wire,drop,P0,Mechanic shop,WireSpool,Wire spool,exact-role,Rimtera: craft phys-wire-spool @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+965,Rope,drop,P0,Merchant / found,RopeCoil,Rope coil,exact-role,Rimtera: buy from the Station AI @ P0 0 Start
+1119,Black Ink,drop,P0,squids,,,missing,Dye
+1134,Bottled Honey,drop,P0,craft: 1 Bottle @ hand [needHoney],,,missing,Made near honey
+1330,Vertebra,drop,P0,crimson enemies,TaintedTissue,Tainted tissue,merged-into,Rimtera: craft x-taintedtissue @ Bio Lab @ P0 11 Built Bio Lab
+1339,Vial of Venom,drop,P0,craft/drop,,,missing,
+1344,Cog,drop,P0,Steampunker shop,CircuitBoard,Circuit board,partial,Rimtera: kill Junk tinker (in the wild) @ P0 0 Start
+1346,Nanites,drop,P0,not crafted (knowledge: world/drop/shop),,,missing,
+1347,Explosive Powder,drop,P0,Demolitionist shop,ExplosiveCharge,Explosive charge,partial,Explosive charge is ammo that crafts bombs; Rimtera: mine Coastal hab pod @ P0 0 Start
+1432,Empty Bullet,drop,P0,not crafted (knowledge: world/drop/shop),,,missing,
+3111,Pink Gel,drop,P0,pink slimes,BioGel,Bio-gel,merged-into,Rimtera: mine Salvage pod @ P0 0 Start
+3306,White String,drop,P0,craft: 30 Cobweb @ Loom,,,missing,Yoyo string
+5070,Flinx Fur,drop,P0,flinxes,,,missing,Flinx fur coat / summoner start
+86,Shadow Scale,drop,P1,Eater of Worlds,HeartFragment,Blight heart fragment,partial,"Blight heart fragment comes from breaking hearts, not from the evil boss; Rimtera: break a heart @ P0 0 Start"
+154,Bone,drop,P1,dungeon enemies,,,missing,"Dungeon bones: 40+ recipes (bone furniture, necro armour, Bone Welder)"
+209,Stinger,drop,P1,hornets,,,missing,"Jungle hornets: jungle armour, Bee Keeper line"
+210,Vine,drop,P1,jungle,PlantFiber,Plant fiber,partial,Plant fibre feeds rope coils; Rimtera: mine Fiber tuft @ P0 0 Start
+1132,Honey Comb,drop,P1,Queen Bee,HiveCombBlock,Hive comb,partial,Rimtera: mine Hive comb @ P0 0 Start
+1329,Tissue Sample,drop,P1,Brain of Cthulhu,HeartFragment,Blight heart fragment,merged-into,Rimtera: break a heart @ P0 0 Start
+2431,Bee Wax,drop,P1,Queen Bee,NectarBlock,Nectar,partial,Rimtera: mine Nectar @ P0 0 Start
+501,Pixie Dust,drop,P2,pixies,,,missing,
+522,Cursed Flame,drop,P2,HM corruption enemies,,,missing,"Evil HM drop: cursed bullets, flasks"
+526,Unicorn Horn,drop,P2,unicorns,,,missing,
+527,Dark Shard,drop,P2,evil mimic/fish,,,missing,
+528,Light Shard,drop,P2,hallow mimic/fish,,,missing,Mimic/biome-key line
+1328,Turtle Shell,drop,P2,giant tortoises,,,missing,Turtle armour
+1332,Ichor,drop,P2,HM crimson enemies,,,missing,
+1516,Giant Harpy Feather,drop,P2,harpies (rare),,,missing,
+1517,Bone Feather,drop,P2,dungeon HM,,,missing,
+1518,Fire Feather,drop,P2,Hell bats,,,missing,
+1519,Ice Feather,drop,P2,ice golem,,,missing,
+1520,Broken Bat Wing,drop,P2,giant flying fox,,,missing,
+1521,Tattered Bee Wing,drop,P2,moss hornets,,,missing,
+2161,Frost Core,drop,P2,ice elementals,,,missing,Frost armour
+2607,Spider Fang,drop,P2,black recluses,,,missing,Spider armour and staff
+3794,Ancient Cloth,drop,P2,mummies,,,missing,
+1293,Lihzahrd Power Cell,drop,P4,temple chests,AncientPowerCell,Ancient power cell,partial,Ancient power cell (coastal hab pods) - not a boss-altar key; Rimtera: open Coastal hab pod @ P0 0 Start
+1508,Ectoplasm,drop,P4,post-Plantera dungeon spirits,,,missing,Dungeon post-Plantera: spectre bar and gear; void essence is closest but is a different tier
+1570,Broken Hero Sword,drop,P4,Mothron,,,missing,Solar eclipse: True Excalibur/Nights Edge -> Terra Blade chain
+1831,Spooky Twig,drop,P4,Splinterling,HollowEmber,Hollow ember,partial,Hollow Moon (pumpkin moon) material; Rimtera: kill Hollow effigy (during HollowMoon) @ P2 43 Defeated Fission Tyrant
+2218,Beetle Husk,drop,P4,Golem,,,missing,Golem: beetle armour
+2860,Martian Conduit Plating,drop,P4,Martian invasion,,,missing,
+3783,Forbidden Fragment,fragment,P2,sand elementals,,,missing,Forbidden Fragment (sand elementals): forbidden armour
+2766,Solar Tablet Fragment,fragment,P4,Solar Eclipse enemies,,,missing,Solar Tablet fragment (Solar Eclipse) -> Solar Tablet summon
+3456,Vortex Fragment,fragment,P5,craft: 1 FragmentSolar + 1 FragmentNebula + 1 FragmentStardust @ LunarCraftingStation,AstralOre,Astral ore,merged-into,Rimtera: kill Ember obelisk (in the obelisk sieges) @ P5 70 Defeated Void Cantor
+3457,Nebula Fragment,fragment,P5,craft: 1 FragmentSolar + 1 FragmentVortex + 1 FragmentStardust @ LunarCraftingStation,AstralOre,Astral ore,merged-into,Rimtera: kill Ember obelisk (in the obelisk sieges) @ P5 70 Defeated Void Cantor
+3458,Solar Fragment,fragment,P5,craft: 1 FragmentVortex + 1 FragmentNebula + 1 FragmentStardust @ LunarCraftingStation,AstralOre,Astral ore,merged-into,Four pillar fragments collapse into one astral ore from four obelisks; Rimtera: kill Ember obelisk (in the obelisk sieges) @ P5 70 Defeated Void Cantor
+3459,Stardust Fragment,fragment,P5,craft: 1 FragmentSolar + 1 FragmentVortex + 1 FragmentNebula @ LunarCraftingStation,AstralOre,Astral ore,merged-into,Rimtera: kill Ember obelisk (in the obelisk sieges) @ P5 70 Defeated Void Cantor
+177,Sapphire,gem,P0,not crafted (knowledge: world/drop/shop),SapphireShard,Sapphire shard,exact-role,Rimtera: mine Sapphire-studded rock @ P0 0 Start
+178,Ruby,gem,P0,not crafted (knowledge: world/drop/shop),RubyShard,Ruby shard,exact-role,Rimtera: mine Supply cache @ P0 0 Start
+179,Emerald,gem,P0,not crafted (knowledge: world/drop/shop),EmeraldShard,Emerald shard,exact-role,Rimtera: mine Emerald-studded rock @ P0 0 Start
+180,Topaz,gem,P0,not crafted (knowledge: world/drop/shop),TopazShard,Topaz shard,exact-role,Rimtera: mine Supply cache @ P0 0 Start
+181,Amethyst,gem,P0,not crafted (knowledge: world/drop/shop),AmethystShard,Amethyst shard,exact-role,Rimtera: mine Amethyst-studded rock @ P0 0 Start
+182,Diamond,gem,P0,not crafted (knowledge: world/drop/shop),DiamondShard,Diamond shard,exact-role,Rimtera: mine Geode cluster @ P0 0 Start
+999,Amber,gem,P0,not crafted (knowledge: world/drop/shop),,,missing,"Desert gem (amber staff, amber robe, fossil)"
+1522,Large Amethyst,gem,P0,craft: 15 Amethyst @ Anvils,,,missing,Capture-the-gem items
+1523,Large Topaz,gem,P0,craft: 15 Topaz @ Anvils,,,missing,
+1524,Large Sapphire,gem,P0,craft: 15 Sapphire @ Anvils,,,missing,
+1525,Large Emerald,gem,P0,craft: 15 Emerald @ Anvils,,,missing,
+1526,Large Ruby,gem,P0,craft: 15 Ruby @ Anvils,,,missing,
+1527,Large Diamond,gem,P0,craft: 15 Diamond @ Anvils,,,missing,
+3643,Large Amber,gem,P0,craft: 15 Amber @ Anvils,,,missing,
+11,Iron Ore,ore,P0,mine (world ore),CobaltOre,Cobalt ore,exact-role,Cobalt = tier 2 = iron/lead (GearCurve); Rimtera: mine Supply cache @ P0 0 Start
+12,Copper Ore,ore,P0,mine (world ore),CopperOre,Ferrite ore,exact-role,"Ferrite ore (tier 1 = copper/tin, GearCurve); Rimtera: mine Ferrite ore @ P0 0 Start"
+13,Gold Ore,ore,P0,mine (world ore),UraniumOre,Uranium ore,partial,Tier 3 biome metal; glacial/uranium are the world-variant pair; Rimtera: open Lead-lined reactor chest @ P0 0 Start
+14,Silver Ore,ore,P0,mine (world ore),GlacialOre,Glacial ore,partial,Tier 3 biome metal; Rimtera: kill Snow-mite (in the wild) @ P0 0 Start
+173,Obsidian,ore,P0,mine (water+lava),ObsidianShard,Vitrified shard,exact-role,Vitrified shard (pyrocite bar = 3 pyrocite + obsidian); Rimtera: open Lead-lined reactor chest @ P0 0 Start
+699,Tin Ore,ore,P0,mine (world ore),ScrapIronOre,Scrap-iron ore,partial,Scrap-iron ore is the tier-1 alternative but only feeds bombs and alloy; Rimtera: mine Scrap-iron ore @ P0 0 Start
+700,Lead Ore,ore,P0,mine (world ore),CobaltOre,Cobalt ore,merged-into,No tier-2 alternate ore; Rimtera: mine Supply cache @ P0 0 Start
+701,Tungsten Ore,ore,P0,mine (world ore),GlacialOre,Glacial ore,merged-into,Rimtera: kill Snow-mite (in the wild) @ P0 0 Start
+702,Platinum Ore,ore,P0,mine (world ore),UraniumOre,Uranium ore,merged-into,Rimtera: open Lead-lined reactor chest @ P0 0 Start
+3347,Desert Fossil,ore,P0,desert underground,,,missing,Extractinator source of fossils
+3380,Sturdy Fossil,ore,P0,Extractinator / desert,,,missing,"Sturdy fossil (desert): fossil armour, Bone Javelin"
+56,Demonite Ore,ore,P1,mine (evil biome) / Eater of Worlds,UraniumOre,Uranium ore,partial,Evil ore: Rimtera tier 3 merges silver..platinum and demonite; the evil-boss ore drop has no own material; Rimtera: open Lead-lined reactor chest @ P0 0 Start
+116,Meteorite,ore,P1,mine meteor (pick 50),MeteoriteOre,Meteorite ore,exact-role,Falls after a heart is broken; power 50 in both; Rimtera: mine a fallen meteorite @ P0 22 Hearts broken
+174,Hellstone,ore,P1,mine Underworld (pick 65),PyrociteOre,Pyrocite ore,exact-role,Pyrocite = hellstone; Rimtera: kill Magma turtle (in the wild) @ P0 0 Start
+880,Crimtane Ore,ore,P1,mine (evil biome) / Brain of Cthulhu,UraniumOre,Uranium ore,merged-into,Rimtera: open Lead-lined reactor chest @ P0 0 Start
+364,Cobalt Ore,ore,P2,altar-seeded (pick 100),ViridiumOre,Viridium ore,exact-role,Tier 4 first post-Fracture ore (altar seeded); Rimtera: biome chests @ P0 0 Start
+365,Mythril Ore,ore,P2,altar-seeded (pick 110),LumeniteOre,Lumenite ore,exact-role,"Tier 5, drill 85 = Terraria 110; Rimtera: kill Pearl golem (after the Fracture) @ P2 43 Defeated Fission Tyrant"
+366,Adamantite Ore,ore,P2,altar-seeded (pick 150),VoidsteelOre,Voidsteel ore,exact-role,"Tier 6, drill 100 = Terraria 150; Rimtera: sift AshBlock after the Fracture @ P2 43 Defeated Fission Tyrant"
+1104,Palladium Ore,ore,P2,altar-seeded,ViridiumOre,Viridium ore,merged-into,No alternate ore per HM tier; Rimtera: biome chests @ P0 0 Start
+1105,Orichalcum Ore,ore,P2,altar-seeded,LumeniteOre,Lumenite ore,merged-into,Rimtera: kill Pearl golem (after the Fracture) @ P2 43 Defeated Fission Tyrant
+1106,Titanium Ore,ore,P2,altar-seeded,VoidsteelOre,Voidsteel ore,merged-into,Rimtera: sift AshBlock after the Fracture @ P2 43 Defeated Fission Tyrant
+947,Chlorophyte Ore,ore,P3,"mine jungle (pick 200, post-mech)",,,missing,No post-mech jungle ore; Terraria chlorophyte feeds 30+ recipes and the Shroomite/Spectre bars
+3460,Luminite,ore,P5,Moon Lord drop,AstralOre,Astral ore,exact-role,Astral ore from obelisks and the Astro-God; Rimtera: kill Ember obelisk (in the obelisk sieges) @ P5 70 Defeated Void Cantor
+520,Soul of Light,soul,P2,HM underground hallow enemies,PrismEssence,Prism essence,exact-role,Fracture essence from prism (hallow-analog) creatures; Rimtera: Fracture essences @ P2 43 Defeated Fission Tyrant
+521,Soul of Night,soul,P2,HM underground evil enemies,BlightEssence,Blight essence,exact-role,Fracture essence from blight creatures; breakdown D9 also lists void essence as a soul-of-night analog; Rimtera: Fracture essences @ P2 43 Defeated Fission Tyrant
+575,Soul of Flight,soul,P2,wyverns,FlightEssence,Flight essence,exact-role,From Stratos wyverns after the Fracture; Rimtera: kill Stratos wyvern (after the Fracture) @ P2 43 Defeated Fission Tyrant
+547,Soul of Fright,soul,P3,Skeletron Prime,,,missing,Mech-boss soul; the Renegade Overseer drops gear only
+548,Soul of Might,soul,P3,The Destroyer,,,missing,Cyber-Swarm Leader drops gear only
+549,Soul of Sight,soul,P3,The Twins,,,missing,Warship Core drops gear only
+10,Iron Axe,tool:axe,P0,craft: 8 IronBar + 3 Wood @ Anvils,CobaltHatchet,Cobalt hatchet,exact-role,Rimtera: craft ar-cobalthatchet @ Power Forge @ P0 4 Built Power Forge
+3482,Platinum Axe,tool:axe,P0,craft: 8 PlatinumBar + 3 Wood @ Anvils,UraniumHatchet,Uranium hatchet,merged-into,Tier pair collapses; Rimtera: craft ar-uraniumhatchet @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+3488,Tungsten Axe,tool:axe,P0,craft: 8 TungstenBar + 3 Wood @ Anvils,GlacialHatchet,Glacial hatchet,merged-into,Tier pair collapses; Rimtera: craft ar-glacialhatchet @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+3494,Lead Axe,tool:axe,P0,craft: 8 LeadBar + 3 Wood @ Anvils,CobaltHatchet,Cobalt hatchet,merged-into,Tier pair collapses; Rimtera: craft ar-cobalthatchet @ Power Forge @ P0 4 Built Power Forge
+3500,Tin Axe,tool:axe,P0,craft: 6 TinBar + 3 Wood @ Anvils,FerriteHatchet,Ferrite hatchet,merged-into,Tier pair collapses; Rimtera: starting kit @ P0 0 Start
+3506,Copper Axe,tool:axe,P0,craft: 6 CopperBar + 3 Wood @ Anvils,FerriteHatchet,Ferrite hatchet,exact-role,Rimtera: starting kit @ P0 0 Start
+3512,Silver Axe,tool:axe,P0,craft: 8 SilverBar + 3 Wood @ Anvils,GlacialHatchet,Glacial hatchet,exact-role,Rimtera: craft ar-glacialhatchet @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+3518,Gold Axe,tool:axe,P0,craft: 8 GoldBar + 3 Wood @ Anvils,UraniumHatchet,Uranium hatchet,exact-role,Rimtera: craft ar-uraniumhatchet @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+45,War Axe of the Night,tool:axe,P1,craft: 10 DemoniteBar @ Anvils,MeteoriteHatchet,Meteorite hatchet,partial,Rimtera: craft ar-meteoritehatchet @ Power Forge Mk2 @ P0 22 Hearts broken
+799,Blood Lust Cluster,tool:axe,P1,craft: 10 CrimtaneBar @ Anvils,MeteoriteHatchet,Meteorite hatchet,merged-into,Rimtera: craft ar-meteoritehatchet @ Power Forge Mk2 @ P0 22 Hearts broken
+2342,Sawtooth Shark,tool:axe,P1,shark drops,ChainCutter,Chain cutter,partial,Rimtera: craft ar-chaincutter @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+5095,Lucy the Axe,tool:axe,P1,found,OvergrowthReaper,Overgrowth reaper,partial,Unique axe; Rimtera: defeat Plant Overgrowth @ P1 41 Defeated Plant Overgrowth
+383,Cobalt Chainsaw,tool:axe,P2,craft: 10 CobaltBar @ Anvils,ViridiumCutter,Viridium cutter,exact-role,Rimtera: craft x-viridiumcutter @ Alloy Anvil @ P2 44 Built Alloy Anvil
+384,Mythril Chainsaw,tool:axe,P2,craft: 10 MythrilBar @ MythrilAnvil,LumeniteCutter,Lumenite cutter,exact-role,Rimtera: craft x-lumenitecutter @ Nano-Fabricator Mk2 @ P2 46 Built Nano-Fabricator Mk2
+387,Adamantite Chainsaw,tool:axe,P2,craft: 12 AdamantiteBar @ MythrilAnvil,VoidsteelCutter,Voidsteel cutter,exact-role,Rimtera: craft x-voidsteelcutter @ Void Forge @ P2 48 Built Void Forge
+991,Cobalt Waraxe,tool:axe,P2,craft: 10 CobaltBar @ Anvils,ViridiumHatchet,Viridium hatchet,exact-role,Rimtera: craft ar-viridiumhatchet @ Alloy Anvil @ P2 44 Built Alloy Anvil
+992,Mythril Waraxe,tool:axe,P2,craft: 10 MythrilBar @ MythrilAnvil,LumeniteHatchet,Lumenite hatchet,exact-role,Rimtera: craft ar-lumenitehatchet @ Nano-Fabricator Mk2 @ P2 46 Built Nano-Fabricator Mk2
+993,Adamantite Waraxe,tool:axe,P2,craft: 12 AdamantiteBar @ MythrilAnvil,VoidsteelHatchet,Voidsteel hatchet,exact-role,Rimtera: craft ar-voidsteelhatchet @ Void Forge @ P2 48 Built Void Forge
+1190,Palladium Chainsaw,tool:axe,P2,craft: 12 PalladiumBar @ Anvils,ViridiumCutter,Viridium cutter,merged-into,Tier pair collapses; Rimtera: craft x-viridiumcutter @ Alloy Anvil @ P2 44 Built Alloy Anvil
+1197,Orichalcum Chainsaw,tool:axe,P2,craft: 12 OrichalcumBar @ MythrilAnvil,LumeniteCutter,Lumenite cutter,merged-into,Tier pair collapses; Rimtera: craft x-lumenitecutter @ Nano-Fabricator Mk2 @ P2 46 Built Nano-Fabricator Mk2
+1204,Titanium Chainsaw,tool:axe,P2,craft: 13 TitaniumBar @ MythrilAnvil,VoidsteelCutter,Voidsteel cutter,merged-into,Tier pair collapses; Rimtera: craft x-voidsteelcutter @ Void Forge @ P2 48 Built Void Forge
+1222,Palladium Waraxe,tool:axe,P2,craft: 12 PalladiumBar @ Anvils,ViridiumHatchet,Viridium hatchet,merged-into,Tier pair collapses; Rimtera: craft ar-viridiumhatchet @ Alloy Anvil @ P2 44 Built Alloy Anvil
+1223,Orichalcum Waraxe,tool:axe,P2,craft: 12 OrichalcumBar @ MythrilAnvil,LumeniteHatchet,Lumenite hatchet,merged-into,Tier pair collapses; Rimtera: craft ar-lumenitehatchet @ Nano-Fabricator Mk2 @ P2 46 Built Nano-Fabricator Mk2
+1224,Titanium Waraxe,tool:axe,P2,craft: 13 TitaniumBar @ MythrilAnvil,VoidsteelHatchet,Voidsteel hatchet,merged-into,Tier pair collapses; Rimtera: craft ar-voidsteelhatchet @ Void Forge @ P2 48 Built Void Forge
+5295,Axe of Regrowth,tool:axe,P2,craft: 1 StaffofRegrowth + 1 CopperAxe + 12 JungleSpores + 3 Vine @ WorkBenches,,,missing,Axe of Regrowth (replants)
+5519,Axearang,tool:axe,P2,found,,,missing,
+1232,Chlorophyte Chainsaw,tool:axe,P3,craft: 18 ChlorophyteBar @ MythrilAnvil,,,missing,
+1233,Chlorophyte Greataxe,tool:axe,P3,craft: 18 ChlorophyteBar @ MythrilAnvil,,,missing,
+3098,Butcher's Chainsaw,tool:axe,P4,Solar eclipse,PlasmaSaw,Plasma saw,partial,Eclipse drop vs crafted; Rimtera: craft ar-plasmasaw @ Nano-Fabricator Mk2 @ P2 46 Built Nano-Fabricator Mk2
+2772,Vortex Axe,tool:axe,P5,not crafted (knowledge: world/drop/shop),AstralHatchet,Astral hatchet,exact-role,Rimtera: craft ar-astralhatchet @ Astral Assembler @ P5 71 Built Astral Assembler
+2773,Vortex Chainsaw,tool:axe,P5,not crafted (knowledge: world/drop/shop),AstralCutter,Astral cutter,exact-role,Rimtera: craft x-astralcutter @ Astral Assembler @ P5 71 Built Astral Assembler
+2777,Nebula Axe,tool:axe,P5,not crafted (knowledge: world/drop/shop),AstralHatchet,Astral hatchet,merged-into,Tier pair collapses; Rimtera: craft ar-astralhatchet @ Astral Assembler @ P5 71 Built Astral Assembler
+2778,Nebula Chainsaw,tool:axe,P5,not crafted (knowledge: world/drop/shop),AstralCutter,Astral cutter,merged-into,Tier pair collapses; Rimtera: craft x-astralcutter @ Astral Assembler @ P5 71 Built Astral Assembler
+2782,Solar Flare Axe,tool:axe,P5,not crafted (knowledge: world/drop/shop),AstralHatchet,Astral hatchet,merged-into,Tier pair collapses; Rimtera: craft ar-astralhatchet @ Astral Assembler @ P5 71 Built Astral Assembler
+2783,Solar Flare Chainsaw,tool:axe,P5,not crafted (knowledge: world/drop/shop),AstralCutter,Astral cutter,merged-into,Tier pair collapses; Rimtera: craft x-astralcutter @ Astral Assembler @ P5 71 Built Astral Assembler
+3462,Stardust Axe,tool:axe,P5,not crafted (knowledge: world/drop/shop),AstralHatchet,Astral hatchet,merged-into,Tier pair collapses; Rimtera: craft ar-astralhatchet @ Astral Assembler @ P5 71 Built Astral Assembler
+3463,Stardust Chainsaw,tool:axe,P5,not crafted (knowledge: world/drop/shop),AstralCutter,Astral cutter,merged-into,Tier pair collapses; Rimtera: craft x-astralcutter @ Astral Assembler @ P5 71 Built Astral Assembler
+204,Meteor Hamaxe,tool:axe+hammer,P1,craft: 20 MeteoriteBar @ Anvils,MeteoriteBreaker,Meteorite breaker,partial,No combined hamaxe; split into hatchet + breaker; Rimtera: craft ar-meteoritebreaker @ Power Forge Mk2 @ P0 22 Hearts broken
+217,Molten Hamaxe,tool:axe+hammer,P1,craft: 15 HellstoneBar @ Anvils,PyrociteBreaker,Pyrocite breaker,partial,No combined hamaxe; Rimtera: craft ar-pyrocitebreaker @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+4317,Haemorrhaxe,tool:axe+hammer,P2,Blood moon fishing,,,missing,Blood moon hamaxe
+1305,The Axe,tool:axe+hammer,P4,Pumpkin moon,GravityBreaker,Gravity breaker,partial,Rimtera: craft ar-gravitybreaker @ Void Forge @ P2 48 Built Void Forge
+1507,Spectre Hamaxe,tool:axe+hammer,P4,craft: 18 SpectreBar @ MythrilAnvil,,,missing,
+3522,Solar Flare Hamaxe,tool:axe+hammer,P5,craft: 14 FragmentSolar + 12 LunarBar @ LunarCraftingStation,AstralSledge,Astral sledge,partial,Four lunar hamaxes -> one sledge; Rimtera: craft ar-astralsledge @ Astral Assembler @ P5 71 Built Astral Assembler
+3523,Vortex Hamaxe,tool:axe+hammer,P5,craft: 14 FragmentVortex + 12 LunarBar @ LunarCraftingStation,AstralSledge,Astral sledge,merged-into,Rimtera: craft ar-astralsledge @ Astral Assembler @ P5 71 Built Astral Assembler
+3524,Nebula Hamaxe,tool:axe+hammer,P5,craft: 14 FragmentNebula + 12 LunarBar @ LunarCraftingStation,AstralSledge,Astral sledge,merged-into,Rimtera: craft ar-astralsledge @ Astral Assembler @ P5 71 Built Astral Assembler
+3525,Stardust Hamaxe,tool:axe+hammer,P5,craft: 14 FragmentStardust + 12 LunarBar @ LunarCraftingStation,AstralSledge,Astral sledge,merged-into,Rimtera: craft ar-astralsledge @ Astral Assembler @ P5 71 Built Astral Assembler
+7,Iron Hammer,tool:hammer,P0,craft: 8 IronBar + 3 Wood @ Anvils,CobaltDemolisher,Cobalt demolisher,exact-role,Rimtera: buy from the Demolitionist @ P0 0 Start
+196,Wooden Hammer,tool:hammer,P0,craft: 8 Wood @ WorkBenches,FerriteDemolisher,Ferrite demolisher,partial,No wood-tier hammer; Rimtera: buy from the Demolitionist @ P0 0 Start
+654,Ebonwood Hammer,tool:hammer,P0,craft: 8 Ebonwood @ WorkBenches,FerriteDemolisher,Ferrite demolisher,merged-into,Rimtera: buy from the Demolitionist @ P0 0 Start
+657,Rich Mahogany Hammer,tool:hammer,P0,craft: 8 RichMahogany @ WorkBenches,FerriteDemolisher,Ferrite demolisher,merged-into,Rimtera: buy from the Demolitionist @ P0 0 Start
+922,Shadewood Hammer,tool:hammer,P0,craft: 8 Shadewood @ WorkBenches,FerriteDemolisher,Ferrite demolisher,merged-into,Rimtera: buy from the Demolitionist @ P0 0 Start
+2516,Palm Wood Hammer,tool:hammer,P0,craft: 8 PalmWood @ WorkBenches,FerriteDemolisher,Ferrite demolisher,merged-into,Rimtera: buy from the Demolitionist @ P0 0 Start
+2746,Boreal Wood Hammer,tool:hammer,P0,craft: 8 BorealWood @ WorkBenches,FerriteDemolisher,Ferrite demolisher,merged-into,Rimtera: buy from the Demolitionist @ P0 0 Start
+3481,Platinum Hammer,tool:hammer,P0,craft: 8 PlatinumBar + 3 Wood @ Anvils,UraniumBreaker,Uranium breaker,merged-into,Tier pair collapses; Rimtera: craft ar-uraniumbreaker @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+3487,Tungsten Hammer,tool:hammer,P0,craft: 8 TungstenBar + 3 Wood @ Anvils,GlacialBreaker,Glacial breaker,merged-into,Tier pair collapses; Rimtera: craft ar-glacialbreaker @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+3493,Lead Hammer,tool:hammer,P0,craft: 8 LeadBar + 3 Wood @ Anvils,CobaltDemolisher,Cobalt demolisher,merged-into,Tier pair collapses; Rimtera: buy from the Demolitionist @ P0 0 Start
+3499,Tin Hammer,tool:hammer,P0,craft: 8 TinBar + 3 Wood @ Anvils,FerriteDemolisher,Ferrite demolisher,merged-into,Tier pair collapses; Rimtera: buy from the Demolitionist @ P0 0 Start
+3505,Copper Hammer,tool:hammer,P0,craft: 8 CopperBar + 3 Wood @ Anvils,FerriteDemolisher,Ferrite demolisher,exact-role,Rimtera: buy from the Demolitionist @ P0 0 Start
+3511,Silver Hammer,tool:hammer,P0,craft: 8 SilverBar + 3 Wood @ Anvils,GlacialBreaker,Glacial breaker,exact-role,Rimtera: craft ar-glacialbreaker @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+3517,Gold Hammer,tool:hammer,P0,craft: 8 GoldBar + 3 Wood @ Anvils,UraniumBreaker,Uranium breaker,exact-role,Rimtera: craft ar-uraniumbreaker @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+5283,Ash Wood Hammer,tool:hammer,P0,craft: 8 AshWood @ WorkBenches,FerriteDemolisher,Ferrite demolisher,merged-into,Rimtera: buy from the Demolitionist @ P0 0 Start
+104,The Breaker,tool:hammer,P1,craft: 10 DemoniteBar + 5 ShadowScale @ Anvils,MeteoriteBreaker,Meteorite breaker,partial,Rimtera: craft ar-meteoritebreaker @ Power Forge Mk2 @ P0 22 Hearts broken
+797,Flesh Grinder,tool:hammer,P1,craft: 10 CrimtaneBar + 5 TissueSample @ Anvils,MeteoriteBreaker,Meteorite breaker,merged-into,Rimtera: craft ar-meteoritebreaker @ Power Forge Mk2 @ P0 22 Hearts broken
+2320,Rockfish,tool:hammer,P1,fishing,WreckersMaul,Wrecker's maul,partial,Rimtera: defeat Scavenger Warlord @ OPT 78 Defeated Scavenger Warlord
+367,Pwnhammer,tool:hammer,P2,Wall of Flesh,CoreBreaker,Core breaker,exact-role,Fission Tyrant drop that smashes altars; Rimtera: defeat Fission Tyrant @ P2 43 Defeated Fission Tyrant
+660,Pearlwood Hammer,tool:hammer,P2,craft: 8 Pearlwood @ WorkBenches,FerriteDemolisher,Ferrite demolisher,merged-into,Rimtera: buy from the Demolitionist @ P0 0 Start
+1234,Chlorophyte Warhammer,tool:hammer,P3,craft: 18 ChlorophyteBar @ MythrilAnvil,GravityBreaker,Gravity breaker,partial,Rimtera: craft ar-gravitybreaker @ Void Forge @ P2 48 Built Void Forge
+1262,Chlorophyte Jackhammer,tool:hammer,P3,craft: 18 ChlorophyteBar @ MythrilAnvil,GravityBreaker,Gravity breaker,merged-into,Rimtera: craft ar-gravitybreaker @ Void Forge @ P2 48 Built Void Forge
+787,Hammush,tool:hammer,P4,Truffle? (knowledge: crafted with shroomite at Autohammer in older versions),SeismicHammer,Seismic hammer,partial,Rimtera: craft ar-seismichammer @ Alloy Anvil @ P2 44 Built Alloy Anvil
+2775,Vortex Hammer,tool:hammer,P5,not crafted (knowledge: world/drop/shop),AstralDemolisher,Astral demolisher,exact-role,Rimtera: craft x-astraldemolisher @ Astral Assembler @ P5 71 Built Astral Assembler
+2780,Nebula Hammer,tool:hammer,P5,not crafted (knowledge: world/drop/shop),AstralDemolisher,Astral demolisher,merged-into,Tier pair collapses; Rimtera: craft x-astraldemolisher @ Astral Assembler @ P5 71 Built Astral Assembler
+2785,Solar Flare Hammer,tool:hammer,P5,not crafted (knowledge: world/drop/shop),AstralDemolisher,Astral demolisher,merged-into,Tier pair collapses; Rimtera: craft x-astraldemolisher @ Astral Assembler @ P5 71 Built Astral Assembler
+3465,Stardust Hammer,tool:hammer,P5,not crafted (knowledge: world/drop/shop),AstralDemolisher,Astral demolisher,merged-into,Tier pair collapses; Rimtera: craft x-astraldemolisher @ Astral Assembler @ P5 71 Built Astral Assembler
+1,Iron Pickaxe,tool:pickaxe,P0,craft: 10 IronBar + 3 Wood @ Anvils,CobaltPick,Cobalt pick,exact-role,Rimtera: craft ar-cobaltpick @ Power Forge @ P0 4 Built Power Forge
+882,Cactus Pickaxe,tool:pickaxe,P0,craft: 15 Cactus @ WorkBenches,WoodenPickaxe,Survey drill,partial,Survey drill (power 20) is the fabricator starter pick; Rimtera: craft phys-survey-drill @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+1917,Candy Cane Pickaxe,tool:pickaxe,P0,not crafted (knowledge: world/drop/shop),ProspectorPick,Prospector's pick,partial,Found pick; Rimtera: mine Supply cache @ P0 0 Start
+3485,Platinum Pickaxe,tool:pickaxe,P0,craft: 10 PlatinumBar + 4 Wood @ Anvils,UraniumPick,Uranium pick,merged-into,Tier pair collapses; Rimtera: craft ar-uraniumpick @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+3491,Tungsten Pickaxe,tool:pickaxe,P0,craft: 10 TungstenBar + 4 Wood @ Anvils,GlacialPick,Glacial pick,merged-into,Tier pair collapses; Rimtera: craft ar-glacialpick @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+3497,Lead Pickaxe,tool:pickaxe,P0,craft: 10 LeadBar + 3 Wood @ Anvils,CobaltPick,Cobalt pick,merged-into,Tier pair collapses; Rimtera: craft ar-cobaltpick @ Power Forge @ P0 4 Built Power Forge
+3503,Tin Pickaxe,tool:pickaxe,P0,craft: 8 TinBar + 4 Wood @ Anvils,FerritePick,Ferrite pick,merged-into,Tier pair collapses; Rimtera: craft ar-ferritepick @ Power Forge @ P0 4 Built Power Forge
+3509,Copper Pickaxe,tool:pickaxe,P0,craft: 8 CopperBar + 4 Wood @ Anvils,FerritePick,Ferrite pick,exact-role,Rimtera: craft ar-ferritepick @ Power Forge @ P0 4 Built Power Forge
+3515,Silver Pickaxe,tool:pickaxe,P0,craft: 10 SilverBar + 4 Wood @ Anvils,GlacialPick,Glacial pick,exact-role,Rimtera: craft ar-glacialpick @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+3521,Gold Pickaxe,tool:pickaxe,P0,craft: 10 GoldBar + 4 Wood @ Anvils,UraniumPick,Uranium pick,exact-role,Rimtera: craft ar-uraniumpick @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+103,Nightmare Pickaxe,tool:pickaxe,P1,craft: 12 DemoniteBar + 6 ShadowScale @ Anvils,MeteoritePick,Meteorite pick,partial,Evil pick power 65 maps to the meteorite pick (60); Rimtera: craft ar-meteoritepick @ Power Forge Mk2 @ P0 22 Hearts broken
+122,Molten Pickaxe,tool:pickaxe,P1,craft: 20 HellstoneBar @ Anvils,PyrocitePick,Pyrocite pick,exact-role,Rimtera: craft ar-pyrocitepick @ Power Forge Mk2 @ P0 6 Built Power Forge Mk2
+798,Deathbringer Pickaxe,tool:pickaxe,P1,craft: 12 CrimtaneBar + 6 TissueSample @ Anvils,MeteoritePick,Meteorite pick,merged-into,Rimtera: craft ar-meteoritepick @ Power Forge Mk2 @ P0 22 Hearts broken
+1320,Bone Pickaxe,tool:pickaxe,P1,dungeon/skeleton drop,DronecoreDrill,Drone-core drill,partial,Boss-drop pick; Rimtera: defeat Damaged Mining Drone @ P1 40 Defeated Damaged Mining Drone
+2341,Reaver Shark,tool:pickaxe,P1,fishing,CoralPick,Coral pick,exact-role,Ocean pick; Rimtera: craft ar-coralpick @ Power Forge @ P0 4 Built Power Forge
+4059,Fossil Pickaxe,tool:pickaxe,P1,craft:  @ Anvils,ProspectorPick,Prospector's pick,partial,Rimtera: mine Supply cache @ P0 0 Start
+385,Cobalt Drill,tool:pickaxe,P2,craft: 15 CobaltBar @ Anvils,ViridiumDrill,Viridium drill,exact-role,Rimtera: craft x-viridiumdrill @ Alloy Anvil @ P2 44 Built Alloy Anvil
+386,Mythril Drill,tool:pickaxe,P2,craft: 15 MythrilBar @ MythrilAnvil,LumeniteDrill,Lumenite drill,exact-role,Rimtera: craft x-lumenitedrill @ Nano-Fabricator Mk2 @ P2 46 Built Nano-Fabricator Mk2
+388,Adamantite Drill,tool:pickaxe,P2,craft: 18 AdamantiteBar @ MythrilAnvil,VoidsteelDrill,Voidsteel drill,exact-role,Rimtera: craft x-voidsteeldrill @ Void Forge @ P2 48 Built Void Forge
+776,Cobalt Pickaxe,tool:pickaxe,P2,craft: 15 CobaltBar @ Anvils,ViridiumPick,Viridium pick,exact-role,Rimtera: craft ar-viridiumpick @ Alloy Anvil @ P2 44 Built Alloy Anvil
+777,Mythril Pickaxe,tool:pickaxe,P2,craft: 15 MythrilBar @ MythrilAnvil,LumenitePick,Lumenite pick,exact-role,Rimtera: craft ar-lumenitepick @ Nano-Fabricator Mk2 @ P2 46 Built Nano-Fabricator Mk2
+778,Adamantite Pickaxe,tool:pickaxe,P2,craft: 18 AdamantiteBar @ MythrilAnvil,VoidsteelPick,Voidsteel pick,exact-role,Rimtera: craft ar-voidsteelpick @ Void Forge @ P2 48 Built Void Forge
+1188,Palladium Pickaxe,tool:pickaxe,P2,craft: 18 PalladiumBar @ Anvils,ViridiumPick,Viridium pick,merged-into,Tier pair collapses; Rimtera: craft ar-viridiumpick @ Alloy Anvil @ P2 44 Built Alloy Anvil
+1189,Palladium Drill,tool:pickaxe,P2,craft: 18 PalladiumBar @ Anvils,ViridiumDrill,Viridium drill,merged-into,Tier pair collapses; Rimtera: craft x-viridiumdrill @ Alloy Anvil @ P2 44 Built Alloy Anvil
+1195,Orichalcum Pickaxe,tool:pickaxe,P2,craft: 18 OrichalcumBar @ MythrilAnvil,LumenitePick,Lumenite pick,merged-into,Tier pair collapses; Rimtera: craft ar-lumenitepick @ Nano-Fabricator Mk2 @ P2 46 Built Nano-Fabricator Mk2
+1196,Orichalcum Drill,tool:pickaxe,P2,craft: 18 OrichalcumBar @ MythrilAnvil,LumeniteDrill,Lumenite drill,merged-into,Tier pair collapses; Rimtera: craft x-lumenitedrill @ Nano-Fabricator Mk2 @ P2 46 Built Nano-Fabricator Mk2
+1202,Titanium Pickaxe,tool:pickaxe,P2,craft: 20 TitaniumBar @ MythrilAnvil,VoidsteelPick,Voidsteel pick,merged-into,Tier pair collapses; Rimtera: craft ar-voidsteelpick @ Void Forge @ P2 48 Built Void Forge
+1203,Titanium Drill,tool:pickaxe,P2,craft: 20 TitaniumBar @ MythrilAnvil,VoidsteelDrill,Voidsteel drill,merged-into,Tier pair collapses; Rimtera: craft x-voidsteeldrill @ Void Forge @ P2 48 Built Void Forge
+1230,Chlorophyte Pickaxe,tool:pickaxe,P3,craft: 18 ChlorophyteBar @ MythrilAnvil,,,missing,Chlorophyte tier absent
+1231,Chlorophyte Drill,tool:pickaxe,P3,craft: 18 ChlorophyteBar @ MythrilAnvil,,,missing,
+1506,Spectre Pickaxe,tool:pickaxe,P4,craft: 18 SpectreBar @ MythrilAnvil,,,missing,Spectre tier absent
+2798,Laser Drill,tool:pickaxe,P4,Martian invasion,ClaimjumperDrill,Claim-jumper drill,partial,Event-boss drill (Martian vs Asteroid Miner Mech); Rimtera: defeat Asteroid Miner Mech @ OPT 82 Defeated Asteroid Miner Mech
+2774,Vortex Drill,tool:pickaxe,P5,craft: 12 FragmentVortex + 10 LunarBar @ LunarCraftingStation,AstralDrill,Astral drill,exact-role,Rimtera: craft x-astraldrill @ Astral Assembler @ P5 71 Built Astral Assembler
+2776,Vortex Pickaxe,tool:pickaxe,P5,craft: 12 FragmentVortex + 10 LunarBar @ LunarCraftingStation,AstralPick,Astral pick,exact-role,Rimtera: craft ar-astralpick @ Astral Assembler @ P5 71 Built Astral Assembler
+2779,Nebula Drill,tool:pickaxe,P5,craft: 12 FragmentNebula + 10 LunarBar @ LunarCraftingStation,AstralDrill,Astral drill,merged-into,Tier pair collapses; Rimtera: craft x-astraldrill @ Astral Assembler @ P5 71 Built Astral Assembler
+2781,Nebula Pickaxe,tool:pickaxe,P5,craft: 12 FragmentNebula + 10 LunarBar @ LunarCraftingStation,AstralPick,Astral pick,merged-into,Tier pair collapses; Rimtera: craft ar-astralpick @ Astral Assembler @ P5 71 Built Astral Assembler
+2784,Solar Flare Drill,tool:pickaxe,P5,craft: 12 FragmentSolar + 10 LunarBar @ LunarCraftingStation,AstralDrill,Astral drill,merged-into,Tier pair collapses; Rimtera: craft x-astraldrill @ Astral Assembler @ P5 71 Built Astral Assembler
+2786,Solar Flare Pickaxe,tool:pickaxe,P5,craft: 12 FragmentSolar + 10 LunarBar @ LunarCraftingStation,AstralPick,Astral pick,merged-into,Tier pair collapses; Rimtera: craft ar-astralpick @ Astral Assembler @ P5 71 Built Astral Assembler
+3464,Stardust Drill,tool:pickaxe,P5,craft: 12 FragmentStardust + 10 LunarBar @ LunarCraftingStation,AstralDrill,Astral drill,merged-into,Tier pair collapses; Rimtera: craft x-astraldrill @ Astral Assembler @ P5 71 Built Astral Assembler
+3466,Stardust Pickaxe,tool:pickaxe,P5,craft: 12 FragmentStardust + 10 LunarBar @ LunarCraftingStation,AstralPick,Astral pick,merged-into,Tier pair collapses; Rimtera: craft ar-astralpick @ Astral Assembler @ P5 71 Built Astral Assembler
+579,Drax,tool:pickaxe+axe,P3,craft: 18 HallowedBar + 1 SoulofFright + 1 SoulofMight + 1 SoulofSight @ MythrilAnvil,VoidAuger,Void auger,partial,Hallowed pick-axe (mech souls); Rimtera has no combined pick+axe; Rimtera: craft ar-voidauger @ Void Forge @ P2 48 Built Void Forge
+990,Pickaxe Axe,tool:pickaxe+axe,P3,craft: 18 HallowedBar + 1 SoulofFright + 1 SoulofMight + 1 SoulofSight @ MythrilAnvil,VoidAuger,Void auger,merged-into,Rimtera: craft ar-voidauger @ Void Forge @ P2 48 Built Void Forge
+1294,Picksaw,tool:pickaxe+axe,P4,Golem,,,missing,"Golem drop, the only pick (210) that mines Lihzahrd brick; D-35 needs a Colossus-tier drill and none is dropped"
+2176,Shroomite Digging Claw,tool:pickaxe+axe,P4,craft: 18 ShroomiteBar @ MythrilAnvil,,,missing,
+50,Magic Mirror,tool:utility,P0,craft: 10 Glass + 8 GoldBar + 3 Diamond @ Furnaces,RecallCapsule,Recall capsule,partial,Recall capsule is consumable; Rimtera: buy from the Travelling Merchant @ P0 0 Start
+205,Empty Bucket,tool:utility,P0,craft: 2 IronBar @ Anvils,EmptyBucket,Empty bucket,exact-role,Rimtera: buy from the Quartermaster @ P0 0 Start
+206,Water Bucket,tool:utility,P0,not crafted (knowledge: world/drop/shop),BucketWater,Water bucket,exact-role,Rimtera: fill a bucket @ P0 0 Start
+207,Lava Bucket,tool:utility,P0,not crafted (knowledge: world/drop/shop),BucketLava,Liquid uranium canister,exact-role,Liquid uranium canister; Rimtera: fill a bucket @ P0 0 Start
+486,Ruler,tool:utility,P0,Merchant,,,missing,Ruler (building grid)
+509,Red Wrench,tool:utility,P0,Mechanic,WireTool,Wire tool,exact-role,One wire tool; Terraria has 4 wire colours; Rimtera: craft x-wiretool @ Tinker Bench @ P0 16 Built Tinker Bench
+510,Wire Cutter,tool:utility,P0,Mechanic,WireCutter,Wire cutter,exact-role,Rimtera: craft phys-wire-cutter @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+849,Actuator,tool:utility,P0,Mechanic,Actuator,Actuator,exact-role,Rimtera: craft phys-actuator @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+850,Blue Wrench,tool:utility,P0,not crafted (knowledge: world/drop/shop),WireTool,Wire tool,merged-into,Rimtera: craft x-wiretool @ Tinker Bench @ P0 16 Built Tinker Bench
+851,Green Wrench,tool:utility,P0,not crafted (knowledge: world/drop/shop),WireTool,Wire tool,merged-into,Rimtera: craft x-wiretool @ Tinker Bench @ P0 16 Built Tinker Bench
+997,Extractinator,tool:utility,P0,found underground,Sifter,Sediment sifter,exact-role,"Sediment sifter (silt/slush/fossil -> ores, gems); Rimtera: craft ps-sifter @ Nano-Fabricator @ P0 2 Built Nano-Fabricator"
+1071,Paintbrush,tool:utility,P0,not crafted (knowledge: world/drop/shop),Paintbrush,Paintbrush,exact-role,Rimtera: buy from the Pigment Trader @ P0 0 Start
+1072,Paint Roller,tool:utility,P0,not crafted (knowledge: world/drop/shop),PaintRoller,Paint roller,exact-role,Rimtera: craft leisure-paint-roller @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+1100,Paint Scraper,tool:utility,P0,not crafted (knowledge: world/drop/shop),PaintScraper,Paint scraper,exact-role,Rimtera: craft leisure-paint-scraper @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+1128,Honey Bucket,tool:utility,P0,craft: 1 HoneyBlock + 1 EmptyBucket @ Campfire,BucketFuel,Fuel bucket,partial,Fuel is the third liquid; Rimtera: fill a bucket @ P0 0 Start
+1786,Sickle,tool:utility,P0,not crafted (knowledge: world/drop/shop),,,missing,Hay
+1991,Bug Net,tool:utility,P0,Merchant,BugNet,Bug net,exact-role,Rimtera: buy from the Quartermaster @ P0 0 Start
+3199,Ice Mirror,tool:utility,P0,ice chests,RecallCapsule,Recall capsule,merged-into,Rimtera: buy from the Travelling Merchant @ P0 0 Start
+3612,Yellow Wrench,tool:utility,P0,not crafted (knowledge: world/drop/shop),WireTool,Wire tool,merged-into,Rimtera: craft x-wiretool @ Tinker Bench @ P0 16 Built Tinker Bench
+3620,Actuation Rod,tool:utility,P0,craft: 50 Actuator + 10 IronBar + 10 Wire @ Anvils,,,missing,
+213,Staff of Regrowth,tool:utility,P1,jungle shrine,,,missing,Herb harvesting staff
+2216,Paint Sprayer,tool:utility,P1,not crafted (knowledge: world/drop/shop),PaintSprayer,Plating sprayer,partial,Plating sprayer; Rimtera: craft x-paintsprayer @ Tinker Bench @ P0 16 Built Tinker Bench
+2799,Mechanical Ruler,tool:utility,P1,not crafted (knowledge: world/drop/shop),,,missing,Mechanical ruler
+3061,Architect Gizmo Pack,tool:utility,P1,craft: 1 BrickLayer + 1 ExtendoGrip + 1 PaintSprayer + 1 PortableCementMixer @ TinkerersWorkbench,ExtenderArm,Extender arm,partial,"Building accessories (range, speed): accessory agent covers detail; Rimtera: craft ar-extenderarm @ Tinker Bench @ P0 16 Built Tinker Bench"
+3124,Cell Phone,tool:utility,P1,craft: 1 PDA + 1 MagicMirror @ TinkerersWorkbench,,,missing,Info + recall combination
+3183,Golden Bug Net,tool:utility,P1,not crafted (knowledge: world/drop/shop),BugNet,Bug net,merged-into,Rimtera: buy from the Quartermaster @ P0 0 Start
+3611,The Grand Design,tool:utility,P1,craft: 1 MulticolorWrench + 1 MechanicalLens + 1 LaserRuler + 60 Wire @ TinkerersWorkbench,,,missing,The Grand Design
+3625,Multicolor Wrench,tool:utility,P1,craft: 1 Wrench + 1 GreenWrench + 1 BlueWrench + 1 YellowWrench + 1 WireCutter @ TinkerersWorkbench,WireTool,Wire tool,merged-into,Rimtera: craft x-wiretool @ Tinker Bench @ P0 16 Built Tinker Bench
+4821,Lavaproof Bug Net,tool:utility,P1,craft: 15 HellstoneBar + 1 BugNet @ Hellforge,BugNet,Bug net,merged-into,Lava critters; Rimtera: buy from the Quartermaster @ P0 0 Start
+779,Clentaminator,tool:utility,P2,Steampunker,PurifierGel,Purifier gel,partial,Purifier gel ammo + beacon; no solution sprayer; Rimtera: mine Supply cache @ P0 0 Start
+1326,Rod of Discord,tool:utility,P2,chaos elementals,PhaseRod,Phase rod,exact-role,Rimtera: buy from the Travelling Merchant (blight.fracture) @ P2 43 Defeated Fission Tyrant
+5296,Chlorophyte Extractinator,tool:utility,P3,craft: 18 ChlorophyteBar + 1 Extractinator @ MythrilAnvil,,,missing,Upgraded extractinator
+1543,Spectre Paintbrush,tool:utility,P4,craft: 8 SpectreBar @ MythrilAnvil,Paintbrush,Paintbrush,merged-into,Rimtera: buy from the Pigment Trader @ P0 0 Start
+1544,Spectre Paint Roller,tool:utility,P4,craft: 8 SpectreBar @ MythrilAnvil,PaintRoller,Paint roller,merged-into,Rimtera: craft leisure-paint-roller @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+1545,Spectre Paint Scraper,tool:utility,P4,craft: 8 SpectreBar @ MythrilAnvil,PaintScraper,Paint scraper,merged-into,Rimtera: craft leisure-paint-scraper @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+2768,Drill Containment Unit,tool:utility,P4,craft: 40 LunarBar + 40 ChlorophyteBar + 40 ShroomiteBar + 40 SpectreBar + 40 HellstoneBar @ MythrilAnvil,,,missing,Drill mount
+3031,Bottomless Water Bucket,tool:utility,P4,not crafted (knowledge: world/drop/shop),,,missing,Infinite liquid buckets (4 kinds) and absorbent sponges
+3032,Super Absorbant Sponge,tool:utility,P4,not crafted (knowledge: world/drop/shop),,,missing,
+4820,Bottomless Lava Bucket,tool:utility,P4,not crafted (knowledge: world/drop/shop),,,missing,
+4872,Lava Absorbant Sponge,tool:utility,P4,not crafted (knowledge: world/drop/shop),,,missing,
+5302,Bottomless Honey Bucket,tool:utility,P4,not crafted (knowledge: world/drop/shop),,,missing,
+5303,Honey Absorbant Sponge,tool:utility,P4,not crafted (knowledge: world/drop/shop),,,missing,
+5304,Ultra Absorbant Sponge,tool:utility,P4,craft: 1 SuperAbsorbantSponge + 1 LavaAbsorbantSponge + 1 HoneyAbsorbantSponge @ TinkerersWorkbench,,,missing,
+5358,Shellphone (Home),tool:utility,P4,not crafted (knowledge: world/drop/shop),,,missing,
+5134,Terraformer,tool:utility,P5,not crafted (knowledge: world/drop/shop),,,missing,Terraformer
+5335,Rod of Harmony,tool:utility,P5,not crafted (knowledge: world/drop/shop),PhaseRod,Phase rod,merged-into,Rimtera: buy from the Travelling Merchant (blight.fracture) @ P2 43 Defeated Fission Tyrant
+5364,Bottomless Shimmer Bucket,tool:utility,P5,craft: 10 LunarBar + 1 BottomlessBucket @ LunarCraftingStation,,,missing,
+29,Life Crystal,upgrade,P0,found underground,LifeCore,Life core,exact-role,"+20 max life, 15 max (D-1); Rimtera: mine Life core @ P0 0 Start"
+109,Mana Crystal,upgrade,P0,craft: 5 FallenStar @ hand,ChargeCrystal,Charge crystal,partial,Terraria: 5 fallen stars by hand; Rimtera: sold by the travelling merchant; Rimtera: buy from the Travelling Merchant @ P0 0 Start
+5043,Torch God's Favor,upgrade,P0,Torch God event,LumenAccord,Lumen accord,partial,Biome-tinted light vs biome torch swap; Rimtera: defeat Solar Flare Entity @ OPT 81 Defeated Solar Flare Entity
+5286,Repaired Life Crystal,upgrade,P0,craft: 1 LifeCrystal @ HeavyWorkBench [needGraveyardBiome],,,missing,1.4.5 life crystal variant
+5287,Repaired Mana Crystal,upgrade,P0,craft: 1 ManaCrystal @ HeavyWorkBench [needGraveyardBiome],,,missing,1.4.5 mana crystal variant
+5289,Minecart Upgrade Kit,upgrade,P0,craft: 1 MechanicalWheelPiece + 1 MechanicalWagonPiece + 1 MechanicalBatteryPiece @ MythrilAnvil,,,missing,Minecart upgrade
+5326,Artisan Loaf,upgrade,P0,Merchant? (knowledge: Skeleton merchant shop),FabricatorManual,Fabricator manual,exact-role,+station reach; Rimtera: defeat Mothership Core @ OPT 88 Defeated Mothership Core
+4382,Advanced Combat Techniques,upgrade,P1,Blood moon drop,,,missing,Town NPC defence (world upgrade)
+4829,Cat License,upgrade,P1,not crafted (knowledge: world/drop/shop),PurrbotPermit,Purrbot permit,exact-role,Town pet; Rimtera: craft leisure-purrbot @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+4830,Dog License,upgrade,P1,not crafted (knowledge: world/drop/shop),RoverPermit,Rover permit,exact-role,Rimtera: craft leisure-rover @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+4910,Bunny License,upgrade,P1,not crafted (knowledge: world/drop/shop),HoplingPermit,Hopling permit,exact-role,Rimtera: craft leisure-hopling @ Nano-Fabricator @ P0 2 Built Nano-Fabricator
+5343,Peddler's Satchel,upgrade,P1,Travelling merchant (knowledge),,,missing,Travelling merchant +1 slot
+3335,Demon Heart,upgrade,P2,Expert WoF treasure bag,AuxiliarySocket,Auxiliary socket,exact-role,Brutal+ Fission Tyrant drop; slot logic per D-8
+5336,Advanced Combat Techniques: Volume Two,upgrade,P2,Pirate drop,,,missing,
+5337,Vital Crystal,upgrade,P2,Shimmer (knowledge),,,missing,Vital Crystal: +life regen (breakdown B7)
+5338,Aegis Fruit,upgrade,P2,Shimmer (knowledge),NaniteMarrow,Nanite marrow,exact-role,+4 defense; Rimtera: defeat Void Stalker @ OPT 79 Defeated Void Stalker
+5339,Arcane Crystal,upgrade,P2,Shimmer/merchant (knowledge),CoolantPearl,Coolant pearl,exact-role,Mana/charge regen; Rimtera: defeat Prism Empress @ P4 68 Defeated Prism Empress
+5340,Galaxy Pearl,upgrade,P2,Shimmer (knowledge),FortuneLattice,Fortune lattice,exact-role,+luck; Rimtera: defeat Eclipse Lord @ OPT 84 Defeated Eclipse Lord
+5341,Gummy Worm,upgrade,P2,fishing (knowledge),BaitGland,Bait gland,exact-role,+fishing (amount higher); Rimtera: defeat Pirate Dreadnought @ OPT 85 Defeated Pirate Dreadnought
+5342,Ambrosia,upgrade,P2,Shimmer (knowledge),ServoGrease,Servo grease,exact-role,+mining speed; Rimtera: defeat Protocol Dragon @ OPT 86 Defeated Protocol Dragon
+1291,Life Fruit,upgrade,P3,HM jungle (post-mech),LifebloomPod,Lifebloom pod,exact-role,"+5; cap differs (breakdown B2, D-1 sets 500); Rimtera: find a lifebloom pod @ P2 43 Defeated Fission Tyrant"
+9,Wood,wood,P0,not crafted (knowledge: world/drop/shop),Timber,Timber,exact-role,"Timber (felled) -> hull panel 1:1 (the building material, 105 recipes); Rimtera: cut Tree trunk @ P0 0 Start"
+619,Ebonwood,wood,P0,not crafted (knowledge: world/drop/shop),Blightwood,Blightwood log,exact-role,Biome logs hand-craft into timber 1:1; Rimtera: cut Blightwood trunk @ P0 0 Start
+620,Rich Mahogany,wood,P0,not crafted (knowledge: world/drop/shop),Vinewood,Vinewood log,exact-role,Rimtera: cut Vinewood trunk @ P0 0 Start
+832,Living Wood Wand,wood,P0,not crafted (knowledge: world/drop/shop),LivingWood,Living wood,partial,Rimtera has a living wood tile but no wand; Rimtera: mine Living wood @ P0 0 Start
+911,Shadewood,wood,P0,not crafted (knowledge: world/drop/shop),Blightwood,Blightwood log,merged-into,Rimtera: cut Blightwood trunk @ P0 0 Start
+2260,Dynasty Wood,wood,P0,not crafted (knowledge: world/drop/shop),,,missing,Sold wood
+2503,Boreal Wood,wood,P0,not crafted (knowledge: world/drop/shop),,,missing,No snow tree wood
+2504,Palm Wood,wood,P0,not crafted (knowledge: world/drop/shop),Palmwood,Fuel-palm log,exact-role,Rimtera: cut Fuel-palm trunk @ P0 0 Start
+4564,Bamboo,wood,P0,craft: 1 LargeBambooBlock @ Sawmill,,,missing,
+5215,Ash Wood,wood,P0,not crafted (knowledge: world/drop/shop),,,missing,Underworld trees (1.4.4)
+5710,Feywood,wood,P0,craft:  @ LivingLoom,,,missing,1.4.5 wood
+621,Pearlwood,wood,P2,not crafted (knowledge: world/drop/shop),Prismwood,Prismwood log,exact-role,Rimtera: grow and fell a Prismwood trunk @ P2 43 Defeated Fission Tyrant
+1729,Spooky Wood,wood,P4,not crafted (knowledge: world/drop/shop),HollowEmber,Hollow ember,partial,Rimtera: kill Hollow effigy (during HollowMoon) @ P2 43 Defeated Fission Tyrant
