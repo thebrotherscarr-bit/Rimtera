@@ -1,0 +1,355 @@
+terraria_npc_id(s),name,kind,biome/event,stage,ai_style,notable_drops,rimtera_kind,rimtera_name,match,notes
+22,Guide,town,Town,start,7 Passive/town,,TownNpcKind.StationAi,Station AI,exact-role,"Guide: recipe advice (GuideAdvisor). Rimtera's guide also sells a work bench, torch and rope; the Guide sells nothing"
+17,Merchant,town,Town,start,7 Passive/town,,TownNpcKind.Quartermaster,Quartermaster,exact-role,"Shop 1. Move-in: Terraria counts the piggy bank, Rimtera counts the inventory only (NC-14)"
+18,Nurse,town,Town,start,7 Passive/town,,TownNpcKind.Medic,Medic,exact-role,Heal-for-credits service; debuff clearing is NC-13
+19,Arms Dealer,town,Town,start,7 Passive/town,,TownNpcKind.Armorer,Armorer,exact-role,Shop 2
+20,Dryad,town,Town,post-boss,7 Passive/town,,TownNpcKind.AstroBotanist,Astro-Botanist,exact-role,Shop 3. No world-purity report
+38,Demolitionist,town,Town,start,7 Passive/town,,TownNpcKind.Demolitionist,Demolitionist,exact-role,Shop 4. Rimtera starts it bound in worldgen structures
+54,Clothier,town,Town,post-Skeletron,7 Passive/town,,TownNpcKind.Tailor,Tailor,exact-role,Shop 5. Terraria frees him by killing Skeletron; Rimtera binds him from world start
+37,Old Man,town,Dungeon,start,7 Passive/town,,-,-,missing,"Skeletron's curse giver. Design choice G12: the Scout Mech is summoned by an item, not by talking to an old man"
+105 107,Goblin Tinkerer,town,Town / Caverns (bound),post-goblin-army,7 Passive/town; 0 Bound/still,,TownNpcKind.Mechanic,Mechanic,partial,"Shop 6. D-5: the Mechanic takes the tinkerer role (Tinker Bench sale, reforge NC-12), bound in a cavern hut until a Scavenger Raid is cleared. Not done yet"
+106 108,Wizard,town,"Town / Caverns (bound, HM)",HM,7 Passive/town; 0 Bound/still,,TownNpcKind.Archivist,Archivist,partial,Shop 7. D-51 names the Archivist the Wizard analog (Fracture-only structure); the magic stock (charge gear) is the Head Researcher's
+123 124,Mechanic,town,Town / Dungeon (bound),post-Skeletron,7 Passive/town; 0 Bound/still,,TownNpcKind.ChiefEngineer,Chief Engineer,partial,"Shop 8 (wiring). The Chief Engineer sells the wire tool, circuit boards and conveyors; D-51 puts one survivor in the dungeon after the Scout Mech"
+142,Santa Claus,town,Town,"post-Frost-Legion, Christmas",7 Passive/town,,-,-,missing,Shop 9. D-52 defers Santa
+160,Truffle,town,Town (mushroom house),HM,7 Passive/town,,-,-,missing,Shop 10. D-52: a fungal-biome vendor (Truffle analog) is planned
+178,Steampunker,town,Town,post-mech,7 Passive/town,,TownNpcKind.ChiefEngineer,Chief Engineer,partial,Shop 11. Clentaminator analog (purifier sprayer) is the Astro-Botanist's; logic gates and solutions missing
+207,Dye Trader,town,Town,dye carried,7 Passive/town,,TownNpcKind.PigmentTrader,Pigment Trader,exact-role,Shop 12
+208,Party Girl,town,Town,14 NPCs,7 Passive/town,,TownNpcKind.PartyPlanner,Party Planner,exact-role,Shop 13. Rimtera parties are player-triggered (24 h cooldown)
+209,Cyborg,town,Town,post-Plantera,7 Passive/town,,TownNpcKind.Isotopist,Isotopist,partial,"Shop 14 (rockets, proximity mines). Isotopist is the Cyborg-like late vendor; rockets live with the Demolitionist"
+227,Painter,town,Town,8 NPCs,7 Passive/town,,TownNpcKind.TradeConsul,Trade Consul,partial,Shop 15 and shop 25 (paintings). D-53 makes the Trade Consul the Painter analog; paint tools are sold by the Pigment Trader
+228,Witch Doctor,town,Town,post-Queen-Bee,7 Passive/town,,TownNpcKind.AstroBotanist,Astro-Botanist,partial,Shop 16. Imbuing station and flasks missing
+229,Pirate,town,Town,post-pirates,7 Passive/town,,-,-,missing,"Shop 17 (cannon, parrot cracker). No analog"
+353 354,Stylist,town,Town / Spider cave (bound),start,7 Passive/town; 0 Bound/still,,-,-,missing,Shop 18 (hair dyes). D-52 plans a Stylist with PU-25
+368,Traveling Merchant,town,Town (visitor),2 NPCs,7 Passive/town,,TownNpcKind.TravellingMerchant,Travelling Merchant,exact-role,SetupTravelShop; Rimtera rolls 6 of 20 items per day. The Trade Consul overlaps until D-53
+369 376,Angler,town,Town / Ocean (sleeping),start,7 Passive/town; 0 Bound/still,,TownNpcKind.TideWarden,Tide-Warden,exact-role,Daily fish quest and rewards
+453,Skeleton Merchant,town,Caverns (wanders),start,7 Passive/town,,-,-,missing,"Shop 20 (moon-phase stock: counterweights, yoyo glove, magic lantern)"
+441 534,Tax Collector,town,Town (purified Tortured Soul),HM,7 Passive/town; 3 Fighter,,-,-,missing,Passive coin income. D-52 plans a tax-collector analog
+550 579,Tavernkeep,town,Town / surface (unconscious),post-EoW/BoC,7 Passive/town; 0 Bound/still,,-,-,missing,"Shop 21 (Defender medals, sentries). Rimtera starts the Defense Protocol with a signal core at the Station AI; no medal vendor"
+588 589,Golfer,town,Town / desert (rescue),start,7 Passive/town; 0 Bound/still,,TownNpcKind.Greenskeeper,Greenskeeper,exact-role,Shop 22. Rimtera moves him in when a golf ball is found
+633,Zoologist,town,Town,10% bestiary,7 Passive/town,,TownNpcKind.FieldZoologist,Field Zoologist,exact-role,Shop 23. Rimtera has no full-moon transformation
+663,Princess,town,Town,all others,7 Passive/town,,-,-,missing,Shop 24. D-52 defers the Princess
+695 696,PalworldCattivaDistressed,town,Town (crossover),start,127 Pal rescue,,-,-,missing,"1.4.5 Palworld crossover rescue (AI 127, shop 19 Pal armor). Out of scope: third-party crossover"
+637,Cat,pet,Town,licence,7 Passive/town,,TownPetKind.Purrbot,Purrbot,exact-role,Cat licence; Rimtera files a companion permit
+638,Dog,pet,Town,licence,7 Passive/town,,TownPetKind.Rover,Rover,exact-role,Dog licence
+656,Bunny,pet,Town,licence,7 Passive/town,,TownPetKind.Hopling,Hopling,exact-role,Bunny licence
+670 678 679 680 681 682 683 684 685 686 687,Nerdy Slime,pet,Town,varies,7 Passive/town; 0 Bound/still,Dirt Wall,TownNpcKind.GelAzure + TownNpcKind.GelAmber + TownNpcKind.GelRose + TownNpcKind.GelVerdant,Town gel (azure) + Town gel (amber) + Town gel (rose) + Town gel (verdant),partial,"8 Terraria town slimes (each with its own unlock: shimmer, golden key, Queen Slime, gold) vs 4 Rimtera gels unlocked by biome roll"
+50,King Slime,boss,Surface (slime rain),PHM,15 King Slime,Royal Delight; Slimy Saddle; King Slime Mask; Slime Hook; Slime Gun; Solidifier,EnemyKind.AlphaSkitter,Alpha Skitter,exact-role,"Spawns slimes, teleports. Alpha Skitter summons swarmers (BO-5)"
+4 5,Eye of Cthulhu,boss,Surface night,PHM,4 Eye of Cthulhu; 5 Flyer,0x33's Aviators; Suspicious Grinning Eye; Eye of Cthulhu Mask; Binoculars; Unholy Arrow; Crimtane Ore,EnemyKind.StoneSentinel,Overseer mech,exact-role,Gate boss. Two phases. Servants are minions (BO-5)
+13 14 15 666,Eater of Worlds,boss,Corruption,PHM,6 Worm; 9 Spell,Shadow Scale; Demonite Ore; Treasure Bag (Eater of Worlds); Writhing Remains; Eater's Bone; Eater of Worlds Mask,EnemyKind.FalloutHivemind,Fallout Hive-mind,partial,Worm boss that splits; Rimtera's Fallout Hive-mind is a single diving flyer (BO-3 worm bosses)
+266 267,Brain of Cthulhu,boss,Crimson,PHM,54 Brain of Cthulhu; 55 Creeper,Brain in a Jar; Crimtane Ore; Brain of Cthulhu Mask; Bone Rattle,EnemyKind.PlantOvergrowth,Plant Overgrowth,partial,Brain plus Creeper shield; Plant Overgrowth has no orbiting shield minions (BO-4/BO-5)
+222,Queen Bee,boss,Jungle hive,PHM,43 Queen Bee,Sparkling Honey; Queen Bee Mask; Honey Comb; Nectar; Honeyed Goggles; Queen of Bees,EnemyKind.BloomMatriarch,Bloom Matriarch,partial,Design choice G2: Bloom Matriarch is post-Fracture
+35 36,Skeletron,boss,Dungeon,PHM,11 Skeletron head; 12 Skeletron hand,Possessed Skull; Skeletron Mask; Skeletron Hand; Book of Skulls; Chippy's Couch; Chippy's Helmet,EnemyKind.ScoutMech,Scout Mech,partial,Design choice G12: the Scout Mech holds Skeletron's dungeon-gate role; no hands (BO-4)
+668,Deerclops,boss,Snow,PHM,123 Deerclops,Deerclops Eyeball; Deerclops Mask; Eye Bone; Eyebrella; Radio Thing; Dizzy's Rare Gecko Chester,EnemyKind.HoarfrostBehemoth,Hoarfrost Behemoth,exact-role,Frozen Wasteland only
+113 114 115 116 117 118 119,Wall of Flesh,boss,Underworld,PHM gate,27 Wall of Flesh; 28 WoF eye; 29 Hungry; 2 Demon eye; 6 Worm,Magic Missile; Goat Skull; Wall of Flesh Mask; Pwnhammer,EnemyKind.FissionTyrant,Fission Tyrant,partial,Defeat causes the Fracture (hardmode). Not yet a screen-wide wall (BO-19); hungries/leeches are missing minions
+657 658 659 660,Queen Slime,boss,Hallow,HM,121 Queen Slime; 1 Slime; 14 Bat,Regal Delicacy; Sparkle Slime Balloon; Queen Slime Mask; Blade Staff; Gelatinous Pillion; Hook of Dissonance,EnemyKind.GelSovereign,Gel Sovereign,exact-role,Minions missing (BO-5)
+125 126,Retinazer,boss,Surface night,HM mech,30 Retinazer; 31 Spazmatism,Treasure Bag (The Twins); Twins Mask; Hallowed Bar; Soul of Sight; Pair of Eyeballs; Waffle's Iron,EnemyKind.WarshipCore,Warship Core,partial,D-10: Warship Core is the Twins analog; twin bodies are BO-4
+134 135 136 139,The Destroyer,boss,Surface night,HM mech,37 Destroyer; 5 Flyer,Deactivated Probe; Destroyer Mask; Hallowed Bar; Soul of Might; Waffle's Iron,EnemyKind.CyberSwarmLeader,Cyber-Swarm Leader,partial,D-10: Cyber-Swarm Leader is the Destroyer analog; worm body and probes are BO-3/BO-5
+127 128 129 130 131,Skeletron Prime,boss,Surface night,HM mech,32 Prime head; 35 Prime cannon; 33 Prime saw; 34 Prime vice; 36 Prime laser,Robotic Skull; Skeletron Prime Mask; Hallowed Bar; Soul of Fright; Waffle's Iron,EnemyKind.RenegadeOverseer,Renegade Overseer,partial,D-10: Renegade Overseer is Prime; the four arms are BO-4
+262 263 264 265,Plantera,boss,Underground jungle,HM post-mech,51 Plantera; 52 Plantera hook; 53 Plantera tentacle; 50 Spore,Plantera Seedling; Plantera Mask; Temple Key; Seedling; The Axe; Pygmy Staff,EnemyKind.MutatedFlora,Mutated Flora,partial,D-16: becomes a hooked flyer; hooks and tentacles missing
+245 246 247 248 249,Golem,boss,Lihzahrd temple,post-Plantera,45 Golem body; 46 Golem head; 47 Golem fist; 48 Golem free head,Guardian Golem; Golem Mask; Picksaw; Mobius Strip; Stynger; Stynger Bolt,EnemyKind.VaultColossus,Vault Colossus,partial,"Multi-part (body, head, two fists, free head) vs one body (BO-4)"
+370 371 372 373,Duke Fishron,boss,Ocean (truffle worm),HM,69 Duke Fishron; 70 Detonating bubble; 71 Sharkron,Pork of the Sea; Duke Fishron Mask; Fishron Wings,EnemyKind.AbyssLeviathan,Abyss Leviathan,exact-role,Fished with abyss bait; bubbles and sharkrons missing (BO-5)
+636,Empress of Light,boss,Hallow night,HM,120 Empress of Light,Jewel of Light; Empress Wings; Prismatic Dye; Stellar Tune; Empress of Light Mask; Rainbow Cursor,EnemyKind.PrismEmpress,Prism Empress,exact-role,Empress butterfly summon replaced by the prism catalyst
+379 380 437 438 439 440 454 455 456 457 458 459 521 522 523,Lunatic Cultist,boss,Dungeon entrance,post-Golem,84 Lunatic Cultist; 6 Worm; 86 Ancient vision; 100 Ancient light; 101 Ancient doom; 83 Cultist devote; 3 Fighter,Tablet Fragment; Lunatic Cultist Mask; Ancient Manipulator,EnemyKind.VoidCantor,Void Cantor,partial,"Clones, phantasm dragon, ancient vision/light/doom and the devotee/archer ritual guards are missing as separate units"
+396 397 398 400 401,Moon Lord's Core,boss,Surface,post-pillars,77 Moon Lord core; 79 Moon Lord head; 78 Moon Lord hand; 81 True eye; 82 Leech blob,Piece of Moon Squid; Moon Lord Mask; Meowmere Minecart; Portal Gun; Luminite,EnemyKind.AstroGod,Astro-God,partial,"Core plus head and two hands, true eyes, leech clots; Astro-God is one body (BO-20 phases)"
+68,Dungeon Guardian,miniboss,Dungeon (too early),any,11 Skeletron head,Bone Key,EnemyKind.DungeonGuardian,Dungeon Guardian,exact-role,Guards the dungeon before its gate boss
+325,Mourning Wood,miniboss,Pumpkin Moon,HM,57 Mourning Wood,Spooky Wood (k); Stake Launcher (k); Necromantic Scroll (k); Witch's Broom (k),EnemyKind.EmberRootwalker,Ember rootwalker,exact-role,Wave 4
+327 328,Pumpking,boss,Pumpkin Moon,HM,58 Pumpking; 59 Pumpking blade,The Horseman's Blade (k); Bat Scepter (k); Candy Corn Rifle (k); Jack 'O Lantern Launcher (k); Raven Staff (k),EnemyKind.HollowRegent,Hollow Regent,exact-role,Wave 8 (D-27: 15 waves)
+315,Headless Horseman,miniboss,Pumpkin Moon,HM,26 Charger (unicorn),The Horseman's Blade (k); Jack 'O Lantern Mask (k),EnemyKind.HollowLancer,Hollow lancer,exact-role,Wave 6
+344,Everscream,miniboss,Frost Moon,HM,57 Mourning Wood,Christmas Tree Sword (k); Razorpine (k); Festive Wings (k),EnemyKind.FrostspirePine,Frostspire pine,exact-role,Wave 4
+346,Santa-NK1,miniboss,Frost Moon,HM,61 Santa-NK1,Elf Melter (k); Chain Gun (k),EnemyKind.CryoTank,Cryo tank,exact-role,Wave 6
+345,Ice Queen,boss,Frost Moon,HM,60 Ice Queen,Blizzard Staff (k); North Pole (k); Snowman Cannon (k); Reindeer Bells (k); Frozen Crown (k),EnemyKind.RimeSeraph,Rime Seraph,exact-role,Wave 8 (D-27: 20 waves)
+477 478 479,Mothron,miniboss,Solar Eclipse,post-mech,88 Mothron; 89 Mothron egg; 90 Baby mothron,Broken Hero Sword (k); Mothron Wings (k); The Eye of Cthulhu (yoyo) (k),EnemyKind.EclipseLord + EnemyKind.EventEclipseMothMech,Eclipse Lord + Eclipse moth-mech,exact-role,Eggs hatch baby mothrons; Rimtera has the moth-mech unit but no egg stage
+491 492,Flying Dutchman,miniboss,Pirate Invasion,HM,93 Flying Dutchman; 75 Rider/saucer part,Coin Gun; Lucky Coin; Discount Card; Pirate Staff; Gold Ring; The Dutchman,EnemyKind.PirateDreadnought,Pirate Dreadnought,exact-role,Flying Dutchman with four cannons; Rimtera is one body plus separate boarding cannons
+392 393 394 395,Martian Saucer,miniboss,Martian Madness,post-Golem,75 Rider/saucer part; 76 Saucer core,Cosmic Skateboard; Arc Surge,EnemyKind.MothershipCore,Mothership Core,exact-role,Turrets and cannons are missing parts (BO-4)
+551,Betsy,boss,Old One's Army T3,post-Golem,110 Betsy,Betsy's Egg; Betsy Mask; Betsy's Wings,EnemyKind.ProtocolDragon,Protocol Dragon,exact-role,Final wave
+576 577,Ogre,miniboss,Old One's Army T2/T3,post-mech,107 Improved walker (DD2),War Table; Ogre Mask; Huntress's Buckler; Monk's Belt; Creeper Egg; Ogre's Club,EnemyKind.EventProtocolOgre,Protocol ogre,exact-role,Wave elite
+564 565,Dark Mage,miniboss,Old One's Army,any,109 Dark mage,Dark Mage Mask; Dark Mage's Tome; Squire's Shield; Apprentice's Scarf; War Table; Dragon Egg,EnemyKind.EventProtocolMage,Protocol mage,exact-role,Wave elite
+618,Dreadnautilus,miniboss,Blood Moon (fishing),HM,117 Dreadnautilus,Sanguine Staff; Blood Moon Monolith; Bloody Tear,EnemyKind.CorrosionNautilus,Corrosion nautilus,exact-role,Dreadnautilus
+243,Ice Golem,miniboss,Snow (blizzard),HM,3 Fighter,Ice Feather; Frost Core,EnemyKind.BlizzardColossus,Blizzard colossus,exact-role,Ice Golem
+541,Sand Elemental,miniboss,Sandstorm,HM,102 Sand elemental,Forbidden Fragment,EnemyKind.GritElemental,Grit elemental,exact-role,Sand Elemental
+471 472,Goblin Warlock,miniboss,Goblin Army,HM,3 Fighter; 86 Ancient vision,Shadowflame Hex Doll (k); Shadowflame Bow (k); Shadowflame Knife (k),EnemyKind.ScavengerHexer,Scavenger hexer,exact-role,The shadowflame apparitions it summons are missing
+290,Paladin,miniboss,Dungeon,post-Plantera,3 Fighter,Paladin's Hammer (k); Paladin's Shield (k),EnemyKind.CryptPaladin,Crypt paladin,exact-role,Hammer throw (BO-22)
+473 474,Corrupt Mimic,miniboss,Corruption / Crimson underground,HM,87 Biome mimic,Dart Rifle (k); Chain Guillotines (k); Clinger Staff (k); Putrid Scent (k); Worm Hook (k),EnemyKind.LeadBoxMimic,Lead-box mimic,partial,Biome mimics from biome keys; Rimtera has one radiated lead-box mimic and no key-in-chest summon
+475,Hallowed Mimic,miniboss,Hallow underground,HM,87 Biome mimic,Daedalus Stormbow (k); Flying Knife (k); Crystal Vile Shard (k); Illuminant Hook (k),EnemyKind.LightMimic,Light mimic,exact-role,Hallowed mimic
+476,Jungle Mimic,miniboss,Jungle underground,HM,87 Biome mimic,Staff of the Frost Hydra (remix pool) (k),-,-,missing,Jungle mimic (Remix/console key). No canopy mimic
+517,Solar Pillar,miniboss,Lunar Events,post-Cultist,94 Celestial pillar,Solar Fragment (k),EnemyKind.EmberObelisk,Ember obelisk,exact-role,Shield until kill quota (D-14: 100)
+422,Vortex Pillar,miniboss,Lunar Events,post-Cultist,94 Celestial pillar,Vortex Fragment,EnemyKind.GaleObelisk,Gale obelisk,exact-role,Shield until kill quota
+507,Nebula Pillar,miniboss,Lunar Events,post-Cultist,94 Celestial pillar,Nebula Fragment,EnemyKind.RiftObelisk,Rift obelisk,exact-role,Shield until kill quota
+493,Stardust Pillar,miniboss,Lunar Events,post-Cultist,94 Celestial pillar,Stardust Fragment,EnemyKind.ShardObelisk,Shard obelisk,exact-role,Shield until kill quota
+412 413 414,Crawltipede,event,Solar Pillar,post-Cultist,6 Worm,Solar Fragment (k),EnemyKind.SlagCentipede,Slag centipede,exact-role,Worm
+415 416,Drakomire,event,Solar Pillar,post-Cultist,3 Fighter; 75 Rider/saucer part,Solar Fragment (k),EnemyKind.PyreLancer,Pyre lancer,exact-role,Rider dismounts
+419,Selenian,event,Solar Pillar,post-Cultist,3 Fighter,Solar Fragment (k),EnemyKind.PyreLancer,Pyre lancer,merged-into,Selenian (spinning blocker)
+418,Corite,event,Solar Pillar,post-Cultist,74 Corite/drone,Solar Fragment (k),EnemyKind.CinderImp,Cinder imp,exact-role,Charging flyer
+417,Sroller,event,Solar Pillar,post-Cultist,39 Tortoise/roller,Solar Fragment (k),-,-,missing,Rolling ball fighter
+518,Drakanian,event,Solar Pillar,post-Cultist,3 Fighter,Solar Fragment (k),-,-,missing,Drakanian
+516 519,Solar Flare,event,Solar Pillar,post-Cultist,9 Spell; 99 Solar goop,,-,-,merged-into,Projectile NPCs (not creatures)
+425,Storm Diver,event,Vortex Pillar,post-Cultist,3 Fighter,Vortex Fragment (k),EnemyKind.GaleDiver,Gale diver,exact-role,Storm Diver
+426 427,Alien Queen,event,Vortex Pillar,post-Cultist,3 Fighter,Vortex Fragment (k),EnemyKind.SquallHornet,Squall hornet,exact-role,Alien Queen and Alien Hornet merged
+428,Alien Larva,event,Vortex Pillar,post-Cultist,3 Fighter,Vortex Fragment (k),EnemyKind.TempestLarva,Tempest larva,exact-role,Alien Larva
+429,Vortexian,event,Vortex Pillar,post-Cultist,3 Fighter,Vortex Fragment (k),-,-,missing,Vortexian (gravity-flip fighter)
+420,Nebula Floater,event,Nebula Pillar,post-Cultist,97 Nebula floater,Nebula Fragment (k),EnemyKind.RiftFloater,Rift floater,exact-role,Nebula Floater
+421,Brain Suckler,event,Nebula Pillar,post-Cultist,85 Star cell,Nebula Fragment (k),EnemyKind.MindLeech,Mind leech,exact-role,Brain Suckler
+424,Predictor,event,Nebula Pillar,post-Cultist,3 Fighter,Nebula Fragment (k),EnemyKind.RiftSeer,Rift seer,exact-role,Predictor
+423,Evolution Beast,event,Nebula Pillar,post-Cultist,26 Charger (unicorn),Nebula Fragment (k),-,-,missing,Evolution Beast
+402 403 404,Milkyway Weaver,event,Stardust Pillar,post-Cultist,6 Worm,Stardust Fragment (k),EnemyKind.LatticeWeaver,Lattice weaver,exact-role,Milkyway Weaver
+405 406,Star Cell,event,Stardust Pillar,post-Cultist,85 Star cell; 95 Small star cell,Stardust Fragment (k),EnemyKind.StarCell,Star-cell,exact-role,Splits into small cells (split missing)
+407 408,Flow Invader,event,Stardust Pillar,post-Cultist,96 Flow invader,Stardust Fragment (k),EnemyKind.ShardInvader,Shard invader,exact-role,Flow Invader
+409 410,Twinkle Popper,event,Stardust Pillar,post-Cultist,3 Fighter; 26 Charger (unicorn),Stardust Fragment (k),-,-,missing,Twinkle Popper / Twinkle
+411,Stargazer,event,Stardust Pillar,post-Cultist,3 Fighter,Stardust Fragment (k),-,-,missing,Stargazer
+489,Blood Zombie,event,Blood Moon,PHM,3 Fighter,Bloody Tear; Shark Tooth Necklace; Money Trough,EnemyKind.EventHusk,Rust husk,exact-role,Blood Zombie
+490,Drippler,event,Blood Moon,PHM,22 Hovering fighter,Bloody Tear; Shark Tooth Necklace; Money Trough,EnemyKind.EventEyeDrone,Eye drone,exact-role,Drippler
+53 536,The Groom,event,Blood Moon,PHM,3 Fighter,Bloody Tear; Top Hat; Wedding Veil; Wedding Dress,EnemyKind.EventRustWraith,Rust wraith,partial,Groom/Bride zombies (rare blood-moon variants)
+47 57 168 230 464 465 470,Corrupt Bunny,event,Blood Moon,PHM,3 Fighter; 16 Swimmer; 7 Passive/town,Bunny Hood; Corrupt Bunny Kite; Vicious Bunny Kite,EnemyKind.EventRustHound,Rust hound,partial,Critters turned hostile by the blood moon (walking goldfish also in rain); Rimtera has no critter-conversion
+109,Clown,event,Blood Moon,HM,3 Fighter,Bananarang (k),EnemyKind.RustJester,Rust jester,exact-role,Bomb-throwing clown
+630,Blood Mummy,event,Blood Moon (desert),HM,3 Fighter,Dark Shard,EnemyKind.EventHusk,Rust husk,merged-into,Blood moon mummy
+586 587 619 620 621 622 623,Zombie Merman,event,Blood Moon (fishing),PHM/HM,3 Fighter; 44 Flying fish; 5 Flyer; 107 Improved walker (DD2); 6 Worm,Chum Bucket; Vampire Frog Staff; Blood Rain Bow; Chum Caster; Money Trough; Blood Thorn,EnemyKind.BloodfinAmbusher,Bloodfin ambusher,partial,Blood-moon fishing hostiles collapse into one fished ambusher
+73,Goblin Scout,enemy,Surface (outer thirds),PHM,3 Fighter,Tattered Cloth (k),EnemyKind.EventScout,Raider scout,exact-role,Goblin Scout; killing it can summon the army
+26,Goblin Peon,event,Goblin Army,PHM,3 Fighter,Spiky Ball (k); Harpoon (k); Tattered Cloth (k),EnemyKind.EventScavengerGrunt,Scavenger grunt,exact-role,Goblin Peon
+27,Goblin Thief,event,Goblin Army,PHM,3 Fighter,Spiky Ball (k); Harpoon (k),EnemyKind.EventScavengerRigger,Scavenger rigger,partial,Goblin Thief (fast melee)
+28,Goblin Warrior,event,Goblin Army,PHM,3 Fighter,Spiky Ball (k); Harpoon (k),EnemyKind.EventScavengerBrute,Scavenger brute,exact-role,Goblin Warrior
+29 30,Goblin Sorcerer,event,Goblin Army,PHM,8 Caster; 9 Spell,Spiky Ball (k); Harpoon (k),EnemyKind.EventScavengerRigger,Scavenger rigger,partial,Teleporting caster; Rimtera's raid has no caster until the hexer (HM)
+111,Goblin Archer,event,Goblin Army,PHM,3 Fighter,Spiky Ball (k); Harpoon (k),EnemyKind.EventScavengerSniper,Scavenger sniper,exact-role,Goblin Archer
+212 213,Pirate Deckhand,event,Pirate Invasion,HM,3 Fighter,Coin Gun (k); Lucky Coin (k); Gold Ring (k); Pirate Staff (pirate pool) (k),EnemyKind.EventPirateDeckhand,Pirate deckhand,exact-role,Deckhand and Corsair merged
+214 215,Pirate Deadeye,event,Pirate Invasion,HM,3 Fighter,Coin Gun (k); Lucky Coin (k); Gold Ring (k); Pirate Staff (pirate pool) (k),EnemyKind.EventPirateGunner,Pirate gunner,exact-role,Ranged pirates merged
+216,Pirate Captain,event,Pirate Invasion,HM,3 Fighter,Coin Gun; Lucky Coin; Discount Card; Pirate Staff; Gold Ring; Cutlass,EnemyKind.EventPirateCannon + EnemyKind.CyberPirateCaptain,Boarding cannon + Cyber-Pirate Captain,partial,Captain fires a cannon; Rimtera has a boarding-cannon unit and a separate Cyber-Pirate Captain incursion boss
+252,Parrot,event,Pirate Invasion,HM,5 Flyer,Coin Gun (k); Lucky Coin (pirate pool) (k),EnemyKind.EventPirateParrotDrone,Parrot drone,exact-role,Parrot
+662,Pirate's Curse,enemy,Ocean (Pirate's Curse),any,122 Pirate ghost,,-,-,missing,Ghost from cursed coins (1.4.4+)
+143,Snowman Gangsta,event,Frost Legion,HM,38 Snowman,Snowball (k),EnemyKind.BrigadeTrooper,Brigade trooper,exact-role,Snowman Gangsta
+144,Mister Stabby,event,Frost Legion,HM,38 Snowman,Snowball (k),EnemyKind.BrigadeShiv,Brigade shiv,exact-role,Mister Stabby
+145,Snow Balla,event,Frost Legion,HM,38 Snowman,Snowball (k),EnemyKind.BrigadeLobber,Brigade lobber,exact-role,Snow Balla
+338 339 340 350,Zombie Elf,event,Frost Moon,HM,3 Fighter,Elf Hat (k); Elf Shirt (k); Elf Pants (k),EnemyKind.FrostSapper,Frost sapper,exact-role,Zombie elves and elf archers merged
+348 349,Nutcracker,event,Frost Moon,HM,3 Fighter,,EnemyKind.Shellcracker,Shellcracker,exact-role,Nutcracker
+352,Flocko,event,Frost Moon,HM,63 Flocko,,EnemyKind.FlurryFlake,Flurry flake,exact-role,Flocko
+341,Present Mimic,event,Frost Moon,HM,25 Mimic,Present (k),EnemyKind.CargoMimic,Cargo mimic,exact-role,Present Mimic
+343,Yeti,event,Frost Moon,HM,3 Fighter,Snowman Cannon (k); North Pole (event pool) (k),EnemyKind.SnowHulk,Snow hulk,exact-role,Yeti
+342,Gingerbread Man,event,Frost Moon,HM,3 Fighter,,EnemyKind.FrostSapper,Frost sapper,merged-into,Gingerbread Man
+347,Elf Copter,event,Frost Moon,HM,62 Elf copter,Elf Melter (k),-,-,missing,Elf Copter (flying gunner)
+351,Krampus,event,Frost Moon,HM,3 Fighter,Krampus Horn Wig (k),-,-,missing,Krampus
+305 306 307 308 309 310 311 312 313 314,Scarecrow,event,Pumpkin Moon,HM,3 Fighter,Scarecrow Hat set (k),EnemyKind.HollowEffigy,Hollow effigy,exact-role,10 scarecrow variants merged
+326,Splinterling,event,Pumpkin Moon,HM,3 Fighter,Spooky Wood (k),EnemyKind.EmberSplinter,Ember splinter,exact-role,Splinterling
+329,Hellhound,event,Pumpkin Moon,HM,26 Charger (unicorn),Spooky Wood (k),EnemyKind.CinderHound,Cinder hound,exact-role,Hellhound
+330,Poltergeist,event,Pumpkin Moon,HM,22 Hovering fighter,Spooky Wood (k),EnemyKind.StaticPoltergeist,Static poltergeist,exact-role,Poltergeist
+253,Reaper,event,Solar Eclipse,HM,22 Hovering fighter,Requiem,EnemyKind.EventEclipseReaper,Eclipse reaper,exact-role,Reaper
+158 159 162 166 251 461 462 469,Eyezor,event,Solar Eclipse,HM,3 Fighter; 14 Bat,Moon Stone; Amulet of the Night; Broken Bat Wing; Buddies; Eye Spring; Eyezorhead,EnemyKind.EventEclipseShade,Eclipse shade,merged-into,Eight melee/fighter eclipse units collapse into the eclipse shade
+460 466,Butcher,event,Solar Eclipse,post-Plantera,3 Fighter,A Machine for Terrarians; Butcher's Bloodstained Apron; Butcher's Bloodstained Pants,EnemyKind.EclipseSlasher,Eclipse slasher,exact-role,Psycho and Butcher
+467,Deadly Sphere,event,Solar Eclipse,post-Plantera,85 Star cell,Deadly Sphere Staff (k),EnemyKind.EclipseSphere,Eclipse sphere,exact-role,Deadly Sphere
+463 468,Dr. Man Fly,event,Solar Eclipse,post-Plantera,3 Fighter,Dr. Man Fly's Lab Coat,-,-,missing,"Ranged eclipse units (flasks, nails)"
+399,Martian Probe,enemy,Surface (outer thirds),post-Golem,80 Martian probe,none (starts Martian Madness) (k),EnemyKind.EventPrecursorProbe,Precursor probe,exact-role,Scout that triggers the invasion
+382 383 384 385,Ray Gunner,event,Martian Madness,post-Golem,3 Fighter; 72 Force bubble,Laser Drill (k); Charged Blaster Cannon (k); Anti-Gravity Hook (k); Martian costume (k),EnemyKind.EventProbeGunner,Probe gunner,exact-role,Gunners and officer (bubble shield) merged
+386 387 389,Martian Engineer,event,Martian Madness,post-Golem,3 Fighter; 73 Martian turret,Martian Conduit Plating (k); Laser Drill (k),EnemyKind.EventProbeTeslaWalker,Tesla walker,partial,Engineer builds tesla turrets; Rimtera has a walking tesla unit
+381,Brain Scrambler,event,Martian Madness,post-Golem,3 Fighter,Brain Scrambler (k),EnemyKind.EventProbeBrainDrone,Brain drone,exact-role,Brain Scrambler
+388 390 391 520,Martian Drone,event,Martian Madness,post-Golem,74 Corite/drone; 75 Rider/saucer part; 3 Fighter,Martian Conduit Plating (k); Laser Drill (k),EnemyKind.EventProbeGunner,Probe gunner,merged-into,"Drones, scutlix gunner and walker merged"
+552 553 554 555 556 557 566 567,Etherian Goblin,event,Old One's Army,any,107 Improved walker (DD2),Defender Medal (k),EnemyKind.EventProtocolGrunt,Protocol grunt,exact-role,"Etherian goblins, bombers and skeletons merged"
+561 562 563,Etherian Javelin Thrower,event,Old One's Army,any,107 Improved walker (DD2),Defender Medal (k),EnemyKind.EventProtocolShieldbearer,Protocol shieldbearer,partial,Javelin throwers
+558 559 560,Etherian Wyvern,event,Old One's Army,any,108 Diving flyer (DD2),Defender Medal (k),EnemyKind.EventProtocolWyvern,Protocol wyvern,exact-role,Etherian Wyvern
+568 569 570 571 572 573 574 575 578,Wither Beast,event,Old One's Army T2/T3,post-mech,107 Improved walker (DD2); 108 Diving flyer (DD2); 111 Lightning bug (DD2),Defender Medal (k),-,-,missing,"Wither beast, drakin, kobolds, glider kobold, lightning bug: no Rimtera units"
+547 548 549,Eternia Crystal,event,Old One's Army,any,105 Eternia crystal; 106 Lane portal; 104 DD2 test,none (objective) (k),-,-,missing,"The defended crystal and the lane portals are objects, not creatures; Rimtera's event has no defend-the-core objective"
+225,Umbrella Slime,event,Rain,PHM,1 Slime,Umbrella Hat (k),EnemyKind.DrizzleGel,Drizzle gel,exact-role,Umbrella Slime
+224,Flying Fish,event,Rain,PHM,44 Flying fish,,EnemyKind.RainSkipper,Rain skipper,exact-role,Flying Fish
+-55 -54 223,Raincoat Zombie,event,Rain,PHM,3 Fighter,Rain Hat (k); Rain Coat (k),EnemyKind.SlickerHusk,Slicker husk,exact-role,Raincoat Zombie
+250,Angry Nimbus,event,Rain,HM,49 Angry Nimbus,Nimbus Rod (k),EnemyKind.Thunderhead,Thunderhead,exact-role,Angry Nimbus
+628,Angry Dandelion,event,Windy Day,PHM,119 Dandelion,Daybloom,EnemyKind.ThistledownDrifter,Thistledown drifter,exact-role,Angry Dandelion
+594,Windy Balloon,critter,Windy Day,PHM,113 Windy balloon,,-,-,missing,Balloon that carries a slime/critter down
+535,Spiked Slime,event,Slime Rain,PHM,1 Slime,,EnemyKind.ArmoredSwarmer,Armored swarmer,partial,Spiked Slime
+667,Golden Slime,enemy,Slime Rain (rare),any,1 Slime,Coins (k); gold furniture (k); Gold Ring (k),-,-,missing,Golden Slime: coins and gold loot
+664,The Torch God,event,Torch God,PHM,0 Bound/still,,EnemyKind.LumenFlare + EnemyKind.GlareMote,Lumen flare + Glare mote,partial,Design choice: Terraria's Torch God throws torches only; Rimtera's Lumen Tempest has creatures. Reward (Torch God's Favor) = Lumen accord
+23,Meteor Head,enemy,Meteorite,PHM,5 Flyer,,EnemyKind.EventMeteorHead,Meteor head,exact-role,Meteor Head
+-10 -9 -8 -7 -6 -5 -4 -3 1,Blue Slime,enemy,Forest / underground,PHM,1 Slime,Gel (k); Slime Staff (rare) (k),EnemyKind.MeadowGel + EnemyKind.MudGel + EnemyKind.SlateGel,Meadow gel + Mud gel + Slate gel,exact-role,"Slime family (netID colours). Rimtera's per-layer gels; Jungle slime = vine gel, Pinky rare"
+16,Mother Slime,enemy,Cavern,PHM,1 Slime,Gel (k),EnemyKind.SlateGel,Slate gel,partial,Splits into baby slimes on death; split missing
+-43 -42 -41 -40 -39 -38 2 190 191 192 193 194 317 318,Demon Eye,enemy,Surface night,PHM,2 Demon eye,Lens (k); Black Lens (k),EnemyKind.DriftingEye,Drifting eye,exact-role,Demon Eye and its netID/seasonal variants
+133,Wandering Eye,enemy,Surface night,HM,2 Demon eye,Wandering Eye Kite,EnemyKind.DriftingEye,Drifting eye,partial,Hardmode eye; Rimtera has no HM eye
+-45 -44 -37 -36 -35 -34 -33 -32 -31 -30 -29 -28 -27 -26 3 132 186 187 188 189 200 319 320 321 331 332 430 431 432 433 434 435 436 590 591 691,Zombie,enemy,Surface night,PHM,3 Fighter,Shackle (k); Zombie Arm (k),EnemyKind.GraveHusk,Grave husk,exact-role,Zombie and all visual/seasonal/armed variants
+302 303 304 333 334 335 336,Slime,enemy,Surface (Halloween/Christmas),PHM,1 Slime; 7 Passive/town,,EnemyKind.MeadowGel,Meadow gel,merged-into,Seasonal slimes; Rimtera has no holiday seasons for creatures
+48,Harpy,enemy,Space,PHM,14 Bat,Feather (k); Giant Harpy Feather (k),EnemyKind.StratosRaptor,Stratos raptor,exact-role,Harpy
+87 88 89 90 91 92,Wyvern,enemy,Space,HM,6 Worm,Soul of Flight (k),EnemyKind.StratosWyvern,Stratos wyvern,partial,"Segmented worm-flyer; Rimtera's wyvern is a diving flyer, not segmented"
+301,Raven,enemy,Graveyard,PHM,17 Vulture,Raven Feather,EnemyKind.CarrionDrone,Carrion drone,exact-role,Raven
+316,Ghost,enemy,Graveyard,PHM,22 Hovering fighter,,EnemyKind.GraveWisp,Grave wisp,exact-role,Ghost
+632,Maggot Zombie,enemy,Graveyard,PHM,3 Fighter,,EnemyKind.TombHusk,Tomb husk,exact-role,Maggot Zombie
+104,Werewolf,enemy,Surface full moon,HM,3 Fighter,Moon Charm (k),EnemyKind.NeoTerraReaver,Neo-Terra reaver,partial,Full-moon only in Terraria
+140,Possessed Armor,enemy,Surface night,HM,3 Fighter,Ancient Cloth (k),EnemyKind.NightRevenant,Night revenant,exact-role,Possessed Armor
+82,Wraith,enemy,Surface night,HM,22 Hovering fighter,,EnemyKind.VengefulWisp,Vengeful wisp,exact-role,Wraith
+624,Gnome,enemy,Surface underground (living tree),PHM,3 Fighter,,-,-,missing,Gnome turns to stone in sunlight (1.4.4)
+10 11 12,Giant Worm,enemy,Underground,PHM,6 Worm,Whoopie Cushion (k),EnemyKind.GrubWorm,Grub worm,exact-role,Giant Worm
+49,Cave Bat,enemy,Cavern,PHM,14 Bat,Chain Knife (k); Depth Meter (k),EnemyKind.HollowBat + EnemyKind.CaveBat,Hollow bat + Spore bat,exact-role,Cave Bat
+93,Giant Bat,enemy,Cavern,HM,14 Bat,Trifold Map (k),EnemyKind.HollowBat,Hollow bat,partial,Hardmode bat; no HM bat in the caverns roster
+-53 -52 -51 -50 -49 -48 -47 -46 21 201 202 203 322 323 324 449 450 451 452,Skeleton,enemy,Cavern,PHM,3 Fighter,Hook (k); Skull (k); Ancient Iron Helmet (k),EnemyKind.RockGolem,Security droid,partial,Skeleton family (bone-throwing variants are Remix). Rimtera's security droid fills the cavern fighter slot
+44,Undead Miner,enemy,Cavern,PHM,3 Fighter,Mining Helmet (k); Bone Wand (k); Mining Shirt (k),EnemyKind.ArmoredDelver,Armored delver,partial,Undead Miner; Rimtera's delver is HM
+45,Tim,enemy,Cavern (rare),PHM,8 Caster,Wizard Hat (k); Magic Hat (k),EnemyKind.EchoCaster,Echo caster,exact-role,Tim (rare caster)
+-15 77,Armored Skeleton,enemy,Cavern,HM,3 Fighter,Armor Polish (k); Beam Sword (k),EnemyKind.ArmoredDelver,Armored delver,exact-role,Armored Skeleton
+110,Skeleton Archer,enemy,Cavern,HM,3 Fighter,Magic Quiver (k); Marrow (k),EnemyKind.CryptMarksman,Crypt marksman,partial,Skeleton Archer; Rimtera's marksman is dungeon-only
+172,Rune Wizard,enemy,Cavern (rare),HM,8 Caster,Rune Hat (k); Rune Robe (k),EnemyKind.RunicCaster,Runic caster,exact-role,Rune Wizard
+195 196,Nymph,enemy,Cavern,PHM,3 Fighter; 42 Lost girl,Metal Detector (k),-,-,missing,Lost Girl transforms into a Nymph
+498 499 500 501 502 503 504 505 506,Salamander,enemy,Cavern,PHM,3 Fighter,Rally (yoyo) (k),EnemyKind.CaveLurker,Cave lurker,partial,Salamander (9 colour variants)
+494 495,Crawdad,enemy,Cavern,PHM,3 Fighter,Rally (yoyo) (k),EnemyKind.GemCrawler,Gem crawler,partial,Crawdad
+496 497,Giant Shelly,enemy,Cavern,PHM,39 Tortoise/roller,Rally (yoyo) (k),EnemyKind.GeodeCrab,Geode crab,partial,Giant Shelly (rolling); Rimtera's geode crab is HM
+217 218 219,Cochineal Beetle,enemy,Underground (snow/jungle/forest),PHM,3 Fighter,Red Husk; Cyan Husk; Violet Husk,EnemyKind.BoreBeetle,Bore beetle,partial,Dye beetles (drop dye materials)
+631,Rock Golem,enemy,Cavern,PHM,3 Fighter,Stone Block; Rock Golem Head,EnemyKind.ClayGolem,Clay golem,exact-role,Rock Golem (1.4.4)
+482,Granite Golem,enemy,Granite cave,PHM,3 Fighter,Spaghetti; Granite Block; Snapping Stone,EnemyKind.ClayGolem,Clay golem,partial,Granite Golem; no granite mini-biome
+483,Granite Elemental,enemy,Granite cave,PHM,91 Granite elemental,Granite Block (k); Night Vision Helmet (k),-,-,missing,Granite Elemental
+480,Medusa,enemy,Marble cave,PHM,3 Fighter,Medusa Head (k),-,-,missing,Medusa (petrifying gaze)
+481,Hoplite,enemy,Marble cave,PHM,3 Fighter,Gladiator set (k),EnemyKind.AlabasterHoplite,Alabaster hoplite,exact-role,Hoplite
+85,Mimic,miniboss,Cavern (chest),PHM/HM,25 Mimic,Dual Hook (k); Magic Dagger (k); Titan Glove (k); Philosopher's Stone (k); Cross Necklace (k); Star Cloak (k),EnemyKind.CacheMimic + EnemyKind.StrongboxMimic + EnemyKind.UrnMimic,Cache mimic + Strongbox mimic + Urn mimic,exact-role,Mimic
+141,Toxic Sludge,enemy,Underground,HM,1 Slime,Gel (k); Mud (k),EnemyKind.MudGel,Mud gel,partial,Toxic Sludge; Rimtera's mud gel is PHM
+95 96 97,Digger,enemy,Cavern,HM,6 Worm,Soul of Night/Light (biome) (k),EnemyKind.TunnelWyrm + EnemyKind.DelveWyrm,Tunnel wyrm + Delve wyrm,exact-role,Digger
+103,Green Jellyfish,enemy,Cavern water,PHM,18 Jellyfish,Glowstick (k),-,-,missing,Cave water jellyfish; no hostile cavern swimmers
+102,Angler Fish,enemy,Cavern water,HM,16 Swimmer,Adhesive Bandage (k),EnemyKind.DeepMaw,Deep maw,partial,Angler Fish; Rimtera's deep maw is ocean
+120,Chaos Elemental,enemy,Underground hallow,HM,3 Fighter,Rod of Discord (k),EnemyKind.CrystalWraith,Crystal wraith,exact-role,Teleporting chaos elemental
+689 690 693 694,Statue,enemy,Various (1.4.5),any,126 Statue mimic; 24 Bird; 10 Cursed skull; 8 Caster,Water Bolt,-,-,missing,"1.4.5 additions (statue/owl mimics, water-bolt mimic, librarian skeleton)"
+164 165,Wall Creeper,enemy,Spider cave,PHM,3 Fighter; 40 Wall spider,Cobweb (k); Silk (k),EnemyKind.SilkSpiderMite + EnemyKind.WebLurker,Silk spider-mite + Web lurker,exact-role,Wall Creeper (wall-climbing form missing)
+163 238,Black Recluse,enemy,Spider cave,HM,3 Fighter; 40 Wall spider,Spider Fang (k); Poison Staff (k),EnemyKind.VenomRecluse,Venom recluse,exact-role,Black Recluse
+-14 -13 31 294 295 296,Angry Bones,enemy,Dungeon,PHM,3 Fighter,Bone (k); Golden Key (k); Treasure Magnet (k),EnemyKind.CryptHoplite,Crypt hoplite,exact-role,Angry Bones variants
+32 33,Dark Caster,enemy,Dungeon,PHM,8 Caster; 9 Spell,Bone (k); Golden Key (k),EnemyKind.VoidScribe,Void scribe,exact-role,Dark Caster
+34,Cursed Skull,enemy,Dungeon,PHM,10 Cursed skull,Bone (k); Nazar (k),EnemyKind.CryptFlitter,Crypt flitter,exact-role,Cursed Skull
+71,Dungeon Slime,enemy,Dungeon,PHM,1 Slime,Golden Key (k),-,-,missing,Dungeon Slime (golden key carrier)
+70 72,Spike Ball,enemy,Dungeon,PHM,20 Spike ball; 21 Blazing wheel,,-,-,missing,"Trap NPCs (spike ball, blazing wheel)"
+269 270 271 272 273 274 275 276 277 278 279 280 287,Rusty Armored Bones,enemy,Dungeon,post-Plantera,3 Fighter,Keybrand (k); Magnet Sphere (k); Wisp in a Bottle (k); Bone Feather (k); Rocket Launcher (k),EnemyKind.CryptKnight,Crypt knight,exact-role,Armored Bones by wall colour; Bone Lee merged. Design: one late-dungeon roster (no wall-colour split)
+281 282 283 284 285 286,Ragged Caster,enemy,Dungeon,post-Plantera,8 Caster,Spectre Staff (k); Shadowbeam Staff (k); Inferno Fork (k),EnemyKind.HexNecrotech,Hex necrotech,exact-role,Late dungeon casters merged
+291 292 293,Skeleton Sniper,enemy,Dungeon,post-Plantera,3 Fighter,Sniper Rifle (k); Rifle Scope (k),EnemyKind.CryptMarksman,Crypt marksman,exact-role,Late dungeon gunners merged
+288 289,Dungeon Spirit,enemy,Dungeon,post-Plantera,56 Dungeon spirit; 10 Cursed skull,Ectoplasm (k),EnemyKind.CryptSpirit,Crypt spirit,exact-role,Dungeon Spirit; Giant Cursed Skull merged
+-12 -11 6,Eater of Souls,enemy,Corruption,PHM,5 Flyer,Rotten Chunk (k); Ancient Shadow armor (k),EnemyKind.RadMoth + EnemyKind.GeigerBug,Rad moth + Geiger bug,exact-role,Eater of Souls (Radiated Deeps is the corruption analog)
+7 8 9,Devourer,enemy,Corruption,PHM,6 Worm,Worm Tooth (k),EnemyKind.SludgeWorm,Sludge worm,exact-role,Devourer
+-2 -1 81 121,Corrupt Slime,enemy,Corruption,HM,1 Slime; 14 Bat,,EnemyKind.IsotopeGel,Isotope gel,partial,Corrupt Slime splits into slimelings; Slimer flies
+94 112,Corruptor,enemy,Corruption,HM,5 Flyer; 9 Spell,Rotten Chunk (k); Vile Powder (k),EnemyKind.IsotopeWraith,Isotope wraith,partial,Corruptor (spits vile spit)
+98 99 100,World Feeder,enemy,Corruption,HM,6 Worm,Cursed Flame (k),-,-,missing,World Feeder (HM evil worm)
+101,Clinger,enemy,Corruption,HM,13 Tethered plant,Cursed Flame (k),EnemyKind.EventVoidSiphon,Void siphon,partial,Clinger (wall-anchored spitter)
+83,Cursed Hammer,enemy,Underground corruption,HM,23 Flying weapon,Soul of Night (k),-,-,missing,Cursed Hammer (flying weapon)
+79,Dark Mummy,enemy,Corrupt desert,HM,3 Fighter,Dark Shard (k); Mummy set (k),-,-,missing,Dark Mummy
+170 171 180,Pigron,enemy,Snow (evil/hallow),HM,2 Demon eye,Bacon (k); Hamdrax (k),-,-,missing,Pigrons
+525 526 527,Vile Ghoul,enemy,Evil/hallow desert,HM,3 Fighter,Ancient Cloth; Cursed Flame; Dark Shard; Ichor; Light Shard,EnemyKind.DustGhoul,Dust ghoul,merged-into,Biome ghoul variants
+543 544 545,Bone Biter,enemy,Evil/hallow desert,HM,103 Sand shark,Dark Shard; Light Shard,EnemyKind.DuneRazorfin,Dune razorfin,merged-into,Biome sand-shark variants
+-23 -22 173,Crimera,enemy,Crimson,PHM,5 Flyer,Vertebra (k),EnemyKind.ThornBat,Thorn bat,exact-role,Crimera (Overgrowth is the crimson analog)
+181,Face Monster,enemy,Crimson,PHM,3 Fighter,Vertebra (k),EnemyKind.BlightCrawler,Blight crawler,partial,Face Monster
+239 240,Blood Crawler,enemy,Crimson,PHM,3 Fighter; 40 Wall spider,,EnemyKind.RootWyrm,Root wyrm,partial,Blood Crawler (wall spider)
+-25 -24 183,Crimslime,enemy,Crimson,HM,1 Slime,,EnemyKind.RootGel,Root gel,partial,Crimslime; Rimtera's root gel is PHM
+174,Herpling,enemy,Crimson,HM,41 Herpling jumper,Vertebra (k),EnemyKind.BlightHulk,Blight hulk,partial,Herpling (high jumper)
+241 242,Blood Jelly,enemy,Crimson water,HM,18 Jellyfish; 16 Swimmer,Ichor (k),-,-,missing,Crimson swimmers
+268,Ichor Sticker,enemy,Underground crimson,HM,22 Hovering fighter,Ichor (k),EnemyKind.RotChanter,Rot chanter,partial,Ichor Sticker (spitting hoverer)
+182,Floaty Gross,enemy,Crimson,HM,22 Hovering fighter,Vitamins,EnemyKind.VineReaper,Vine reaper,partial,Floaty Gross
+179,Crimson Axe,enemy,Underground crimson,HM,23 Flying weapon,Soul of Night (k),-,-,missing,Crimson Axe (flying weapon)
+75,Pixie,enemy,Hallow,HM,22 Hovering fighter,Pixie Dust (k); Fast Clock (k); Blessed Apple (k),EnemyKind.GlassKite,Glass kite,partial,Pixie
+86,Unicorn,enemy,Hallow,HM,26 Charger (unicorn),Unicorn Horn (k); Blessed Apple (k),EnemyKind.ShardUnicorn,Shard strider,exact-role,Unicorn charger
+122,Gastropod,enemy,Hallow night,HM,22 Hovering fighter,Pink Gel (k); Blessed Apple (k),EnemyKind.LumenCaster,Lumen caster,partial,Gastropod (laser hoverer)
+137,Illuminant Bat,enemy,Underground hallow,HM,14 Bat,Soul of Light (k),EnemyKind.HaloBat,Halo bat,exact-role,Illuminant Bat
+138,Illuminant Slime,enemy,Underground hallow,HM,1 Slime,Soul of Light (k),EnemyKind.PrismGel,Prism gel,exact-role,Illuminant Slime
+84,Enchanted Sword,enemy,Underground hallow,HM,23 Flying weapon,Soul of Light (k),EnemyKind.PrismKnight,Prism knight,partial,Enchanted Sword (flying weapon)
+244,Rainbow Slime,enemy,Hallow (rain),HM,1 Slime,Gel (k),EnemyKind.PrismSwarmer,Prism swarmer,exact-role,Rainbow Slime
+80,Light Mummy,enemy,Hallow desert,HM,3 Fighter,Light Shard (k); Mummy set (k),-,-,missing,Light Mummy
+147 184,Ice Slime,enemy,Snow,PHM,1 Slime,Gel (k),EnemyKind.RimeGel,Rime gel,exact-role,Ice and spiked ice slime
+161,Frozen Zombie,enemy,Snow night,PHM,3 Fighter,Eskimo set (k),EnemyKind.TundraBrute,Tundra brute,partial,Frozen Zombie
+185,Snow Flinx,enemy,Snow,PHM,3 Fighter,Snow Flinx Fur (k),EnemyKind.SnowMite,Snow-mite,partial,Snow Flinx
+150,Ice Bat,enemy,Ice caverns,PHM,14 Bat,Depth Meter (k),EnemyKind.IcicleBat,Icicle bat,exact-role,Ice Bat
+167,Undead Viking,enemy,Ice caverns,PHM,3 Fighter,Viking Helmet (k),EnemyKind.FrostboundDelver,Frostbound delver,exact-role,Undead Viking
+155,Wolf,enemy,Snow,HM,26 Charger (unicorn),Wolf Fang (k),EnemyKind.SnowWolf,Snow-wolf,partial,Wolf is HM in Terraria; Rimtera's snow-wolf is PHM
+169,Ice Elemental,enemy,Ice caverns,HM,22 Hovering fighter,Frost Core (k); Ice Sickle (k),EnemyKind.HoarfrostElemental,Hoarfrost elemental,exact-role,Ice Elemental
+154,Ice Tortoise,enemy,Ice caverns,HM,39 Tortoise/roller,Frozen Turtle Shell (k),EnemyKind.GlacierTortoise,Glacier tortoise,exact-role,Ice Tortoise
+197,Armored Viking,enemy,Ice caverns,HM,3 Fighter,Ice Sickle (k),EnemyKind.GlacierTitan,Glacier titan,partial,Armored Viking
+206,Icy Merman,enemy,Ice caverns,HM,3 Fighter,Frost Staff (k),EnemyKind.CryoCaster,Cryo caster,partial,Icy Merman (frost caster)
+629,Ice Mimic,miniboss,Ice caverns,PHM/HM,25 Mimic,Frostbrand (k); Ice Bow (k); Flower of Frost (k); Toy Sled (k),EnemyKind.FrozenMimic,Frozen mimic,exact-role,Ice Mimic
+61,Vulture,enemy,Desert,PHM,17 Vulture,Feather (k),EnemyKind.SalvageDrone,Salvage drone,partial,"Vulture (waits, then swoops)"
+69,Antlion,enemy,Desert,PHM,19 Antlion,Antlion Mandible (k),-,-,missing,"Antlion (buried, shoots sand); no stationary desert shooter"
+78,Mummy,enemy,Desert,HM,3 Fighter,Mummy set (k); Dark/Light Shard (k),EnemyKind.RustReaper,Rust reaper,partial,Mummy
+537,Sand Slime,enemy,Desert,PHM,1 Slime,Gel (k); Sand (k),EnemyKind.RustGel,Rust gel,exact-role,Sand Slime
+546,Angry Tumbler,enemy,Desert (windy),PHM,26 Charger (unicorn),,EnemyKind.JunkSkitter,Junk-skitter,partial,Angry Tumbleweed (rolling)
+508 580 582,Antlion Charger,enemy,Underground desert,PHM/HM,3 Fighter,Antlion Mandible (k),EnemyKind.PitCharger,Pit charger,exact-role,"Antlion Charger (+larva, HM giant)"
+509 581,Antlion Swarmer,enemy,Underground desert,PHM/HM,44 Flying fish,Antlion Mandible (k),EnemyKind.PitSwarmer,Pit swarmer,exact-role,Antlion Swarmer (+HM giant)
+513 514 515,Tomb Crawler,enemy,Underground desert,PHM,6 Worm,Ancient Cloth (k),EnemyKind.TombBorer,Tomb borer,exact-role,Tomb Crawler
+510 511 512,Dune Splicer,enemy,Underground desert,HM,6 Worm,Ancient Cloth (k),EnemyKind.DuneDevourer,Dune devourer,exact-role,Dune Splicer
+524,Ghoul,enemy,Underground desert,HM,3 Fighter,Ancient Cloth (k),EnemyKind.DustGhoul,Dust ghoul,exact-role,Ghoul
+528 529,Lamia,enemy,Underground desert,HM,3 Fighter,Lamia set (k); Moon Mask (k),-,-,missing,Lamia
+530 531,Sand Poacher,enemy,Underground desert,HM,3 Fighter; 40 Wall spider,Ancient Cloth (k),-,-,missing,Sand Poacher (wall climber)
+532,Basilisk,enemy,Underground desert,HM,3 Fighter,Ancient Horn (k),EnemyKind.RustBasilisk,Rust basilisk,exact-role,Basilisk
+533,Desert Spirit,enemy,Underground desert,HM,8 Caster,Desert Spirit Lamp (k); Ancient Cloth (k),EnemyKind.GritSeer,Grit seer,exact-role,Desert Spirit
+542,Sand Shark,event,Sandstorm,HM,103 Sand shark,Shark Fin (k); Sharktooth Necklace (k),EnemyKind.DuneRazorfin,Dune razorfin,exact-role,Sand Shark
+204,Spiked Jungle Slime,enemy,Jungle,PHM,1 Slime,Stinger,EnemyKind.VineGel,Vine gel,exact-role,Spiked Jungle Slime
+51,Jungle Bat,enemy,Underground jungle,PHM,14 Bat,Depth Meter (k),EnemyKind.CanopyBat,Canopy bat,exact-role,Jungle Bat
+56,Snatcher,enemy,Jungle surface,PHM,13 Tethered plant,Vine (k); Jungle Rose (k),EnemyKind.SnapjawPlant,Snapjaw plant,exact-role,"Snatcher (tethered lunger, D-23)"
+43,Man Eater,enemy,Underground jungle,PHM,13 Tethered plant,Vine (k); Jungle Rose (k),EnemyKind.SnapjawPlant,Snapjaw plant,merged-into,Man Eater
+175,Angry Trapper,enemy,Underground jungle,HM,13 Tethered plant,Vine (k),EnemyKind.StranglerBloom,Strangler bloom,exact-role,Angry Trapper
+-65 -64 -63 -62 -61 -60 -59 -58 -57 -56 -17 -16 42 231 232 233 234 235,Hornet,enemy,Underground jungle,PHM,5 Flyer,Stinger (k); Bezoar (k); Tattered Bee Wing (k),EnemyKind.PollenDroneSwarm + EnemyKind.HornetDrone,Pollen drone swarm + Hornet drone,exact-role,Hornets (stinger shooters) and size variants
+-21 -20 -19 -18 176,Moss Hornet,enemy,Underground jungle,HM,5 Flyer,Stinger (k); Tattered Bee Wing (k),EnemyKind.MossHornet,Moss hornet,exact-role,Moss Hornet
+52,Doctor Bones,enemy,Jungle night (rare),PHM,3 Fighter,Archaeologist's Hat,-,-,missing,Doctor Bones
+236 237,Jungle Creeper,enemy,Underground jungle,PHM,3 Fighter; 40 Wall spider,,EnemyKind.MudCrawler,Mud crawler,partial,Jungle Creeper (wall spider)
+177,Derpling,enemy,Jungle,HM,41 Herpling jumper,,EnemyKind.SpearFrog,Spear frog,partial,Derpling (high jumper); spear frog is PHM
+153,Giant Tortoise,enemy,Underground jungle,HM,39 Tortoise/roller,Turtle Shell (k),EnemyKind.SilverbackBrute,Silverback brute,partial,Giant Tortoise (shell charge)
+152,Giant Flying Fox,enemy,Jungle,HM,14 Bat,Grapes,EnemyKind.CanopyBat,Canopy bat,merged-into,Giant Flying Fox
+205,Moth,enemy,Underground jungle,HM,5 Flyer,Butterfly Dust (k),-,-,missing,Moth (butterfly dust source)
+58,Piranha,enemy,Jungle water,PHM,16 Swimmer,Robot Hat (k),-,-,missing,Piranha; no hostile canopy swimmer
+157,Arapaima,enemy,Jungle water,HM,16 Swimmer,Arapaima scales (k),-,-,missing,Arapaima
+210 211,Bee,enemy,Queen Bee / hive,PHM,5 Flyer,,EnemyKind.BloomMatriarch,Bloom Matriarch,merged-into,Queen Bee's bees
+198 199,Lihzahrd,enemy,Lihzahrd temple,post-Plantera,3 Fighter,,EnemyKind.VaultSentinel,Vault sentinel,exact-role,Lihzahrd and its wall crawler
+226,Flying Snake,enemy,Lihzahrd temple,post-Plantera,14 Bat,Lihzahrd Power Cell (k),EnemyKind.GlyphDrone,Glyph drone,exact-role,Flying Snake
+254 255,Spore Zombie,enemy,Glowing mushroom,PHM,3 Fighter,Glowing Mushroom (k),EnemyKind.SporeZombie,Spore husk,exact-role,Spore Zombie
+257,Anomura Fungus,enemy,Glowing mushroom,PHM,3 Fighter,Glowing Mushroom (k),EnemyKind.FungalCrawler,Fungal crawler,exact-role,Anomura Fungus
+258,Mushi Ladybug,enemy,Glowing mushroom,PHM,3 Fighter,Glowing Mushroom (k),EnemyKind.CapTurtle,Cap turtle,partial,Mushi Ladybug
+259 260 261,Fungi Bulb,enemy,Glowing mushroom,PHM/HM,13 Tethered plant; 50 Spore,Glowing Mushroom (k),EnemyKind.CapSentinel,Cap sentinel,partial,Fungi Bulb (tethered) and its spores
+256,Fungo Fish,enemy,Glowing mushroom water,HM,18 Jellyfish,,EnemyKind.PuffDrifter,Puff drifter,partial,Fungo Fish (swimmer)
+634,Spore Bat,enemy,Glowing mushroom,PHM,14 Bat,Glowing Mushroom (k),EnemyKind.LanternBat,Lantern bat,exact-role,Spore Bat
+635,Spore Skeleton,enemy,Glowing mushroom,PHM,3 Fighter,Glowing Mushroom (k),EnemyKind.ShroomStalker,Shroom stalker,exact-role,Spore Skeleton
+374 375,Truffle Worm,critter,Glowing mushroom,HM,66 Critter worm; 6 Worm,,EnemyKind.TruffleMite,Truffle mite,exact-role,Truffle Worm (Duke bait); Rimtera's abyss bait is crafted
+65,Shark,enemy,Ocean,PHM,16 Swimmer,Shark Fin (k),EnemyKind.AcidShark,Saltjaw shark,exact-role,Shark
+67,Crab,enemy,Ocean,PHM,3 Fighter,,EnemyKind.ReefCrawler + EnemyKind.PincerCrab,Reef crawler + Pincer crab,exact-role,Crab
+63 64,Blue Jellyfish,enemy,Ocean / cavern water,PHM,18 Jellyfish,Glowstick (k),EnemyKind.TideLeech,Tide leech,partial,Jellyfish (shock when hit with melee)
+221,Squid,enemy,Ocean,PHM,18 Jellyfish,Black Ink (k),EnemyKind.InkSquid,Ink squid,exact-role,Squid
+220,Sea Snail,enemy,Ocean,PHM,3 Fighter,Purple Mucus,EnemyKind.ReefCrawler,Reef crawler,merged-into,Sea Snail
+55,Goldfish,critter,Surface water,PHM,16 Swimmer,,EnemyKind.FishSilver + EnemyKind.PondMinnow,Silver fish + Pond minnow,exact-role,Goldfish
+24 25,Fire Imp,enemy,Underworld,PHM,8 Caster; 9 Spell,Obsidian Rose (k); Plumber's Hat (k),EnemyKind.IsotopeImp,Isotope imp,exact-role,Fire Imp
+62 66,Demon,enemy,Underworld,PHM,14 Bat,Demon Scythe (k); Guide Voodoo Doll (Voodoo Demon) (k),EnemyKind.FissionWisp,Fission wisp,partial,Demon (scythe flyer); Voodoo Demon carries the WoF doll; Rimtera's Core igniter is crafted
+59,Lava Slime,enemy,Underworld,PHM,1 Slime,Lava Charm (k),EnemyKind.SlagGel,Slag gel,exact-role,Lava Slime
+60 151,Hellbat,enemy,Underworld,PHM/HM,14 Bat,Magma Stone (k),EnemyKind.ReactorBat,Reactor bat,exact-role,Hellbat and HM Lava Bat
+39 40 41,Bone Serpent,enemy,Underworld,PHM,6 Worm,Hotdog; Bone Serpent Kite,EnemyKind.CoreBorer,Core borer,exact-role,Bone Serpent
+156,Red Devil,enemy,Underworld,HM,14 Bat,Unholy Trident (k); Fire Feather (k),EnemyKind.CriticalWisp,Critical wisp,partial,Red Devil
+46 337 540 614,Bunny,critter,Forest,any,7 Passive/town,,EnemyKind.HopBunny,Hop bunny,exact-role,Bunny and variants
+443,Gold Bunny,critter,Forest,any,7 Passive/town,,EnemyKind.GildedHopBunny,Gilded hop bunny,exact-role,Gold Bunny
+74 297 298,Bird,critter,Forest day,any,24 Bird,,EnemyKind.ThistleFinch + EnemyKind.SkyFlier,Thistle finch + Sky flier,exact-role,Birds
+442,Gold Bird,critter,Forest,any,24 Bird,,EnemyKind.GildedFinch,Gilded finch,exact-role,Gold Bird
+299 538,Squirrel,critter,Forest,any,7 Passive/town,,EnemyKind.SquirrelBot,Squirrel bot,exact-role,Squirrels
+539,Gold Squirrel,critter,Forest,any,7 Passive/town,,EnemyKind.GildedSquirrelBot,Gilded squirrel bot,exact-role,Gold Squirrel
+300,Mouse,critter,Underground,any,7 Passive/town,,EnemyKind.BurrowMole + EnemyKind.WireMouse,Burrow mole + Wire mouse,exact-role,Mouse
+447,Gold Mouse,critter,Underground,any,7 Passive/town,,EnemyKind.GildedVole,Gilded vole,exact-role,Gold Mouse
+610,Rat,critter,Graveyard / underground,any,7 Passive/town,,EnemyKind.TerraRat + EnemyKind.ScrapRat,Terra rat + Scrap rat,exact-role,Rat
+357,Worm,critter,Forest (rain),any,66 Critter worm,,EnemyKind.Worm,Burrow worm,exact-role,Worm (bait)
+448,Gold Worm,critter,Forest,any,66 Critter worm,,-,-,missing,Gold Worm; no gilded worm
+484,Enchanted Nightcrawler,critter,Forest night,any,66 Critter worm,,EnemyKind.LampWorm,Lamp worm,exact-role,Enchanted Nightcrawler (bait)
+485 486 487,Grubby,critter,Underground,any,66 Critter worm,,EnemyKind.RootGrub + EnemyKind.GravelSnail + EnemyKind.GemTick,Root grub + Gravel snail + Gem tick,exact-role,Underground bait critters
+606,Maggot,critter,Graveyard,any,66 Critter worm,,EnemyKind.Rootworm,Rootworm,partial,Maggot
+669,Stinkbug,critter,Graveyard,any,115 Ladybug,,EnemyKind.MutantRoach,Mutant roach,partial,Stinkbug
+356,Butterfly,critter,Forest day,any,65 Butterfly,,EnemyKind.ButterflyBlue + EnemyKind.SunbeamMoth,Blue wingflit + Sunbeam moth,exact-role,Butterflies (8 colours)
+444,Gold Butterfly,critter,Forest,any,65 Butterfly,,EnemyKind.ButterflyGold,Gold wingflit,exact-role,Gold Butterfly
+653,Hell Butterfly,critter,Underworld,any,65 Butterfly,,EnemyKind.FissionMoth,Fission moth,exact-role,Hell Butterfly
+661,Prismatic Lacewing,critter,Hallow night,HM,65 Butterfly,,-,-,missing,Prismatic Lacewing (summons the Empress). Rimtera summons the Prism Empress with the prism catalyst
+355,Firefly,critter,Forest night,any,64 Firefly,,EnemyKind.GlowFirefly,Glow firefly,exact-role,Firefly
+358,Lightning Bug,critter,Hallow night,any,64 Firefly,,EnemyKind.ShardMoth,Shard moth,partial,Lightning Bug
+654,Lavafly,critter,Underworld,any,64 Firefly,,EnemyKind.IsotopeBeetle,Isotope beetle,partial,Lavafly
+677,Faeling,critter,Aether,any,64 Firefly,,-,-,missing,No shimmer biome
+359,Snail,critter,Forest,any,67 Snail,,EnemyKind.Snail + EnemyKind.GravelSnail,Garden snail + Gravel snail,exact-role,Snail
+360,Glowing Snail,critter,Glowing mushroom,any,67 Snail,,EnemyKind.GlowSnail,Glow snail,exact-role,Glowing Snail
+655,Magma Snail,critter,Underworld,any,67 Snail,,EnemyKind.IsotopeBeetle,Isotope beetle,partial,Magma Snail
+361,Frog,critter,Jungle / water,any,7 Passive/town,,EnemyKind.Frog + EnemyKind.LeafFrog,Pond frog + Leaf frog,exact-role,Frog
+445,Gold Frog,critter,Jungle,any,7 Passive/town,,EnemyKind.GildedFrog,Gilded frog,exact-role,Gold Frog
+362 363 364 365 608 609,Duck,critter,Forest water,any,7 Passive/town; 68 Duck,,EnemyKind.Duck,Pond duck,exact-role,Ducks and grebes
+602 603,Seagull,critter,Ocean,any,7 Passive/town; 68 Duck,,EnemyKind.SeaBird,Sea bird,exact-role,Seagull
+611,Owl,critter,Forest night,any,24 Bird,,EnemyKind.Owl,Night owl,exact-role,Owl
+366 367,Scorpion,critter,Desert,any,7 Passive/town,,EnemyKind.DuneLizard + EnemyKind.RustScarab,Dune lizard + Rust scarab,partial,Scorpions
+377,Grasshopper,critter,Forest,any,1 Slime,,EnemyKind.MeadowCricket,Meadow cricket,exact-role,Grasshopper
+446,Gold Grasshopper,critter,Forest,any,1 Slime,,EnemyKind.GildedCricket,Gilded cricket,exact-role,Gold Grasshopper
+148 149,Penguin,critter,Snow,any,7 Passive/town,,EnemyKind.PenguinDrone,Penguin drone,exact-role,Penguin
+592 593,Gold Goldfish,critter,Surface water,any,16 Swimmer; 7 Passive/town,,EnemyKind.GildedMinnow,Gilded minnow,exact-role,Gold Goldfish
+583 584 585,Pink Fairy,critter,Surface night,any,112 Fairy critter,,EnemyKind.LightWispBird,Light-wisp bird,partial,Fairies lead the player to treasure; no guiding behaviour
+595 596 597 598 599 600,Dragonfly,critter,Forest water,any,114 Dragonfly,,EnemyKind.Dragonfly,Glassfly,exact-role,Dragonflies (6 colours)
+601,Gold Dragonfly,critter,Forest water,any,114 Dragonfly,,-,-,missing,Gold Dragonfly; no gilded dragonfly
+604,Ladybug,critter,Forest (windy),any,115 Ladybug,,EnemyKind.LadybugBot,Ladybug bot,exact-role,Ladybug
+605,Gold Ladybug,critter,Forest,any,115 Ladybug,,-,-,missing,Gold Ladybug; no gilded ladybug
+612,Water Strider,critter,Forest water,any,116 Water strider,,EnemyKind.MireSkipper,Mire skipper,exact-role,Water Strider
+613,Gold Water Strider,critter,Forest water,any,116 Water strider,,-,-,missing,Gold Water Strider
+607,Pupfish,critter,Desert oasis,any,16 Swimmer,,-,-,missing,Pupfish; no oasis
+616 617 625,Turtle,critter,Forest / jungle / beach,any,7 Passive/town,,EnemyKind.PuffballTortoise,Puffball tortoise,exact-role,Turtles
+626,Seahorse,critter,Ocean,any,118 Seahorse,,EnemyKind.FuelSeahorse,Fuel seahorse,exact-role,Seahorse
+627,Gold Seahorse,critter,Ocean,any,118 Seahorse,,-,-,missing,Gold Seahorse
+615 688 692,Dolphin,critter,Ocean,any,16 Swimmer,,EnemyKind.ReefStar,Reef star,partial,Ocean swimmers (Orca is 1.4.5); Rimtera has small reef critters only
+671 672 673 674 675,Scarlet Macaw,critter,Jungle,any,24 Bird,,EnemyKind.CanopyParrot,Canopy parrot,exact-role,Jungle birds
+639 640 641 642 643 644 645 646 647 648 649 650 651 652,Amethyst Squirrel,critter,Cavern (gem trees),any,7 Passive/town,,EnemyKind.CrystalBunny + EnemyKind.GemTick,Crystal bunny + Gem tick,partial,14 gem critters (drop their gem)
+676,Shimmer Slime,enemy,Aether,any,1 Slime,,-,-,missing,Shimmer Slime; no shimmer
+488,Target Dummy,critter,Placed,any,92 Target dummy,,-,-,missing,Target Dummy (training NPC with DPS readout)
+378,Chattering Teeth Bomb,enemy,Placed (thrown),any,41 Herpling jumper,,-,-,merged-into,Projectile NPC from the chattering-teeth bomb
+665,ChaosBallTim,enemy,(projectile NPCs),any,9 Spell,,-,-,merged-into,Projectile NPCs; counted with their owners
+76 146,None2,enemy,(unused),-,,,-,-,merged-into,Unused ids
