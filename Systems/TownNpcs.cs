@@ -233,7 +233,8 @@ public static class TownNpcCatalog
             [(BiomeZone.VerdantCanopy, Affection.Love), (BiomeZone.FungalHollows, Affection.Like), (BiomeZone.JunkWasteland, Affection.Hate)],
             [(TownNpcKind.Medic, Affection.Like), (TownNpcKind.Arborist, Affection.Love), (TownNpcKind.Demolitionist, Affection.Hate)],
             [(ItemId.Berry, null), (ItemId.HydroponicsTray, null), (ItemId.PurifierGel, null), (ItemId.PlantPot, null),
-             (ItemId.HerbPlanter, null), (ItemId.BioGel, null), (ItemId.PurifierSprayer, "hearts.broken")],
+             (ItemId.HerbPlanter, null), (ItemId.BioGel, null), (ItemId.PurifierSprayer, "hearts.broken"),
+             (ItemId.PrismGrassBlock, "blight.fracture")],
             ["The canopy breathes. Listen and you can hear it.", "Purifier gel turns blight back to honest soil."]);
         yield return new(TownNpcKind.HeadResearcher, "Head Researcher", "npc_colony_worker", ["Prof. Adaeze Lin", "Prof. Marek Holm"],
             [(BiomeZone.CrystalSpires, Affection.Love), (BiomeZone.Overgrowth, Affection.Dislike)],

@@ -593,6 +593,9 @@ public static class CraftingStationNames
         CraftingStationId.NanoFabricatorMk2 => [CraftingStationId.Workbench, CraftingStationId.FieldWorkbench],
         CraftingStationId.Workbench => [CraftingStationId.FieldWorkbench],
         CraftingStationId.OreRefineryMk2 => [CraftingStationId.Furnace],
+        // Terraria's Glass Kiln counts as a Furnace and its Alchemy Table as a Bottle (Recipe.SetupTileInheritance).
+        CraftingStationId.Kiln => [CraftingStationId.Furnace],
+        CraftingStationId.BioLab => [CraftingStationId.ChemLab],
         CraftingStationId.PowerForgeMk2 => [CraftingStationId.Anvil],
         CraftingStationId.AlloyAnvil => [CraftingStationId.Anvil, CraftingStationId.PowerForgeMk2],
         CraftingStationId.VoidForge => [CraftingStationId.Furnace, CraftingStationId.OreRefineryMk2],

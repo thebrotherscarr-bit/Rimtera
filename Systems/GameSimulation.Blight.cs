@@ -330,6 +330,9 @@ public sealed partial class GameSimulation
         (ItemId.PowerCell, 1, 1, 1), (ItemId.Worm, 1, 3, 1), (ItemId.RopeCoil, 1, 2, 1)
     ];
 
+    /// <summary>Every item a supply cache or salvage pod can hold (crafting audit).</summary>
+    internal static IEnumerable<ItemId> SupplyLootItems => CacheLoot.Concat(PodLoot).Select(entry => entry.Item);
+
     private void GrantLoot(string container, (ItemId Item, int Min, int Max, int Weight)[] table, int rolls)
     {
         var total = table.Sum(entry => entry.Weight);

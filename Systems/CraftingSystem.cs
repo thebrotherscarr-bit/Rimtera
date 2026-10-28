@@ -55,9 +55,15 @@ public sealed class CraftingSystem
     public CraftingSystem(ItemCatalog items)
     {
         _items = items ?? throw new ArgumentNullException(nameof(items));
+        // The opening (docs/CRAFTING_PROGRESSION.md): a felled tree's timber builds the first station by hand, as
+        // Terraria's 10 wood make a work bench, and timber presses into hull panels, the building material most
+        // early recipes use (Terraria's wood). Salvaged hull panels still work for the fabricator.
         Register(new RecipeDefinition(
             "workbench", ItemId.WorkbenchBlock, 1,
-            new[] { IngredientRequirement.Exact(ItemId.WoodBlock, 10) }));
+            new[] { new IngredientRequirement(new[] { ItemId.Timber, ItemId.WoodBlock }, 10) }));
+        Register(new RecipeDefinition(
+            "hull-panel", ItemId.WoodBlock, 1,
+            new[] { IngredientRequirement.Exact(ItemId.Timber, 1) }));
         Register(new RecipeDefinition(
             "furnace", ItemId.FurnaceBlock, 1,
             new[]

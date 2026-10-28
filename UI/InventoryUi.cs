@@ -3,10 +3,29 @@ using Rimtera.World;
 
 namespace Rimtera.UI;
 
-/// <summary>Mouse-held-stack interaction logic shared by player and chest inventory grids.</summary>
+/// <summary>
+/// Mouse-held-stack interaction logic shared by player and chest inventory grids. Given the player's inventory, the
+/// held stack lives on it (<see cref="Inventory.Cursor"/>, Terraria's mouse item), so the world can use it and the
+/// host can return it to the bag when the inventory closes; without one (tests) it is kept here.
+/// </summary>
 public sealed class InventoryUiController
 {
-    public ItemStack CursorStack { get; private set; }
+    private readonly Inventory? _cursorHome;
+    private ItemStack _localCursor;
+
+    public InventoryUiController(Inventory? cursorHome = null) => _cursorHome = cursorHome;
+
+    public ItemStack CursorStack
+    {
+        get => _cursorHome?.Cursor ?? _localCursor;
+        private set
+        {
+            if (_cursorHome is not null)
+                _cursorHome.SetCursor(value);
+            else
+                _localCursor = value.IsEmpty ? default : value;
+        }
+    }
 
     public void LeftClick(Inventory inventory, int slot)
     {
@@ -30,22 +49,33 @@ public sealed class InventoryUiController
         CursorStack = held;
     }
 
-    public void RightClick(Inventory inventory, int slot)
+    /// <summary>
+    /// Terraria's right click on a slot (<c>ItemSlot.RightClick</c>): takes <paramref name="count"/> items (one per
+    /// step of the hold) onto the cursor. With the same item already on the cursor it pulls more onto it, up to a full
+    /// stack; with a different item it does nothing. Returns how many moved.
+    /// </summary>
+    public int RightClick(Inventory inventory, int slot, int count = 1)
     {
         ArgumentNullException.ThrowIfNull(inventory);
         Validate(inventory, slot);
-        if (CursorStack.IsEmpty)
+        var available = inventory.Slots[slot];
+        if (available.IsEmpty || count <= 0)
+            return 0;
+        var held = CursorStack;
+        if (held.IsEmpty)
         {
-            var available = inventory.Slots[slot];
-            if (!available.IsEmpty)
-                CursorStack = inventory.TakeFromSlot(slot, (available.Count + 1) / 2);
-            return;
+            var taken = inventory.TakeFromSlot(slot, count);
+            CursorStack = taken;
+            return taken.Count;
         }
-
-        var one = new ItemStack(CursorStack.ItemId, 1);
-        var remainder = inventory.PlaceIntoSlot(slot, one);
-        if (remainder.IsEmpty)
-            CursorStack = CursorStack with { Count = CursorStack.Count - 1 };
+        if (held.ItemId != available.ItemId || held.Calibration != available.Calibration)
+            return 0;
+        var room = inventory.Catalog[held.ItemId].MaxStack - held.Count;
+        if (room <= 0)
+            return 0;
+        var more = inventory.TakeFromSlot(slot, Math.Min(count, room));
+        CursorStack = held with { Count = held.Count + more.Count };
+        return more.Count;
     }
 
     public int QuickTransfer(Inventory from, int fromSlot, Inventory to)
@@ -69,6 +99,9 @@ public sealed class InventoryUiController
     }
 
     public void DropCursor() => CursorStack = default;
+
+    /// <summary>Replaces the cursor stack (returning the trash's remainder, for one).</summary>
+    public void SetCursor(ItemStack stack) => CursorStack = stack;
 
     /// <summary>Puts a stack on the empty cursor (taking an item back out of the trash).</summary>
     public void PickUp(ItemStack stack)
@@ -104,14 +137,21 @@ public static class InventoryLayout
     public static float ChestTop(int playerSlots) => HintTop(playerSlots) + 30f;
     public static float CraftingTop(int playerSlots, int chestSlots) =>
         (chestSlots > 0 ? ChestTop(playerSlots) + 24f + GridHeight(chestSlots) : HintTop(playerSlots) + 24f) + 34f;
+
+    /// <summary>The recipe guide's item slot sits where a chest's first row would, under its heading.</summary>
+    public static float GuideSlotTop(int playerSlots) => ChestTop(playerSlots) + 24f;
+
+    /// <summary>With the recipe guide open, its recipe list starts under the guide slot (one chest row's worth of space).</summary>
+    public static float GuideListTop(int playerSlots) => CraftingTop(playerSlots, Columns);
 }
 
 /// <summary>
 /// The inventory screen, the hub Escape opens as in Terraria: inventory and hotbar, sort / quick stack / trash,
 /// an open chest with Loot all, Deposit all, Quick stack, Restock and Sort, crafting (drawn by the canvas), worn
 /// gear with loadouts, tabs for housing, crew, bestiary and feats, and the Settings button. Clicks follow
-/// Terraria: left picks up and places, right takes half or equips, Shift moves to the open chest (or equips, or
-/// trashes), Ctrl trashes, Alt marks a favorite.
+/// Terraria (ItemSlot): left picks up, places or swaps on the press; right takes one onto the cursor and keeps taking
+/// while held (or equips); Shift moves to or from the open chest and otherwise does nothing; Ctrl trashes; Alt marks a
+/// favorite. The cursor stack lives on the player's inventory (Terraria's mouse item), usable in the world.
 /// </summary>
 public sealed class InventoryUiState : UiState
 {
@@ -124,21 +164,91 @@ public sealed class InventoryUiState : UiState
     private readonly string _chestTitle;
     private Tab _tab;
     private string? _housingReport;
+    private UiTextElement? _guideCaption;
 
     private enum Tab { Gear, Housing }
 
     public InventoryUiState(Inventory playerInventory, InventoryUiController? controller = null, Inventory? chest = null,
-        GameSimulation? game = null, GridPoint? chestCell = null, string chestTitle = "Chest")
+        GameSimulation? game = null, GridPoint? chestCell = null, string chestTitle = "Chest", GuideLookupState? guide = null,
+        bool showAlmostCraftable = false)
         : base("inventory", style: new UiStyle { Width = UiLength.Pct(1f), Height = UiLength.Pct(1f) })
     {
         PlayerInventory = playerInventory ?? throw new ArgumentNullException(nameof(playerInventory));
         ChestInventory = chest;
-        _controller = controller ?? new InventoryUiController();
+        _controller = controller ?? new InventoryUiController(playerInventory);
         _game = game;
         _chestCell = chestCell;
         _chestTitle = chestTitle;
+        // The recipe guide takes the chest's place, so it opens only without a container.
+        Guide = chest is null ? guide : null;
+        ShowAlmostCraftable = showAlmostCraftable;
         Build();
     }
+
+    /// <summary>
+    /// The station AI's recipe guide (Terraria's Guide slot) when it is open in place of crafting: the looked-up item,
+    /// the Used in / Made from view and the lookup history. Null while the crafting list shows.
+    /// </summary>
+    public GuideLookupState? Guide { get; private set; }
+
+    /// <summary>The crafting list also shows recipes the player is close to (greyed, with what's missing in red).</summary>
+    public bool ShowAlmostCraftable { get; private set; }
+
+    /// <summary>Raised when the player flips the "close to" toggle, so the host can remember it.</summary>
+    public event Action<bool>? AlmostCraftableChanged;
+
+    /// <summary>Raised by "Recipe guide" while a chest is open: the host reopens the inventory with the guide in its place.</summary>
+    public event Action<ItemId?>? GuideRequested;
+
+    /// <summary>Raised by the "Station AI tips" button: the host opens the station AI's advice.</summary>
+    public event Action? TipsRequested;
+
+    /// <summary>Where the canvas draws the crafting list or, with the guide open, the guide's recipe list.</summary>
+    public float CraftingTop => Guide is not null
+        ? InventoryLayout.GuideListTop(PlayerInventory.SlotCount)
+        : InventoryLayout.CraftingTop(PlayerInventory.SlotCount, ChestInventory?.SlotCount ?? 0);
+
+    /// <summary>Opens the recipe guide in place of crafting (with <paramref name="item"/> in its slot, if given).</summary>
+    public void OpenGuide(ItemId? item = null, GuideView? view = null)
+    {
+        if (ChestInventory is not null)
+            return;
+        Guide ??= new GuideLookupState();
+        if (item is { } lookup)
+            Guide.LookUp(lookup, view);
+        else if (view is { } chosen)
+            Guide.View = chosen;
+        Rebuild();
+    }
+
+    /// <summary>Closes the recipe guide and shows crafting again.</summary>
+    public void CloseGuide()
+    {
+        Guide = null;
+        Rebuild();
+    }
+
+    /// <summary>Looks an item up in the open guide (an ingredient or result clicked in its list, or the slot).</summary>
+    public void GuideLookUp(ItemId item)
+    {
+        if (Guide is null)
+            return;
+        Guide.LookUp(item);
+        RefreshGuideCaption();
+    }
+
+    /// <summary>Shows or hides the recipes the player is close to in the crafting list.</summary>
+    public void SetShowAlmostCraftable(bool show)
+    {
+        if (ShowAlmostCraftable == show)
+            return;
+        ShowAlmostCraftable = show;
+        AlmostCraftableChanged?.Invoke(show);
+        Rebuild();
+    }
+
+    /// <summary>Raised by the chest's "Rename" button (Terraria's <c>ChestUI.RenameChest</c>); the host prompts for the name.</summary>
+    public event Action<GridPoint>? RenameRequested;
 
     /// <summary>Raised by the "Cargo pod" button; the host reopens the screen with the bank as the container.</summary>
     public event Action? BankRequested;
@@ -161,7 +271,7 @@ public sealed class InventoryUiState : UiState
     public string StatusText => _statusLabel?.Text ?? string.Empty;
 
     /// <summary>The click hints shown under the grid until an action reports something.</summary>
-    public const string ClickHints = "Shift-click  move     Ctrl-click  trash     Alt-click  favorite     Right-click  equip";
+    public const string ClickHints = "Shift-click  to chest     Ctrl-click  trash     Alt-click  favorite     Right-click  take one / equip";
 
     public void SelectHotbarSlot(int index) => PlayerInventory.Select(index);
 
@@ -170,7 +280,7 @@ public sealed class InventoryUiState : UiState
 
     /// <summary>A click on a player-grid slot with the given modifiers, as the screen handles it (for hosts and tests).</summary>
     public void ClickPlayerSlot(int slot, UiPointerButton button = UiPointerButton.Left, bool shift = false, bool ctrl = false, bool alt = false) =>
-        HandleSlotClick(PlayerInventory, slot, button, shift, ctrl, alt, doubleClick: false);
+        HandleSlotClick(PlayerInventory, slot, button, shift, ctrl, alt);
 
     private void Build()
     {
@@ -188,6 +298,8 @@ public sealed class InventoryUiState : UiState
             Width = UiLength.Px(InventoryLayout.Columns * InventoryLayout.Stride + 10f), Height = UiLength.Px(18f)
         }) { Scale = 0.7f, Color = new UiColor(170, 178, 192) };
         Add(_statusLabel);
+        if (Guide is not null && _game is not null)
+            AddGuideSlot();
         if (ChestInventory is not null)
         {
             var chestTop = InventoryLayout.ChestTop(playerSlots);
@@ -249,10 +361,20 @@ public sealed class InventoryUiState : UiState
             Left = UiLength.Px(x), Top = UiLength.Px(InventoryLayout.HintTop(PlayerInventory.SlotCount) - InventoryLayout.Stride),
             Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot)
         });
-        // Terraria's trash: drop a held stack in (destroying what was there); click it empty-handed to take it back.
+        trash.ClickOnPress = true;
+        // Terraria's trash: drop a held stack in (destroying what was there); click it empty-handed to take it back, or
+        // Shift-click it to send it straight back to the inventory (GetAlternateClickAction: TransferToBackpack).
         trash.OnClick(_ =>
         {
-            if (!_controller.CursorStack.IsEmpty)
+            if (Modifiers().Shift && _controller.CursorStack.IsEmpty && !game.TrashSlot.IsEmpty)
+            {
+                var back = game.TakeTrash();
+                var added = PlayerInventory.Add(back.ItemId, back.Count, back.Calibration);
+                if (added < back.Count)
+                    game.PutInTrash(back with { Count = back.Count - added });
+                Status(added > 0 ? "Back in the inventory." : "No room.");
+            }
+            else if (!_controller.CursorStack.IsEmpty)
             {
                 game.PutInTrash(_controller.CursorStack);
                 _controller.DropCursor();
@@ -277,21 +399,102 @@ public sealed class InventoryUiState : UiState
         Button("chest-quick-stack", "Quick stack", x, top + 60f, InventoryLayout.SideWidth, () => Status($"Stacked {game.QuickStackInto(_chestCell)} items here."));
         Button("chest-restock", "Restock", x, top + 90f, InventoryLayout.SideWidth, () => Status($"Restocked {game.Restock(_chestCell)} items."));
         Button("chest-sort", "Sort", x, top + 120f, InventoryLayout.SideWidth, () => Status(game.SortContainer(_chestCell) ? "Sorted the container." : "Nothing to sort."));
+        if (_chestCell is { } cell)
+            Button("chest-rename", "Rename", x, top + 150f, InventoryLayout.SideWidth, () => RenameRequested?.Invoke(cell));
     }
 
-    /// <summary>The crafting heading and the station AI, which (like Terraria's Guide) tells you what your materials make.</summary>
+    /// <summary>
+    /// The crafting heading with its toggles: also show recipes you're close to, the station AI's recipe guide (Terraria's
+    /// Guide: hand it an item to see what it makes) and its tips. With the guide open, the heading switches its views.
+    /// </summary>
     private void AddCraftingHeader(GameSimulation game)
     {
-        var top = InventoryLayout.CraftingTop(PlayerInventory.SlotCount, ChestInventory?.SlotCount ?? 0) - 30f;
-        Add(new UiTextElement("Crafting", "crafting-title", new UiStyle
+        var top = CraftingTop - 30f;
+        Add(new UiTextElement(Guide is null ? "Crafting" : "Recipe guide", "crafting-title", new UiStyle
         {
             Left = UiLength.Px(InventoryLayout.Left - 10f), Top = UiLength.Px(top), Width = UiLength.Px(140f), Height = UiLength.Px(26f)
         }) { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
-        Button("crafting-guide", "Ask station AI", InventoryLayout.Left + 130f, top, 140f, () =>
+        if (Guide is null)
         {
-            var advice = game.ConsultGuide();
-            Status(advice.Count > 0 ? advice[0] : "The station AI has nothing new to suggest.");
+            Button("crafting-almost", ShowAlmostCraftable ? "Close to: shown" : "Close to: hidden", InventoryLayout.Left + 110f, top, 140f,
+                () => SetShowAlmostCraftable(!ShowAlmostCraftable), height: 26f);
+            Button("crafting-guide", "Recipe guide", InventoryLayout.Left + 256f, top, 120f, () =>
+            {
+                // Seeds the guide with the item on the cursor or in hand, as handing the Guide an item would. The guide
+                // takes the chest's place, so with a chest open the host reopens the inventory without it.
+                ItemId? item = !_controller.CursorStack.IsEmpty ? _controller.CursorStack.ItemId
+                    : PlayerInventory.SelectedStack.IsEmpty ? null : PlayerInventory.SelectedStack.ItemId;
+                if (ChestInventory is null)
+                    OpenGuide(item);
+                else
+                    GuideRequested?.Invoke(item);
+            }, height: 26f);
+            Button("crafting-tips", "Station AI tips", InventoryLayout.Left + 382f, top, 128f, () => TipsRequested?.Invoke(), height: 26f);
+            return;
+        }
+        var guide = Guide;
+        void ViewButton(string id, string text, GuideView view, float left) =>
+            Add(new UiButtonElement(text, () => { guide.View = view; guide.Scroll = 0; Rebuild(); }, id, new UiStyle
+            {
+                Left = UiLength.Px(InventoryLayout.Left + left), Top = UiLength.Px(top), Width = UiLength.Px(100f), Height = UiLength.Px(26f)
+            }) { TextScale = 0.75f, Color = guide.View == view ? UiColor.ButtonActive : UiColor.ButtonDefault });
+        ViewButton("guide-used-in", "Used in", GuideView.UsedIn, 110f);
+        ViewButton("guide-made-from", "Made from", GuideView.MadeFrom, 214f);
+        Button("guide-back", "Back", InventoryLayout.Left + 318f, top, 70f, () =>
+        {
+            if (guide.Back())
+                RefreshGuideCaption();
         }, height: 26f);
+        Button("guide-close", "Crafting", InventoryLayout.Left + 392f, top, 100f, CloseGuide, height: 26f);
+    }
+
+    /// <summary>
+    /// The guide's item slot, where a chest would sit: click it holding an item (or Shift-click an inventory item) to look
+    /// that item up; click it empty-handed to clear it. The item itself never leaves the inventory or the cursor.
+    /// </summary>
+    private void AddGuideSlot()
+    {
+        var guide = Guide!;
+        var playerSlots = PlayerInventory.SlotCount;
+        Add(new UiTextElement("Station AI · recipe guide", "guide-heading", new UiStyle
+        {
+            Left = UiLength.Px(InventoryLayout.Left - 10f), Top = UiLength.Px(InventoryLayout.ChestTop(playerSlots)), Width = UiLength.Px(300f), Height = UiLength.Px(22f)
+        }) { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
+        var slot = new UiStackSlotElement("guide-slot", "Item", () => guide.Item is { } item ? new ItemStack(item, 1) : default, new UiStyle
+        {
+            Left = UiLength.Px(InventoryLayout.Left), Top = UiLength.Px(InventoryLayout.GuideSlotTop(playerSlots)),
+            Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot)
+        });
+        slot.OnClick(_ =>
+        {
+            if (!_controller.CursorStack.IsEmpty)
+                GuideLookUp(_controller.CursorStack.ItemId);
+            else
+            {
+                guide.Clear();
+                RefreshGuideCaption();
+            }
+        });
+        Add(slot);
+        _guideCaption = new UiTextElement(string.Empty, "guide-caption", new UiStyle
+        {
+            Left = UiLength.Px(InventoryLayout.Left + InventoryLayout.Stride + 4f), Top = UiLength.Px(InventoryLayout.GuideSlotTop(playerSlots) + 2f),
+            Width = UiLength.Px(InventoryLayout.Columns * InventoryLayout.Stride - InventoryLayout.Stride - 10f), Height = UiLength.Px(42f)
+        }) { Scale = 0.72f, Color = new UiColor(200, 206, 218), Wrap = true };
+        Add(_guideCaption);
+        RefreshGuideCaption();
+    }
+
+    /// <summary>The line beside the guide slot: what is looked up and how to use the guide.</summary>
+    public string GuideCaption => _guideCaption?.Text ?? string.Empty;
+
+    private void RefreshGuideCaption()
+    {
+        if (_guideCaption is null || Guide is null || _game is null)
+            return;
+        _guideCaption.Text = Guide.Item is { } item
+            ? $"{_game.Items[item].Name}: {(Guide.View == GuideView.UsedIn ? "what it is used in" : "what makes it")}. Click any item below to look it up; Back returns."
+            : "Click this slot while holding an item, or Shift-click an item in your inventory, to see every recipe that uses it.";
     }
 
     /// <summary>Right side: loadouts, worn gear (or the housing panel) and the tabs.</summary>
@@ -334,6 +537,9 @@ public sealed class InventoryUiState : UiState
         _tab = tab;
         Rebuild();
     }
+
+    /// <summary>Rebuilds the screen from the game's current state (a loadout switched from the keyboard, for one).</summary>
+    public void Refresh() => Rebuild();
 
     private void Rebuild()
     {
@@ -427,12 +633,13 @@ public sealed class InventoryUiState : UiState
             })
             {
                 Badge = player && slotIndex < Inventory.HotbarSlots ? ((slotIndex + 1) % 10).ToString() : null,
-                ShowSelection = player
+                ShowSelection = player,
+                ClickOnPress = true
             };
             element.OnClick(input =>
             {
                 var (shift, ctrl, alt) = Modifiers();
-                HandleSlotClick(inventory, slotIndex, input.Button, shift, ctrl, alt, input.IsDoubleClick);
+                HandleSlotClick(inventory, slotIndex, input.Button, shift, ctrl, alt);
             });
             element.OnActivate(_ => { _controller.LeftClick(inventory, slotIndex); RefreshCursorLabel(); });
             _slots.Add(element);
@@ -440,11 +647,23 @@ public sealed class InventoryUiState : UiState
         }
     }
 
-    private void HandleSlotClick(Inventory inventory, int slotIndex, UiPointerButton button, bool shift, bool ctrl, bool alt, bool doubleClick)
+    /// <summary>
+    /// A press on a grid slot, as Terraria's <c>ItemSlot</c> handles it (<c>OverrideHover</c> / <c>GetAlternateClickAction</c> /
+    /// <c>LeftClick</c>): Alt toggles a favourite; Ctrl trashes (favourites refuse); Shift moves the stack to or from the open
+    /// chest, or hands it to the open recipe guide, and with neither does nothing (Terraria leaves Shift-trash off by
+    /// default); a plain left press picks up, places, merges or swaps. A right press goes through <see cref="RightPress"/>,
+    /// which the host repeats while the button is held (<see cref="TickRightHold"/>).
+    /// </summary>
+    private void HandleSlotClick(Inventory inventory, int slotIndex, UiPointerButton button, bool shift, bool ctrl, bool alt)
     {
+        if (button == UiPointerButton.Right)
+        {
+            RightPress(inventory, slotIndex, fresh: true, count: 1);
+            return;
+        }
         var player = ReferenceEquals(inventory, PlayerInventory);
         var stack = inventory.Slots[slotIndex];
-        if (_game is not null && player && button == UiPointerButton.Left && _controller.CursorStack.IsEmpty && !stack.IsEmpty)
+        if (_game is not null && player && _controller.CursorStack.IsEmpty && !stack.IsEmpty)
         {
             if (alt)
             {
@@ -458,42 +677,65 @@ public sealed class InventoryUiState : UiState
                 return;
             }
         }
-        if (shift && button == UiPointerButton.Left && _controller.CursorStack.IsEmpty && !stack.IsEmpty)
+        if (shift && _controller.CursorStack.IsEmpty && !stack.IsEmpty)
         {
-            if (ChestInventory is not null)
+            if (Guide is not null && player)
+                // With the recipe guide open, Shift-click hands the item to the guide (Terraria's Guide slot).
+                GuideLookUp(stack.ItemId);
+            else if (ChestInventory is not null)
             {
                 var moved = player ? _controller.QuickTransfer(PlayerInventory, slotIndex, ChestInventory)
                     : _controller.QuickTransfer(ChestInventory, slotIndex, PlayerInventory);
                 Status(moved > 0 ? $"Moved {moved}." : "No room.");
             }
-            else if (_game is not null && player && _game.Items[stack.ItemId].EquipmentSlot is not null)
-                Status(_game.TryEquipFromInventory(slotIndex) ? $"Equipped {_game.Items[stack.ItemId].Name}." : $"Cannot equip {_game.Items[stack.ItemId].Name}.");
-            else if (_game is not null && player)
-                Status(_game.TrashInventorySlot(slotIndex) ? "Trashed." : "Favorites can't be trashed.");
             RefreshCursorLabel();
             return;
         }
-        if (doubleClick && ChestInventory is not null)
-        {
-            if (player) _controller.QuickTransfer(PlayerInventory, slotIndex, ChestInventory);
-            else _controller.QuickTransfer(ChestInventory, slotIndex, PlayerInventory);
-            RefreshCursorLabel();
+        _controller.LeftClick(inventory, slotIndex);
+        RefreshCursorLabel();
+    }
+
+    private readonly StackSplitRepeater _rightHold = new();
+    private bool _rightHeldLastTick;
+
+    /// <summary>
+    /// Called by the host every tick with the element under the pointer and whether the right button (pressed on the
+    /// interface) is held. Over a grid slot the press takes one item (or equips), and holding keeps taking at Terraria's
+    /// accelerating rate: after 30 ticks, then every 7 ticks and faster (<see cref="StackSplitRepeater"/>).
+    /// </summary>
+    public void TickRightHold(UiElement? hovered, bool rightHeld)
+    {
+        var slot = hovered as UiItemSlotElement;
+        var fresh = rightHeld && !_rightHeldLastTick;
+        _rightHeldLastTick = rightHeld;
+        var take = _rightHold.Tick(rightHeld && slot is not null);
+        if (take > 0 && slot is not null)
+            RightPress(slot.Inventory, slot.SlotIndex, fresh, take);
+    }
+
+    /// <summary>
+    /// One step of a right click on a slot. On the press itself an equippable single item in the player's grid is put on
+    /// (<c>SwapEquip</c>); otherwise <paramref name="count"/> items move onto the cursor (Terraria's stack split).
+    /// </summary>
+    private void RightPress(Inventory inventory, int slotIndex, bool fresh, int count)
+    {
+        var player = ReferenceEquals(inventory, PlayerInventory);
+        var stack = inventory.Slots[slotIndex];
+        if (stack.IsEmpty)
             return;
-        }
-        // Right-clicking armor or an accessory in the player grid wears it (Terraria-style quick equip).
-        if (button != UiPointerButton.Left && _game is not null && player && _controller.CursorStack.IsEmpty && !stack.IsEmpty &&
+        if (fresh && _game is not null && player && _controller.CursorStack.IsEmpty && stack.Count == 1 &&
             _game.Items[stack.ItemId].EquipmentSlot is not null)
         {
             var name = _game.Items[stack.ItemId].Name;
             Status(_game.TryEquipFromInventory(slotIndex) ? $"Equipped {name}." : $"Cannot equip {name}.");
             return;
         }
-        if (button == UiPointerButton.Left) _controller.LeftClick(inventory, slotIndex);
-        else _controller.RightClick(inventory, slotIndex);
+        _controller.RightClick(inventory, slotIndex, count);
         RefreshCursorLabel();
     }
 
-    private void RefreshCursorLabel()
+    /// <summary>Shows what rides on the cursor (refreshed every tick: a use in the world or a throw changes it too).</summary>
+    public void RefreshCursorLabel()
     {
         if (_cursorLabel is not null)
             _cursorLabel.Text = _controller.CursorStack.IsEmpty

@@ -104,7 +104,8 @@ public static class BiomeSpawnTables
         [
             new(EnemyKind.PrismKnight, 0.12f, 0.14f), new(EnemyKind.ShardUnicorn, 0.08f, 0.06f), new(EnemyKind.LightMimic, 0.03f, 0.03f),
             new(EnemyKind.CrystalWraith, 0.06f, 0.14f), new(EnemyKind.RefractorTurret, 0.06f, 0.06f), new(EnemyKind.HaloBat, 0.08f, 0.14f),
-            new(EnemyKind.PearlGolem, 0.05f, 0.05f), new(EnemyKind.SpireDragonfly, 0.12f, 0.06f), new(EnemyKind.PrismButterfly, 0.12f, 0.04f),
+            // Pearl golems (lumenite ore, the drill-power-85 ore) roam only the post-Fracture roster below.
+            new(EnemyKind.SpireDragonfly, 0.12f, 0.06f), new(EnemyKind.PrismButterfly, 0.12f, 0.04f),
             new(EnemyKind.LightWispBird, 0.08f, 0.04f), new(EnemyKind.CrystalBunny, 0.12f, 0.06f), new(EnemyKind.HaloSnail, 0.08f, 0.08f)
         ],
         [BiomeZone.MiteWarrens] =

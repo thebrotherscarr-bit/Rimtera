@@ -34,3 +34,6 @@ desktop.ini
 # Audacity project scratch files (SQLite write-ahead log)
 *.aup4-shm
 *.aup4-wal
+
+# Python bytecode from the ComfyUI tools
+__pycache__/

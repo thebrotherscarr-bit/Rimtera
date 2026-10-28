@@ -117,7 +117,7 @@ public sealed partial class GameSimulation
             PlayerProfile.Id,
             PlayerProfile.Name,
             DateTimeOffset.UtcNow,
-            Player.Inventory.Slots.ToArray(),
+            Player.Inventory.SlotsWithCursorReturned(),
             Player.Inventory.SelectedSlot,
             CaptureEquipmentWithCalibrations(),
             loadouts,

@@ -58,7 +58,8 @@ public sealed record PlayerWorldSnapshot(
     BannerTileSnapshot[]? Banners = null,
     Dictionary<string, int>? KillCounts = null,
     BestiarySnapshot[]? Bestiary = null,
-    float RespawnSecondsRemaining = 0f);
+    float RespawnSecondsRemaining = 0f,
+    SignSnapshot[]? ChestNames = null);
 
 public sealed record SignSnapshot(int X, int Y, string Text);
 public sealed record BannerTileSnapshot(int X, int Y, EnemyKind Kind);
@@ -118,6 +119,29 @@ public sealed partial class GameSimulation
     private readonly EquipmentSnapshot?[] _loadouts = new EquipmentSnapshot?[LoadoutCount];
     private Inventory? _bank;
     private readonly Dictionary<GridPoint, string> _signs = new();
+    private readonly Dictionary<GridPoint, string> _chestNames = new();
+
+    /// <summary>Terraria caps a chest name at 20 characters (<c>ChestUI.RenameChest</c>).</summary>
+    public const int ChestNameMaxLength = 20;
+
+    private bool IsContainerCell(GridPoint cell) =>
+        World.Contains(cell) && ContentTiles.Has(World.GetCell(cell).TileId, TileTraits.Container);
+
+    /// <summary>The name given to the chest at <paramref name="cell"/>, or null when it has none.</summary>
+    public string? GetChestName(GridPoint cell) => _chestNames.TryGetValue(cell, out var name) ? name : null;
+
+    /// <summary>Names (or, with empty text, unnames) the chest at <paramref name="cell"/>, as Terraria's chest Rename does.</summary>
+    public bool SetChestName(GridPoint cell, string? name)
+    {
+        if (!IsContainerCell(cell))
+            return false;
+        name = name?.Trim();
+        if (string.IsNullOrEmpty(name))
+            _chestNames.Remove(cell);
+        else
+            _chestNames[cell] = name.Length > ChestNameMaxLength ? name[..ChestNameMaxLength] : name;
+        return true;
+    }
     private readonly Dictionary<GridPoint, EnemyKind> _bannerTiles = new();
     private readonly Dictionary<EnemyKind, int> _killCounts = new();
     private readonly HashSet<EnemyKind> _activeBanners = new();
@@ -1089,6 +1113,9 @@ public sealed partial class GameSimulation
         foreach (var cell in _signs.Keys.ToArray())
             if (!World.Contains(cell) || !PlayerTiles.HoldsText(World.GetCell(cell).TileId))
                 _signs.Remove(cell);
+        foreach (var cell in _chestNames.Keys.ToArray())
+            if (!IsContainerCell(cell))
+                _chestNames.Remove(cell);
     }
 
     /// <summary>Drops loot from a defeated creature (collected at once when it died within reach) and logs it.</summary>
@@ -1201,7 +1228,8 @@ public sealed partial class GameSimulation
         _bannerTiles.Select(pair => new BannerTileSnapshot(pair.Key.X, pair.Key.Y, pair.Value)).ToArray(),
         _killCounts.ToDictionary(pair => pair.Key.ToString(), pair => pair.Value),
         Bestiary.Capture(),
-        _respawnSeconds);
+        _respawnSeconds,
+        _chestNames.Select(pair => new SignSnapshot(pair.Key.X, pair.Key.Y, pair.Value)).ToArray());
 
     private void RestorePlayerWorld(PlayerWorldSnapshot? state)
     {
@@ -1214,6 +1242,9 @@ public sealed partial class GameSimulation
             if (World.Contains(cell) && sign.Text is { Length: > 0 } text && PlayerTiles.HoldsText(World.GetCell(cell).TileId))
                 _signs[cell] = text.Length > 240 ? text[..240] : text;
         }
+        foreach (var name in state.ChestNames ?? [])
+            if (name.Text is { Length: > 0 } text)
+                _chestNames[new GridPoint(name.X, name.Y)] = text.Length > ChestNameMaxLength ? text[..ChestNameMaxLength] : text;
         foreach (var banner in state.Banners ?? [])
         {
             var cell = new GridPoint(banner.X, banner.Y);

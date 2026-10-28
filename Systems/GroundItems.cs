@@ -56,6 +56,14 @@ public sealed partial class GameSimulation
     private Random GroundRandom => _groundRandomField ??= new Random(Seed ^ 0x6A0D17E);
 
     /// <summary>Loose items in the world (render with the item sprite at <see cref="GroundItem.Position"/>).</summary>
+    /// <summary>Crafting audit: empties the pack and the ground between scanned tile breaks.</summary>
+    internal void ClearAuditLoot()
+    {
+        _groundItems.Clear();
+        foreach (var stack in Player.Inventory.Slots.Where(stack => !stack.IsEmpty).ToArray())
+            Player.Inventory.TryConsume(stack.ItemId, stack.Count);
+    }
+
     public IReadOnlyList<GroundItem> GroundItems => _groundItems;
 
     /// <summary>Current grab radius (larger with a magnet accessory).</summary>

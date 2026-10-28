@@ -350,7 +350,9 @@ public static class PlayerStatsCalculator
         var life = 100f;
         var mana = 20f;
         var defense = 0;
-        var lifeRegen = 0.035f;
+        // No base regeneration: the player heals by Terraria's natural regen formula (GameSimulation.UpdateLifeRegen) plus
+        // gear and buffs only. The old free 0.035 per hour was a colonist-style recovery Terraria's player never gets.
+        var lifeRegen = 0f;
         var manaRegen = 0.05f;
         var damage = 1f;
         var knockback = 1f;

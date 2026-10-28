@@ -1212,9 +1212,10 @@ public sealed class MenuFlow
                 entries.Add(Toggle("Damage text", () => Preferences.DamageNumbers, value => Preferences.DamageNumbers = value, "Floating numbers when anything takes damage."));
                 break;
             case OptionsCategory.Interface:
-                entries.Add(Percent("Zoom", () => Preferences.Zoom, value => Preferences.Zoom = value, 0.1f, 0.6f, 2f, "How close the camera is to the world. In game, Ctrl + mouse wheel zooms too."));
+                entries.Add(Percent("Zoom", () => Preferences.Zoom, value => Preferences.Zoom = value, 0.1f, 0.6f, 2f, "How close the camera is to the world. In game, = and - zoom too."));
                 entries.Add(Percent("UI scale", () => Preferences.UiScale, value => Preferences.UiScale = value, 0.05f, 0.75f, 1.5f, "Size of menus and panels."));
                 entries.Add(Choice("Health bars", () => Preferences.EnemyHealthBars, value => Preferences.EnemyHealthBars = value, "Above or below damaged creatures, or hidden."));
+                entries.Add(Toggle("Guide hints", () => Preferences.GuideHints, value => Preferences.GuideHints = value, "The station AI's next-step hint at the top of the screen. Click its × to hide one tip."));
                 break;
             case OptionsCategory.Video:
                 entries.Add(new($"Window mode: {DisplayOptions.ModeLabel(Preferences.ScreenMode)}", Adjust: amount =>
@@ -1263,7 +1264,7 @@ public sealed class MenuFlow
     {
         var entries = new List<MenuEntry>
         {
-            new("Left click uses   ·   Right click interacts   ·   Wheel picks a hotbar slot   ·   Ctrl + wheel zooms", Enabled: false)
+            new("Left click uses   ·   Right click interacts   ·   Wheel picks a hotbar slot   ·   = and - zoom", Enabled: false)
         };
         foreach (var group in ControlCatalog.All.GroupBy(action => action.Group))
         {

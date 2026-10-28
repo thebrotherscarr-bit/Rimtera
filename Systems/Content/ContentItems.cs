@@ -381,6 +381,8 @@ internal static class ContentItems
             Utility(ItemId.WireTool, "Wire tool", ItemUseKind.Utility, 35);
             Utility(ItemId.GlowSticks, "Glow sticks", ItemUseKind.Utility, 2, 99);
             Utility(ItemId.TeleportBeacon, "Teleport beacon", ItemUseKind.Utility, 120);
+            // Built from lumenite bars and an ancient power cell (and sold once the vault is open): a tier-5 device.
+            items[ItemId.TeleportBeacon] = items[ItemId.TeleportBeacon] with { Tier = 5 };
         }
 
         // ------------------------------------------------------------ armor

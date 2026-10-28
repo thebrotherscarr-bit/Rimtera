@@ -224,10 +224,9 @@ public sealed partial class GameSimulation : IStoryHost
         _social = new ColonySocialSystem(seed ^ 0x50C1A1E5);
         _mindRandom = new Random(seed ^ 0x6D1D5EED);
         ColonySocialSystem.SeedStartingRelations(ColonyPawns, seed);
-        Player.Brain = new AgentBrain(new PrioritySelectorNode(
-            new NeedActivityNode(NeedKind.Food, triggerReserve: 0.42f, basePriority: 0.85f, urgencyGain: 0.4f),
-            new NeedActivityNode(NeedKind.Rest, triggerReserve: 0.3f, basePriority: 0.45f, urgencyGain: 0.25f),
-            new WorkActivityNode(priority: 0.1f)));
+        // The player has no brain: as in Terraria, the player character never eats, rests, digs or recovers on its own.
+        // Crew colonists keep their own needs AI (UpdateColonists).
+        Player.Brain = null;
 
         // Survivors wait, bound, inside the structures the detailed generator built.
         if (Features is { } features)
@@ -379,7 +378,7 @@ public sealed partial class GameSimulation : IStoryHost
             TickNumber, Day, ClockHour, motion.Position.X, motion.Position.Y,
             motion.Velocity.X, motion.Velocity.Y, motion.Facing,
             Player.HitPoints, Player.Needs.FoodReserve, Player.Needs.RestReserve,
-            Player.Inventory.Slots.ToArray(), Player.Inventory.SelectedSlot,
+            Player.Inventory.SlotsWithCursorReturned(), Player.Inventory.SelectedSlot,
             CaptureEquipmentWithCalibrations(), Player.Statuses.Active.ToArray(),
             Player.Needs.JoyReserve, Player.Needs.ComfortReserve, colonistSnapshots,
             _defeatedBosses.OrderBy(kind => kind).ToArray(),
@@ -652,7 +651,7 @@ public sealed partial class GameSimulation : IStoryHost
             elapsedHours,
             Player.ColonistStats.FoodConsumptionMultiplier,
             Player.ColonistStats.RestRateMultiplier);
-        Player.Health.IsResting = Player.IsDowned || _autonomousActivity.Activity == ActivityKind.Rest;
+        Player.Health.IsResting = Player.IsDowned;
         Player.Health.Tick(elapsedHours);
         var statusDamage = Player.Statuses.Advance(elapsedHours);
         if (statusDamage > 0f)
@@ -681,6 +680,7 @@ public sealed partial class GameSimulation : IStoryHost
         CarryOnGlideWalk(deltaSeconds);
         AfterPlayerMovement(movement, deltaSeconds);
         UpdateToolUse(input.Action); // swing, press/hold and release tracking (ToolParityUse.cs)
+        ApplyBufferedHotbarSlot(); // a hotbar change made mid-swing lands once the use ends (GameSimulation.Controls.cs)
         // As in Terraria, using an item turns the player toward what it is used on, even while walking the other way.
         if (input.Action is PlayerAction.Mine or PlayerAction.UseSelected or PlayerAction.ReplaceSelected && input.Target is { } aimed &&
             !Player.IsDowned && MathF.Abs(aimed.X + 0.5f - PlayerCenter.X) > 0.3f)
@@ -1909,40 +1909,14 @@ public sealed partial class GameSimulation : IStoryHost
         }
     }
 
-    private void UpdateAutonomousBehavior(float elapsedHours)
-    {
-        if (Player.Brain is null)
-            return;
-
-        var safeToRest = !_enemies.Any(enemy => enemy.IsAlive && !enemy.IsPassive &&
-            Vector2.Distance(enemy.Motion.Position, Player.Motion.Position) < 8f);
-        var hasWork = World.Contains(GetFacingTile()) && World.GetCell(GetFacingTile()).TileId != TileId.Air;
-        var context = new AgentContext(Player.Needs, Player.Inventory.Count(ItemId.Berry), safeToRest, hasWork);
-        _autonomousActivity = Player.Brain.Think(context);
-        switch (_autonomousActivity.Activity)
-        {
-            case ActivityKind.Eat:
-                if (Player.Inventory.TryConsume(ItemId.Berry))
-                {
-                    Player.Needs.Restore(NeedKind.Food, Items[ItemId.Berry].FoodRestore);
-                    Player.Mind.Thoughts.AddMemory(ThoughtId.AteNanoBanana);
-                }
-                break;
-            case ActivityKind.Rest:
-                var restBefore = Player.Needs.RestReserve;
-                Player.Needs.Restore(NeedKind.Rest, elapsedHours * 0.18f);
-                if (restBefore < 0.3f && Player.Needs.RestReserve >= 0.3f)
-                    Player.Mind.Thoughts.AddMemory(ThoughtId.RestedWell);
-                break;
-        }
-
-        var nearCamp = Vector2.Distance(Player.Motion.Position, GuidePosition) < 7f;
-        if (safeToRest && nearCamp && Player.Motion.Velocity.LengthSquared() < 0.04f)
-        {
-            Player.Needs.Restore(NeedKind.Joy, elapsedHours * 0.06f);
-            Player.Needs.Restore(NeedKind.Comfort, elapsedHours * 0.05f);
-        }
-    }
+    /// <summary>
+    /// Formerly the player's RimWorld-style brain (auto-eating berries, auto-resting for faster healing, and joy and comfort
+    /// restored for free near camp). Terraria's player never acts or recovers on its own, so the player now has no
+    /// autonomous behaviour at all: hunger is met by eating food yourself, health comes back only by Terraria's natural
+    /// regeneration, gear, buffs and the items you use.
+    /// </summary>
+    private void UpdateAutonomousBehavior(float elapsedHours) =>
+        _autonomousActivity = new ActivityChoice(ActivityKind.Idle, 0f, "the player acts only on input");
 
     // UpdateSpawning lives in GameSimulation.Spawning.cs.
 
@@ -2148,7 +2122,10 @@ public sealed partial class GameSimulation : IStoryHost
             yield return (ThoughtId.LoverNearby, 1f, null);
     }
 
-    /// <summary>Colonists with medical skill tend the nearest wounded crew member or the player.</summary>
+    /// <summary>
+    /// Colonists with medical skill tend the nearest wounded crew member. Never the player: Terraria's player gets no free
+    /// healing, so the player's wounds are tended only by the player (TendSelf) or healed by what the player uses.
+    /// </summary>
     private void UpdateTending(IReadOnlyList<IColonyPawn> living)
     {
         foreach (var medic in _colonists)
@@ -2158,7 +2135,7 @@ public sealed partial class GameSimulation : IStoryHost
                 continue;
             var center = medic.Motion.Position + medic.Motion.Size / 2f;
             var patient = living
-                .Where(pawn => pawn.Health.NeedsTending &&
+                .Where(pawn => !ReferenceEquals(pawn, Player) && pawn.Health.NeedsTending &&
                                Vector2.Distance(center, pawn.Motion.Position + pawn.Motion.Size / 2f) <= 6f)
                 .OrderBy(pawn => ReferenceEquals(pawn, medic) ? 1 : 0)
                 .ThenByDescending(pawn => pawn.IsDowned)

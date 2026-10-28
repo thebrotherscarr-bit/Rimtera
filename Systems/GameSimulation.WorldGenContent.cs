@@ -192,6 +192,9 @@ public sealed partial class GameSimulation
         [ItemId.Dynamite, ItemId.AncientPowerCell, ItemId.VoidEssence]
     ];
 
+    /// <summary>Everything a generated chest may gain on top of its table: the depth finds and the rare thruster fins (crafting audit).</summary>
+    internal static IEnumerable<ItemId> ChestExtraFinds => ChestDepthFinds.SelectMany(finds => finds).Append(ItemId.SalvagedThrusterFins);
+
     private void ImproveChestLoot(GridPoint cell, Inventory inventory)
     {
         var tier = Features?.ChestTier(cell) ?? -1;

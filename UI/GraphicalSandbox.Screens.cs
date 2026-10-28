@@ -16,20 +16,36 @@ public static partial class GraphicalSandbox
         private GameSimulation? _achievementGame;
 
         /// <summary>Player inventory beside a container, a chest or the Cargo Pod bank.</summary>
-        private void ShowStorage(Inventory? container, GridPoint? cell, string title)
+        private InventoryUiState? ShowStorage(Inventory? container, GridPoint? cell, string title, GuideLookupState? guide = null)
         {
             if (_game is null)
-                return;
+                return null;
             var game = _game;
             _down.Clear();
             _menuDown.Clear();
-            var state = new InventoryUiState(game.Player.Inventory, chest: container, game: game, chestCell: cell, chestTitle: title);
+            var state = new InventoryUiState(game.Player.Inventory, chest: container, game: game, chestCell: cell, chestTitle: title,
+                guide: guide, showAlmostCraftable: _menu.Preferences.CraftingShowsAlmost);
+            state.AlmostCraftableChanged += show =>
+            {
+                _menu.Preferences.CraftingShowsAlmost = show;
+                _menu.SavePreferences();
+            };
+            state.TipsRequested += () => OpenStationAiScreen(null);
+            state.GuideRequested += item => OpenRecipeGuide(item);
             state.BankRequested += () =>
             {
                 if (game.OpenBank() is { } bank)
                     ShowStorage(bank, null, "Cargo pod");
             };
             state.SettingsRequested += OpenPauseMenu;
+            state.RenameRequested += chestCell => _menu.PromptForText("Rename chest", "A name for this chest (up to 20 characters).",
+                game.GetChestName(chestCell) ?? string.Empty, value =>
+                {
+                    game.SetChestName(chestCell, value);
+                    // Reopen the chest under its new name, as Terraria's rename returns to the open chest.
+                    if (game.GetContainer(chestCell) is { } reopened)
+                        ShowStorage(reopened, chestCell, game.GetChestName(chestCell) ?? "Chest");
+                }, maxLength: GameSimulation.ChestNameMaxLength);
             state.CrewRequested += OpenColonistSheet;
             state.BestiaryRequested += OpenBestiary;
             state.FeatsRequested += OpenAchievements;
@@ -42,6 +58,7 @@ public static partial class GraphicalSandbox
             _menuOpen = true;
             UpdateMenuViewport();
             SyncCanvas();
+            return state;
         }
 
         /// <summary>Sign or tombstone text with an edit option (tombstones keep their epitaph).</summary>

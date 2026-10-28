@@ -29,9 +29,9 @@ No arguments (or `--graphics` / `--game`) opens the WinForms client at the title
 
 As in Terraria 1.4, the inventory is where everything lives:
 
-- **Inventory**: ten columns by five rows, the top row being the hotbar (numbered 1-0). Left click picks up and places; right click takes half (or equips gear); **Shift+click** moves a stack to the open chest (or equips it, or trashes it); **Ctrl+click** trashes; **Alt+click** marks a favorite, which sort, deposit and quick stack leave alone.
-- Beside it: **Sort**, **Quick stack** (to nearby chests), the **Cargo pod** when you have one, the **Wires** builder toggle, and the **trash slot** (drop a held stack on it; click it empty-handed to take the stack back).
-- **Chests** open underneath with **Loot all**, **Deposit all**, **Quick stack**, **Restock** and **Sort**.
+- **Inventory**: ten columns by five rows, the top row being the hotbar (numbered 1-0). Left click picks up, places or swaps; right click takes one item onto the cursor (hold to keep taking, faster and faster) or equips gear; **Shift+click** moves a stack to or from the open chest; **Ctrl+click** trashes; **Alt+click** marks a favorite, which sort, deposit, quick stack, trash and throw leave alone. The world keeps running while the inventory is open (unless Autopause is on): you can move, jump, use the held item, or use the item **on the cursor** by clicking the world, and **right-clicking the world throws the cursor item**. Closing the inventory puts a carried item back in the bag (or at your feet if the bag is full).
+- Beside it: **Sort**, **Quick stack** (to nearby chests), the **Cargo pod** when you have one, the **Wires** builder toggle, and the **trash slot** (drop a held stack on it; click it empty-handed to take the stack back, or Shift-click it to send it back to the bag).
+- **Chests** open underneath with **Loot all**, **Deposit all**, **Quick stack**, **Restock**, **Sort** and **Rename**.
 - **Crafting** underneath that: everything craftable nearby as a grid; click a result to see its materials, click it again to craft; the wheel scrolls. **Ask station AI** suggests what your materials make.
 - Down the right: worn **gear** (armor, accessories, vanity), **Loadouts 1-3**, and tabs for **Housing** (check the room you stand in; see your crew), **Crew**, **Bestiary** and **Feats**.
 - **Settings** in the bottom-right corner.
@@ -40,24 +40,29 @@ Right-click a **bed** to sleep and the **station AI** for guidance, as with Terr
 
 ### Graphical gameplay controls
 
-Defaults follow Terraria's PC layout, and every key can be rebound under Settings → Controls (crafting, crew, bestiary, feats, sleep, housing, wires and eating start unbound since the inventory and right clicks cover them, but each can take a key) (Shift, Ctrl and Alt included; a key taken from another action moves and the screen says so). The `/` key toggles an on-screen key reference built from the current bindings. One list, `ControlCatalog` in `UI/PreferencesAndProfiles.cs`, drives gameplay input, the controls screen and that reference.
+Defaults are Terraria 1.4.5.8's PC layout (see `docs/CONTROLS_PARITY.md`), and every key can be rebound under Settings → Controls (crafting, crew, bestiary, feats, sleep, housing, wires and eating start unbound since the inventory and right clicks cover them, but each can take a key) (Shift, Ctrl and Alt included; a key taken from another action moves and the screen says so). The `/` key toggles an on-screen key reference built from the current bindings. One list, `ControlCatalog` in `UI/PreferencesAndProfiles.cs`, drives gameplay input, the controls screen and that reference.
 
 | Key | Action |
 |---|---|
 | `W` `A` `S` `D` | Up / climb, left, down / drop through platforms, right |
 | `Space` | Jump (also lets go of ropes) |
 | Double-tap `A` / `D` | Dash (a dash key can be bound too) |
-| Left mouse | Use the selected item; placing a block on another swaps it |
-| Right mouse | Interact: doors, chests, stations, people, beds (sleep), the station AI |
-| Mouse wheel / `1`–`0` | Hotbar (`Ctrl` + wheel zooms) |
+| Left mouse | Use the held item (items without auto-reuse need a fresh click; clicks on the HUD or a panel never swing); placing a block on another swaps it |
+| Right mouse | Interact: doors, chests, stations, people, beds (sleep), the station AI; with an item on the cursor, throw it |
+| Mouse wheel / `1`–`0` | Hotbar (with the inventory open the wheel scrolls the crafting list; on the full map it zooms) |
 | `Esc` / `I` | Inventory hub: crafting, chests, gear, crew, housing, bestiary, feats, settings |
-| `E` | Grappling hook |
-| `T` | Throw the held item |
-| `Shift` (hold) | Smart select: switch to the tool that fits what's under the cursor |
+| `E` | Grappling hook (each press fires a hook; jump to let go) |
+| `T` | Throw the held item (not favorites) |
+| `Shift` (hold) | Auto-select: the tool for the block under the cursor (drill, cutter, demolisher), or a torch over empty air |
 | `Ctrl` | Smart cursor (toggle or hold, per Settings → Cursor) |
 | `R` | Quick mount |
 | `H` / `J` / `B` | Quick heal / charge / buff |
-| `M` / `Tab` | Full map / map style; `+` and `-` zoom the minimap |
+| `M` / `Tab` | Full map (WASD pans it) / map style |
+| Numpad `+` / `-`, `PgUp` / `PgDn` | Map zoom, map opacity |
+| `=` / `-` | Camera zoom (also Settings → Zoom) |
+| `F1` / `F2` / `F3` | Loadouts 1-3 |
+| `F10` / `F11` / `Alt+Enter` | Frame rate / hide the interface / fullscreen |
+| `C` | Creative menu (creative worlds) |
 | `` ` `` (hold) + `1`–`8` | Emotes |
 
 ### Terminal gameplay controls

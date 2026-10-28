@@ -204,6 +204,22 @@ public static class FishingTables
         _ => []
     };
 
+    /// <summary>
+    /// Crate finds that wait for the Fracture: before it, a crate holds none of the hardmode ores and bars (Terraria's
+    /// crates only give hardmode ores in hardmode), so a lucky catch cannot skip the drill-power and station gates.
+    /// </summary>
+    public static readonly IReadOnlySet<ItemId> FractureCrateLoot = new HashSet<ItemId>
+    {
+        ItemId.LumeniteOre, ItemId.LumeniteBar, ItemId.VoidsteelBar, ItemId.AstralOre
+    };
+
+    /// <summary>Astral ore waits for the obelisks to fall (the Astral Assembler, Terraria's Ancient Manipulator, comes after the cultists).</summary>
+    public const string AstralCrateFlag = "obelisks.down";
+
+    /// <summary>A crate's loot in a world that has (or has not yet) fractured, and whose obelisks are (or are not yet) down.</summary>
+    public static IEnumerable<(ItemId Item, int Min, int Max)> CrateLoot(ItemId crate, bool fractured, bool obelisksDown = true) =>
+        CrateLoot(crate).Where(entry => (fractured || !FractureCrateLoot.Contains(entry.Item)) && (obelisksDown || entry.Item != ItemId.AstralOre));
+
     /// <summary>The Tide-Warden's quest fish: where each bites and the flag that unlocks it (null = always).</summary>
     public static readonly (ItemId Fish, Func<FishingContext, bool> Where, string? Unlock)[] QuestFish =
     [

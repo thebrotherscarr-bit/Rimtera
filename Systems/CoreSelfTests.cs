@@ -213,15 +213,19 @@ public static class CoreSelfTests
         uiInventory.Add(ItemId.RockBlock, 20);
         uiInventory.Add(ItemId.WoodBlock, 6);
         var inventoryUi = new InventoryUiController();
-        inventoryUi.RightClick(uiInventory, 0);
-        Check(inventoryUi.CursorStack.Count == 10 && uiInventory.Slots[0].Count == 10,
-            "inventory UI splits a held stack in half on secondary click");
-        inventoryUi.RightClick(uiInventory, 2);
-        Check(inventoryUi.CursorStack.Count == 9 && uiInventory.Slots[2] == new ItemStack(ItemId.RockBlock, 1),
-            "inventory UI places one item at a time on secondary click");
+        // Terraria's right click (ItemSlot.RightClick) takes ONE item onto the cursor, and with that item already held pulls
+        // more; it never splits the stack in half or drops items into the slot. (These checks used to encode the older
+        // half-split / place-one behaviour.)
+        var tookOne = inventoryUi.RightClick(uiInventory, 0);
+        Check(tookOne == 1 && inventoryUi.CursorStack.Count == 1 && uiInventory.Slots[0].Count == 19,
+            "inventory UI right click takes one item onto the cursor (Terraria's stack split)");
+        var pulled = inventoryUi.RightClick(uiInventory, 0, 4);
+        var refused = inventoryUi.RightClick(uiInventory, 1);
+        Check(pulled == 4 && inventoryUi.CursorStack.Count == 5 && uiInventory.Slots[0].Count == 15 && refused == 0 && uiInventory.Slots[1].Count == 6,
+            "inventory UI right click with the same item held pulls more onto the cursor, and a different item is left alone");
         inventoryUi.LeftClick(uiInventory, 2);
-        Check(inventoryUi.CursorStack.IsEmpty && uiInventory.Slots[2].Count == 10,
-            "inventory UI merges a held stack into a compatible slot");
+        Check(inventoryUi.CursorStack.IsEmpty && uiInventory.Slots[2] == new ItemStack(ItemId.RockBlock, 5),
+            "inventory UI places the held stack into an empty slot");
         inventoryUi.LeftClick(uiInventory, 1);
         inventoryUi.LeftClick(uiInventory, 0);
         Check(uiInventory.Slots[0].ItemId == ItemId.WoodBlock && inventoryUi.CursorStack.ItemId == ItemId.RockBlock,
@@ -307,8 +311,10 @@ public static class CoreSelfTests
             }
         };
         v3Profile.Normalize();
-        Check(new[] { "Colonist", "Guide", "Bestiary", "Achievements", "Craft", "CraftPrevious", "CraftNext", "Sleep", "CheckHousing", "WireLayer", "Eat" }
-                  .All(action => defaultBindings.Bindings[action].Count == 0) &&
+        // The recipe guide no longer has an action at all (reached from the hub button and the station AI), so it is not
+        // in this list any more; an old profile's guide binding is dropped (ControlsParitySelfTests).
+        Check(new[] { "Colonist", "Bestiary", "Achievements", "Craft", "CraftPrevious", "CraftNext", "Sleep", "CheckHousing", "WireLayer", "Eat" }
+                  .All(action => defaultBindings.Bindings[action].Count == 0) && !defaultBindings.Bindings.ContainsKey("Guide") &&
               v3Profile.Bindings["Colonist"].Count == 0 && v3Profile.Bindings["Bestiary"].Count == 0 &&
               v3Profile.Bindings["Craft"].Count == 0 && v3Profile.Bindings["Sleep"].SequenceEqual(["Y"]),
             "panel keys start unbound (their panels live in the inventory, beds and the station AI answer right clicks); a saved profile drops the old ones unless the player changed them");
@@ -1638,6 +1644,7 @@ public static class CoreSelfTests
         TravelSelfTests.Run(Check);
         ContentFillSelfTests.Run(Check);
         ModesSelfTests.Run(Check); // town tracks, modes and progression achievements (G13-G16)
+        ControlsParitySelfTests.Run(Check); // Terraria's controls: mouse state, slots, cursor item, auto-reuse, keys (docs/CONTROLS_PARITY.md)
         GrowthSelfTests.Run(Check); // character growth: lifebloom, sixth slot, upgrades, glide rigs, hooks, creative kit (G3, G7-G11)
         StarterKitSelfTests.Run(Check); // the Terraria-style starting kit (Classic ferrite trio, Creative cobalt drop)
         SpawnSafetySelfTests.Run(Check); // no sky island over the landing site, no spawning into a cave under a plant
@@ -1648,6 +1655,8 @@ public static class CoreSelfTests
         FloraParitySelfTests.Run(Check); // flora rules matched to the reference (docs/FLORA_PARITY.md)
         ItemAuditSelfTests.Run(Check); // every item has a function and a sprite of its own (docs/ITEM_AUDIT.md)
         CreatureCoverageSelfTests.Run(Check); // every biome, event and boss has its creatures, leaders and summons (docs/CREATURE_COVERAGE.md)
+        CraftingGuideSelfTests.Run(Check); // crafting guidance: recipe guide lookups, "close to" recipes, tooltips, the station AI's next steps
+        CraftingAuditSelfTests.Run(Check); // crafting progression: a felled tree builds the first station; every station and item is reachable (docs/CRAFTING_PROGRESSION.md)
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }

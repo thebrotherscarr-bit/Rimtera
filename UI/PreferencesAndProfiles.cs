@@ -92,6 +92,10 @@ public sealed record GamePreferences
     public bool DamageNumbers { get; set; } = true;
     public bool MinimapEnabled { get; set; } = true;
     public bool ShowFrameRate { get; set; }
+    /// <summary>The station AI's one-line "next step" hint at the top of the screen.</summary>
+    public bool GuideHints { get; set; } = true;
+    /// <summary>The crafting panel also lists recipes the player is close to (greyed, missing parts in red).</summary>
+    public bool CraftingShowsAlmost { get; set; }
     public HealthBarPlacement EnemyHealthBars { get; set; } = HealthBarPlacement.Above;
 
     // Video
@@ -175,8 +179,10 @@ public sealed record ControlAction(string Id, string Label, ControlGroup Group, 
 /// jump, Escape inventory, E grapple, T throw, Shift smart select, Ctrl smart cursor, R mount, H/J/B quick
 /// heal/charge/buff, M map, Tab map style). As in Terraria, panels live in the inventory (crafting, crew,
 /// housing, bestiary, feats, wires) and the world answers right clicks (beds, the station AI), so those actions
-/// start unbound but can be given keys. Mouse buttons stay fixed: left uses the selected item, right interacts,
-/// the wheel cycles the hotbar (Ctrl + wheel zooms).
+/// start unbound but can be given keys. Mouse buttons stay fixed, as in Terraria: left uses the held item, right
+/// interacts (or throws the item on the cursor), the wheel scrolls the hotbar (with the inventory open it scrolls the
+/// crafting list; on the full map it zooms). Camera zoom is on = and -, as Terraria's ViewZoomIn / ViewZoomOut.
+/// Keyboard defaults are Terraria 1.4.5.8's (PlayerInput.Reset): see docs/CONTROLS_PARITY.md.
 /// </summary>
 public static class ControlCatalog
 {
@@ -188,12 +194,12 @@ public static class ControlCatalog
         new("MoveDown", "Down / drop through", ControlGroup.Movement, ["S"]),
         new("Jump", "Jump", ControlGroup.Movement, ["Spacebar"]),
         new("Dash", "Dash", ControlGroup.Movement, [], "Or double-tap left or right."),
-        new("Grapple", "Grapple", ControlGroup.Movement, ["E"], "Fires at the cursor. Press again to let go."),
+        new("Grapple", "Grapple", ControlGroup.Movement, ["E"], "Fires a hook at the cursor. Jump to let go."),
         new("Mount", "Quick mount", ControlGroup.Movement, ["R"]),
 
         new("SmartSelect", "Smart select (hold)", ControlGroup.Actions, ["Shift"], "Switches to the right tool for what's under the cursor while held."),
         new("SmartCursor", "Smart cursor", ControlGroup.Actions, ["Ctrl"], "Toggle or hold, as set in Settings > Cursor."),
-        new("ThrowItem", "Throw", ControlGroup.Actions, ["T"], "Drops the item in your hand."),
+        new("ThrowItem", "Throw", ControlGroup.Actions, ["T"], "Throws the item in your hand (not favorites). Right-click the world to throw the item on the cursor."),
         new("Interact", "Interact", ControlGroup.Actions, [], "Right click. Bind a key to interact from the keyboard too."),
         new("UseSelected", "Use item", ControlGroup.Actions, [], "Left click. Bind a key to use from the keyboard too."),
         new("ReplaceTile", "Replace block", ControlGroup.Actions, [], "Placing a block over another swaps it on its own."),
@@ -203,24 +209,29 @@ public static class ControlCatalog
         new("QuickCharge", "Quick charge", ControlGroup.QuickUse, ["J"]),
         new("QuickBuff", "Quick buff", ControlGroup.QuickUse, ["B"]),
         new("Eat", "Eat", ControlGroup.QuickUse, [], "Using food from the hotbar eats it."),
-        new("Loadout1", "Loadout 1", ControlGroup.QuickUse, [], "Or the loadout buttons in the inventory."),
-        new("Loadout2", "Loadout 2", ControlGroup.QuickUse, []),
-        new("Loadout3", "Loadout 3", ControlGroup.QuickUse, []),
+        new("Loadout1", "Loadout 1", ControlGroup.QuickUse, ["F1"], "Or the loadout buttons in the inventory."),
+        new("Loadout2", "Loadout 2", ControlGroup.QuickUse, ["F2"]),
+        new("Loadout3", "Loadout 3", ControlGroup.QuickUse, ["F3"]),
 
         new("Inventory", "Inventory", ControlGroup.Panels, ["Escape", "I"], "Settings are in the inventory."),
         new("Map", "Full map", ControlGroup.Panels, ["M"]),
         new("MapStyle", "Map style", ControlGroup.Panels, ["Tab"], "Minimap, overlay or off."),
-        new("MinimapZoomIn", "Map zoom in", ControlGroup.Panels, ["Add", "OemPlus"]),
-        new("MinimapZoomOut", "Map zoom out", ControlGroup.Panels, ["Subtract", "OemMinus"]),
+        new("MinimapZoomIn", "Map zoom in", ControlGroup.Panels, ["Add"], "Numpad +: the minimap, the overlay or the full map."),
+        new("MinimapZoomOut", "Map zoom out", ControlGroup.Panels, ["Subtract"]),
+        new("MapAlphaUp", "Map opacity up", ControlGroup.Panels, ["PageUp"], "The minimap or the overlay map."),
+        new("MapAlphaDown", "Map opacity down", ControlGroup.Panels, ["PageDown"]),
+        new("ZoomIn", "Zoom in", ControlGroup.Panels, ["OemPlus"], "The camera; the same setting as Settings > Zoom."),
+        new("ZoomOut", "Zoom out", ControlGroup.Panels, ["OemMinus"]),
         new("Craft", "Craft selected recipe", ControlGroup.Panels, [], "Crafting lives in the inventory."),
         new("CraftPrevious", "Previous recipe", ControlGroup.Panels, []),
         new("CraftNext", "Next recipe", ControlGroup.Panels, []),
         new("Colonist", "Crew", ControlGroup.Panels, [], "Or the Crew tab in the inventory."),
-        new("Guide", "Ask the station AI", ControlGroup.Panels, [], "Or right-click the station AI, or Ask station AI under crafting."),
         new("Bestiary", "Bestiary", ControlGroup.Panels, [], "Or the Bestiary tab in the inventory."),
         new("Achievements", "Feats", ControlGroup.Panels, [], "Or the Feats tab in the inventory."),
         new("ControlsHelp", "Show / hide key help", ControlGroup.Panels, ["Oem2"]),
         new("FrameRate", "Show / hide frame rate", ControlGroup.Panels, ["F10"], "Frames per second and drawing time, in the corner."),
+        new("HideUi", "Hide the interface", ControlGroup.Panels, ["F11"], "Hides the whole HUD. Alt+Enter toggles fullscreen."),
+        new("Creative", "Creative menu", ControlGroup.Panels, ["C"], "Creative worlds only."),
 
         new("Sleep", "Sleep (near a bed, at night)", ControlGroup.World, [], "Or right-click a bed."),
         new("CheckHousing", "Check housing at cursor", ControlGroup.World, [], "Or the Housing tab in the inventory."),
@@ -273,9 +284,11 @@ public sealed class InputProfile
     /// <summary>
     /// Saved-profile format: 2 took WASD off menu navigation; 3 moved gameplay onto <see cref="ControlCatalog"/>
     /// (bindings that still match the old defaults take the new ones; anything the player changed is kept); 4 moved
-    /// the panel keys into the inventory hub, unbinding them unless the player had changed them.
+    /// the panel keys into the inventory hub, unbinding them unless the player had changed them; 5 matched Terraria
+    /// 1.4.5.8's keyboard defaults (loadouts on F1-F3, camera zoom on = and -, minimap zoom on the numpad only) and
+    /// removed the recipe-guide action (the guide is reached from the hub and the station AI).
     /// </summary>
-    public const int CurrentMenuBindingVersion = 4;
+    public const int CurrentMenuBindingVersion = 5;
 
     public string Name { get; set; } = "Keyboard + Mouse";
     public int MenuBindingVersion { get; set; } = CurrentMenuBindingVersion;
@@ -348,6 +361,11 @@ public sealed class InputProfile
             MigrateToCatalog();
         if (menuActionVersion < 4)
             UnbindPanelKeys();
+        if (menuActionVersion < 5)
+            MigrateToTerrariaDefaults();
+        // Actions that no longer exist (the recipe guide, for one) go, so an old binding can't linger or steal a key.
+        foreach (var stale in Bindings.Keys.Where(action => ControlCatalog.Find(action) is null).ToArray())
+            Bindings.Remove(stale);
         MenuBindingVersion = CurrentMenuBindingVersion;
         // New actions arrive with their defaults; a player's empty list (deliberately unbound) stays empty.
         foreach (var action in ControlCatalog.All)
@@ -364,6 +382,30 @@ public sealed class InputProfile
     /// the real keys were fixed in code. Actions still on their old defaults move to the catalog's; actions the
     /// player rebound keep their keys; actions that no longer exist go.
     /// </summary>
+    /// <summary>
+    /// Version 5: Terraria's keyboard defaults. Minimap zoom keeps only the numpad if it still had the old pair (= and -
+    /// now zoom the camera); loadouts that were never bound take F1-F3 unless another action already uses that key.
+    /// The recipe guide action is removed with every other stale action.
+    /// </summary>
+    private void MigrateToTerrariaDefaults()
+    {
+        void Narrow(string action, string keep, string old)
+        {
+            if (Bindings.TryGetValue(action, out var saved) && saved.Count == 2 &&
+                string.Equals(saved[0], keep, StringComparison.OrdinalIgnoreCase) && string.Equals(saved[1], old, StringComparison.OrdinalIgnoreCase))
+                saved.RemoveAt(1);
+        }
+        Narrow("MinimapZoomIn", "Add", "OemPlus");
+        Narrow("MinimapZoomOut", "Subtract", "OemMinus");
+        for (var i = 1; i <= 3; i++)
+        {
+            var key = $"F{i}";
+            var taken = Bindings.Any(pair => pair.Value.Any(bound => string.Equals(bound, key, StringComparison.OrdinalIgnoreCase)));
+            if (!taken && Bindings.TryGetValue($"Loadout{i}", out var saved) && saved.Count == 0)
+                saved.Add(key);
+        }
+    }
+
     /// <summary>Version 4: the panel keys of version 3, where still untouched, go (their panels moved into the inventory).</summary>
     private void UnbindPanelKeys()
     {

@@ -464,6 +464,7 @@ public static partial class GraphicalSandbox
             foreach (var buff in game.ActiveBuffs.Take(22))
             {
                 var rect = new RectangleF(x, y, icon, icon);
+                _hudRects.Add(rect);
                 using (var back = new SolidBrush(buff.IsDebuff ? Color.FromArgb(170, 90, 24, 30) : Color.FromArgb(170, 20, 40, 60)))
                     g.FillRectangle(back, rect);
                 g.DrawRectangle(buff.IsDebuff ? Pens.IndianRed : Pens.SteelBlue, rect.X, rect.Y, rect.Width, rect.Height);
