@@ -717,7 +717,8 @@ public sealed partial class GameSimulation
         TileId.DungeonChest =>
         [
             (ItemId.Credits, 120, 420), (ItemId.Dynamite, 2, 6), (ItemId.PrecursorRelic, 0, 1), (ItemId.AncientPowerCell, 0, 1),
-            (ItemId.LumeniteBar, 0, 6), (ItemId.VoidEssence, 0, 3), (ItemId.TeleporterPad, 0, 2), (ItemId.Actuator, 0, 10)
+            // Tier-3 bars, not lumenite: the dungeon opens before the Fracture (Terraria's dungeon chests hold no hardmode bars).
+            (ItemId.PyrociteBar, 0, 6), (ItemId.VoidEssence, 0, 3), (ItemId.TeleporterPad, 0, 2), (ItemId.Actuator, 0, 10)
         ],
         _ => WorldGenChestLoot(tile)
     };

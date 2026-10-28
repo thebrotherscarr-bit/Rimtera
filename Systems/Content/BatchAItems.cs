@@ -78,6 +78,18 @@ public static class BatchAItems
         var chem = At(CraftingStationId.ChemLab);
 
         Add("timber-planks", ItemId.AstroTimberPlanksBlock, 2, none, (ItemId.Timber, 1));
+        // The wooden-tier tools of the old starting kit, at the first station (Terraria: wooden sword, bow and the
+        // cactus pickaxe at the work bench).
+        Add("shock-baton", ItemId.WoodenSword, 1, fab, (ItemId.WoodBlock, 7), (ItemId.EnergyCrystal, 1));
+        Add("laser-rifle", ItemId.CopperBow, 1, fab, (ItemId.WoodBlock, 10), (ItemId.EnergyCrystal, 2));
+        Add("survey-drill", ItemId.WoodenPickaxe, 1, fab, (ItemId.WoodBlock, 12), (ItemId.CopperOre, 4));
+        // Geode blocks: the geode itself breaks into its gem, so the block is pressed from gem and basalt (Terraria:
+        // gemspark blocks at the work bench).
+        Add("geode-cyan", ItemId.GeodeCyanBlock, 4, fab, (ItemId.SapphireShard, 1), (ItemId.RockBlock, 4));
+        Add("geode-magenta", ItemId.GeodeMagentaBlock, 4, fab, (ItemId.AmethystShard, 1), (ItemId.RockBlock, 4));
+        // Acid sand: silica sand soaked at an acid pool (Terraria: bottled water needs water nearby).
+        crafting.Register(new RecipeDefinition("phys-acid-sand", ItemId.AcidSandBlock, 1,
+            [IngredientRequirement.Exact(ItemId.SandBlock, 1)], RequiredLiquids: new HashSet<LiquidKind> { LiquidKind.Acid }));
         Add("plank-platform", ItemId.PlankPlatform, 2, none, (ItemId.Timber, 1));
         Add("metal-platform", ItemId.MetalPlatform, 4, fab, (ItemId.FerriteBar, 1));
         Add("climbing-rope", ItemId.ClimbingRope, 10, none, (ItemId.RopeCoil, 1));

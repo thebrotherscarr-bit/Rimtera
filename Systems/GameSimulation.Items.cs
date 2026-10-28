@@ -668,25 +668,7 @@ public sealed partial class GameSimulation
 
     private void SeedContainerLoot(TileId tile, Inventory inventory)
     {
-        (ItemId Item, int Min, int Max)[] table = tile switch
-        {
-            TileId.LockedVaultChest =>
-            [
-                (ItemId.PrecursorRelic, 1, 1), (ItemId.AncientPowerCell, 1, 2), (ItemId.LumeniteBar, 5, 12),
-                (ItemId.VoidEssence, 2, 5), (ItemId.AstralHalo, 0, 1), (ItemId.Credits, 300, 900)
-            ],
-            TileId.CoastalHabPod =>
-            [
-                (ItemId.CoralShard, 2, 6), (ItemId.TideFish, 1, 4), (ItemId.HarpoonGun, 0, 1), (ItemId.ExplosiveCharge, 5, 20),
-                (ItemId.Credits, 20, 80)
-            ],
-            TileId.FungalHabRuin =>
-            [
-                (ItemId.GlowSpore, 3, 8), (ItemId.MushroomMace, 0, 1), (ItemId.SporeCenser, 0, 1), (ItemId.BioGel, 2, 6),
-                (ItemId.Credits, 20, 80)
-            ],
-            _ => PhysicsContainerLoot(tile)
-        };
+        var table = ContainerLootTable(tile);
         foreach (var (item, min, max) in table)
         {
             var count = _lootRandom.Next(min, max + 1);
@@ -696,6 +678,28 @@ public sealed partial class GameSimulation
         if (tile == TileId.LockedVaultChest && Player.Inventory.Count(ItemId.VaultKey) > 0)
             Flags.Increment("vault.chests.opened");
     }
+
+    /// <summary>The loot table a world container is seeded from on first access (empty for player-built storage).</summary>
+    internal static (ItemId Item, int Min, int Max)[] ContainerLootTable(TileId tile) =>
+        tile switch
+        {
+            TileId.LockedVaultChest =>
+            [
+                (ItemId.PrecursorRelic, 1, 1), (ItemId.AncientPowerCell, 1, 2), (ItemId.LumeniteBar, 5, 12),
+                (ItemId.VoidEssence, 2, 5), (ItemId.AstralHalo, 0, 1), (ItemId.Credits, 300, 900)
+            ],
+            TileId.CoastalHabPod =>
+            [
+                (ItemId.CoralShard, 2, 6), (ItemId.TideFish, 1, 4), (ItemId.HarpoonGun, 0, 1), (ItemId.ExplosiveCharge, 5, 20),
+                (ItemId.CoralJellyFamiliar, 0, 1), (ItemId.Credits, 20, 80)
+            ],
+            TileId.FungalHabRuin =>
+            [
+                (ItemId.GlowSpore, 3, 8), (ItemId.MushroomMace, 0, 1), (ItemId.SporeCenser, 0, 1), (ItemId.BioGel, 2, 6),
+                (ItemId.Credits, 20, 80)
+            ],
+            _ => PhysicsContainerLoot(tile)
+        };
 
     /// <summary>Toggles a door and every same-family door cell stacked with it. False when an actor blocks the closing door.</summary>
     public bool ToggleDoor(GridPoint cell)

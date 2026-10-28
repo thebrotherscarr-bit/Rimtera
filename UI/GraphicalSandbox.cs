@@ -75,7 +75,6 @@ public static partial class GraphicalSandbox
         private readonly ScreenTransition _transition = new();
         private readonly AudioEngine _audio = new();
         private readonly AudioDirector _audioDirector;
-        private bool _mouseUseHeld;
         private float _autosaveSeconds;
         private bool _jump;
         private bool _dash;
@@ -121,79 +120,38 @@ public static partial class GraphicalSandbox
                 ForwardPointer(PointerFrame(e.Location));
             };
             _canvas.MouseLeave += (_, _) => _canvas.MousePosition = null;
-            _canvas.MouseDown += (_, e) =>
+            _canvas.MouseDown += (_, e) => OnCanvasMouseDown(e);
+            _canvas.MouseUp += (_, e) => OnCanvasMouseUp(e);
+            // A press whose release never arrives (capture taken away, the window switched mid-drag) must not stay held.
+            _canvas.MouseCaptureChanged += (_, _) =>
             {
-                if (_canvas.FullscreenMapOpen)
-                {
-                    if (e.Button == MouseButtons.Left && _game is not null && _canvas.TryMapPylonTeleport(_game, e.Location)) return;
-                    _canvas.MapMouseDown(e.Location);
+                if (!IsHandleCreated)
                     return;
-                }
-                if (e.Button == MouseButtons.Left && _menuOpen && _game is not null && _menu.Ui.CurrentState is InventoryUiState &&
-                    _canvas.TryCraftClick(e.Location, out var recipeId))
+                BeginInvoke(() =>
                 {
-                    if (recipeId is not null && _menu.Ui.CurrentState is InventoryUiState crafting)
-                        crafting.ShowStatus(_game.TryCraft(recipeId).Message);
-                    SyncCanvas();
-                    return;
-                }
-                // Terraria plays on with the inventory open: a click on the world (not on a panel) uses the held item
-                // or interacts, as it would with the inventory closed.
-                if (PlaysThroughMenu && _menu.Ui.CurrentState is InventoryUiState { Controller.CursorStack.IsEmpty: true } &&
-                    !_menu.Ui.IsOverInterface(ToUiPoint(e.Location)) && !_canvas.IsOverCraftingPanel(e.Location))
-                {
-                    if (e.Button == MouseButtons.Left)
-                        _mouseUseHeld = true;
-                    else if (e.Button == MouseButtons.Right)
-                        InteractAtCursor();
-                    return;
-                }
-                if (!_menuOpen && _game is not null)
-                {
-                    if (e.Button == MouseButtons.Left && _canvas.HotbarSlotAt(e.Location) is { } slot)
-                        _game.TrySelectInventorySlot(slot);
-                    else if (e.Button == MouseButtons.Left)
-                        _mouseUseHeld = true;
-                    else if (e.Button == MouseButtons.Right)
-                        InteractAtCursor();
-                    return;
-                }
-                ForwardPointer(PointerFrame(e.Location));
-            };
-            _canvas.MouseUp += (_, e) =>
-            {
-                _canvas.MapMouseUp();
-                if (e.Button == MouseButtons.Left)
-                    _mouseUseHeld = false;
-                ForwardPointer(PointerFrame(e.Location));
+                    if (!_canvas.Capture && _mouse.AnyDown && Environment.TickCount64 - _lastMouseUpTicks > 50)
+                        ReleaseAllPointer();
+                });
             };
             _canvas.MouseWheel += (_, e) =>
             {
+                // Terraria's wheel: zooms the full map; scrolls the hotbar in the world; with the inventory open it scrolls
+                // the crafting list or the list under the mouse (Player.Update → DoScrollingInInventory), never the hotbar.
                 if (_canvas.FullscreenMapOpen)
                 {
                     _canvas.MapZoom(e.Delta, e.Location);
                     return;
                 }
-                if (!_menuOpen && _game is not null && (ModifierKeys & Keys.Control) != 0)
-                {
-                    // Ctrl + wheel zooms the camera (the same setting as Options → Zoom), kept between sessions.
-                    var zoom = Math.Clamp(MathF.Round((_menu.Preferences.Zoom + (e.Delta > 0 ? 0.1f : -0.1f)) * 10f) / 10f, 0.6f, 2f);
-                    if (zoom != _menu.Preferences.Zoom)
-                    {
-                        _menu.Preferences.Zoom = zoom;
-                        _menu.SavePreferences();
-                        _canvas.Notify($"Zoom {zoom:P0}");
-                    }
-                    return;
-                }
                 if (!_menuOpen && _game is not null)
                 {
-                    // Scrolling cycles the ten hotbar slots, wrapping around.
-                    var next = (_game.Player.Inventory.SelectedSlot + (e.Delta < 0 ? 1 : -1) + 10) % 10;
-                    _game.TrySelectInventorySlot(next);
+                    var current = _smartSelectReturnSlot ?? _game.PendingHotbarSlot;
+                    if (current is < 0 or >= Inventory.HotbarSlots)
+                        current = 0;
+                    var next = (current + (e.Delta < 0 ? 1 : -1) + Inventory.HotbarSlots) % Inventory.HotbarSlots;
+                    SelectHotbar(next);
                     return;
                 }
-                if (_menuOpen && _menu.Ui.CurrentState is InventoryUiState && _canvas.TryScrollCrafting(e.Location, e.Delta))
+                if (_menuOpen && _menu.Ui.CurrentState is InventoryUiState scrolled && _canvas.TryScrollCrafting(e.Location, e.Delta, scrolled))
                     return;
                 ForwardPointer(PointerFrame(e.Location) with { ScrollDelta = e.Delta });
             };
@@ -218,6 +176,7 @@ public static partial class GraphicalSandbox
             {
                 _down.Clear();
                 _menuDown.Clear();
+                ReleaseAllPointer();
             };
             Resize += (_, _) =>
             {
@@ -296,13 +255,25 @@ public static partial class GraphicalSandbox
 
         private void OnKeyDown(object? sender, KeyEventArgs e)
         {
+            if (e.Alt && e.KeyCode == Keys.Enter)
+            {
+                // Alt+Enter toggles fullscreen, hard-wired as Terraria's DoUpdate_AltEnter_ToggleFullscreen.
+                ToggleFullscreen();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                return;
+            }
             if (_transition.BlocksGameplay)
                 return;
             if (_canvas.FullscreenMapOpen)
             {
-                // The map takes over input; the world keeps running behind it.
+                // The map takes over input (the player stands still, Player.Update zeroes the controls): WASD pans it and
+                // the map zoom keys zoom it, both read while held in Advance; M or Esc closes it. The world keeps running.
                 if (IsBoundTo("Map", e.KeyCode) || e.KeyCode == Keys.Escape)
                     _canvas.FullscreenMapOpen = false;
+                else
+                    _down.Add(e.KeyCode);
+                e.Handled = true;
                 return;
             }
             if (_menuOpen)
@@ -318,11 +289,16 @@ public static partial class GraphicalSandbox
                     return;
                 }
 
-                if (PlaysThroughMenu && ActionsFor(e.KeyCode).Where(IsPlayThroughAction).ToList() is { Count: > 0 } playing)
+                if (PlaysThroughMenu && ActionsFor(e.KeyCode).Where(IsPlayThroughAction).ToList() is { Count: > 0 } playing &&
+                    !IsMenuBound("MenuBack", e.KeyCode))
                 {
+                    // As in Terraria every gameplay key works with the inventory open (Player.Update runs as usual); the
+                    // inventory key closes it. Escape stays the menu's Back, which closes the hub too.
                     var held = !_down.Add(e.KeyCode);
+                    if (e.KeyCode == Keys.Menu)
+                        e.SuppressKeyPress = true;
                     foreach (var action in playing)
-                        if (!held || action == "Jump")
+                        if (!held || IsRepeatingAction(action))
                             RunAction(action);
                     e.Handled = true;
                     e.SuppressKeyPress = true;
@@ -361,7 +337,7 @@ public static partial class GraphicalSandbox
                 _dash = true;
             foreach (var action in actions)
             {
-                if (repeat && action is not ("Jump" or "CraftPrevious" or "CraftNext" or "MinimapZoomIn" or "MinimapZoomOut" or "CycleInventory"))
+                if (repeat && !IsRepeatingAction(action))
                     continue;
                 RunAction(action);
                 e.Handled = true;
@@ -377,13 +353,15 @@ public static partial class GraphicalSandbox
             var game = _game;
             if (action.StartsWith("Hotbar", StringComparison.Ordinal) && int.TryParse(action[6..], out var hotbar))
             {
-                game.TrySelectInventorySlot(hotbar - 1);
+                SelectHotbar(hotbar - 1);
                 return;
             }
             if (action.StartsWith("Loadout", StringComparison.Ordinal) && int.TryParse(action[7..], out var loadout))
             {
                 if (game.SwitchLoadout(loadout - 1))
                     _canvas.Notify($"Loadout {loadout} equipped.");
+                if (_menu.Ui.CurrentState is InventoryUiState open)
+                    open.Refresh();
                 return;
             }
             switch (action)
@@ -394,8 +372,11 @@ public static partial class GraphicalSandbox
                 case "ReplaceTile": _replace = true; break;
                 case "Eat": _eat = true; break;
                 case "Interact": InteractAtCursor(); break;
-                case "SmartSelect": BeginSmartSelect(); break;
+                case "SmartSelect": break; // re-checked every tick while held (UpdateSmartSelect)
                 case "SmartCursor":
+                    // Over an interface Ctrl is Ctrl-click (trash), never the smart cursor (Player.Update @3612-3627).
+                    if (_canvas.MousePosition is { } overPoint && PointerOverInterface(overPoint))
+                        break;
                     if (_menu.Preferences.SmartCursor == SmartCursorMode.Hold)
                         _canvas.Smart.Enabled = true;
                     else
@@ -405,13 +386,15 @@ public static partial class GraphicalSandbox
                     }
                     break;
                 case "ThrowItem":
-                    if (game.DropInventorySlot(game.Player.Inventory.SelectedSlot) is null)
-                        _canvas.Notify("Nothing in hand to throw.");
+                    switch (game.TryThrowHeld())
+                    {
+                        case ThrowOutcome.NothingHeld: _canvas.Notify("Nothing in hand to throw."); break;
+                        case ThrowOutcome.Favorite: _canvas.Notify("Favorites can't be thrown."); break;
+                    }
                     break;
                 case "Grapple":
-                    if (game.Grapple is not null)
-                        game.ReleaseGrapple();
-                    else if (_canvas.CursorTile() is { } hookAt && !game.TryFireGrapple(new Vector2(hookAt.X + 0.5f, hookAt.Y + 0.5f)))
+                    // Terraria's QuickGrapple: every press fires a hook (a new one replaces the old); jumping lets go.
+                    if (_canvas.CursorTile() is { } hookAt && !game.TryFireGrapple(new Vector2(hookAt.X + 0.5f, hookAt.Y + 0.5f)))
                         _canvas.Notify("Equip a grappling hook to fire it.");
                     break;
                 case "Mount":
@@ -430,12 +413,29 @@ public static partial class GraphicalSandbox
                     var buffs = game.QuickBuff();
                     _canvas.Notify(buffs > 0 ? $"Used {buffs} buff item{(buffs == 1 ? "" : "s")}." : "No buff items to use.");
                     break;
-                case "Inventory": OpenInventory(); break;
+                case "Inventory":
+                    if (_menuOpen && _menu.Ui.CurrentState is InventoryUiState)
+                        CloseInventory();
+                    else
+                        OpenInventory();
+                    break;
                 case "Pause": OpenPauseMenu(); break;
                 case "Colonist": OpenColonistSheet(); break;
                 case "Bestiary": OpenBestiary(); break;
                 case "Achievements": OpenAchievements(); break;
-                case "Map": _canvas.OpenFullscreenMap(game); break;
+                case "Map":
+                    // TryOpeningFullscreenMap closes the inventory first.
+                    if (_menuOpen && _menu.Ui.CurrentState is InventoryUiState)
+                        CloseInventory();
+                    _canvas.OpenFullscreenMap(game);
+                    break;
+                case "ZoomIn": StepZoom(0.1f); break;
+                case "ZoomOut": StepZoom(-0.1f); break;
+                case "HideUi": _canvas.HideUi = !_canvas.HideUi; break;
+                case "Creative":
+                    if (game.IsCreative)
+                        OpenCreativeMenu();
+                    break;
                 case "MapStyle":
                     _canvas.MapView = (GameCanvas.MapStyle)(((int)_canvas.MapView + 1) % 3);
                     _canvas.Notify($"Map: {_canvas.MapView}.");
@@ -450,7 +450,6 @@ public static partial class GraphicalSandbox
                 case "Craft": game.TryCraftNext(); break;
                 case "CraftPrevious": game.CycleCraftableRecipe(-1); break;
                 case "CraftNext": game.CycleCraftableRecipe(1); break;
-                case "Guide": game.ConsultGuide(); break;
                 case "CycleInventory": game.SelectNextInventoryItem(); break;
                 case "SummonBoss": _boss = true; break;
                 case "Sleep":
@@ -518,34 +517,15 @@ public static partial class GraphicalSandbox
             return doubled;
         }
 
+        /// <summary>The slot Shift auto-select switched away from, restored when Shift is let go.</summary>
         private int? _smartSelectReturnSlot;
-
-        /// <summary>
-        /// Smart select (Terraria's Shift): while held, the hotbar jumps to the tool that can work what's under the
-        /// cursor (cutter for trees, then drill, then demolisher for walls); letting go returns to the item before.
-        /// </summary>
-        private void BeginSmartSelect()
-        {
-            if (_game is null || _canvas.CursorTile() is not { } cursor)
-                return;
-            var inventory = _game.Player.Inventory;
-            var mouse = new Vector2(cursor.X + 0.5f, cursor.Y + 0.5f);
-            foreach (var kind in new[] { ItemUseKind.Cutter, ItemUseKind.Pickaxe, ItemUseKind.Demolisher })
-                for (var slot = 0; slot < Inventory.HotbarSlots; slot++)
-                    if (inventory.Slots[slot] is { IsEmpty: false } stack && _game.Items.Contains(stack.ItemId) &&
-                        _game.Items[stack.ItemId] is var item && item.UseKind == kind && SmartToolTargeting.Find(_game, item, mouse) is not null)
-                    {
-                        _smartSelectReturnSlot ??= inventory.SelectedSlot;
-                        _game.TrySelectInventorySlot(slot);
-                        return;
-                    }
-        }
 
         private void EndSmartSelect()
         {
-            if (_smartSelectReturnSlot is { } slot)
-                _game?.TrySelectInventorySlot(slot);
+            var slot = _smartSelectReturnSlot;
             _smartSelectReturnSlot = null;
+            if (slot is { } back)
+                _game?.RequestHotbarSlot(back);
         }
 
         private void HandleTextPromptKey(KeyEventArgs e)
@@ -640,20 +620,43 @@ public static partial class GraphicalSandbox
         }
 
         /// <summary>
-        /// A pointer frame carrying the real button state. Frames from mouse moves used to say "no button down", which
-        /// the UI read as a release: a click fired on the first move after the press, or was lost if that move left the slot.
+        /// A pointer frame carrying the button state from this window's own mouse events (<see cref="_mouse"/>), and only
+        /// for presses that began on an interface: a press on the world never reaches the UI. Reading the live hardware
+        /// state instead (Control.MouseButtons) missed posted clicks entirely.
         /// </summary>
         private UiInputFrame PointerFrame(Point location) => new(ToUiPoint(location),
-            LeftDown: (MouseButtons & MouseButtons.Left) != 0, RightDown: (MouseButtons & MouseButtons.Right) != 0);
+            LeftDown: _mouse.InterfaceLeftDown, RightDown: _mouse.InterfaceRightDown);
 
         /// <summary>The inventory is open over a running world (Autopause off): the player keeps moving and using items, as in Terraria.</summary>
         private bool PlaysThroughMenu => _menuOpen && _game is not null && !_menu.Preferences.AutoPause && _menu.Ui.CurrentState is InventoryUiState;
 
-        /// <summary>Gameplay keys that keep working with the inventory open.</summary>
-        private static bool IsPlayThroughAction(string action) =>
-            action is "MoveLeft" or "MoveRight" or "MoveUp" or "MoveDown" or "Jump" or "Dash" or "Grapple" or "Mount" or "QuickHeal" or
-                "QuickCharge" or "QuickBuff" or "SmartCursor" or "SmartSelect" or "ThrowItem" or "FrameRate" ||
-            action.StartsWith("Hotbar", StringComparison.Ordinal);
+        /// <summary>
+        /// Gameplay keys with the inventory open: all of them, as in Terraria (Player.Update copies every trigger whatever
+        /// the inventory; only chat and sign editing block the hotbar keys). Emotes stay with the world view.
+        /// </summary>
+        private static bool IsPlayThroughAction(string action) => action is not "Emote";
+
+        /// <summary>Actions a held key repeats (Terraria reads these triggers every tick while held).</summary>
+        private static bool IsRepeatingAction(string action) =>
+            action is "Jump" or "CraftPrevious" or "CraftNext" or "MinimapZoomIn" or "MinimapZoomOut" or "CycleInventory" or "ZoomIn" or "ZoomOut";
+
+        /// <summary>Camera zoom (Terraria's ViewZoomIn / ViewZoomOut on = and -); the same setting as Options → Zoom.</summary>
+        private void StepZoom(float step)
+        {
+            var zoom = Math.Clamp(MathF.Round((_menu.Preferences.Zoom + step) * 10f) / 10f, 0.6f, 2f);
+            if (zoom == _menu.Preferences.Zoom)
+                return;
+            _menu.Preferences.Zoom = zoom;
+            _menu.SavePreferences();
+            _canvas.Notify($"Zoom {zoom:P0}");
+        }
+
+        private void ToggleFullscreen()
+        {
+            _menu.Preferences.SetScreenMode(_menu.Preferences.ScreenMode == WindowMode.Fullscreen ? WindowMode.Windowed : WindowMode.Fullscreen);
+            _menu.SavePreferences();
+            ApplyDisplayPreferences();
+        }
 
         private void ForwardPointer(UiInputFrame frame)
         {
@@ -662,6 +665,192 @@ public static partial class GraphicalSandbox
             _menu.Handle(frame);
             AfterMenuAction();
         }
+
+        // ------------------------------------------------------------ mouse
+
+        private readonly MouseButtonState _mouse = new();
+        private readonly UseButtonGate _useGate = new();
+        private long _lastMouseUpTicks;
+        /// <summary>The world-use state computed this tick (the left button went down on the world, not over an interface).</summary>
+        private bool _worldUseHeld;
+
+        private static UiPointerButton? ButtonOf(MouseButtons button) => button switch
+        {
+            MouseButtons.Left => UiPointerButton.Left,
+            MouseButtons.Right => UiPointerButton.Right,
+            _ => null
+        };
+
+        /// <summary>
+        /// True when <paramref name="point"/> is over an interface rather than the world: a hub element or the crafting panel
+        /// with the inventory open, the HUD with it closed. Terraria's <c>mouseInterface</c>.
+        /// </summary>
+        private bool PointerOverInterface(Point point) => _menuOpen
+            ? _menu.Ui.IsOverInterface(ToUiPoint(point)) || _canvas.IsOverCraftingPanel(point)
+            : _canvas.IsOverHud(point) || _canvas.GuideHintAt(point);
+
+        /// <summary>
+        /// Every press is recorded in <see cref="_mouse"/> with its owner, then routed: map, crafting and guide panels and
+        /// HUD elements take it as an interface press; otherwise the world gets it (left uses, right interacts or throws
+        /// the cursor item). Clicks over UI never reach the world, and world presses never reach the UI.
+        /// </summary>
+        private void OnCanvasMouseDown(MouseEventArgs e)
+        {
+            if (ButtonOf(e.Button) is not { } button)
+                return;
+            _canvas.MousePosition = e.Location;
+            if (_canvas.FullscreenMapOpen)
+            {
+                _mouse.Press(button, PointerOwner.Interface);
+                if (button == UiPointerButton.Left && _game is not null && _canvas.TryMapPylonTeleport(_game, e.Location)) return;
+                _canvas.MapMouseDown(e.Location);
+                return;
+            }
+            if (button == UiPointerButton.Left && _menuOpen && _game is not null && _menu.Ui.CurrentState is InventoryUiState guiding &&
+                HandleGuideClick(guiding, e.Location))
+            {
+                _mouse.Press(button, PointerOwner.Interface);
+                return;
+            }
+            if (button == UiPointerButton.Left && _menuOpen && _game is not null && _menu.Ui.CurrentState is InventoryUiState &&
+                _canvas.TryCraftClick(e.Location, out var recipeId))
+            {
+                _mouse.Press(button, PointerOwner.Interface);
+                if (recipeId is not null && _menu.Ui.CurrentState is InventoryUiState crafting)
+                {
+                    var crafted = _game.TryCraft(recipeId);
+                    crafting.ShowStatus(crafted.Message);
+                    if (crafted.Success)
+                        BeginCraftHold(recipeId);
+                }
+                SyncCanvas();
+                return;
+            }
+            // Terraria plays on with the inventory open: a press on the world (not on a panel) uses the held item, or the
+            // item on the cursor, and a right press interacts, or throws the cursor item.
+            if (PlaysThroughMenu && !PointerOverInterface(e.Location))
+            {
+                _mouse.Press(button, PointerOwner.World);
+                if (button == UiPointerButton.Right)
+                    RightClickWorld();
+                return;
+            }
+            if (!_menuOpen && _game is not null)
+            {
+                if (button == UiPointerButton.Left && HandleGuideHintClick(e.Location) || _canvas.GuideHintAt(e.Location))
+                {
+                    _mouse.Press(button, PointerOwner.Interface);
+                    return;
+                }
+                if (_canvas.HotbarSlotAt(e.Location) is { } slot)
+                {
+                    _mouse.Press(button, PointerOwner.Interface);
+                    if (button == UiPointerButton.Left)
+                        SelectHotbar(slot);
+                    return;
+                }
+                if (_canvas.IsOverHud(e.Location))
+                {
+                    _mouse.Press(button, PointerOwner.Interface);
+                    return;
+                }
+                _mouse.Press(button, PointerOwner.World);
+                if (button == UiPointerButton.Right)
+                    RightClickWorld();
+                return;
+            }
+            _mouse.Press(button, PointerOwner.Interface);
+            ForwardPointer(PointerFrame(e.Location));
+        }
+
+        private void OnCanvasMouseUp(MouseEventArgs e)
+        {
+            _lastMouseUpTicks = Environment.TickCount64;
+            _canvas.MapMouseUp();
+            if (ButtonOf(e.Button) is { } button)
+            {
+                _mouse.Release(button);
+                if (button == UiPointerButton.Left)
+                    EndCraftHold();
+            }
+            ForwardPointer(PointerFrame(e.Location));
+        }
+
+        /// <summary>Focus or capture lost: nothing stays pressed, nothing half-clicked fires later.</summary>
+        private void ReleaseAllPointer()
+        {
+            _mouse.Clear();
+            _menu.Ui.CancelPointer();
+            _useGate.Reset();
+            _worldUseHeld = false;
+            EndCraftHold();
+            EndSmartSelect();
+        }
+
+        /// <summary>
+        /// A right press on the world: with an item on the cursor it is thrown (Terraria's <c>dropItemCheck</c>), otherwise
+        /// doors, containers, beds, NPCs and the station AI answer it.
+        /// </summary>
+        private void RightClickWorld()
+        {
+            if (_game is null)
+                return;
+            if (_game.Player.Inventory.HoldingCursor)
+            {
+                _game.ThrowCursorItem();
+                if (_menu.Ui.CurrentState is InventoryUiState open)
+                    open.ShowStatus("Thrown.");
+                SyncCanvas();
+                return;
+            }
+            InteractAtCursor();
+        }
+
+        /// <summary>A hotbar choice from the player: waits for the current swing, and while Shift auto-select holds a tool it becomes the slot to return to.</summary>
+        private void SelectHotbar(int slot)
+        {
+            if (_game is null)
+                return;
+            if (_smartSelectReturnSlot is not null)
+                _smartSelectReturnSlot = slot;
+            else
+                _game.RequestHotbarSlot(slot);
+        }
+
+        /// <summary>
+        /// Shift auto-select, re-checked every tick while the key is held and the mouse is over the world (Terraria's
+        /// <c>SmartSelectLookup</c>, run from <c>PickItemSelectionOverride</c> each frame): the hotbar jumps to the item the
+        /// game picks for the cell under the cursor and returns to the slot before when Shift is let go.
+        /// </summary>
+        private void UpdateSmartSelect(bool overInterface)
+        {
+            if (_game is null)
+                return;
+            if (!Held("SmartSelect") || overInterface || _canvas.FullscreenMapOpen || _game.Player.Inventory.HoldingCursor)
+            {
+                EndSmartSelect();
+                return;
+            }
+            if (_game.IsUsingItem || _canvas.CursorTile() is not { } cursor)
+                return;
+            var inventory = _game.Player.Inventory;
+            if (_game.SmartSelectSlot(cursor) is not { } slot)
+            {
+                EndSmartSelect();
+                return;
+            }
+            _smartSelectReturnSlot ??= inventory.SelectedSlot;
+            if (slot != inventory.SelectedSlot)
+                _game.TrySelectInventorySlot(slot);
+        }
+
+        /// <summary>Closes the inventory hub the way its own close does (the bank closes with it).</summary>
+        private void CloseInventory()
+        {
+            _game?.CloseBank();
+            CloseMenu();
+        }
+
 
         private UiInputFrame? TranslateMenuKey(Keys key)
         {
@@ -686,6 +875,7 @@ public static partial class GraphicalSandbox
 
         private void Advance()
         {
+            UpdateCraftHold();
             if (_game is not null)
             {
                 _audioDirector.Update(_game, _menu.Preferences);
@@ -709,6 +899,18 @@ public static partial class GraphicalSandbox
                 SyncCanvas();
                 return;
             }
+            if (_game is not null)
+            {
+                // Terraria's dropItemCheck: with the inventory gone, a stack still on the cursor goes back to the bag (or
+                // drops at the player's feet when the bag is full). Nothing on the cursor is ever lost.
+                if (_game.Player.Inventory.HoldingCursor && !(_menuOpen && _menu.Ui.CurrentState is InventoryUiState))
+                    _game.ReturnCursorItem();
+                if (_menuOpen && _menu.Ui.CurrentState is InventoryUiState hub)
+                {
+                    hub.TickRightHold(_canvas.MousePosition is { } at ? _menu.Ui.ElementAt(ToUiPoint(at)) : null, _mouse.InterfaceRightDown);
+                    hub.RefreshCursorLabel();
+                }
+            }
             // Autopause off: the world keeps running behind the inventory and colonist sheet.
             var runBehindMenu = _menuOpen && _game is not null && !_menu.Preferences.AutoPause &&
                                 _menu.Ui.CurrentState is InventoryUiState or ColonistSheetState;
@@ -725,13 +927,25 @@ public static partial class GraphicalSandbox
                 return;
             }
 
-            if (_canvas.FullscreenMapOpen)
+            var overInterface = _canvas.MousePosition is { } pointer && PointerOverInterface(pointer);
+            var mapOpen = _canvas.FullscreenMapOpen;
+            if (mapOpen)
             {
-                _down.Clear();
-                _mouseUseHeld = false;
+                // Player.Update with the full map open: WASD pans it, the map zoom keys zoom it, and the player stands still.
+                const float pan = 16f;
+                _canvas.PanFullscreenMap((Held("MoveRight") ? pan : 0f) - (Held("MoveLeft") ? pan : 0f),
+                    (Held("MoveDown") ? pan : 0f) - (Held("MoveUp") ? pan : 0f));
+                if (Held("MinimapZoomIn")) _canvas.ZoomFullscreenMap(1.05f);
+                if (Held("MinimapZoomOut")) _canvas.ZoomFullscreenMap(0.95f);
             }
-            var horizontal = Held("MoveLeft") ? -1f : Held("MoveRight") ? 1f : 0f;
-            if (_mouseUseHeld && !_mine && !_use)
+            if (!mapOpen && Held("MapAlphaUp")) _canvas.AdjustMapOpacity(0.015f);
+            if (!mapOpen && Held("MapAlphaDown")) _canvas.AdjustMapOpacity(-0.015f);
+            UpdateSmartSelect(overInterface);
+            // Holding left and right together cancels out (Player.Update @3583-3602).
+            var horizontal = mapOpen ? 0f : (Held("MoveRight") ? 1f : 0f) - (Held("MoveLeft") ? 1f : 0f);
+            _worldUseHeld = !mapOpen && _mouse.WorldUseHeld(overInterface);
+            // Items without auto-reuse are used once per press; the rest keep going while held (Item.autoReuse).
+            if (_useGate.Update(_worldUseHeld, ItemUseRules.AutoReuse(_game.Player.Inventory.SelectedItem)) && !_mine && !_use)
             {
                 if (_game.Player.Inventory.SelectedItem?.UseKind == ItemUseKind.Pickaxe)
                     _mine = true;
@@ -753,9 +967,9 @@ public static partial class GraphicalSandbox
                 action = PlayerAction.ReplaceSelected;
 
             _game.Tick(new GameInput(
-                new MovementInput(horizontal, JumpPressed: _jump, DashPressed: _dash,
-                    JumpHeld: Held("Jump"),
-                    Vertical: Held("MoveUp") ? -1f : Held("MoveDown") ? 1f : 0f),
+                new MovementInput(horizontal, JumpPressed: _jump && !mapOpen, DashPressed: _dash && !mapOpen,
+                    JumpHeld: !mapOpen && Held("Jump"),
+                    Vertical: mapOpen ? 0f : Held("MoveUp") ? -1f : Held("MoveDown") ? 1f : 0f),
                 action,
                 aim));
             _jump = _dash = _mine = _use = _replace = _eat = _boss = false;
@@ -781,9 +995,9 @@ public static partial class GraphicalSandbox
             var game = _game!;
             if (_canvas.CursorTile() is { } cursor)
             {
-                if (!_mouseUseHeld)
+                if (!_worldUseHeld)
                     _canvas.Smart.ReleaseLock();
-                return _canvas.Smart.Resolve(game, cursor, _mouseUseHeld)?.Tile ?? cursor;
+                return _canvas.Smart.Resolve(game, cursor, _worldUseHeld)?.Tile ?? cursor;
             }
             var motion = game.Player.Motion;
             var x = (int)MathF.Floor(motion.Position.X + motion.Size.X / 2f + motion.Facing * 2.5f);
@@ -1035,8 +1249,7 @@ public static partial class GraphicalSandbox
             // Right-clicking the station AI talks to it, as with Terraria's Guide.
             if (Vector2.Distance(new Vector2(target.X + 0.5f, target.Y + 0.5f), _game.GuidePosition) < 1.5f)
             {
-                var advice = _game.ConsultGuide();
-                _canvas.Notify(advice.Count > 0 ? advice[0] : "The station AI has nothing new to suggest.");
+                OpenStationAiScreen(StationAiAt(_game.GuidePosition), consult: true);
                 return;
             }
             // Right-clicking a bed sleeps in it, as in Terraria 1.4.
@@ -1049,7 +1262,7 @@ public static partial class GraphicalSandbox
             switch (result.Kind)
             {
                 case WorldInteractionKind.ContainerOpened when result.Container is { } container:
-                    ShowStorage(container, result.Cell, "Chest");
+                    ShowStorage(container, result.Cell, (result.Cell is { } named ? _game.GetChestName(named) : null) ?? "Chest");
                     break;
                 case WorldInteractionKind.BankOpened when result.Container is { } bank:
                     ShowStorage(bank, null, "Cargo pod");
@@ -1078,6 +1291,12 @@ public static partial class GraphicalSandbox
             if (_game is null)
                 return;
             var game = _game;
+            if (npc.Kind == TownNpcKind.StationAi && !npc.IsBound)
+            {
+                var talking = string.IsNullOrWhiteSpace(status) || status == game.GetNpcDialogue(npc);
+                OpenStationAiScreen(npc, status: talking ? null : status, consult: talking);
+                return;
+            }
             var entries = new List<MenuEntry>
             {
                 new("Shop", () => OpenShopScreen(npc, string.Empty)),
@@ -1517,6 +1736,8 @@ public static partial class GraphicalSandbox
         private const float CameraFollowX = 14f;
         private const float CameraFollowY = 9f;
         private readonly List<(RectangleF Rect, int Slot)> _hotbarHits = new();
+        /// <summary>Every HUD panel drawn last frame (vitals, buffs, minimap, status, boss and event bars).</summary>
+        private readonly List<RectangleF> _hudRects = new();
         private readonly List<(RectangleF Rect, string RecipeId)> _craftHits = new();
         private RectangleF _craftArea;
         private string? _craftSelected;
@@ -1534,6 +1755,44 @@ public static partial class GraphicalSandbox
             var x = (int)MathF.Floor(_viewStartX + mouse.X / (float)TileSize);
             var y = (int)MathF.Floor(_viewStartY + mouse.Y / (float)TileSize);
             return x >= 0 && y >= 0 && x < Game.World.Width && y < Game.World.Height ? new GridPoint(x, y) : null;
+        }
+
+        /// <summary>
+        /// True over any HUD element (hotbar, vitals, buffs, minimap, status panel, boss and event bars). Terraria sets
+        /// <c>mouseInterface</c> over all of these, so a click there never uses the held item.
+        /// </summary>
+        public bool IsOverHud(Point point) => !MenuOpen && !HideUi && (HotbarSlotAt(point) is not null || _hudRects.Any(rect => rect.Contains(point)));
+
+        /// <summary>F11: hides the whole HUD, as Terraria's <c>Main.hideUI</c>.</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool HideUi { get; set; }
+
+        /// <summary>Minimap and overlay opacity (PageUp / PageDown, Terraria's MapAlphaUp / MapAlphaDown).</summary>
+        public float MinimapOpacity { get; private set; } = 1f;
+        public float OverlayOpacity { get; private set; } = 0.55f;
+
+        /// <summary>Changes the opacity of whichever map is showing by <paramref name="step"/> (Terraria: ±0.015 a tick held).</summary>
+        public void AdjustMapOpacity(float step)
+        {
+            if (MapView == MapStyle.Overlay)
+                OverlayOpacity = Math.Clamp(OverlayOpacity + step, 0.05f, 1f);
+            else if (MapView == MapStyle.Minimap)
+                MinimapOpacity = Math.Clamp(MinimapOpacity + step, 0.05f, 1f);
+        }
+
+        /// <summary>Pans the fullscreen map by screen pixels (WASD while the map is open, as in Terraria).</summary>
+        public void PanFullscreenMap(float dx, float dy)
+        {
+            _mapCenter = new PointF(_mapCenter.X + dx / _mapZoom, _mapCenter.Y + dy / _mapZoom);
+            Invalidate();
+        }
+
+        /// <summary>Zooms the fullscreen map about its centre by <paramref name="factor"/> (the map zoom keys, held).</summary>
+        public void ZoomFullscreenMap(float factor)
+        {
+            _mapZoom = Math.Clamp(_mapZoom * factor, 0.12f, 16f);
+            Invalidate();
         }
 
         public int? HotbarSlotAt(Point point)
@@ -1567,17 +1826,8 @@ public static partial class GraphicalSandbox
         }
 
         /// <summary>True over the crafting panel, which the canvas draws beside the inventory's UI tree.</summary>
-        public bool IsOverCraftingPanel(Point point) => _craftArea.Contains(point) || _craftHits.Any(hit => hit.Rect.Contains(point));
-
-        /// <summary>The mouse wheel over the crafting grid scrolls it a row at a time.</summary>
-        public bool TryScrollCrafting(Point point, int delta)
-        {
-            if (!_craftArea.Contains(point))
-                return false;
-            _craftScrollRows = Math.Max(0, _craftScrollRows + (delta < 0 ? 1 : -1));
-            Invalidate();
-            return true;
-        }
+        public bool IsOverCraftingPanel(Point point) => _craftArea.Contains(point) || _craftHits.Any(hit => hit.Rect.Contains(point)) ||
+                                                        _guideArea.Contains(point) || _guideHits.Any(hit => hit.Rect.Contains(point));
 
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -2114,8 +2364,18 @@ public static partial class GraphicalSandbox
             _craftHits.Clear();
             _profiler.Mark("effects");
             if (MenuOpen)
+            {
+                _hudRects.Clear();
                 return;
+            }
             DrawCursorHighlight(g, game, startX, startY);
+            _hudRects.Clear();
+            if (HideUi)
+            {
+                _hotbarHits.Clear();
+                _profiler.Mark("hud");
+                return;
+            }
             DrawHud(g, game);
             DrawBuffBar(g, game);
             if (MapView == MapStyle.Overlay)
@@ -2364,6 +2624,7 @@ public static partial class GraphicalSandbox
             DrawShadowed(g, info, _small, _hudBrush, Width - infoSize.Width - 10, Height - 22);
 
             DrawControlsHint(g);
+            DrawGuideHint(g, game);
         }
 
         private static string FormatClock(float hour)
@@ -2383,6 +2644,7 @@ public static partial class GraphicalSandbox
         private void DrawVitals(Graphics g, GameSimulation game)
         {
             var panel = new RectangleF(Width - MinimapWidth - 10, 8, MinimapWidth, VitalsHeight - 8);
+            _hudRects.Add(panel);
             DrawRivetedPanel(g, panel);
             var x = panel.X + 12;
             var width = panel.Width - 24;
@@ -2507,7 +2769,7 @@ public static partial class GraphicalSandbox
                 _overlayCenter = tileCenter;
             }
             using var fade = new ImageAttributes();
-            fade.SetColorMatrix(new ColorMatrix { Matrix33 = 0.55f });
+            fade.SetColorMatrix(new ColorMatrix { Matrix33 = OverlayOpacity });
             var previous = g.InterpolationMode;
             g.InterpolationMode = InterpolationMode.NearestNeighbor;
             g.DrawImage(_overlayMap, new Rectangle(0, 0, mapW * scale, mapH * scale), 0, 0, mapW, mapH, GraphicsUnit.Pixel, fade);
@@ -2688,7 +2950,7 @@ public static partial class GraphicalSandbox
                 if (colonist.IsAlive && Over(world, colonist.Motion.Position, colonist.Motion.Size, 0.3f))
                     return $"{colonist.Profile.Name} · {colonist.Activity} · {colonist.MoodLabel}";
             if (!game.GuideMovedIn && Vector2.Distance(world, game.Guide.Position) < 1.2f)
-                return "Station AI · right-click for guidance";
+                return "Station AI · right-click for tips and the recipe guide";
 
             if (CursorTile() is { } tile)
             {
@@ -2719,10 +2981,18 @@ public static partial class GraphicalSandbox
             }
 
             var frame = new RectangleF(Width - MinimapWidth - 10, VitalsHeight + 4, MinimapWidth, MinimapHeight);
+            _hudRects.Add(frame);
             var previous = g.InterpolationMode;
             g.InterpolationMode = InterpolationMode.NearestNeighbor;
             g.PixelOffsetMode = PixelOffsetMode.Half;
-            g.DrawImage(_minimap, frame);
+            if (MinimapOpacity >= 0.999f)
+                g.DrawImage(_minimap, frame);
+            else
+            {
+                using var alpha = new ImageAttributes();
+                alpha.SetColorMatrix(new ColorMatrix { Matrix33 = MinimapOpacity });
+                g.DrawImage(_minimap, Rectangle.Round(frame), 0, 0, _minimap.Width, _minimap.Height, GraphicsUnit.Pixel, alpha);
+            }
             g.InterpolationMode = previous;
             g.PixelOffsetMode = PixelOffsetMode.Default;
             foreach (var agent in game.Colonists.Where(agent => agent.IsAlive))
@@ -2864,7 +3134,7 @@ public static partial class GraphicalSandbox
             var panel = new RectangleF(12, 12, 360, 54);
             DrawRivetedPanel(g, panel);
             g.DrawString("WORLD MAP", _hud, _amberBrush, panel.X + 12, panel.Y + 8);
-            g.DrawString($"Drag to pan · wheel to zoom ({_mapZoom:0.##}×) · M or Esc to close", _small, _hudBrush, panel.X + 12, panel.Y + 30);
+            g.DrawString($"Drag or WASD to pan · wheel or +/- to zoom ({_mapZoom:0.##}×) · M or Esc to close", _small, _hudBrush, panel.X + 12, panel.Y + 30);
             if (MousePosition is { } mouse)
             {
                 var tile = ScreenToMap(mouse);
@@ -2904,6 +3174,7 @@ public static partial class GraphicalSandbox
             if (boss is null)
                 return;
             var bar = new RectangleF(Width / 2f - 260, Height - (ControlsHintVisible(out _) ? 132 : 70), 520, 22);
+            _hudRects.Add(new RectangleF(bar.X - 10, bar.Y - 8, bar.Width + 20, bar.Height + 34));
             DrawRivetedPanel(g, new RectangleF(bar.X - 10, bar.Y - 8, bar.Width + 20, bar.Height + 34));
             g.FillRectangle(_barBack, bar);
             g.FillRectangle(_bossBar, bar.X, bar.Y, bar.Width * Math.Clamp(boss.HitPoints / boss.MaximumHitPoints, 0f, 1f), bar.Height);
@@ -2920,6 +3191,7 @@ public static partial class GraphicalSandbox
             foreach (var progress in game.EventProgress.Take(3))
             {
                 var bar = new RectangleF(Width - 330, y, 310, 14);
+                _hudRects.Add(new RectangleF(bar.X - 8, bar.Y - 20, bar.Width + 16, bar.Height + 28));
                 DrawRivetedPanel(g, new RectangleF(bar.X - 8, bar.Y - 20, bar.Width + 16, bar.Height + 28));
                 var label = progress.Waves > 1 ? $"{progress.Name}  ·  wave {progress.Wave}/{progress.Waves}" : progress.Name;
                 if (progress.HoursLeft > 0f)
@@ -2995,76 +3267,13 @@ public static partial class GraphicalSandbox
                 lines.Add(item.UseCooldownTicks <= 10 ? "Fast speed" : item.UseCooldownTicks <= 24 ? "Average speed" : "Slow speed");
             if (item.IsMaterial)
                 lines.Add("Material");
+            var plain = lines.Count;
+            lines.AddRange(GuideTooltipLines(item.Id));
             var width = lines.Max(line => g.MeasureString(line, _small).Width) + 20;
             var rect = new RectangleF(Math.Min(at.X + 16, Width - width - 4), Math.Max(4, at.Y - 18 - lines.Count * 16), width, lines.Count * 16 + 12);
             DrawRivetedPanel(g, rect);
             for (var i = 0; i < lines.Count; i++)
-                g.DrawString(lines[i], _small, i == 0 ? _amberBrush : _hudBrush, rect.X + 10, rect.Y + 6 + i * 16);
-        }
-
-        /// <summary>Craftable recipes beside the inventory; clicking one crafts it.</summary>
-        /// <summary>
-        /// Crafting under the inventory (and any open chest), Terraria 1.4's grid: everything craftable here as result
-        /// slots, the selected one outlined with its materials on the row below. Click to select, click again to
-        /// craft; the wheel scrolls; hovering shows the item's tooltip.
-        /// </summary>
-        private void DrawCraftingPanel(Graphics g, GameSimulation game, InventoryUiState inventory)
-        {
-            _craftHits.Clear();
-            var recipes = game.GetCraftableRecipes();
-            var top = InventoryLayout.CraftingTop(inventory.PlayerInventory.SlotCount, inventory.ChestInventory?.SlotCount ?? 0);
-            var stride = InventoryLayout.Stride;
-            var size = InventoryLayout.Slot;
-            var left = InventoryLayout.Left;
-            if (recipes.Count == 0)
-            {
-                _craftArea = RectangleF.Empty;
-                g.DrawString("Nothing to craft here. Stand near a station with the materials.", _small, _dimTextBrush, left, top + 4);
-                return;
-            }
-            var selectedIndex = recipes.ToList().FindIndex(recipe => recipe.Id == _craftSelected);
-            if (selectedIndex < 0)
-            {
-                selectedIndex = 0;
-                _craftSelected = recipes[0].Id;
-            }
-            // Rows that fit above the materials row and the bottom edge.
-            var visibleRows = Math.Max(1, (int)((Height - top - stride - 28) / stride));
-            var totalRows = (recipes.Count + InventoryLayout.Columns - 1) / InventoryLayout.Columns;
-            _craftScrollRows = Math.Clamp(_craftScrollRows, 0, Math.Max(0, totalRows - visibleRows));
-            _craftArea = new RectangleF(left, top, InventoryLayout.Columns * stride, visibleRows * stride);
-            for (var i = _craftScrollRows * InventoryLayout.Columns; i < recipes.Count && i < (_craftScrollRows + visibleRows) * InventoryLayout.Columns; i++)
-            {
-                var recipe = recipes[i];
-                var row = i / InventoryLayout.Columns - _craftScrollRows;
-                var rect = new RectangleF(left + i % InventoryLayout.Columns * stride, top + row * stride, size, size);
-                var selected = i == selectedIndex;
-                DrawSlot(g, rect, new ItemStack(recipe.Output, recipe.OutputCount), selected, null);
-                if (selected)
-                    g.DrawRectangle(_menuFocusPen, rect.X - 2, rect.Y - 2, rect.Width + 4, rect.Height + 4);
-                if (MousePosition is { } mouse && rect.Contains(mouse))
-                    _hoveredSlotStack = new ItemStack(recipe.Output, recipe.OutputCount);
-                _craftHits.Add((rect, recipe.Id));
-            }
-            if (totalRows > visibleRows)
-                g.DrawString($"Rows {_craftScrollRows + 1}–{Math.Min(totalRows, _craftScrollRows + visibleRows)} of {totalRows}   ·   scroll with the wheel", _small, _dimTextBrush,
-                    left + InventoryLayout.Columns * stride + 4, top);
-
-            // Materials for the selected result.
-            var chosen = recipes[selectedIndex];
-            var materialsTop = top + visibleRows * stride + 6;
-            var output = game.Items[chosen.Output];
-            g.DrawString($"{output.Name}{(chosen.OutputCount > 1 ? $" ×{chosen.OutputCount}" : "")} needs:", _small, _amberBrush, left, materialsTop);
-            var x = left;
-            foreach (var ingredient in chosen.Ingredients)
-            {
-                var rect = new RectangleF(x, materialsTop + 18, 34, 34);
-                DrawSlot(g, rect, new ItemStack(ingredient.Alternatives[0], ingredient.Quantity), false, null);
-                if (MousePosition is { } mouse && rect.Contains(mouse))
-                    _hoveredSlotStack = new ItemStack(ingredient.Alternatives[0], ingredient.Quantity);
-                x += 38;
-            }
-            g.DrawString("Click the highlighted result again to craft it.", _small, _dimTextBrush, x + 6, materialsTop + 28);
+                g.DrawString(lines[i], _small, i == 0 ? _amberBrush : i >= plain ? _guideTipBrush : _hudBrush, rect.X + 10, rect.Y + 6 + i * 16);
         }
 
         /// <summary>Top-right readout: biome, temperature/comfort, shelter, events, recent incidents.</summary>
@@ -3074,6 +3283,7 @@ public static partial class GraphicalSandbox
             var lines = 4 + incidents.Length;
             var minimapShown = _menu.Preferences.MinimapEnabled && MapView == MapStyle.Minimap;
             var panel = new RectangleF(Width - 290, minimapShown ? VitalsHeight + MinimapHeight + 12 : VitalsHeight + 4, 280, 22 + lines * 18);
+            _hudRects.Add(panel);
             DrawRivetedPanel(g, panel);
             var x = panel.X + 12;
             var y = panel.Y + 10;

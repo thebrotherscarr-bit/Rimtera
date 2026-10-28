@@ -259,7 +259,7 @@ public sealed partial class GameSimulation
         var granted = new List<(ItemId, int)>();
         if (!Items[crate].IsCrate || !Player.Inventory.TryConsume(crate))
             return granted;
-        foreach (var (item, min, max) in FishingTables.CrateLoot(crate))
+        foreach (var (item, min, max) in FishingTables.CrateLoot(crate, FractureActive, Flags.IsSet(FishingTables.AstralCrateFlag)))
         {
             var count = _lootRandom.Next(min, max + 1);
             if (count <= 0)

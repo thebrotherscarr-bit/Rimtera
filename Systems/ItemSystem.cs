@@ -1768,9 +1768,80 @@ public sealed class Inventory
     public ItemCatalog Catalog => _catalog;
     public int SlotCount => _slots.Length;
     public int SelectedSlot { get; private set; }
-    public ItemStack SelectedStack => _slots[SelectedSlot];
+
+    /// <summary>
+    /// The held item: the stack on the cursor while there is one (Terraria's mouse item, which <c>PickItemSelectionOverride</c>
+    /// makes the selected item, slot 58), otherwise the selected slot.
+    /// </summary>
+    public ItemStack SelectedStack => Cursor.IsEmpty ? _slots[SelectedSlot] : Cursor;
     public ItemDefinition? SelectedItem => SelectedStack.IsEmpty ? null : _catalog[SelectedStack.ItemId];
     public IReadOnlyList<ItemStack> Slots => _readOnlySlots;
+
+    /// <summary>
+    /// The stack carried on the mouse cursor while the inventory is open (Terraria's <c>Main.mouseItem</c>). While it holds
+    /// something it is the item in hand: using an item consumes from it first. The host returns it to the bag when the
+    /// inventory closes (<see cref="ReturnCursor"/>).
+    /// </summary>
+    public ItemStack Cursor { get; private set; }
+
+    /// <summary>True while a stack rides on the cursor.</summary>
+    public bool HoldingCursor => !Cursor.IsEmpty;
+
+    public void SetCursor(ItemStack stack)
+    {
+        if (!stack.IsEmpty && (!_catalog.Contains(stack.ItemId) || stack.Count > _catalog[stack.ItemId].MaxStack))
+            throw new ArgumentOutOfRangeException(nameof(stack));
+        Cursor = stack.IsEmpty ? default : stack;
+    }
+
+    /// <summary>
+    /// Puts the cursor stack back into the bag, merging into matching stacks first and then the first empty slot, as
+    /// Terraria's <c>GetOrDropItem(mouseItem, ReturnItemFromSlot)</c> does. Returns what did not fit (the caller drops it)
+    /// and leaves the cursor empty.
+    /// </summary>
+    public ItemStack ReturnCursor()
+    {
+        var held = Cursor;
+        Cursor = default;
+        if (held.IsEmpty)
+            return default;
+        var remaining = AddInto(_slots, held);
+        return remaining <= 0 ? default : held with { Count = remaining };
+    }
+
+    /// <summary>The slots as a save should record them: a stack still on the cursor is folded back in where it would return.</summary>
+    public ItemStack[] SlotsWithCursorReturned()
+    {
+        var copy = _slots.ToArray();
+        if (!Cursor.IsEmpty)
+            AddInto(copy, Cursor);
+        return copy;
+    }
+
+    /// <summary>Adds a stack (keeping its calibration and favourite flag) into matching stacks, then empty slots; returns the leftover count.</summary>
+    private int AddInto(ItemStack[] slots, ItemStack stack)
+    {
+        var maxStack = _catalog[stack.ItemId].MaxStack;
+        var remaining = stack.Count;
+        for (var i = 0; i < slots.Length && remaining > 0; i++)
+        {
+            var current = slots[i];
+            if (current.IsEmpty || current.ItemId != stack.ItemId || current.Calibration != stack.Calibration || current.Count >= maxStack)
+                continue;
+            var moved = Math.Min(remaining, maxStack - current.Count);
+            slots[i] = current with { Count = current.Count + moved };
+            remaining -= moved;
+        }
+        for (var i = 0; i < slots.Length && remaining > 0; i++)
+        {
+            if (!slots[i].IsEmpty)
+                continue;
+            var moved = Math.Min(remaining, maxStack);
+            slots[i] = stack with { Count = moved };
+            remaining -= moved;
+        }
+        return remaining;
+    }
 
     public bool Select(int slot)
     {
@@ -1946,10 +2017,18 @@ public sealed class Inventory
 
     public bool TryConsume(ItemId itemId, int quantity = 1)
     {
-        if (quantity <= 0 || Count(itemId) < quantity)
+        var onCursor = !Cursor.IsEmpty && Cursor.ItemId == itemId ? Cursor.Count : 0;
+        if (quantity <= 0 || Count(itemId) + onCursor < quantity)
             return false;
 
         var remaining = quantity;
+        // The stack on the cursor is the one in hand, so a use spends it first (Terraria uses the mouse item itself).
+        if (onCursor > 0)
+        {
+            var spent = Math.Min(remaining, onCursor);
+            Cursor = onCursor - spent > 0 ? Cursor with { Count = onCursor - spent } : default;
+            remaining -= spent;
+        }
         for (var i = 0; i < _slots.Length && remaining > 0; i++)
         {
             var stack = _slots[i];

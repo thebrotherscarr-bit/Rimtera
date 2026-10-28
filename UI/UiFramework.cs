@@ -88,6 +88,11 @@ public class UiElement
     public bool IsEnabled { get; set; } = true;
     public bool IgnoresMouseInteraction { get; set; }
     public bool PassThroughMouseInteraction { get; set; }
+    /// <summary>
+    /// Fire the left click when the button goes down rather than on release. Terraria's item slots act on the press
+    /// (<c>ItemSlot.LeftClick</c> runs on <c>mouseLeft &amp;&amp; mouseLeftRelease</c>); buttons keep the release.
+    /// </summary>
+    public bool ClickOnPress { get; set; }
     public bool IsMouseHovering { get; internal set; }
     public bool IsFocused { get; internal set; }
     public virtual string? Text { get; set; }
@@ -253,6 +258,25 @@ public sealed class UserInterface
         return hit is not null && !ReferenceEquals(hit, CurrentState);
     }
 
+    /// <summary>The element under <paramref name="point"/> on the current screen (null over nothing).</summary>
+    public UiElement? ElementAt(Vector2 point)
+    {
+        if (!IsVisible || CurrentState is null)
+            return null;
+        CurrentState.Layout(Viewport);
+        return CurrentState.HitTest(point, Viewport);
+    }
+
+    /// <summary>
+    /// Forgets a press in progress without clicking anything (the window lost focus or mouse capture), so the next
+    /// frame cannot turn a stale press into a click.
+    /// </summary>
+    public void CancelPointer()
+    {
+        _leftDownTarget = _rightDownTarget = null;
+        _leftWasDown = _rightWasDown = false;
+    }
+
     public void SetState(UiState? next, bool saveCurrent = true)
     {
         if (ReferenceEquals(CurrentState, next))
@@ -315,7 +339,14 @@ public sealed class UserInterface
         }
 
         if (input.LeftDown && !_leftWasDown)
+        {
             _leftDownTarget = hit;
+            if (hit is { ClickOnPress: true, IsEnabled: true } pressed)
+            {
+                pressed.RaiseClick(new UiPointerEvent(pressed, input.PointerPosition, UiPointerButton.Left, false));
+                _leftDownTarget = null;
+            }
+        }
         else if (!input.LeftDown && _leftWasDown)
         {
             if (_leftDownTarget is { IsEnabled: true } down && ReferenceEquals(down, hit))
@@ -336,7 +367,8 @@ public sealed class UserInterface
         }
 
         if (input.RightDown && !_rightWasDown)
-            _rightDownTarget = hit;
+            // Press-time elements (item slots) take the right button per tick while it is held (InventoryUiState.TickRightHold).
+            _rightDownTarget = hit is { ClickOnPress: true } ? null : hit;
         else if (!input.RightDown && _rightWasDown)
         {
             if (_rightDownTarget is { IsEnabled: true } right && ReferenceEquals(right, hit))
