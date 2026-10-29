@@ -8,6 +8,7 @@ continues where it left off. Progress is printed per sheet.
 The ComfyUI server is restarted before every sheet: on this ROCm setup the first job after a start samples at
 ~12 s/step but later jobs on the same server slow to 180+ s/step, and a restart costs well under a minute.
 """
+import os
 import subprocess
 import sys
 import time
@@ -24,15 +25,27 @@ def priority(path: Path):
     return rank, name
 
 
-def restart_server():
-    """Stops any running ComfyUI from this install and starts a fresh one; waits until it answers."""
+def stop_server():
+    """Stops any running ComfyUI from this install, so nothing is left holding the GPU when a run ends."""
     subprocess.run(["powershell", "-NoProfile", "-Command",
                     "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | "
                     r"Where-Object { $_.CommandLine -like '*ComfyUI\main.py*' } | "
                     "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def restart_server():
+    """Stops any running ComfyUI from this install and starts a fresh one; waits until it answers."""
+    stop_server()
     time.sleep(3)
+    # Power: overnight.py sets these for a focused run (1.5 GB of VRAM free, normal priority); left unset, the server
+    # keeps start_comfy.ps1's restricted defaults (4 GB free, below-normal priority).
+    power = []
+    if os.environ.get("RIMTERA_VRAM_FREE_GB"):
+        power += ["-ReserveVramGB", os.environ["RIMTERA_VRAM_FREE_GB"]]
+    if os.environ.get("RIMTERA_PRIORITY"):
+        power += ["-Priority", "Normal" if os.environ["RIMTERA_PRIORITY"] == "normal" else "BelowNormal"]
     subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-                    str(ROOT / "tools" / "comfy" / "start_comfy.ps1")],
+                    str(ROOT / "tools" / "comfy" / "start_comfy.ps1"), *power],
                    # Not captured: the server inherits the handles, so a captured pipe would never reach EOF.
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     deadline = time.time() + 300
