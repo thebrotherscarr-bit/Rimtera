@@ -521,7 +521,7 @@ public static class SoundCatalog
                 WorldEventCategory.Calm => (90, "E major", "serene glowing music, soft bells and pads"),
                 _ => (132, "E minor", "dramatic event music, rising strings and percussion")
             };
-            add(new($"mus_event_{Snake(spec.Kind.ToString())}", "music", $"during {spec.Name}", 1, 150f, $"{card}, theme for the {spec.Name} event. {music}", "mus_boss_easy",
+            add(new($"mus_event_{Snake(spec.Kind.ToString())}", "music", $"during {spec.Name}", 1, 150f, $"{card}, theme for the {spec.Name} event. {music}", "",
                 Loop: true, Offset: -3f, Bpm: bpm, Key: key, Meter: 4));
         }
         (BossTier Tier, int Bpm, string Key, string Card)[] bosses =

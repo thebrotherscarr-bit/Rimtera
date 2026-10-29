@@ -1647,6 +1647,7 @@ public static class CoreSelfTests
         ControlsParitySelfTests.Run(Check); // Terraria's controls: mouse state, slots, cursor item, auto-reuse, keys (docs/CONTROLS_PARITY.md)
         GrowthSelfTests.Run(Check); // character growth: lifebloom, sixth slot, upgrades, glide rigs, hooks, creative kit (G3, G7-G11)
         StarterKitSelfTests.Run(Check); // the Terraria-style starting kit (Classic ferrite trio, Creative cobalt drop)
+        AudioSceneSelfTests.Run(Check); // music and ambience players: Terraria-style choice, fallbacks, looping streams
         SoundCatalogSelfTests.Run(Check); // everything that needs a sound has a cue, and every cue falls back to a sound (docs/AUDIO_FLOW.md)
         SpawnSafetySelfTests.Run(Check); // no sky island over the landing site, no spawning into a cave under a plant
         ToolCombatSelfTests.Run(Check); // tools are melee weapons too: picks, hatchets and hammers hurt creatures in their swing
