@@ -95,6 +95,27 @@ The renderer uses each piece once it exists and falls back to the procedural sky
 ## Overnight run
 `python tools/comfy/overnight.py` refreshes the lists, then runs textures, then environment art, then animations, all resumable. Rebuild or publish afterwards.
 
+## Flows in the ComfyUI app
+To make art or audio by hand, open the Workflows sidebar (W) in the ComfyUI app and use the **Rimtera** folder. Install or refresh the flows with:
+```bash
+Rimtera/standalone-env/python.exe tools/comfy/app_flows.py
+```
+| Flow | What it makes | Output (in ComfyUI's output folder) |
+|---|---|---|
+| Rimtera Art - Item sheet | 16 item icons in a 4×4 grid (the `gen_sheet.py` graph) | `rimtera/items` |
+| Rimtera Art - Animation sheet | an 8-frame sheet of the character in Load Image (the `gen_anim.py` graph) | `rimtera/anim` |
+| Rimtera Art - Background layer | a 1024×512 parallax layer (`gen_env.py`) | `rimtera/env` |
+| Rimtera Art - Terrain textures | 16 seamless textures (`gen_textures.py`) | `rimtera/textures` |
+| Rimtera Audio - Music track | one ACE-Step 1.5 track (`gen_music.py`) | `rimtera/music` |
+| Rimtera Audio - Sound effect | one MOSS-SoundEffect clip (`gen_sfx.py`) | `rimtera/sfx` |
+| Rimtera Audio - Ambience loop | one MOSS ambience loop, up to 30 s | `rimtera/ambience` |
+
+Each flow has a "How to use" note. The prompts are filled in with real examples from the overnight runs.
+
+The sound flows use the **Rimtera MOSS Sound Effect** node (`tools/comfy/nodes/rimtera_nodes.py`), which `app_flows.py` installs as a shim in `custom_nodes`. MOSS cannot load inside ComfyUI because it pins a different transformers, so the node unloads ComfyUI's models and runs `tools/audio/moss_worker.py` in the MOSS venv. The model loads each run (about a minute for the first clip). The node's `power` setting is `focused` (about 80% of the machine) or `restricted` (4 GB of VRAM left free).
+
+Flows saved here make raw output only. The overnight scripts also cut, downscale and promote the results into `Assets/`.
+
 ## Music preview
 `dotnet run -- --music-preview art/music-preview` renders 20 s of every music theme to WAV (calm, then tense), so the generative score can be auditioned.
 

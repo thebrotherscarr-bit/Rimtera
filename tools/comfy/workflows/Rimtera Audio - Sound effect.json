@@ -1,0 +1,226 @@
+{
+  "id": "3fb6c2fa-853d-436e-a6bb-031db02a42b5",
+  "revision": 0,
+  "last_node_id": 1,
+  "last_link_id": 1,
+  "nodes": [
+    {
+      "id": "moss",
+      "type": "RimteraMossSoundEffect",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        400,
+        286
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "negative",
+          "name": "negative",
+          "type": "STRING",
+          "widget": {
+            "name": "negative"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seconds",
+          "name": "seconds",
+          "type": "FLOAT",
+          "widget": {
+            "name": "seconds"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "steps",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "cfg",
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": {
+            "name": "cfg"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "power",
+          "name": "power",
+          "type": "COMBO",
+          "widget": {
+            "name": "power"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "AUDIO",
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RimteraMossSoundEffect"
+      },
+      "widgets_values": [
+        "a quick short blade stab, sharp thin swish. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech",
+        "speech, talking, voice, singing, music, low quality, distorted, muffled, noise",
+        0.5,
+        1,
+        "randomize",
+        50,
+        4,
+        "focused"
+      ],
+      "widgets_values_named": {
+        "prompt": "a quick short blade stab, sharp thin swish. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech",
+        "negative": "speech, talking, voice, singing, music, low quality, distorted, muffled, noise",
+        "seconds": 0.5,
+        "seed": 1,
+        "control_after_generate": "randomize",
+        "steps": 50,
+        "cfg": 4,
+        "power": "focused"
+      }
+    },
+    {
+      "id": "save",
+      "type": "SaveAudio",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        329.2798828125,
+        112
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 1
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "audioUI",
+          "name": "audioUI",
+          "type": "AUDIO_UI",
+          "widget": {
+            "name": "audioUI"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "rimtera/sfx"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "rimtera/sfx"
+      }
+    },
+    {
+      "id": 1,
+      "type": "Note",
+      "pos": [
+        909.2798828125,
+        90
+      ],
+      "size": [
+        380,
+        200
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "How to use",
+      "properties": {},
+      "widgets_values": [
+        "One sound effect (MOSS-SoundEffect v2.0, run in its own venv by the Rimtera node). The model loads each run (~30 s), then 15-30 s per clip. 'focused' uses ~80% of the machine, 'restricted' leaves 4 GB VRAM free. Output: output/rimtera/sfx."
+      ],
+      "widgets_values_named": {
+        "text": "One sound effect (MOSS-SoundEffect v2.0, run in its own venv by the Rimtera node). The model loads each run (~30 s), then 15-30 s per clip. 'focused' uses ~80% of the machine, 'restricted' leaves 4 GB VRAM free. Output: output/rimtera/sfx."
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [
+      1,
+      "moss",
+      0,
+      "save",
+      0,
+      "AUDIO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.9,
+      "offset": [
+        416,
+        110
+      ]
+    }
+  },
+  "version": 0.4
+}
