@@ -45,7 +45,10 @@ def promote(candidate, row, log):
     target.parent.mkdir(parents=True, exist_ok=True)
     audio, rate = soundfile.read(str(candidate), always_2d=True)
     if target.suffix == ".ogg":
-        soundfile.write(str(target), audio, rate, format="OGG", subtype="VORBIS")
+        # In blocks: libsndfile 1.2.2 crashes writing a long Vorbis file in one call.
+        with soundfile.SoundFile(str(target), "w", rate, audio.shape[1], format="OGG", subtype="VORBIS") as handle:
+            for start in range(0, len(audio), 8192):
+                handle.write(audio[start:start + 8192])
     else:
         soundfile.write(str(target), audio, rate, subtype="PCM_16")
     log.writerow([row["cue"], str(target.relative_to(TOOLS.parents[1])).replace("\\", "/"), candidate.name])
