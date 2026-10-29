@@ -95,6 +95,17 @@ The renderer uses each piece once it exists and falls back to the procedural sky
 ## Overnight run
 `python tools/comfy/overnight.py` refreshes the lists, then runs textures, then environment art, then animations, all resumable. Rebuild or publish afterwards.
 
+## Original art sheets index
+Double-click `tools\comfy\run_sheet_index.cmd` to index the original labelled art sheets in `art\sheets\`. It does this:
+1. Starts ComfyUI.
+2. Asks the Qwen3-VL vision model on each sheet for every labelled picture and where it is.
+3. Cuts each picture out, without its label, to `art\generated\sheet_index\<sheet>\<label>.png`.
+4. Lists them all in `tools\comfy\sheet_index.tsv` and stops ComfyUI.
+
+To check the cut-outs, open `art\generated\sheet_index\<sheet>_review.png`, which shows each cut-out with its label.
+
+It takes about a minute per sheet. Finished sheets are skipped, so you can close the window any time and carry on later. Pass `--restricted` to leave 4 GB of VRAM free, or `--redo` to index every sheet again. The beauty pass uses the index as the design and style reference for any sprite whose name matches a label.
+
 ## Flows in the ComfyUI app
 To make art or audio by hand, open the Workflows sidebar (W) in the ComfyUI app and use the **Rimtera** folder. Install or refresh the flows with:
 ```bash
