@@ -73,6 +73,8 @@ Scripts in `tools/audio/`, mirroring `tools/comfy/`.
 
 Rough timing at full power: about 1,300 effect takes at 15–25 s each, 64 tracks at about 4 minutes each and 40 ambience loops at a few minutes each, so everything takes two or three nights. `--only` runs a single lane, and each night continues where the last one stopped.
 
+**Pause and resume:** close the run's window (or stop its processes) to pause; only the clip or track in progress is lost, because takes are written only when finished. Double-click `tools/audio/run_overnight.cmd` to resume, or pass the same options (`tools\audio\run_overnight.cmd --restricted`). Lanes already done are skipped in seconds. Output goes to the window and is appended to `%TEMP%\rimtera-audio-overnight.log`.
+
 The steps as built:
 
 1. **Export needs:** `dotnet run -- --sound-cues > tools/audio/audio_needs.tsv`. It keeps any status and lane choices already in the file and adds new cues as `missing`.
