@@ -1,6 +1,6 @@
 # Generating art with ComfyUI
 
-Rimtera's sprites can be generated locally with your Comfy Desktop install (`Rimtera\` in this folder), using the Qwen-Image 2.1 model already downloaded into the Desktop app's shared models folder.
+Rimtera's sprites can be generated locally with your Comfy Desktop install (`tools\comfy-app\`), using the Qwen-Image 2.1 model already downloaded into the Desktop app's shared models folder.
 
 ## Start the server
 ```powershell
@@ -12,7 +12,7 @@ This starts ComfyUI headless on http://127.0.0.1:8188, using the Desktop app's m
 | Problem | Fix |
 |---|---|
 | hipBLASLt does not support RDNA2 (gfx1030), so sampling failed with `HIPBLAS_STATUS_INVALID_VALUE`. | The script sets `TORCH_BLAS_PREFER_HIPBLASLT=0` so PyTorch uses rocBLAS. |
-| The int8 ("convrot") model multiplies its weights with `torch._int_mm`, which only exists through hipBLASLt on ROCm. | `Rimtera\ComfyUI\custom_nodes\rocm_int8_fallback.py` switches those multiplies to float32 (exact for int8 inputs; float32 is also the fastest path on this card). Delete that file to undo. |
+| The int8 ("convrot") model multiplies its weights with `torch._int_mm`, which only exists through hipBLASLt on ROCm. | `tools\comfy-app\ComfyUI\custom_nodes\rocm_int8_fallback.py` switches those multiplies to float32 (exact for int8 inputs; float32 is also the fastest path on this card). Delete that file to undo. |
 | Dynamic VRAM streamed weights from RAM on every step, because the model (7.2 GB) and text encoder (8.9 GB) don't both fit in 16 GB. That made steps take 30–240 s. | The server runs with `--disable-dynamic-vram --disable-fast-disk`, so the text encoder is unloaded while the diffusion model samples fully resident: about 12 s per step. |
 
 ## Generate sprites
@@ -98,7 +98,7 @@ The renderer uses each piece once it exists and falls back to the procedural sky
 ## Flows in the ComfyUI app
 To make art or audio by hand, open the Workflows sidebar (W) in the ComfyUI app and use the **Rimtera** folder. Install or refresh the flows with:
 ```bash
-Rimtera/standalone-env/python.exe tools/comfy/app_flows.py
+tools/comfy-app/standalone-env/python.exe tools/comfy/app_flows.py
 ```
 | Flow | What it makes | Output (in ComfyUI's output folder) |
 |---|---|---|

@@ -1,11 +1,11 @@
-# Starts the local ComfyUI (Comfy Desktop's "Rimtera" install) headless on http://127.0.0.1:8188 for tools/comfy.
+# Starts the local ComfyUI (Comfy Desktop's "Rimtera" install, in tools/comfy-app) headless on http://127.0.0.1:8188 for tools/comfy.
 # Uses the Desktop app's model paths. rocBLAS is preferred because hipBLASLt does not support RDNA2 GPUs; int8
 # Dynamic VRAM streams weights every step on 16 GB cards (Qwen model + text encoder do not fit together), so it is
 # disabled: the text encoder is evicted while the diffusion model samples fully resident. int8 models also need ComfyUI/custom_nodes/rocm_int8_fallback.py (installed alongside this setup).
 # Sharing the GPU (e.g. watching video while art generates): -ReserveVramGB keeps that much VRAM free for other
 # programs, and the server runs at below-normal priority. Use -ReserveVramGB 0 -Priority Normal for full speed.
 param([double]$ReserveVramGB = 4, [string]$Priority = "BelowNormal")
-$root = Join-Path $PSScriptRoot "..\..\Rimtera" | Resolve-Path
+$root = Join-Path $PSScriptRoot "..\comfy-app" | Resolve-Path
 $config = '"' + (Join-Path $env:APPDATA "Comfy Desktop\instance-model-paths\inst-1792547457667.yaml") + '"'
 $shared = Join-Path $env:LOCALAPPDATA "Comfy-Desktop\ComfyUI-Shared"
 $log = Join-Path $env:TEMP "rimtera-comfy.log"

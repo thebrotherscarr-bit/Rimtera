@@ -5,6 +5,6 @@ rem   tools\audio\run_overnight.cmd --restricted
 rem Finished takes are skipped, so it carries on where the last run stopped. Close the window to pause it; the track or
 rem clip in progress is the only work lost. Output is shown here and appended to %TEMP%\rimtera-audio-overnight.log.
 cd /d "%~dp0..\.."
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& '.\Rimtera\standalone-env\python.exe' -u tools\audio\overnight_audio.py %* 2>&1 | Tee-Object -FilePath (Join-Path $env:TEMP 'rimtera-audio-overnight.log') -Append"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& '.\tools\comfy-app\standalone-env\python.exe' -u tools\audio\overnight_audio.py %* 2>&1 | Tee-Object -FilePath (Join-Path $env:TEMP 'rimtera-audio-overnight.log') -Append"
 echo.
 pause

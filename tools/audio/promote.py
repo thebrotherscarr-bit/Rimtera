@@ -1,7 +1,7 @@
 """Moves auditioned candidates into the game (docs/AUDIO_FLOW.md, step 6). Run with the MOSS venv python:
 
-    Rimtera/vendor/moss-venv/Scripts/python.exe tools/audio/promote.py --keep keep.txt
-    Rimtera/vendor/moss-venv/Scripts/python.exe tools/audio/promote.py --fill-gaps
+    tools/moss-venv/Scripts/python.exe tools/audio/promote.py --keep keep.txt
+    tools/moss-venv/Scripts/python.exe tools/audio/promote.py --fill-gaps
 
 --keep takes the list the audition page copies (one candidate file name per line) and adds each as the cue's next take.
 --fill-gaps gives every cue that has no file at all its first candidates (up to the cue's wanted variants), so nothing

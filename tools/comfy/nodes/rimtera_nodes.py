@@ -1,8 +1,8 @@
-"""Rimtera's ComfyUI nodes, loaded by the shim tools/comfy/app_flows.py installs in Rimtera/ComfyUI/custom_nodes.
+"""Rimtera's ComfyUI nodes, loaded by the shim tools/comfy/app_flows.py installs in tools/comfy-app/ComfyUI/custom_nodes.
 
 Rimtera MOSS Sound Effect: MOSS-SoundEffect v2.0 (Apache 2.0) as a node, so the effect and ambience flows run from the
 ComfyUI app. MOSS pins transformers 4.57, which conflicts with ComfyUI's, so the node does not import it: it unloads
-ComfyUI's models, runs tools/audio/moss_worker.py in Rimtera/vendor/moss-venv on one job, and returns the clip as AUDIO
+ComfyUI's models, runs tools/audio/moss_worker.py in tools/moss-venv on one job, and returns the clip as AUDIO
 for Save Audio or Preview Audio. The model loads for every run (about half a minute), then each clip takes 15-30 s.
 """
 import json
@@ -16,7 +16,7 @@ import numpy as np
 import torch
 
 ROOT = Path(__file__).resolve().parents[3]
-MOSS_PYTHON = ROOT / "Rimtera" / "vendor" / "moss-venv" / "Scripts" / "python.exe"
+MOSS_PYTHON = ROOT / "tools" / "moss-venv" / "Scripts" / "python.exe"
 WORKER = ROOT / "tools" / "audio" / "moss_worker.py"
 NEGATIVE = "speech, talking, voice, singing, music, low quality, distorted, muffled, noise"
 

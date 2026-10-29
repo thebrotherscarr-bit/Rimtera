@@ -10,8 +10,10 @@ publish/
 .vscode/
 .idea/
 
-# Local ComfyUI install used for art generation (not game code)
-Rimtera/
+# Local ComfyUI app install (art and music generation) and the MOSS sound model's code and Python (not game code)
+tools/comfy-app/
+tools/moss/
+tools/moss-venv/
 
 # Third-party clones, tracked by their own remotes
 rea/
@@ -42,3 +44,4 @@ __pycache__/
 tools/audio/raw/
 tools/audio/candidates/
 tools/audio/jobs*.jsonl
+tools/audio/moss-constraints.txt
