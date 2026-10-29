@@ -1,0 +1,940 @@
+{
+  "id": "ef6320eb-e55c-4103-9655-0cf4b1427fd5",
+  "revision": 0,
+  "last_node_id": 1,
+  "last_link_id": 11,
+  "nodes": [
+    {
+      "id": "clip",
+      "type": "CLIPLoader",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "type",
+          "name": "type",
+          "type": "COMBO",
+          "widget": {
+            "name": "type"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "device",
+          "name": "device",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "device"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "CLIP",
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            1,
+            8
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "qwen3vl_8b_int8_convrot.safetensors",
+        "qwen_image",
+        "default"
+      ],
+      "widgets_values_named": {
+        "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+        "type": "qwen_image",
+        "device": "default"
+      }
+    },
+    {
+      "id": "sprite",
+      "type": "LoadImage",
+      "pos": [
+        60,
+        286
+      ],
+      "size": [
+        282.798828125,
+        102
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "choose file to upload",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "widget": {
+            "name": "upload"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "localized_name": "MASK",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "rimtera_old_ammo_mini_rocket.png",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "rimtera_old_ammo_mini_rocket.png",
+        "upload": "image"
+      }
+    },
+    {
+      "id": "name",
+      "type": "PrimitiveString",
+      "pos": [
+        60,
+        478
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "value",
+          "name": "value",
+          "type": "STRING",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PrimitiveString"
+      },
+      "widgets_values": [
+        "Mini rocket (ammo)"
+      ],
+      "widgets_values_named": {
+        "value": "Mini rocket (ammo)"
+      }
+    },
+    {
+      "id": "describe",
+      "type": "TextGenerate",
+      "pos": [
+        402.798828125,
+        90
+      ],
+      "size": [
+        400,
+        288
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 1
+        },
+        {
+          "localized_name": "image",
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 2
+        },
+        {
+          "localized_name": "video",
+          "name": "video",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "localized_name": "system_prompt",
+          "name": "system_prompt",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_length",
+          "name": "max_length",
+          "type": "INT",
+          "widget": {
+            "name": "max_length"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Sampling Mode",
+          "name": "sampling_mode",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "widget": {
+            "name": "sampling_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "thinking",
+          "name": "thinking",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "thinking"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "use_default_template",
+          "name": "use_default_template",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "use_default_template"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "mtp",
+          "name": "mtp",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "mtp"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "generated_text",
+          "name": "generated_text",
+          "type": "STRING",
+          "links": [
+            6,
+            10
+          ]
+        },
+        {
+          "localized_name": "thinking",
+          "name": "thinking",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextGenerate"
+      },
+      "widgets_values": [
+        "What single object or creature does this pixel art video game sprite show? If it shows several separate things, or is broken into fragments, say so. Answer in at most ten words.",
+        40,
+        "off",
+        false,
+        true,
+        "auto"
+      ],
+      "widgets_values_named": {
+        "prompt": "What single object or creature does this pixel art video game sprite show? If it shows several separate things, or is broken into fragments, say so. Answer in at most ten words.",
+        "max_length": 40,
+        "sampling_mode": "off",
+        "thinking": false,
+        "use_default_template": true,
+        "mtp": "auto"
+      }
+    },
+    {
+      "id": "q1",
+      "type": "StringConcatenate",
+      "pos": [
+        402.798828125,
+        468
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "string_a",
+          "name": "string_a",
+          "type": "STRING",
+          "widget": {
+            "name": "string_a"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "string_b",
+          "name": "string_b",
+          "type": "STRING",
+          "widget": {
+            "name": "string_b"
+          },
+          "link": 3
+        },
+        {
+          "localized_name": "delimiter",
+          "name": "delimiter",
+          "type": "STRING",
+          "widget": {
+            "name": "delimiter"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            4
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "StringConcatenate"
+      },
+      "widgets_values": [
+        "A video game thing is named \"",
+        "",
+        ""
+      ],
+      "widgets_values_named": {
+        "string_a": "A video game thing is named \"",
+        "string_b": "",
+        "delimiter": ""
+      }
+    },
+    {
+      "id": "q2",
+      "type": "StringConcatenate",
+      "pos": [
+        862.798828125,
+        302
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "string_a",
+          "name": "string_a",
+          "type": "STRING",
+          "widget": {
+            "name": "string_a"
+          },
+          "link": 4
+        },
+        {
+          "localized_name": "string_b",
+          "name": "string_b",
+          "type": "STRING",
+          "widget": {
+            "name": "string_b"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "delimiter",
+          "name": "delimiter",
+          "type": "STRING",
+          "widget": {
+            "name": "delimiter"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "StringConcatenate"
+      },
+      "widgets_values": [
+        "",
+        "\". Its sprite was described as: \"",
+        ""
+      ],
+      "widgets_values_named": {
+        "string_a": "",
+        "string_b": "\". Its sprite was described as: \"",
+        "delimiter": ""
+      }
+    },
+    {
+      "id": "q3",
+      "type": "StringConcatenate",
+      "pos": [
+        1322.798828125,
+        90
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "string_a",
+          "name": "string_a",
+          "type": "STRING",
+          "widget": {
+            "name": "string_a"
+          },
+          "link": 5
+        },
+        {
+          "localized_name": "string_b",
+          "name": "string_b",
+          "type": "STRING",
+          "widget": {
+            "name": "string_b"
+          },
+          "link": 6
+        },
+        {
+          "localized_name": "delimiter",
+          "name": "delimiter",
+          "type": "STRING",
+          "widget": {
+            "name": "delimiter"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "StringConcatenate"
+      },
+      "widgets_values": [
+        "",
+        "",
+        ""
+      ],
+      "widgets_values_named": {
+        "string_a": "",
+        "string_b": "",
+        "delimiter": ""
+      }
+    },
+    {
+      "id": "q4",
+      "type": "StringConcatenate",
+      "pos": [
+        1782.798828125,
+        90
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "string_a",
+          "name": "string_a",
+          "type": "STRING",
+          "widget": {
+            "name": "string_a"
+          },
+          "link": 7
+        },
+        {
+          "localized_name": "string_b",
+          "name": "string_b",
+          "type": "STRING",
+          "widget": {
+            "name": "string_b"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "delimiter",
+          "name": "delimiter",
+          "type": "STRING",
+          "widget": {
+            "name": "delimiter"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            9
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "StringConcatenate"
+      },
+      "widgets_values": [
+        "",
+        "\". Does that description show the kind of thing the name says (for example a rocket, a sword, a helmet, a crab)? Ignore colour, material and made-up sci-fi words. It does not fit if it is a different kind of thing, several things, or broken fragments. Answer only YES or NO.",
+        ""
+      ],
+      "widgets_values_named": {
+        "string_a": "",
+        "string_b": "\". Does that description show the kind of thing the name says (for example a rocket, a sword, a helmet, a crab)? Ignore colour, material and made-up sci-fi words. It does not fit if it is a different kind of thing, several things, or broken fragments. Answer only YES or NO.",
+        "delimiter": ""
+      }
+    },
+    {
+      "id": "judge",
+      "type": "TextGenerate",
+      "pos": [
+        2242.798828125,
+        90
+      ],
+      "size": [
+        400,
+        288
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 8
+        },
+        {
+          "localized_name": "image",
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "video",
+          "name": "video",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "localized_name": "system_prompt",
+          "name": "system_prompt",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 9
+        },
+        {
+          "localized_name": "max_length",
+          "name": "max_length",
+          "type": "INT",
+          "widget": {
+            "name": "max_length"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Sampling Mode",
+          "name": "sampling_mode",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "widget": {
+            "name": "sampling_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "thinking",
+          "name": "thinking",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "thinking"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "use_default_template",
+          "name": "use_default_template",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "use_default_template"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "mtp",
+          "name": "mtp",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "mtp"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "generated_text",
+          "name": "generated_text",
+          "type": "STRING",
+          "links": [
+            11
+          ]
+        },
+        {
+          "localized_name": "thinking",
+          "name": "thinking",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TextGenerate"
+      },
+      "widgets_values": [
+        "",
+        4,
+        "off",
+        false,
+        true,
+        "auto"
+      ],
+      "widgets_values_named": {
+        "prompt": "",
+        "max_length": 4,
+        "sampling_mode": "off",
+        "thinking": false,
+        "use_default_template": true,
+        "mtp": "auto"
+      }
+    },
+    {
+      "id": "seen",
+      "type": "PreviewAny",
+      "pos": [
+        862.798828125,
+        90
+      ],
+      "size": [
+        210,
+        122
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "source",
+          "name": "source",
+          "type": "*",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewAny"
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    },
+    {
+      "id": "verdict",
+      "type": "PreviewAny",
+      "pos": [
+        2702.798828125,
+        90
+      ],
+      "size": [
+        210,
+        122
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "source",
+          "name": "source",
+          "type": "*",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewAny"
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 1,
+      "type": "Note",
+      "pos": [
+        2972.798828125,
+        90
+      ],
+      "size": [
+        400,
+        220
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "How to use",
+      "properties": {},
+      "widgets_values": [
+        "Checks a sprite shows what its name says. Load Image: the sprite. Type its name (and kind) in the String box. The model first describes the picture without the name, then judges the description against the name. 'seen' shows what it saw, 'verdict' YES or NO."
+      ],
+      "widgets_values_named": {
+        "text": "Checks a sprite shows what its name says. Load Image: the sprite. Type its name (and kind) in the String box. The model first describes the picture without the name, then judges the description against the name. 'seen' shows what it saw, 'verdict' YES or NO."
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [
+      1,
+      "clip",
+      0,
+      "describe",
+      0,
+      "CLIP"
+    ],
+    [
+      2,
+      "sprite",
+      0,
+      "describe",
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      "name",
+      0,
+      "q1",
+      1,
+      "STRING"
+    ],
+    [
+      4,
+      "q1",
+      0,
+      "q2",
+      0,
+      "STRING"
+    ],
+    [
+      5,
+      "q2",
+      0,
+      "q3",
+      0,
+      "STRING"
+    ],
+    [
+      6,
+      "describe",
+      0,
+      "q3",
+      1,
+      "STRING"
+    ],
+    [
+      7,
+      "q3",
+      0,
+      "q4",
+      0,
+      "STRING"
+    ],
+    [
+      8,
+      "clip",
+      0,
+      "judge",
+      0,
+      "CLIP"
+    ],
+    [
+      9,
+      "q4",
+      0,
+      "judge",
+      5,
+      "STRING"
+    ],
+    [
+      10,
+      "describe",
+      0,
+      "seen",
+      0,
+      "STRING"
+    ],
+    [
+      11,
+      "judge",
+      0,
+      "verdict",
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1,
+      "offset": [
+        0,
+        0
+      ]
+    }
+  },
+  "version": 0.4
+}

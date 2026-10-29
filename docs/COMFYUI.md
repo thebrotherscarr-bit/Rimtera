@@ -120,12 +120,20 @@ tools/comfy-app/standalone-env/python.exe tools/comfy/app_flows.py
 | Rimtera Audio - Music track | one ACE-Step 1.5 track (`gen_music.py`) | `rimtera/music` |
 | Rimtera Audio - Sound effect | one MOSS-SoundEffect clip (`gen_sfx.py`) | `rimtera/sfx` |
 | Rimtera Audio - Ambience loop | one MOSS ambience loop, up to 30 s | `rimtera/ambience` |
+| Rimtera Art - Redraw character | one character redrawn from its old sprite and an original sheet's style, finished at its game size | `rimtera/redrawn` |
+| Rimtera Art - Redraw item | one item icon redrawn the same way (64 px, 96 for weapons and tools) | `rimtera/redrawn` |
+| Rimtera Art - Re-animate character | 8 frames drawn over the finished sprite, matched to it | `rimtera/anim` |
+| Rimtera Art - Index one sheet | every labelled picture on one original art sheet, cut out | `rimtera/sheet_index` |
+| Rimtera Check - Sprite matches name | the model's blind description of a sprite, then YES or NO against its name | shown in the flow |
+| Rimtera Audio - Finish clip | any clip levelled, trimmed or looped for its cue, optionally added to the game | shown in the flow; `Assets/` with install on |
 
-Each flow has a "How to use" note. The prompts are filled in with real examples from the overnight runs.
+Each flow has a "How to use" note. The prompts are filled in with real examples from the overnight runs, and the flows open with sample inputs (copied by `app_flows.py`), so they run as soon as they open. In the redraw flows, the name in the prompt decides what the sprite shows; the old sprite only lends its design where it fits that name.
+
+The overnight runs are not flows: on this card ComfyUI has to restart between jobs (the second job on one server slows from 12 s to over 180 s per step), and a flow cannot restart its own server. They stay one-click launchers.
 
 The sound flows use the **Rimtera MOSS Sound Effect** node (`tools/comfy/nodes/rimtera_nodes.py`), which `app_flows.py` installs as a shim in `custom_nodes`. MOSS cannot load inside ComfyUI because it pins a different transformers, so the node unloads ComfyUI's models and runs `tools/audio/moss_worker.py` in the MOSS venv. The model loads each run (about a minute for the first clip). The node's `power` setting is `focused` (about 80% of the machine) or `restricted` (4 GB of VRAM left free).
 
-Flows saved here make raw output only. The overnight scripts also cut, downscale and promote the results into `Assets/`.
+The sprite flows finish their output with the Rimtera sprite nodes (`tools/comfy/beauty_core.py`): cut from the grid by connected shapes, box-downscaled to 40 px per tile, hard alpha, a small palette and a dark outline. The older four art flows still make raw sheets only.
 
 ## Music preview
 `dotnet run -- --music-preview art/music-preview` renders 20 s of every music theme to WAV (calm, then tense), so the generative score can be auditioned.
