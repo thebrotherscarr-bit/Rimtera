@@ -47,6 +47,9 @@ if (args.Contains("--flora-sprites", StringComparer.OrdinalIgnoreCase))
 if (args.Contains("--tile-sprites", StringComparer.OrdinalIgnoreCase))
     return TileTextureExport.Print();
 
+if (args.Contains("--sound-cues", StringComparer.OrdinalIgnoreCase))
+    return SoundCatalog.Print();
+
 if (args.Contains("--entity-sprites", StringComparer.OrdinalIgnoreCase))
     return AnimationCatalog.Print();
 

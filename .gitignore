@@ -37,3 +37,8 @@ desktop.ini
 
 # Python bytecode from the ComfyUI tools
 __pycache__/
+
+# Audio generation work files (candidates are auditioned, then promoted into Assets/)
+tools/audio/raw/
+tools/audio/candidates/
+tools/audio/jobs*.jsonl

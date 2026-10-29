@@ -62,10 +62,16 @@ internal sealed class AudioEngine : IDisposable
     {
         if (!Available)
             return;
-        float[]? samples;
-        if (_recorded.TryGetValue(name, out var takes))
-            samples = takes[_random.Next(takes.Count)];
-        else if (!_effects.TryGetValue(name, out samples))
+        // A specific cue (use_bow) without a file falls back along SoundCatalog's chain (shoot), ending at a synth effect.
+        float[]? samples = null;
+        for (var cue = name; cue is not null && samples is null; cue = SoundCatalog.Fallback(cue))
+        {
+            if (_recorded.TryGetValue(cue, out var takes))
+                samples = takes[_random.Next(takes.Count)];
+            else
+                _effects.TryGetValue(cue, out samples);
+        }
+        if (samples is null)
             return;
         lock (_gate)
         {
@@ -185,6 +191,11 @@ internal sealed class AudioEngine : IDisposable
 
     // ---------------------------------------------------------------- synthesis
 
+    /// <summary>The effects <see cref="Synthesize"/> makes; every <see cref="SoundCatalog"/> fallback chain ends at one.</summary>
+    internal static readonly string[] SynthesisedCues =
+        ["dig", "place", "break", "jump", "land", "swing", "zap", "shoot", "hit", "hurt", "death", "explosion", "pickup", "coin", "craft",
+         "click", "hover", "splash", "thunder", "boss", "event", "bite", "door"];
+
     private void Synthesize()
     {
         var r = new Random(42);
@@ -271,7 +282,7 @@ internal sealed class AudioEngine : IDisposable
     /// How far a sound sits from the common loudness: menu blips stay discreet, the constant actions sit a
     /// touch under, and the big moments land a little over.
     /// </summary>
-    internal static float LoudnessOffset(string name) => name.ToLowerInvariant() switch
+    internal static float LoudnessOffset(string name) => SoundCatalog.Get(name)?.Offset ?? name.ToLowerInvariant() switch
     {
         "hover" => -12f,
         "click" => -8f,
