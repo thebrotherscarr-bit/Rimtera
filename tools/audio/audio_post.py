@@ -1,7 +1,7 @@
 """Post-processes generated takes into game-ready candidates (docs/AUDIO_FLOW.md, step 5). Run with the MOSS venv
 python (it has numpy, scipy, soundfile and pyloudnorm):
 
-    Rimtera/vendor/moss-venv/Scripts/python.exe tools/audio/audio_post.py [--redo]
+    tools/moss-venv/Scripts/python.exe tools/audio/audio_post.py [--redo]
 
 For every take in tools/audio/raw/<category>/ it writes tools/audio/candidates/<category>/<same name>.wav:
 - DC removed; sound effects trimmed of leading and trailing silence with short fades, and made mono

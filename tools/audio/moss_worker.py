@@ -1,11 +1,11 @@
 """Sound-effect and ambience generator: MOSS-SoundEffect v2.0 (Apache 2.0), run in its own venv.
 
 MOSS pins transformers 4.57, which conflicts with ComfyUI's environment, so it runs beside ComfyUI instead of
-inside it: Rimtera/vendor/moss-venv shares ComfyUI's ROCm torch (a .pth file) and adds its own transformers.
+inside it: tools/moss-venv shares ComfyUI's ROCm torch (a .pth file) and adds its own transformers.
 Set up by tools/audio/setup_audio.ps1. Called by gen_sfx.py and gen_ambience.py; run it directly to test:
 
-    Rimtera/vendor/moss-venv/Scripts/python.exe tools/audio/moss_worker.py jobs.jsonl
-    Rimtera/vendor/moss-venv/Scripts/python.exe tools/audio/moss_worker.py --prompt "laser pistol shot" --seconds 2 --out test.wav
+    tools/moss-venv/Scripts/python.exe tools/audio/moss_worker.py jobs.jsonl
+    tools/moss-venv/Scripts/python.exe tools/audio/moss_worker.py --prompt "laser pistol shot" --seconds 2 --out test.wav
 
 Each line of jobs.jsonl is {"prompt", "seconds", "seed", "out"}. Jobs whose file exists are skipped, so a stopped
 run resumes. Output is 48 kHz mono WAV; audio_post.py levels and converts it. The model loads once per run.

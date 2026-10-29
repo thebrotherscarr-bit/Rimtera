@@ -9,8 +9,8 @@ TOOLS = ROOT / "tools" / "audio"
 NEEDS = TOOLS / "audio_needs.tsv"
 RAW = TOOLS / "raw"
 CANDIDATES = TOOLS / "candidates"
-MOSS_PYTHON = ROOT / "Rimtera" / "vendor" / "moss-venv" / "Scripts" / "python.exe"
-COMFY_PYTHON = ROOT / "Rimtera" / "ComfyUI" / ".venv" / "Scripts" / "python.exe"
+MOSS_PYTHON = ROOT / "tools" / "moss-venv" / "Scripts" / "python.exe"
+COMFY_PYTHON = ROOT / "tools" / "comfy-app" / "ComfyUI" / ".venv" / "Scripts" / "python.exe"
 
 # Generation order: the game's most-heard sounds first, so a short night still covers the essentials.
 ORDER = ["weapons", "impacts", "tools", "tiles", "interactions", "ui", "music", "player", "creatures", "bosses", "events", "ambience"]
