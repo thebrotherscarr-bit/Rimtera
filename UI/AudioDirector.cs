@@ -18,7 +18,7 @@ internal sealed class AudioDirector
     private int _itemTotal;
     private int _lightningSeen;
     private bool _bossAlive;
-    private int _events;
+    private readonly HashSet<WorldEventKind> _eventKinds = new();
     private bool _biting;
 
     public AudioDirector(AudioEngine audio) => _audio = audio;
@@ -49,12 +49,22 @@ internal sealed class AudioDirector
         {
             seen.Add(enemy.Id);
             if (_enemyHp.TryGetValue(enemy.Id, out var hp) && enemy.HitPoints < hp - 0.01f)
-                _audio.Play(enemy.IsAlive ? "hit" : "death", 0.8f * Near(enemy.Motion.Position) + 0.2f, Pan(enemy.Motion.Position));
-            _enemyHp[enemy.Id] = enemy.HitPoints;
+            {
+                // The weapon lands on the creature's body (impact_metal, impact_slime …), then the creature answers.
+                var volume = 0.8f * Near(enemy.Motion.Position) + 0.2f;
+                var pan = Pan(enemy.Motion.Position);
+                _audio.Play("impact_" + SoundCatalog.CreatureMaterial(enemy.Archetype), volume * 0.8f, pan);
+                var voice = enemy.IsBoss ? SoundCatalog.BossCue(enemy.Kind, enemy.IsAlive ? "hurt" : "death")
+                    : SoundCatalog.CreatureVoice(enemy.Archetype) + (enemy.IsAlive ? "_hurt" : "_death");
+                _audio.Play(voice, volume, pan);
+            }
+            _enemyHp[enemy.Id] = enemy.IsAlive ? enemy.HitPoints : 0f;
         }
         foreach (var id in _enemyHp.Keys.Where(id => !seen.Contains(id)).ToArray())
         {
-            _audio.Play("death", 0.6f);
+            // A creature removed before its fatal hit was seen (one-shot kills) still gets the generic death.
+            if (_enemyHp[id] > 0f)
+                _audio.Play("death", 0.6f);
             _enemyHp.Remove(id);
         }
 
@@ -71,15 +81,16 @@ internal sealed class AudioDirector
         if (player.ActionCooldownTicks > _cooldown)
         {
             var item = player.Inventory.SelectedItem;
-            var sound = item?.UseKind switch
-            {
-                ItemUseKind.Pickaxe => "dig",
-                ItemUseKind.Melee => "swing",
-                ItemUseKind.Ranged => item.EffectiveClass == DamageClass.Tech ? "zap" : "shoot",
-                ItemUseKind.PlaceTile => "place",
-                _ => null
-            };
-            if (sound is not null)
+            var sound = item is null ? "" : SoundCatalog.WeaponCue(item);
+            if (sound.Length == 0 && item is not null)
+                sound = item.UseKind switch
+                {
+                    ItemUseKind.Melee => "swing",
+                    ItemUseKind.Ranged or ItemUseKind.Tech => item.EffectiveClass == DamageClass.Tech ? "zap" : "shoot",
+                    ItemUseKind.Command => "use_summon_staff",
+                    _ => SoundCatalog.ToolCue(item.UseKind)
+                };
+            if (sound.Length > 0)
                 _audio.Play(sound, 0.8f);
         }
         _cooldown = player.ActionCooldownTicks;
@@ -93,15 +104,21 @@ internal sealed class AudioDirector
             _audio.Play("thunder", 0.9f, Pan(game.LightningStrikes[^1].Position));
         _lightningSeen = game.LightningStrikes.Count;
 
-        var bossAlive = game.Enemies.Any(enemy => enemy.IsAlive && enemy.IsBoss);
-        if (bossAlive && !_bossAlive)
-            _audio.Play("boss");
+        var boss = game.Enemies.FirstOrDefault(enemy => enemy.IsAlive && enemy.IsBoss);
+        var bossAlive = boss is not null;
+        if (boss is not null && !_bossAlive)
+            _audio.Play(SoundCatalog.BossCue(boss.Kind, "roar"));
         _bossAlive = bossAlive;
 
         var events = game.EventProgress.Count;
-        if (events > _events)
-            _audio.Play("event");
-        _events = events;
+        foreach (var progress in game.EventProgress)
+            if (_eventKinds.Add(progress.Kind))
+                _audio.Play(SoundCatalog.EventCue(progress.Kind, "start"));
+        foreach (var ended in _eventKinds.Where(kind => game.EventProgress.All(progress => progress.Kind != kind)).ToArray())
+        {
+            _audio.Play(SoundCatalog.EventCue(ended, "end"), 0.8f);
+            _eventKinds.Remove(ended);
+        }
 
         var biting = game.Bobber?.Biting ?? false;
         if (biting && !_biting)

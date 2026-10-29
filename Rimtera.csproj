@@ -22,5 +22,7 @@
     <None Include="Assets\Sprites\**\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- Recorded voice/sound clips (tools/voice-recorder writes them); each replaces the synthesised effect of the same name. -->
     <None Include="Assets\Sounds\*.wav" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="Assets\Music\*.ogg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="Assets\Ambience\*.ogg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
