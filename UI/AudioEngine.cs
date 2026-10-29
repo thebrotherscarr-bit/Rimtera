@@ -32,6 +32,13 @@ internal sealed class AudioEngine : IDisposable
     private float _rainLevel;
     private float _rainNoise;
 
+    // Streamed loops (OGG in Assets/Music and Assets/Ambience): the music track, the ambience bed, the weather layer
+    // and positional spot loops. The synth music fades out while a track plays and back in when none fits.
+    private readonly Dictionary<string, string> _library = new(StringComparer.OrdinalIgnoreCase);
+    private readonly StreamDeck _musicDeck, _bedDeck, _weatherDeck;
+    private readonly Dictionary<string, StreamDeck> _spotDecks = new(StringComparer.OrdinalIgnoreCase);
+    private float _synthMusicGain = 1f;
+
     public float SoundVolume { get; set; } = 1f;
     public float MusicVolume { get; set; } = 0.8f;
     public float AmbientVolume { get; set; } = 1f;
@@ -57,6 +64,60 @@ internal sealed class AudioEngine : IDisposable
     }
 
     public void SetRain(float level) => _rainLevel = Math.Clamp(level, 0f, 1f);
+
+    /// <summary>True when a music track or ambience loop of that name is installed.</summary>
+    public bool HasLoop(string name) => _library.ContainsKey(name);
+
+    /// <summary>Plays a music track (crossfading from the last one), or null to hand back to the synth music.</summary>
+    public void PlayMusic(string? slot) => _musicDeck.Play(slot);
+
+    public string? MusicTrack => _musicDeck.Current;
+
+    /// <summary>Sets the ambience bed and weather layer; the weather loop follows its intensity.</summary>
+    public void SetAmbience(AmbienceChoice choice)
+    {
+        _bedDeck.Play(choice.Bed);
+        _weatherDeck.Play(choice.Weather);
+        _weatherDeck.Volume = 0.35f + 0.65f * choice.WeatherVolume;
+    }
+
+    /// <summary>A positional loop (waterfall, molten flow, machinery, fire) at a volume and pan; volume 0 fades it out.</summary>
+    public void SetSpot(string slot, float volume, float pan)
+    {
+        if (!_spotDecks.TryGetValue(slot, out var deck))
+        {
+            if (volume <= 0.01f || !HasLoop(slot))
+                return;
+            lock (_gate)
+                _spotDecks[slot] = deck = new StreamDeck(OpenLoop, SampleRate, 1.5f);
+        }
+        deck.Volume = Math.Clamp(volume, 0f, 1f);
+        deck.Pan = Math.Clamp(pan, -1f, 1f);
+        deck.Play(volume > 0.01f ? slot : null);
+    }
+
+    private IAudioStream? OpenLoop(string name)
+    {
+        try
+        {
+            return _library.TryGetValue(name, out var path) ? new VorbisFileStream(path) : null;
+        }
+        catch (Exception error) when (error is IOException or InvalidDataException or ArgumentException or UnauthorizedAccessException)
+        {
+            return null; // a damaged file leaves the slot on its fallback
+        }
+    }
+
+    private void LoadLoops()
+    {
+        foreach (var folder in new[] { "Music", "Ambience" })
+        {
+            var path = Path.Combine(AppContext.BaseDirectory, "Assets", folder);
+            if (Directory.Exists(path))
+                foreach (var file in Directory.EnumerateFiles(path, "*.ogg"))
+                    _library[Path.GetFileNameWithoutExtension(file)] = file;
+        }
+    }
 
     public void Play(string name, float volume = 1f, float pan = 0f)
     {
@@ -86,6 +147,10 @@ internal sealed class AudioEngine : IDisposable
     {
         Synthesize();
         LoadRecordedSounds(Path.Combine(AppContext.BaseDirectory, "Assets", "Sounds"));
+        LoadLoops();
+        _musicDeck = new StreamDeck(OpenLoop, SampleRate, 3f);
+        _bedDeck = new StreamDeck(OpenLoop, SampleRate, 4f);
+        _weatherDeck = new StreamDeck(OpenLoop, SampleRate, 3f);
         try
         {
             var format = new WaveFormat
@@ -168,11 +233,23 @@ internal sealed class AudioEngine : IDisposable
                 if (voice.Position >= voice.Samples.Length)
                     _voices.RemoveAt(v);
             }
-            _music.Render(_left, _right, MusicVolume * 0.35f);
+            // The synth music steps aside (over about 2.5 s) while a streamed track plays.
+            var synthTarget = _musicDeck.Sounding ? 0f : 1f;
+            _synthMusicGain += Math.Clamp(synthTarget - _synthMusicGain, -BufferFrames / (2.5f * SampleRate), BufferFrames / (2.5f * SampleRate));
+            if (_synthMusicGain > 0.001f)
+                _music.Render(_left, _right, MusicVolume * 0.35f * _synthMusicGain);
         }
+        _musicDeck.Render(_left, _right, BufferFrames, MusicVolume * 0.55f);
+        _bedDeck.Render(_left, _right, BufferFrames, AmbientVolume * 0.45f);
+        _weatherDeck.Render(_left, _right, BufferFrames, AmbientVolume * 0.5f);
+        StreamDeck[] spots;
+        lock (_gate)
+            spots = _spotDecks.Values.ToArray();
+        foreach (var deck in spots)
+            deck.Render(_left, _right, BufferFrames, AmbientVolume * 0.5f);
 
-        // Rain: brown-ish noise, louder with intensity.
-        var rain = _rainLevel * AmbientVolume * 0.25f;
+        // Rain: brown-ish noise, louder with intensity; a recorded rain or storm loop replaces it.
+        var rain = _weatherDeck.Sounding ? 0f : _rainLevel * AmbientVolume * 0.25f;
         for (var i = 0; i < BufferFrames; i++)
         {
             if (rain > 0.001f)
@@ -1399,6 +1476,11 @@ internal sealed class AudioEngine : IDisposable
             return;
         _running = false;
         _thread?.Join(500);
+        _musicDeck.Stop();
+        _bedDeck.Stop();
+        _weatherDeck.Stop();
+        foreach (var deck in _spotDecks.Values)
+            deck.Stop();
         waveOutReset(_device);
         var headerSize = Marshal.SizeOf<WaveHeader>();
         for (var i = 0; i < BufferCount; i++)

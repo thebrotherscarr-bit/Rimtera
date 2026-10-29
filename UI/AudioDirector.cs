@@ -1,4 +1,6 @@
+using Rimtera.Entities;
 using Rimtera.Systems;
+using Rimtera.World;
 
 namespace Rimtera.UI;
 
@@ -19,6 +21,9 @@ internal sealed class AudioDirector
     private int _lightningSeen;
     private bool _bossAlive;
     private readonly HashSet<WorldEventKind> _eventKinds = new();
+    private int _frame;
+    private static readonly Dictionary<WorldEventKind, WorldEventSpec> EventSpecs = new WorldEventSystem(1).Specs.ToDictionary(spec => spec.Kind);
+    private static readonly string[] SpotLoops = ["amb_waterfall", "amb_uranium_flow", "amb_machinery", "amb_fire"];
     private bool _biting;
 
     public AudioDirector(AudioEngine audio) => _audio = audio;
@@ -126,27 +131,116 @@ internal sealed class AudioDirector
         _biting = biting;
 
         _audio.SetRain(game.CurrentBiome.Underground ? 0f : game.Weather.Rain);
-        var theme = bossAlive ? "boss"
-            : game.CurrentBiome.Underground && game.CurrentBiome.Zone is BiomeZone.Grassland or BiomeZone.Caverns ? "underground"
-            : game.CurrentBiome.Zone switch
-            {
-                BiomeZone.FrozenWasteland => "frozen",
-                BiomeZone.JunkWasteland => "junk",
-                BiomeZone.MoltenChasm => "molten",
-                BiomeZone.RadiatedDeeps => "radiated",
-                BiomeZone.Overgrowth => "overgrowth",
-                _ => game.CurrentBiome.DisplayName.ToLowerInvariant() switch
-                {
-                    var name when name.Contains("fungal") => "fungal",
-                    var name when name.Contains("crystal") => "crystal",
-                    var name when name.Contains("canopy") || name.Contains("verdant") => "canopy",
-                    var name when name.Contains("coast") => "coast",
-                    _ => "grassland"
-                }
-            };
-        game.HeardMusicTheme = theme; theme = game.MusicThemeOverride ?? theme; // audio decks (GameSimulation.Leisure.cs)
+        var place = Place(game);
+        game.HeardMusicTheme = place; place = game.MusicThemeOverride ?? place; // audio decks (GameSimulation.Leisure.cs)
+        var night = game.ClockHour is >= 19f or < 5f;
+        var weather = game.Weather;
+        var moment = new AudioMoment(place, game.CurrentBiome.Underground, night, boss?.Archetype.Tier ?? BossTier.None,
+            game.EventProgress.Select(progress => EventSpecs.GetValueOrDefault(progress.Kind)).OfType<WorldEventSpec>().ToList(),
+            weather.Rain, weather.Wind, weather.Snow, weather.Dust, weather.AcidRain, game.HeadSubmerged);
+
+        // A recorded or generated track plays when one fits (boss, event, biome); otherwise the synth composes.
+        _audio.PlayMusic(AudioScene.Music(moment, _audio.HasLoop));
+        _audio.SetAmbience(AudioScene.Ambience(moment, _audio.HasLoop));
+        if (_frame++ % 20 == 0)
+            UpdateSpots(game);
         var tension = bossAlive ? 1f : events > 0 ? 0.7f : Math.Min(0.5f, game.Enemies.Count(enemy => enemy.IsAlive && !enemy.IsPassive) * 0.08f);
-        _audio.SetMusicMood(theme, tension, game.ClockHour is >= 19f or < 5f);
+        _audio.SetMusicMood(bossAlive ? "boss" : SynthTheme(place), tension, night);
+    }
+
+    /// <summary>
+    /// Where the player is, as a music and ambience theme: the biome (with Terraria's special places: space high up,
+    /// a town among three or more residents, the hives, warrens and vault below).
+    /// </summary>
+    private static string Place(GameSimulation game)
+    {
+        var biome = game.CurrentBiome;
+        var position = game.Player.Motion.Position;
+        if (!biome.Underground && position.Y < game.World.Height * 0.08f)
+            return "space";
+        if (!biome.Underground && game.TownNpcs.Count(npc => System.Numerics.Vector2.Distance(npc.Motion.Position, position) < 40f) >= 3)
+            return "town";
+        if (biome.Underground && biome.Zone is BiomeZone.Grassland or BiomeZone.Caverns)
+            return "underground";
+        return biome.Zone switch
+        {
+            BiomeZone.FrozenWasteland => "frozen",
+            BiomeZone.JunkWasteland => "junk",
+            BiomeZone.MoltenChasm => "molten",
+            BiomeZone.RadiatedDeeps => "radiated",
+            BiomeZone.Overgrowth => "overgrowth",
+            BiomeZone.FungalHollows => "fungal",
+            BiomeZone.CrystalSpires => "crystal",
+            BiomeZone.VerdantCanopy => "canopy",
+            BiomeZone.AcidCoast => "coast",
+            BiomeZone.BloomHives => "hives",
+            BiomeZone.MiteWarrens => "warrens",
+            BiomeZone.PrecursorVault => "vault",
+            _ => biome.DisplayName.ToLowerInvariant() switch
+            {
+                var name when name.Contains("fungal") => "fungal",
+                var name when name.Contains("crystal") => "crystal",
+                var name when name.Contains("canopy") || name.Contains("verdant") => "canopy",
+                var name when name.Contains("coast") => "coast",
+                _ => "grassland"
+            }
+        };
+    }
+
+    /// <summary>The procedural theme closest to a place that has no synth theme of its own.</summary>
+    private static string SynthTheme(string place) => place switch
+    {
+        "hives" => "canopy",
+        "warrens" => "underground",
+        "vault" => "crystal",
+        "space" => "frozen",
+        "town" => "grassland",
+        "ocean" => "coast",
+        _ => place
+    };
+
+    /// <summary>
+    /// Positional loops near the player: falling water (a waterfall), molten flows, running stations (machinery) and
+    /// campfires. Each grows louder with how much of it is close and pans toward where it is.
+    /// </summary>
+    private void UpdateSpots(GameSimulation game)
+    {
+        const int radius = 24;
+        Span<float> weight = stackalloc float[SpotLoops.Length];
+        Span<float> side = stackalloc float[SpotLoops.Length];
+        var world = game.World;
+        var center = game.Player.Motion.Position;
+        var cx = (int)center.X;
+        var cy = (int)center.Y;
+        for (var y = Math.Max(1, cy - radius); y < Math.Min(world.Height - 1, cy + radius); y++)
+        {
+            for (var x = Math.Max(0, cx - radius); x < Math.Min(world.Width, cx + radius); x++)
+            {
+                var cell = world.GetCell(x, y);
+                var spot = -1;
+                if (cell.LiquidUnits > 0 && cell.LiquidKind is LiquidKind.Water or LiquidKind.Lava)
+                {
+                    var below = world.GetCell(x, y + 1);
+                    var falling = !game.Tiles[below.TileId].IsSolid && below.LiquidUnits < WorldCell.LiquidUnitsMax / 2;
+                    spot = cell.LiquidKind == LiquidKind.Lava ? 1 : falling ? 0 : -1;
+                }
+                else if (cell.TileId == TileId.Campfire)
+                    spot = 3;
+                else if (cell.TileId != TileId.Air && game.Tiles[cell.TileId].Station != CraftingStationId.None)
+                    spot = 2;
+                if (spot < 0)
+                    continue;
+                var dx = x + 0.5f - center.X;
+                var near = 1f / (1f + MathF.Sqrt(dx * dx + (y + 0.5f - center.Y) * (y + 0.5f - center.Y)) / 6f);
+                weight[spot] += near;
+                side[spot] += near * Math.Clamp(dx / 20f, -1f, 1f);
+            }
+        }
+        for (var i = 0; i < SpotLoops.Length; i++)
+        {
+            var volume = Math.Clamp(weight[i] / (i == 0 ? 6f : i == 1 ? 10f : 3f), 0f, 1f);
+            _audio.SetSpot(SpotLoops[i], volume, weight[i] > 0f ? side[i] / weight[i] : 0f);
+        }
     }
 
     public void Ui(string sound) => _audio.Play(sound, 0.7f);

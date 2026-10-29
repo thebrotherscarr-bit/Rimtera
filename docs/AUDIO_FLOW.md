@@ -2,7 +2,7 @@
 
 The audio companion to `docs/COMFYUI.md`: one pipeline that turns the game's audio NEEDS into finished, levelled, named files the game loads. It covers weapon and tool sounds, character and creature sounds, UI, ambience and music.
 
-Status: **generators built and tested; the full overnight run waits for the user's go.** The needs export (`--sound-cues`, 527 cues), fallback playback, the specific triggers, both models and every script in `tools/audio/` exist. The streaming music and ambience players (engine work below) are still to be built, so generated music and ambience files are made and promoted but not yet played; the synth music and rain cover them until then.
+Status: **built.** The needs export (`--sound-cues`, 527 cues), fallback playback, the specific triggers, both models, every script in `tools/audio/`, the OGG music player and the ambience layer all exist. Overnight runs fill the files in.
 
 ## What exists today
 | Piece | Where | What it does |
@@ -109,10 +109,16 @@ These are already planned in the roadmap (PE-4, PE-5, PE-6, S1–S26 in breakdow
   - Category buses that follow the Sound, Music and Ambient sliders.
   - Smaller output buffers so sounds land on time.
 - **Fallback chain:** done. A specific cue (`use_bow`) falls back to its family (`shoot`) and then to the synth (`AudioEngine.Play` walks `SoundCatalog.Fallback`).
-- **Ambience layer.** Crossfaded loops picked by biome, layer, time and weather, plus positional spot loops (waterfalls, uranium, machinery).
-- **Music player** (to build next; it needs an OGG decoder such as NVorbis, MIT licence).
-  - Streams recorded or generated tracks with crossfades, and picks the track by Terraria's priority order: boss, then event, then biome and layer, then time of day.
-  - The procedural `MusicState` stays as the fallback for any slot without a file, and as an option in settings.
+- **OGG decoding:** done. NVorbis 0.10.5 (MIT) streams `Assets/Music/*.ogg` and `Assets/Ambience/*.ogg` from disk (`UI/AudioStreams.cs`): tracks are never held whole in memory, mono plays on both sides, other sample rates are resampled, and loops repeat at the end. Three seconds of stereo decode in about 60 ms.
+- **Music player:** done (`AudioScene.Music`, `AudioEngine.PlayMusic`).
+  - It picks the track in Terraria's priority order: boss tier, then active events (invasions, then night events, then the rest, with weather events only on the surface), then underwater (`mus_ocean`), then the place.
+  - Places are the biome, plus space high up, town among three or more residents, and the hives, warrens and vault below. Depth and time then pick the version: `_underground` (falling back to `mus_underground`), `_night` (falling back to `_day`) or `_day`.
+  - Tracks crossfade over 3 s. When no file fits, the procedural `MusicState` fades back in (it also covers the new places with its nearest theme), so the game always has music.
+- **Ambience layer:** done (`AudioScene.Ambience`, `AudioEngine.SetAmbience`, `SetSpot`).
+  - **Bed:** a biome loop by place and time (`amb_<place>_day/night`, the underground bed below ground, `amb_underwater` when submerged).
+  - **Weather:** acid rain, blizzard, sandstorm, heavy or light rain, or wind, on the surface only, louder with intensity. A rain file replaces the synth rain noise.
+  - **Spot loops:** waterfalls, molten flows, running stations (machinery) and campfires. Every 20 frames the director scans 24 tiles around the player; each spot gets louder the more of it is near and pans toward where it is.
+  - Each layer crossfades on its own and follows the Ambient volume slider.
 - **Despawns stay silent;** catches get their own sound (PE-5).
 
 ## Quality rules
