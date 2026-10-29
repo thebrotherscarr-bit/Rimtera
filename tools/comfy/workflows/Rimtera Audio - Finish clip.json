@@ -1,0 +1,237 @@
+{
+  "id": "f743ca62-2c73-4a5e-8ad7-d55dbecfce39",
+  "revision": 0,
+  "last_node_id": 1,
+  "last_link_id": 2,
+  "nodes": [
+    {
+      "id": "clip",
+      "type": "LoadAudio",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        282.798828125,
+        136
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "COMBO",
+          "widget": {
+            "name": "audio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "audioUI",
+          "name": "audioUI",
+          "type": "AUDIO_UI",
+          "widget": {
+            "name": "audioUI"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "choose file to upload",
+          "name": "upload",
+          "type": "AUDIOUPLOAD",
+          "widget": {
+            "name": "upload"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "AUDIO",
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadAudio"
+      },
+      "widgets_values": [
+        "rimtera_sample_clip.wav",
+        ""
+      ],
+      "widgets_values_named": {
+        "audio": "rimtera_sample_clip.wav",
+        "upload": ""
+      }
+    },
+    {
+      "id": "finish",
+      "type": "RimteraFinishAudio",
+      "pos": [
+        402.798828125,
+        90
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 1
+        },
+        {
+          "localized_name": "cue",
+          "name": "cue",
+          "type": "STRING",
+          "widget": {
+            "name": "cue"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "install",
+          "name": "install",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "install"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "AUDIO",
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RimteraFinishAudio"
+      },
+      "widgets_values": [
+        "use_shortsword",
+        false
+      ],
+      "widgets_values_named": {
+        "cue": "use_shortsword",
+        "install": false
+      }
+    },
+    {
+      "id": "listen",
+      "type": "PreviewAudio",
+      "pos": [
+        732.798828125,
+        90
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 2
+        },
+        {
+          "localized_name": "audioUI",
+          "name": "audioUI",
+          "type": "AUDIO_UI",
+          "widget": {
+            "name": "audioUI"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewAudio"
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 1,
+      "type": "Note",
+      "pos": [
+        1062.798828125,
+        90
+      ],
+      "size": [
+        400,
+        220
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "How to use",
+      "properties": {},
+      "widgets_values": [
+        "Finishes any clip for a cue as the overnight run does: levelled, trimmed and faded, or looped for music and ambience. Load Audio: the clip (any made in the sound, ambience or music flows). Cue: its name in tools/audio/audio_needs.tsv. Turn install on to add it to the game as the cue's next take (an existing file is never replaced); rebuild the game to hear it."
+      ],
+      "widgets_values_named": {
+        "text": "Finishes any clip for a cue as the overnight run does: levelled, trimmed and faded, or looped for music and ambience. Load Audio: the clip (any made in the sound, ambience or music flows). Cue: its name in tools/audio/audio_needs.tsv. Turn install on to add it to the game as the cue's next take (an existing file is never replaced); rebuild the game to hear it."
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [
+      1,
+      "clip",
+      0,
+      "finish",
+      0,
+      "AUDIO"
+    ],
+    [
+      2,
+      "finish",
+      0,
+      "listen",
+      0,
+      "AUDIO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1,
+      "offset": [
+        0,
+        0
+      ]
+    }
+  },
+  "version": 0.4
+}

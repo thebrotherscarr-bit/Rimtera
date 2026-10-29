@@ -30,9 +30,11 @@ ROOT = Path(__file__).resolve().parents[2]
 SHEETS = ROOT / "art" / "sheets"
 OUT = ROOT / "art" / "generated" / "sheet_index"
 INDEX = Path(__file__).resolve().parent / "sheet_index.tsv"
+# No braces: the ComfyUI app reads {a|b} in a prompt as a random choice and would strip them from a JSON example.
 QUESTION = ("This is a sheet of labelled pixel art game sprites. Find every sprite picture that has a text label. For "
-            "each one output a JSON object on its own line: {\"label\": \"<the label text>\", \"bbox_2d\": [x1, y1, x2, y2]} "
-            "where the box covers only the picture, not its label text. Output only the JSON lines.")
+            "each one write one line: the label text, then a | sign, then the box around only the picture (not its "
+            "label text) as x1, y1, x2, y2. Write nothing else.")
+LINE = re.compile(r"^\W*(.+?)\s*\|\s*\[?\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)")
 
 
 def safe(label: str) -> str:
@@ -40,16 +42,22 @@ def safe(label: str) -> str:
 
 
 def boxes(answer: str, width: int, height: int):
-    """(label, box in pixels) for each JSON line the model wrote. Qwen3-VL gives boxes on a 0-1000 scale; a box
-    with any number above 1000 is taken as pixels."""
+    """(label, box in pixels) for each line the model wrote: "label | x1, y1, x2, y2", or the JSON Qwen3-VL sometimes
+    answers with instead. Qwen3-VL gives boxes on a 0-1000 scale; a box with any number above 1000 is taken as pixels."""
     found = []
+    entries = []
     for chunk in re.findall(r"\{[^{}]*\}", answer):
         try:
             item = json.loads(chunk)
-            label = str(item["label"]).strip()
-            x1, y1, x2, y2 = (float(v) for v in item["bbox_2d"])
+            entries.append((str(item["label"]), *(float(v) for v in item["bbox_2d"])))
         except (ValueError, KeyError, TypeError):
             continue
+    if not entries:
+        for line in answer.splitlines():
+            if match := LINE.match(line.strip()):
+                entries.append((match[1].strip(" \"'"), *(float(v) for v in match.groups()[1:])))
+    for label, x1, y1, x2, y2 in entries:
+        label = label.strip()
         if max(x1, y1, x2, y2) <= 1000:
             x1, x2, y1, y2 = x1 * width / 1000, x2 * width / 1000, y1 * height / 1000, y2 * height / 1000
         box = (max(0, int(min(x1, x2))), max(0, int(min(y1, y2))), min(width, int(max(x1, x2))), min(height, int(max(y1, y2))))
