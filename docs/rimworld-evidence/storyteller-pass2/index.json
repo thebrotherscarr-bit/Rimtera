@@ -1,154 +1,158 @@
-﻿[
-    {
-        "type":  "RimWorld.StorytellerDef",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerCompProperties",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerComp_OnOffCycle",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerCompProperties_OnOffCycle",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerComp_ThreatsGenerator",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.ThreatsGenerator",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.ThreatsGeneratorParams",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerComp_RandomMain",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerCompProperties_RandomMain",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerComp_CategoryMTB",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerComp_SingleMTB",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerComp_ClassicIntro",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerComp_Triggered",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerComp_FactionInteraction",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StorytellerUtilityPopulation",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StoryWatcher",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StoryWatcher_Adaptation",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StoryWatcher_PopAdaptation",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StoryWatcher_Wealth",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StoryWatcher_Strength",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.StoryState",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentDef",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentCategoryDef",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentTargetTagDef",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentQueue",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.QueuedIncident",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.FiringIncident",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.DifficultyDef",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.Difficulty",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentWorker_RaidEnemy",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentWorker_WandererJoin",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentWorker_RefugeePodCrash",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentWorker_Disease",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentWorker_ManhunterPack",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.IncidentWorker_TraderCaravanArrival",
-        "found":  true
-    },
-    {
-        "type":  "Verse.AI.MentalBreaker",
-        "found":  true
-    },
-    {
-        "type":  "Verse.AI.MentalBreakWorker",
-        "found":  true
-    },
-    {
-        "type":  "RimWorld.InspirationHandler",
-        "found":  true
-    }
+[
+ {
+  "type": "RimWorld.Difficulty",
+  "found": true
+ },
+ {
+  "type": "RimWorld.DifficultyDef",
+  "found": true
+ },
+ {
+  "type": "RimWorld.FiringIncident",
+  "found": true
+ },
+ {
+  "type": "RimWorld.IncidentCategoryDef",
+  "found": true
+ },
+ {
+  "type": "RimWorld.IncidentDef",
+  "found": true
+ },
+ {
+  "type": "RimWorld.IncidentQueue",
+  "found": true
+ },
+ {
+  "type": "RimWorld.IncidentTargetTagDef",
+  "found": true
+ },
+ {
+  "type": "RimWorld.IncidentWorker_Disease",
+  "found": true
+ },
+ {
+  "type": "RimWorld.IncidentWorker_ManhunterPack",
+  "found": false
+ },
+ {
+  "type": "RimWorld.IncidentWorker_RaidEnemy",
+  "found": true
+ },
+ {
+  "type": "RimWorld.IncidentWorker_RefugeePodCrash",
+  "found": false
+ },
+ {
+  "type": "RimWorld.IncidentWorker_TraderCaravanArrival",
+  "found": true
+ },
+ {
+  "type": "RimWorld.IncidentWorker_WandererJoin",
+  "found": true
+ },
+ {
+  "type": "RimWorld.InspirationHandler",
+  "found": true
+ },
+ {
+  "type": "RimWorld.QueuedIncident",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StoryState",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StoryWatcher",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StoryWatcher_Adaptation",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StoryWatcher_PopAdaptation",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StoryWatcher_Strength",
+  "found": false
+ },
+ {
+  "type": "RimWorld.StoryWatcher_Wealth",
+  "found": false
+ },
+ {
+  "type": "RimWorld.Storyteller",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerCompProperties",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerCompProperties_OnOffCycle",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerCompProperties_RandomMain",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerComp_CategoryMTB",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerComp_ClassicIntro",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerComp_FactionInteraction",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerComp_OnOffCycle",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerComp_RandomMain",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerComp_SingleMTB",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerComp_ThreatsGenerator",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerComp_Triggered",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerDef",
+  "found": true
+ },
+ {
+  "type": "RimWorld.StorytellerUtilityPopulation",
+  "found": true
+ },
+ {
+  "type": "RimWorld.ThreatsGenerator",
+  "found": true
+ },
+ {
+  "type": "RimWorld.ThreatsGeneratorParams",
+  "found": true
+ },
+ {
+  "type": "Verse.AI.MentalBreakWorker",
+  "found": true
+ },
+ {
+  "type": "Verse.AI.MentalBreaker",
+  "found": true
+ }
 ]
