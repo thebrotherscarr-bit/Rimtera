@@ -45,3 +45,6 @@ tools/audio/raw/
 tools/audio/candidates/
 tools/audio/jobs*.jsonl
 tools/audio/moss-constraints.txt
+
+tools/rea-local/
+docs/rimworld-evidence/storyteller-pass2/raw/
