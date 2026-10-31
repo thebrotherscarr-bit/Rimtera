@@ -217,6 +217,20 @@ public static class ModesSelfTests
               buffs.ActiveBuffs.Any(buff => buff.Status == StatusId.Poison),
             "right-clicking a buff cancels a helpful status but not a debuff");
 
+        // ---- 0.1.9: misc equipment slots (pet, light pet, mount, hook) work as if carried ----
+        var misc = NewGame(9310);
+        var wrongRefused = !misc.SetMisc(MiscSlot.Pet, ItemId.CopperOre, out _);
+        var petIn = misc.SetMisc(MiscSlot.Pet, ItemId.PetCrabShell, out _) && misc.SetMisc(MiscSlot.Hook, ItemId.GrappleHook, out _);
+        Tick(misc, 2);
+        var petOut = misc.ActiveBuffs.Any(buff => buff.Key == "pet") && misc.HasGrapple;
+        var savedMisc = GameSimulation.Restore(misc.CaptureSnapshot());
+        var kept = savedMisc.MiscEquipped(MiscSlot.Pet) == ItemId.PetCrabShell && savedMisc.MiscEquipped(MiscSlot.Hook) == ItemId.GrappleHook;
+        misc.SetMisc(MiscSlot.Pet, null, out _);
+        misc.SetMisc(MiscSlot.Hook, null, out _);
+        Tick(misc, 2);
+        check(wrongRefused && petIn && petOut && kept && misc.ActiveBuffs.All(buff => buff.Key != "pet") && !misc.HasGrapple,
+            "an item in a misc slot works as if carried (the pet follows, the hook throws), is saved, and stops when taken out");
+
         // ---- G16: Annihilation scaling, defense and relics ----
         var defenseHit = DefenseBalance.ApplyDefense(40f, 20, WorldDifficulty.Annihilation);
         check(WorldSettings.EnemyScale(WorldDifficulty.Annihilation) == 2f && WorldSettings.EnemyScale(WorldDifficulty.Brutal) == 1.4f &&

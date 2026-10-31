@@ -582,6 +582,41 @@ public sealed class InventoryUiState : UiState
         Slot(EquipmentSlot.Head, "Vanity", vanity: true, 120f, 0);
         Slot(EquipmentSlot.Body, "Vanity", vanity: true, 120f, 1);
         Slot(EquipmentSlot.Legs, "Vanity", vanity: true, 120f, 2);
+
+        // Terraria's misc equipment: pet, light pet, mount and hook, under the vanity column. Drop a fitting item from the
+        // cursor in (what was there comes back on the cursor); click empty-handed to take it out.
+        (MiscSlot Slot, string Label)[] misc = [(MiscSlot.Pet, "Pet"), (MiscSlot.LightPet, "Light"), (MiscSlot.Mount, "Mount"), (MiscSlot.Hook, "Hook")];
+        for (var index = 0; index < misc.Length; index++)
+        {
+            var (miscSlot, label) = misc[index];
+            var element = new UiStackSlotElement($"equip-misc-{miscSlot}", label,
+                () => game.MiscEquipped(miscSlot) is { } id ? new ItemStack(id, 1) : default, new UiStyle
+                {
+                    Left = UiLength.Mixed(-120f, 1f), Top = UiLength.Px(top + (4 + index) * InventoryLayout.Stride),
+                    Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot)
+                });
+            element.ClickOnPress = true;
+            element.OnClick(click =>
+            {
+                var held = _controller.CursorStack;
+                if (!held.IsEmpty)
+                {
+                    if (held.Count != 1 || !game.SetMisc(miscSlot, held.ItemId, out var previous))
+                    {
+                        Status($"That doesn't go in the {label.ToLowerInvariant()} slot.");
+                        return;
+                    }
+                    _controller.DropCursor();
+                    if (previous is { } back)
+                        _controller.PickUp(new ItemStack(back, 1));
+                    Status($"Equipped {game.Items[held.ItemId].Name}.");
+                }
+                else if (game.MiscEquipped(miscSlot) is { } worn && game.SetMisc(miscSlot, null, out _))
+                    _controller.PickUp(new ItemStack(worn, 1));
+                RefreshCursorLabel();
+            });
+            Add(element);
+        }
     }
 
     /// <summary>Terraria's housing panel: check the room you stand in, and who lives with you.</summary>

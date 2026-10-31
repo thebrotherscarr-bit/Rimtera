@@ -403,7 +403,8 @@ public sealed partial class GameSimulation : IStoryHost
             NightBossIds: _nightBossIds.ToArray(),
             WhipMarkedEnemy: _whipMarkedEnemy,
             WhipBuffSeconds: _whipBuffSeconds,
-            Run: CaptureRun()) { CellData = cellData };
+            Run: CaptureRun(),
+            MiscEquipment: CaptureMisc()) { CellData = cellData };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -509,6 +510,7 @@ public sealed partial class GameSimulation : IStoryHost
         game.RestoreContent(snapshot.Content);
         game.RestoreEntities(snapshot);
         game.RestoreRun(snapshot.Run);
+        game.RestoreMisc(snapshot.MiscEquipment);
         game.LoadWiringFromFlags();
 
         var motion = game.Player.Motion;

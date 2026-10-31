@@ -55,7 +55,8 @@ public sealed record GameSnapshot(
     long[]? NightBossIds = null,
     long? WhipMarkedEnemy = null,
     float? WhipBuffSeconds = null,
-    RunStateSnapshot? Run = null)
+    RunStateSnapshot? Run = null,
+    ItemId?[]? MiscEquipment = null)
 {
     public const int CurrentFormatVersion = 2;
 

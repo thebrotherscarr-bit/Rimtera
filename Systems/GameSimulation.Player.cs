@@ -246,9 +246,11 @@ public sealed partial class GameSimulation
                 Dismount();
                 return true;
             case "pet":
+                UnequipMiscTo(MiscSlot.Pet, _pet?.SourceItem);
                 _pet = null;
                 return true;
             case "light-pet":
+                UnequipMiscTo(MiscSlot.LightPet, _lightPet?.SourceItem);
                 _lightPet = null;
                 return true;
         }
@@ -550,7 +552,7 @@ public sealed partial class GameSimulation
     /// <summary>Throws the grappling hook toward a world point (needs a grapple accessory). Re-throwing replaces it.</summary>
     public bool TryFireGrapple(Vector2 target)
     {
-        if (!HasTag("grapple") || Player.IsDead || Player.IsDowned)
+        if (!HasGrapple || Player.IsDead || Player.IsDowned)
             return false;
         var aim = target - PlayerCenter;
         if (aim.LengthSquared() < 0.01f)
@@ -575,7 +577,7 @@ public sealed partial class GameSimulation
             _grappleSpare = null;
             return;
         }
-        if (!HasTag("grapple"))
+        if (!HasGrapple)
         {
             _grapple = null;
             _grappleSpare = null;
@@ -793,28 +795,37 @@ public sealed partial class GameSimulation
 
     // ------------------------------------------------------------------ pets and mount
 
+    /// <summary>The pet an item summons: its name, sprite, whether it is a light pet, its light radius and whether it flies.</summary>
+    private static (string Name, string Sprite, bool Light, float Radius, bool Flies)? PetInfo(ItemId item) => item switch
+    {
+        ItemId.PetDroneChip => ("Pocket drone", "pet_pocket_drone", false, 0f, true),
+        ItemId.PetCrabShell => ("Pebble crab", "pet_pebble_crab", false, 0f, false),
+        ItemId.LightPetWisp => ("Lumen wisp", "pet_lumen_wisp", true, 7f, true),
+        ItemId.LightPetLantern => ("Lantern bot", "pet_lantern_bot", true, 9f, true),
+        _ => null
+    };
+
+    private PetState? CreatePet(ItemId item)
+    {
+        if (PetInfo(item) is not { } info)
+            return null;
+        Achievements.TryUnlock("loyal-companion");
+        return new PetState(item, info.Name, info.Sprite, info.Light, info.Radius, info.Flies, PlayerCenter + new Vector2(-Player.Motion.Facing, -1f));
+    }
+
     public bool TogglePet(ItemId item)
     {
-        var (name, sprite, light, radius, flies) = item switch
-        {
-            ItemId.PetDroneChip => ("Pocket drone", "pet_pocket_drone", false, 0f, true),
-            ItemId.PetCrabShell => ("Pebble crab", "pet_pebble_crab", false, 0f, false),
-            ItemId.LightPetWisp => ("Lumen wisp", "pet_lumen_wisp", true, 7f, true),
-            ItemId.LightPetLantern => ("Lantern bot", "pet_lantern_bot", true, 9f, true),
-            _ => (string.Empty, string.Empty, false, 0f, false)
-        };
-        if (name.Length == 0)
+        if (PetInfo(item) is not { } info)
             return false;
-        ref var slot = ref light ? ref _lightPet : ref _pet;
+        ref var slot = ref info.Light ? ref _lightPet : ref _pet;
         if (slot?.SourceItem == item)
         {
             slot = null;
-            PostMessage($"{name} dismissed.");
+            PostMessage($"{info.Name} dismissed.");
             return true;
         }
-        slot = new PetState(item, name, sprite, light, radius, flies, PlayerCenter + new Vector2(-Player.Motion.Facing, -1f));
-        PostMessage($"{name} summoned.");
-        Achievements.TryUnlock("loyal-companion");
+        slot = CreatePet(item);
+        PostMessage($"{info.Name} summoned.");
         return true;
     }
 
@@ -1211,16 +1222,17 @@ public sealed partial class GameSimulation
             Player.ImmunitySeconds = Math.Max(0f, Player.ImmunitySeconds - deltaSeconds);
         foreach (var enemy in _enemies)
             enemy.TickHitImmunity(deltaSeconds);
-        if (ActiveMountSpec is { } riding && Player.Inventory.Count(riding.Item) == 0)
+        if (ActiveMountSpec is { } riding && !Carries(riding.Item))
             Dismount();
-        if (_pet is { } pet && Player.Inventory.Count(pet.SourceItem) == 0)
+        if (_pet is { } pet && !Carries(pet.SourceItem))
             _pet = null;
-        if (_lightPet is { } lightPet && Player.Inventory.Count(lightPet.SourceItem) == 0)
+        if (_lightPet is { } lightPet && !Carries(lightPet.SourceItem))
             _lightPet = null;
         if (IsBankOpen && !CanAccessBankCached())
             IsBankOpen = false;
 
         UpdateGrapple(deltaSeconds);
+        UpdateMiscGear();
         UpdatePets(deltaSeconds);
         UpdateGroundItems(deltaSeconds);
         UpdateWorldGenContent(deltaSeconds);
