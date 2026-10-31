@@ -103,7 +103,7 @@ What each system needs, what exists, and what is missing. Sizes are rough: S (da
 
 | # | System | Exists now | Missing | Size |
 |---|---|---|---|---|
-| 1 | **Storyteller** | Interval-gated incidents, category then weighted roll, refire timers, threat points from wealth, crew, progression and day (`Systems/Storyteller.cs`); six incidents; 72-hour grace; raids gated on the first boss | Acts (§2), adaptation to losses, population intent, storyteller personalities, an incident queue with warnings, about twenty new incidents (§5) | XL |
+| 1 | **Storyteller** | Interval-gated incidents, category then weighted roll, refire timers, threat points from wealth, crew, progression and day (`Systems/Storyteller.cs`); six incidents; 72-hour grace; raids gated on the first boss | A component interface; acts as the progress score; adaptation and population watchers; on/off threat cycles and the big-threat guarantee; follow-up triggers; the queue with warnings; shared cooldown tags; difficulty dials; three personalities; about twenty-five new incidents (§5) | XL |
 | 2 | **Colony work** | Crew survival behaviour (eat, rest, mine, idle: `AI/SurvivalBehavior.cs`), skills and passions, work-speed stats | Work types and priorities, job givers per work type (the think-tree pattern in `docs/RESEARCH.md`), a work tab | L |
 | 3 | **Station bills** | Crafting at stations by the player | A bill queue per station ("make 10 healing potions", "keep 20 torches"), worked by Crafting colonists | M |
 | 4 | **Farming and brewing** | Herbs grow; potions are crafted by hand | Grow zones, colonist planting and harvesting, brew bills | M |
@@ -114,7 +114,7 @@ What each system needs, what exists, and what is missing. Sizes are rough: S (da
 | 9 | **Permadeath** | Town NPCs respawn on a timer; crew can die | Turn off the respawn timer; graves; death mood thoughts; replacements only from arrivals | S |
 | 10 | **Death drops** | Explorer, Classic, Salvager, Ironman, Creative | Easy / Medium / Hard as in §3.2 | S |
 | 11 | **Colony defence** | Raids spawn waves; crew can fight | Raids aim at the colony (and outposts), not just the player; guard posts; doors and walls matter; town NPCs fight back | L |
-| 12 | **Mood, health, breaks** | Mood, thoughts, health with body parts, a mental break state | Break behaviours that cause trouble (wandering off, refusing work, smashing things); inspirations | M |
+| 12 | **Mood, health, breaks** | Mood, thoughts, health with body parts, a mental break state | Three break levels with thresholds, time below threshold and a cooldown; break behaviours that cause trouble (wandering off, refusing work, smashing things); the "final straw" in the break message; inspirations | M |
 | 13 | **Station AI protection** | AI moves into the first house; hologram until then | Health and damage, raids that target it, run loss on its destruction; rebuild parked | S |
 | 14 | **The arc** | Core gate boss, the Fracture, cultist ritual, obelisks, Astro-God | Act tracking; core boss on arrival; obelisks re-themed as fuel cores; collapse ritual | M |
 | 15 | **Zealots** | Cultist ritual as a boss gate | Zealot incidents: preaching, conversion of a colonist, sabotage, desertion | M |
@@ -147,44 +147,67 @@ From the REA metadata already gathered (`docs/RESEARCH.md`, Phase 4: member and 
 - **Threat points.** `StorytellerUtility.DefaultThreatPointsNow` works from wealth and colonist curves (`PointsPerWealthCurve`, `PointsPerColonistByWealthCurve`) with global minimum and maximum points. Rimtera's `ComputeThreatPoints` is its own formula of the same shape.
 - **A queue.** The storyteller keeps an `incidentQueue` for incidents that fire later.
 
-### 5.2 What still needs mapping (REA pass 2)
-The first pass covered the core pipeline. The parts that give RimWorld's storytellers their feel were not covered: the component types that make Cassandra's cycles and Randy's swings, adaptation to losses, population steering, the incident definitions' gating fields, and difficulty. `tools/rea_storyteller.ps1` extracts their member and type structure on your PC (where RimWorld and REA are installed) into `docs/rimworld-evidence/storyteller-pass2/`. The types it reads:
+### 5.2 What REA pass 2 found
+`tools/rea_storyteller.ps1` read 35 of 39 types from RimWorld 1.6 (`docs/rimworld-evidence/storyteller-pass2/summary.json`: field names, method signatures and calls only). Four types are not in this version under those names: `IncidentWorker_ManhunterPack`, `IncidentWorker_RefugeePodCrash`, `StoryWatcher_Strength` and `StoryWatcher_Wealth`. As with every evidence pass, no method bodies, constants, curves or definitions were read or copied; the numbers below are left for Rimtera to choose.
 
-| Group | Types | What we want to learn |
+| Part | Evidence (names) | What it means |
 |---|---|---|
-| Storyteller definition | `StorytellerDef`, `StorytellerCompProperties` | Which knobs a storyteller has: its component list, point and population settings |
-| Threat pacing | `StorytellerComp_OnOffCycle`, `StorytellerComp_ThreatsGenerator`, `ThreatsGenerator`, `ThreatsGeneratorParams` | How threats come in on and off windows, and the knobs of a cycle |
-| Randomness | `StorytellerComp_RandomMain`, `StorytellerCompProperties_RandomMain`, `StorytellerComp_CategoryMTB`, `StorytellerComp_SingleMTB` | How a "random" storyteller weights categories and mean time between events |
-| Arrivals and intro | `StorytellerComp_ClassicIntro`, `StorytellerComp_Triggered`, `StorytellerComp_FactionInteraction`, `StorytellerUtilityPopulation` | How the opening is paced, triggered follow-ups, visitors, and steering toward a target population |
-| Adaptation | `StoryWatcher`, `StoryWatcher_Adaptation`, `StoryWatcher_PopAdaptation`, `StoryWatcher_Wealth`, `StoryWatcher_Strength`, `StoryState` | What the storyteller remembers: losses, strength, wealth, last fire times |
-| Incidents | `IncidentDef`, `IncidentCategoryDef`, `IncidentTargetTagDef`, `IncidentQueue`, `QueuedIncident`, `FiringIncident` | An incident's gating fields (earliest day, population limits, refire tags) and delayed firing |
-| Difficulty | `DifficultyDef`, `Difficulty` | Which parts of pacing difficulty scales |
-| Example workers | `IncidentWorker_RaidEnemy`, `IncidentWorker_WandererJoin`, `IncidentWorker_RefugeePodCrash`, `IncidentWorker_Disease`, `IncidentWorker_ManhunterPack`, `IncidentWorker_TraderCaravanArrival` | How individual incidents gate themselves |
-| Breaks | `MentalBreaker`, `MentalBreakWorker`, `InspirationHandler` | How mood turns into trouble or inspiration |
+| **Storyteller definition** | `StorytellerDef`: `comps`, `pointsFactorFromDaysPassed`, `adaptDaysMin`, `adaptDaysMax`, `adaptDaysGameStartGraceDays`, `pointsFactorFromAdaptDays`, `adaptDaysLossFromColonistLostByPostPopulation`, `adaptDaysLossFromColonistViolentlyDownedByPopulation`, `adaptDaysGrowthRateCurve`, `populationIntentFactorFromPopCurve`, `populationIntentFactorFromPopAdaptDaysCurve`, `disablePermadeath` | A storyteller is a list of components plus a handful of curves. Personality comes from which components it has and how the curves are shaped. |
+| **Adaptation** | `StoryWatcher_Adaptation`: `adaptDays`, `Notify_PawnEvent`, `ResolvePawnEvent`, `AdaptationWatcherTick` (reads days since settling) | One number, "adapt days", grows over time at a rate set by a curve and is clamped between a minimum and maximum. Losing a colonist, or one being violently downed, takes some away, scaled by population. Threat points are multiplied by a factor of it. A grace period at the start protects new colonies. |
+| **Population adaptation** | `StoryWatcher_PopAdaptation`: `adaptDays`; `StoryState`: `colonistCountTicks`, `RecordPopulationIncrease` | A separate counter tracks how long the colony has been at its size, which feeds population intent. |
+| **Population intent** | `StorytellerUtilityPopulation`: `CalculatePopulationIntent`, `AdjustedPopulationValue`, `PopulationValue_Prisoner`, `PopulationValue_Slave`, `PopulationValue_Child`; `IncidentDef.populationEffect`; `StorytellerCompProperties.minIncChancePopulationIntentFactor` | The storyteller has a target colony size. Each incident says whether it adds or removes people, and its chance is scaled by how much the colony "wants" people right now. Prisoners, slaves and children count for less than a full colonist. |
+| **Threat cycles** | `StorytellerCompProperties_OnOffCycle`: `onDays`, `offDays`, `minSpacingDays`, `numIncidentsRange`, `acceptFractionByDaysPassedCurve`, `acceptPercentFactorPerThreatPointsCurve`, `acceptPercentFactorPerProgressScoreCurve`, `forceRaidEnemyBeforeDaysPassed`; `ThreatsGenerator` and `ThreatsGeneratorParams` with the same fields | Threats come in "on" windows separated by "off" windows. A window holds a number of incidents with a minimum spacing. Whether a proposed threat is accepted depends on days passed, the threat points, and a **progress score**. The same generator is reused elsewhere (quests). |
+| **Random storyteller** | `StorytellerCompProperties_RandomMain`: `mtbDays`, `categoryWeights`, `maxThreatBigIntervalDays`, `randomPointsFactorRange`; `ChooseRandomCategory`, `GenerateParms` | Incidents arrive on a mean time between events, by weighted category, with threat points randomly scaled within a range. A big threat is guaranteed if too many days pass without one. |
+| **Background events** | `StorytellerComp_CategoryMTB`, `StorytellerComp_SingleMTB`, `StorytellerComp_FactionInteraction` | Other components each add their own stream: one category on a mean time, one specific incident on a mean time, visitors and traders. |
+| **Opening** | `StorytellerComp_ClassicIntro`; `Difficulty.allowIntroThreats` | A component scripts the start of a game. |
+| **Reactions** | `StorytellerComp_Triggered.Notify_PawnEvent` (adds to the `IncidentQueue` when a colonist is downed or dies) | Some incidents are follow-ups to something that happened, queued for later. |
+| **The queue** | `IncidentQueue`: `queuedIncidents`, `IncidentQueueTick`; `QueuedIncident`: `fireTick`, `retryDurationTicks`, `triedToFire` | Incidents can be scheduled for a later time. If one cannot fire when its time comes, it keeps retrying for a while. |
+| **Memory** | `StoryState`: `lastThreatBigTick`, `lastFireTicks`, `recentRandomIncidents`, `Notify_IncidentFired` | When the last big threat came, when each incident last fired, what fired recently. |
+| **Incident gating** | `IncidentDef`: `baseChance`, `category`, `targetTags`, `earliestDay`, `minPopulation`, `minGreatestPopulation`, `minRefireDays`, `minDifficulty`, `disabledWhen`, `pointsScaleable`, `minThreatPoints`, `maxThreatPoints`, `allowedBiomes`, `disallowedBiomes`, `tags`, `refireCheckTags`, `chanceFactorByPopulationCurve`, `letterLabel`, `letterText`, `durationDays` | Every incident carries its own gates. `tags` with `refireCheckTags` give related incidents a shared cooldown (two kinds of raid don't stack). |
+| **Difficulty** | `DifficultyDef` and `Difficulty`: `threatScale`, `allowBigThreats`, `allowIntroThreats`, `adaptationGrowthRateFactorOverZero`, `adaptationEffectFactor`, `threatsGeneratorThreatCountFactor`, `colonistMoodOffset`, `cropYieldFactor`, `mineYieldFactor`, `fishingYieldFactor`, `researchSpeedFactor`, `diseaseIntervalFactor`, `raidLootPointsFactor`, `allowExtremeWeatherIncidents`, `fixedWealthMode`, `lowPopConversionBoost`, `enemyDeathOnDownedChanceFactor`, and more | Difficulty is many separate dials, not one number: how hard threats hit, how fast adaptation grows and how much it matters, base mood, yields, research speed, disease frequency. |
+| **Mental breaks** | `MentalBreaker`: `ticksBelowMinor`, `ticksBelowMajor`, `ticksBelowExtreme`, `MinorBreakMTBDays`, `MajorBreakMTBDays`, `ExtremeBreakMTBDays`, `MajorBreakMoodFraction`, `ExtremeBreakMoodFraction`, `MinTicksBelowToBreak`, `MinTicksSinceRecoveryToBreak`, `RandomFinalStraw`; `MentalBreakWorker`: `BreakCanOccur`, `CommonalityFor` | Three break levels with their own mood thresholds. Mood must stay below a threshold for a while before a break can roll, breaks roll on a mean time per level, and there is a cooldown after recovering. The break names the thought that was the "final straw". |
+| **Inspirations** | `InspirationHandler`: `StartInspirationMTBDaysAtMaxMood`, `MinMood`, `TryStartInspiration` | The good side of mood: above a minimum mood, an inspiration rolls on a mean time. |
+| **Arrivals** | `IncidentWorker_WandererJoin`: `RelationWithColonistWeight`, `CanSpawnJoiner`, `GeneratePawn` | A joiner can be related to someone already in the colony. |
 
-As with every evidence pass: member names, field names and type structure only. No method bodies, constants, curves or definitions are copied. Rimtera's numbers and names are its own.
+### 5.3 Rimtera's storyteller
+Built on the existing pipeline (`Systems/Storyteller.cs`), with each part below as a Rimtera component. Every number is Rimtera's own, chosen in tuning.
 
-### 5.3 Rimtera's storyteller (design, pending pass 2)
-Built on the existing pipeline. Each part below becomes a component of Rimtera's own.
+**Pieces**
+- **Acts as the progress score.** RimWorld scales threat acceptance by a progress score. Rimtera's progress score is the run's act (§2) plus bosses down. Each act also opens its own incident pool and sets a floor and ceiling for threat points.
+- **Threat points.** Wealth + crew strength + act, then × days-in-run factor, × adaptation factor, × difficulty's threat scale.
+- **Adaptation.** One "adapt days" number per run. It grows each day (faster on harder settings), is clamped between a minimum and a maximum, and starts with a grace period. A colonist death takes a large bite out of it, a colonist downed in a fight a smaller one, both scaled by how small the colony is. Its factor multiplies threat points. This is what keeps losses from snowballing into a guaranteed wipe, and lets a battered colony recover.
+- **Population intent.** Each act has a target crew size. Every incident declares its population effect (an arrival adds one, a deadly sickness may remove one). Arrivals get likelier the further the colony is below its target. That makes permadeath playable: deaths bring replacements over time. Captured raiders, if added later, count as part of a colonist.
+- **Threat cycles.** An on/off cycle component: a few quiet days, then an "on" window with a number of threats spaced apart. The acceptance chance rises with days passed, threat points and the act.
+- **Big-threat guarantee.** The random component guarantees a major threat if too many days pass without one, so the Wild storyteller cannot stay quiet forever.
+- **Background streams.** Separate components on mean times: arrivals, traders and visitors, weather and world events, sickness.
+- **Opening.** An intro component scripts act 1: the AI's first advice, the first arrival once a house stands, the first small threat after the grace period.
+- **Follow-ups.** A triggered component reacts to colony events and queues a follow-up. A colonist dies, and later a mourning break or a vengeful relative arrives. A raid is beaten, and later its survivors return. A zealot preacher visits, and later someone converts.
+- **The queue with warnings.** Big threats are queued a few hours ahead with a warning shown to the player, and retry for a while if they cannot fire. This is how the player reads the odds.
+- **Shared cooldowns.** Incidents carry tags. Related incidents share a refire timer, so two raid types cannot land back to back.
+- **Difficulty as separate dials.** Threat scale, big threats on or off, adaptation speed and strength, base mood, farm, mine and fishing yields, research speed, sickness frequency, and the death-drop tier (§3.2). Easy, Medium and Hard are presets of these dials, and a custom setting can expose them all.
+- **Breaks and inspirations.** Three break levels (minor, major, extreme) with their own mood thresholds. Mood must stay low for a while before a break can roll, there is a cooldown after one, and the break names its final straw ("broke after Mira died"). Above a mood threshold, inspirations roll instead (a colonist works much faster for a day).
+- **Related arrivals.** A joiner can be related to a living or dead colonist (a sibling looking for them), which feeds the narrative aesthetic.
 
-- **Acts.** The run's act (§2) gates which incidents can fire and sets a floor and ceiling for threat points.
-- **Threat points.** Wealth + crew strength + act + days in act, then × adaptation, × difficulty.
-- **Adaptation.** Recent losses (crew dead, buildings destroyed, a lost outpost) lower the next threats for a while. A long, quiet, prosperous stretch slowly raises them. This is what keeps calamity survivable more often than not, and what lets a colony claw back from the edge.
-- **Population intent.** Each act has a crew size the storyteller aims for. Below it, arrival incidents get likelier; above it, rarer. This is how permadeath stays playable.
-- **Personalities.** Three to start, names our own:
-  - **Steady:** threats on a cycle of quiet days and danger days, rising with each act. The readable one.
-  - **Wild:** any category on any roll, big swings both ways. The chaotic one.
-  - **Builder:** long quiet stretches, gentle threats, generous arrivals. The calm one.
-- **The queue and warnings.** Big threats are queued with a warning ("raiders sighted to the east, arriving at dusk"), so the player can read the odds and choose: prepare, run, or go out and meet them.
+**Personalities**, as presets of the components above:
+
+| | Steady | Wild | Builder |
+|---|---|---|---|
+| Threats | On/off cycle; windows grow with each act | Random categories on a mean time; big swings in threat points; big-threat guarantee | Long off windows; small on windows |
+| Adaptation | Normal | Weak (losses barely soften what comes next) | Strong |
+| Population target | Middling | Swings | Generous |
+| For | Readable challenge | Chaos and stories | Building and the colony |
+
+**Built on what exists.** Rimtera's `Storyteller` already has the interval check, category roll, refire timers and threat points. New code: a component interface, adaptation and population watchers, the queue with warnings, tags, act gating, difficulty dials, and the three presets.
 
 ### 5.4 Incident catalogue (draft)
 Existing: Raid, Cold snap, Heat wave, Toxic fallout, Solar flare, Cargo drop.
 
 | Category | New incidents |
 |---|---|
-| **Arrivals** | Escape-pod survivor (crash site, maybe injured); Wanderer asks to join; Refugee chased by raiders (take them in and fight, or turn them away); Prisoner freed from a raid; Survivor found deep in a biome (rescue to recruit) |
+| **Arrivals** | Escape-pod survivor (crash site, maybe injured); Wanderer asks to join (sometimes a relative of a colonist, living or dead); Refugee chased by raiders (take them in and fight, or turn them away); Prisoner freed from a raid; Survivor found deep in a biome (rescue to recruit) |
 | **Major threats** | Raid on the colony; Raid on an outpost while you are away; Sappers who dig through walls; Hunting pack of maddened creatures; Siege that camps and shells; Fuel-sea creatures surging inland; the Fracture's surface storm |
 | **Minor threats** | Sickness that spreads; Crop blight; Station breakdown; Fire; A colonist's mental break; Short circuit in powered stations |
+| **Follow-ups** (queued by the triggered component) | Mourning after a death; a vengeful relative of someone you killed; beaten raiders returning; a preacher's visit followed by a conversion |
 | **World events** | The blood-moon, eclipse, invasion and rain analogues from `Systems/EventManager.cs`, rescheduled by the storyteller instead of fixed dusk and dawn odds |
 | **Zealots (act 5+)** | Preacher visits; a colonist converts; sabotage of a station or the ship; a converted colonist deserts with supplies; cult raid |
 | **Good** | Cargo drop; Trader ship; Inspiration (a colonist works much better for a day); Ally visit |
