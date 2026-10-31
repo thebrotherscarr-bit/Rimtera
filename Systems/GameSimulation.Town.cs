@@ -65,7 +65,7 @@ public sealed partial class GameSimulation
         {
             if (_townNpcs.Any(npc => npc.Kind == definition.Kind) || !Flags.IsSet($"npc.{WorldFlags.Key(definition.Kind)}.unlocked"))
                 continue;
-            if (Flags.Get(RespawnFlag(definition.Kind)) > (long)MathF.Floor(ElapsedGameHours))
+            if (Flags.Get(RespawnFlag(definition.Kind)) > (long)MathF.Floor(ElapsedGameHours) || Flags.IsSet(LostFlag(definition.Kind)))
                 continue;
             if (definition.Kind == TownNpcKind.TradeConsul && (IsNight || TriggerRandom.Next(6) != 0))
                 continue;
@@ -76,18 +76,7 @@ public sealed partial class GameSimulation
             PostMessage($"{npc.Name} the {definition.Role} has arrived and moved in!");
             return;
         }
-
-        // With every unlocked resident housed, a crew member may come: one per check, into a free house.
-        if (_storyteller.WanderersJoined < WandererJoinsIncident.MaximumCrew &&
-            _colonists.Count(agent => agent.IsAlive) < CrewCapacity && FindFreeHouse() is { } crewHouse)
-        {
-            var agent = AddWanderer(_storyteller.WanderersJoined, StandingAt(crewHouse));
-            agent.Motion.Position = StandingAt(crewHouse);
-            agent.HomePosition = agent.Motion.Position;
-            agent.WanderTarget = agent.Motion.Position;
-            _storyteller.WanderersJoined++;
-            PostMessage($"{agent.Profile.Name} has joined the crew and moved in!");
-        }
+        // Crew members, and residents replacing the dead, arrive through the storyteller's arrival stream.
     }
 
     /// <summary>Unlocks are set by flags; conditions that need a scan are checked once and recorded as flags.</summary>
@@ -231,12 +220,34 @@ public sealed partial class GameSimulation
         if (npc.IsAlive)
             return false;
         _townNpcs.Remove(npc);
-        var respawnAt = (long)MathF.Ceiling(ElapsedGameHours + TownRespawnHours);
-        Flags.Clear(RespawnFlag(npc.Kind));
-        Flags.Increment(RespawnFlag(npc.Kind), respawnAt);
-        PostMessage($"{npc.Name} the {npc.Definition.Role} was slain!");
+        if (PeopleDieForGood)
+        {
+            // Permadeath: the role stays empty until the arrival stream brings someone new to take it up.
+            Flags.Set(LostFlag(npc.Kind));
+            PostMessage($"{npc.Name} the {npc.Definition.Role} was slain. They are gone for good.");
+        }
+        else
+        {
+            var respawnAt = (long)MathF.Ceiling(ElapsedGameHours + TownRespawnHours);
+            Flags.Clear(RespawnFlag(npc.Kind));
+            Flags.Increment(RespawnFlag(npc.Kind), respawnAt);
+            PostMessage($"{npc.Name} the {npc.Definition.Role} was slain!");
+        }
         return true;
     }
+
+    /// <summary>
+    /// People die for good on every setting except the no-stakes ones (Explorer and Creative), where slain residents
+    /// still come back after a while.
+    /// </summary>
+    public bool PeopleDieForGood => PlayerProfile.Difficulty is not (CharacterDifficulty.Explorer or CharacterDifficulty.Creative);
+
+    private static string LostFlag(TownNpcKind kind) => $"npc.{WorldFlags.Key(kind)}.lost";
+
+    /// <summary>Unlocked town roles emptied by a death and not yet filled again.</summary>
+    internal IEnumerable<TownNpcKind> LostResidentKinds() => TownNpcCatalog.All
+        .Select(definition => definition.Kind)
+        .Where(kind => Flags.IsSet(LostFlag(kind)) && !_townNpcs.Any(npc => npc.Kind == kind));
 
     /// <summary>Hostile creatures touching a resident hurt it; residents heal slowly otherwise.</summary>
     private void UpdateTownNpcHealth(float deltaSeconds)

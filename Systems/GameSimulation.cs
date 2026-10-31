@@ -527,7 +527,8 @@ public sealed partial class GameSimulation : IStoryHost
             game.AddLegacyStartingCrew(savedCrew - joined);
         if (snapshot.Storyteller is { } story)
         {
-            if (story.WanderersJoined is < 0 or > WandererJoinsIncident.MaximumCrew)
+            // Crew arrivals are no longer capped over a run (the dead are replaced), only by what housing supports at once.
+            if (story.WanderersJoined is < 0 or > 1024)
                 throw new InvalidDataException("The saved storyteller state is invalid.");
             for (var wanderer = 0; wanderer < story.WanderersJoined; wanderer++)
                 game.AddWanderer(wanderer, game.PlayerCenter);
@@ -2319,7 +2320,10 @@ public sealed partial class GameSimulation : IStoryHost
         ColonyWealth,
         _enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive),
         RadiatedTerrainNearby(),
-        Player.MaximumHitPoints <= 0f ? 0f : Player.HitPoints / Player.MaximumHitPoints);
+        Player.MaximumHitPoints <= 0f ? 0f : Player.HitPoints / Player.MaximumHitPoints,
+        CrewShortage: Math.Max(0, CrewCapacity - _colonists.Count(agent => agent.IsAlive)),
+        LostResidents: LostResidentKinds().Count(),
+        FreeHouse: FindFreeHouse() is not null);
 
     int IStoryHost.SpawnRaidWave(BiomeZone biome, float threatPoints, out string description)
     {
@@ -2381,6 +2385,33 @@ public sealed partial class GameSimulation : IStoryHost
     {
         var agent = AddWanderer(wandererIndex, PlayerCenter);
         name = agent.Profile.Name;
+        return true;
+    }
+
+    bool IStoryHost.TryWelcomeArrival(out string summary, out bool joinedCrew)
+    {
+        summary = string.Empty;
+        joinedCrew = false;
+        if (FindFreeHouse() is not { } house)
+            return false;
+        // A role lost to a death is filled first: someone new takes up the dead resident's trade.
+        if (LostResidentKinds().Take(1).ToList() is [var lost])
+        {
+            Flags.Clear(LostFlag(lost));
+            var resident = AddTownNpc(lost, StandingAt(house), bound: false);
+            resident.HomeCell = house;
+            summary = $"{resident.Name}, a {resident.Definition.Role.ToLowerInvariant()}, arrives looking for a home and moves in.";
+            return true;
+        }
+        // Crew are limited by what the colony can support (CrewCapacity), not by how many came before: the dead are replaced.
+        if (_colonists.Count(agent => agent.IsAlive) >= CrewCapacity)
+            return false;
+        var agent = AddWanderer(_storyteller.WanderersJoined, StandingAt(house));
+        agent.Motion.Position = StandingAt(house);
+        agent.HomePosition = agent.Motion.Position;
+        agent.WanderTarget = agent.Motion.Position;
+        joinedCrew = true;
+        summary = $"{agent.Profile.Name} arrives, asks to join the crew, and moves in.";
         return true;
     }
 

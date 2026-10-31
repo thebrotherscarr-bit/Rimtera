@@ -183,13 +183,15 @@ public static class ParityWorldTests
         second.HomeCell = secondHouse;
         foreach (var x0 in new[] { 4, 22, 40, 58 })
             BuildRoom(colony, x0, top: 16, width: 12);
-        for (var i = 0; i < 24 && colony.Colonists.Count == 0; i++)
-            colony.CheckTownArrivals();
+        // Crew come through the storyteller's arrival stream, by day, into a free house: let the clock run.
+        var housedFirst = colony.Colonists.Count == 0;
+        RunUntil(colony, () => colony.Colonists.Count > 0, cap: 60000);
         var recruit = colony.Colonists.FirstOrDefault();
         var feetOnFloor = recruit is not null && colony.Regions.GetRegion(RegionMap.CellAt(recruit.Motion.Position + recruit.Motion.Size / 2f)) is not null &&
                           !PawnMovementSystem.OverlapsSolid(recruit.Motion.Position, recruit.Motion.Size, colony.World, colony.Tiles);
-        check(guideFollows && crewBefore == 0 && colony.Colonists.Count == 1 && colony.Colonists.Count <= colony.CrewCapacity && feetOnFloor,
-            "the guide moves into the first house and is found there; crew arrive like town NPCs, into a free house, one per two housed residents");
+        check(guideFollows && crewBefore == 0 && housedFirst && colony.Colonists.Count >= 1 && colony.Colonists.Count <= colony.CrewCapacity && feetOnFloor &&
+              colony.Storyteller.RecentIncidents.Any(record => record.IncidentId == Storyteller.ArrivalId),
+            "the guide moves into the first house and is found there; crew arrive through the storyteller's arrival stream, into a free house, up to one per two housed residents");
     }
 
     // ---- D2: town NPCs move in (day only, one at a time), die and come back ----
@@ -228,24 +230,26 @@ public static class ParityWorldTests
         check(nightCount == 0 && night.TownNpcs.Count == 1 && !night.IsNight,
             "D2 houses are checked during the day only: nobody moves in at night, someone does after dawn");
 
-        // A slain resident returns after a delay if a valid house is free.
+        // A slain resident is gone for good (permadeath): the role stays empty until the storyteller's arrival stream
+        // brings someone new to take it up, into a free house.
         var resident = day.TownNpcs.First(npc => npc.Kind == TownNpcKind.Quartermaster);
+        var deadName = resident.Name;
         var hurtBy = day.SpawnCreature(EnemyKind.EventHusk, resident.Motion.Position);
         var hpBefore = resident.HitPoints;
         Step(day, 1f / 60f);
         var contactHurt = resident.HitPoints < hpBefore || !resident.IsAlive;
         hurtBy.TakeDamage(1e6f);
-        var diedAt = day.ElapsedGameHours;
         var died = day.HurtTownNpc(resident, 1e6f);
         var goneNow = day.TownNpcs.All(npc => npc.Kind != TownNpcKind.Quartermaster);
-        day.CheckTownArrivals();
-        var notYet = day.TownNpcs.All(npc => npc.Kind != TownNpcKind.Quartermaster);
-        var respawnHour = day.TownNpcRespawnHour(TownNpcKind.Quartermaster);
-        RunUntil(day, () => day.TownNpcs.Any(npc => npc.Kind == TownNpcKind.Quartermaster), cap: 8000);
+        for (var pass = 0; pass < 3; pass++)
+            day.CheckTownArrivals();
+        var notByHousing = day.TownNpcs.All(npc => npc.Kind != TownNpcKind.Quartermaster) &&
+                           day.LostResidentKinds().Contains(TownNpcKind.Quartermaster);
+        RunUntil(day, () => day.TownNpcs.Any(npc => npc.Kind == TownNpcKind.Quartermaster), cap: 60000);
         var back = day.TownNpcs.FirstOrDefault(npc => npc.Kind == TownNpcKind.Quartermaster);
-        check(contactHurt && died && goneNow && notYet && back is { HomeCell: not null } && day.ElapsedGameHours >= respawnHour &&
-              day.ElapsedGameHours >= diedAt + GameSimulation.TownRespawnHours - 1f,
-            $"D2 hostiles hurt residents; a slain resident is gone, waits out its respawn delay, then moves back into a valid house");
+        check(contactHurt && died && goneNow && notByHousing && back is { HomeCell: not null } && !day.LostResidentKinds().Any() &&
+              day.Storyteller.RecentIncidents.Any(record => record.IncidentId == Storyteller.ArrivalId),
+            $"D2 hostiles hurt residents; a slain resident ({deadName}) is gone for good, and only an arrival fills the role again (by {back?.Name})");
     }
 
     // ---- D3: housing reasons and room claims ----
