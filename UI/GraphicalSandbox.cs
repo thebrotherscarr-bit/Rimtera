@@ -1343,10 +1343,41 @@ public static partial class GraphicalSandbox
                 return;
             var game = _game;
             var credits = game.Player.Inventory.Count(ItemId.Credits);
-            var entries = game.GetShop(npc).Select(offer => new MenuEntry(
+            var entries = new List<MenuEntry> { new("— Buy —", Enabled: false) };
+            entries.AddRange(game.GetShop(npc).Select(offer => new MenuEntry(
                 $"{offer.Name}: {offer.Price} credits",
                 () => OpenShopScreen(npc, game.Buy(npc, offer.Item) ? $"Bought {offer.Name}." : "Not enough credits or no room."),
-                Enabled: credits >= offer.Price)).ToList();
+                Enabled: credits >= offer.Price)));
+            // Terraria's selling: any carried stack (favorites stay), at the price shown; then the buyback list.
+            var sellable = Enumerable.Range(0, game.Player.Inventory.SlotCount)
+                .Where(slot => !game.Player.Inventory.Slots[slot].IsEmpty && !game.Player.Inventory.IsFavorite(slot) &&
+                               game.GetSellPrice(npc, game.Player.Inventory.Slots[slot]) > 0)
+                .ToList();
+            if (sellable.Count > 0)
+                entries.Add(new MenuEntry("— Sell —", Enabled: false));
+            foreach (var slot in sellable)
+            {
+                var stack = game.Player.Inventory.Slots[slot];
+                var price = game.GetSellPrice(npc, stack) * stack.Count;
+                var name = stack.Count > 1 ? $"{game.Items[stack.ItemId].Name} ×{stack.Count}" : game.Items[stack.ItemId].Name;
+                var sellSlot = slot;
+                entries.Add(new MenuEntry($"{name}: sell for {price} credits", () =>
+                {
+                    var earned = game.Sell(npc, sellSlot);
+                    OpenShopScreen(npc, earned > 0 ? $"Sold {name} for {earned} credits." : "They won't buy that.");
+                }));
+            }
+            if (game.Buyback.Count > 0)
+                entries.Add(new MenuEntry("— Buy back —", Enabled: false));
+            for (var index = 0; index < game.Buyback.Count; index++)
+            {
+                var sold = game.Buyback[index];
+                var name = sold.Stack.Count > 1 ? $"{game.Items[sold.Stack.ItemId].Name} ×{sold.Stack.Count}" : game.Items[sold.Stack.ItemId].Name;
+                var buybackIndex = index;
+                entries.Add(new MenuEntry($"{name}: buy back for {sold.Price} credits",
+                    () => OpenShopScreen(npc, game.BuyBack(buybackIndex) ? $"Bought back {name}." : "Not enough credits, or no room."),
+                    Enabled: credits >= sold.Price));
+            }
             entries.Add(new MenuEntry("Back", () => OpenNpcScreen(npc, string.Empty)));
             var screen = new MenuScreen("npc-shop", $"{npc.Name}'s shop", entries,
                 $"You have {credits} credits      Enter  buy      Esc  leave",

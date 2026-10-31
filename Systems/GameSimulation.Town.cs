@@ -440,8 +440,36 @@ public sealed partial class GameSimulation
         var taken = Player.Inventory.TakeFromSlot(slot, quantity);
         var earned = unit * taken.Count;
         Player.Inventory.Add(ItemId.Credits, earned);
+        _buyback.Insert(0, new BuybackEntry(taken, earned));
+        if (_buyback.Count > BuybackCapacity)
+            _buyback.RemoveAt(_buyback.Count - 1);
         PostMessage($"Sold {taken.Count} {Items[taken.ItemId].Name} for {earned} credits.");
         return earned;
+    }
+
+    /// <summary>How many recent sales can be bought back (Terraria keeps a short list, newest first).</summary>
+    public const int BuybackCapacity = 10;
+    private readonly List<BuybackEntry> _buyback = new();
+
+    /// <summary>Recent sales, newest first, each at the price it was sold for.</summary>
+    public IReadOnlyList<BuybackEntry> Buyback => _buyback;
+
+    /// <summary>Buys back a recent sale for the credits it earned. False if unaffordable or there is no room.</summary>
+    public bool BuyBack(int index)
+    {
+        if ((uint)index >= (uint)_buyback.Count)
+            return false;
+        var entry = _buyback[index];
+        if (Player.Inventory.Count(ItemId.Credits) < entry.Price || !Player.Inventory.CanAdd(entry.Stack.ItemId, entry.Stack.Count))
+        {
+            PostMessage($"You need {entry.Price} credits and room in the bag for that.");
+            return false;
+        }
+        Player.Inventory.TryConsume(ItemId.Credits, entry.Price);
+        Player.Inventory.Add(entry.Stack.ItemId, entry.Stack.Count, entry.Stack.Calibration);
+        _buyback.RemoveAt(index);
+        PostMessage($"Bought back {entry.Stack.Count} {Items[entry.Stack.ItemId].Name} for {entry.Price} credits.");
+        return true;
     }
 
     /// <summary>The medic heals the player fully for credits (scaled by missing health and happiness).</summary>
@@ -494,3 +522,6 @@ public sealed partial class GameSimulation
         }
     }
 }
+
+/// <summary>A recent sale that can be bought back, at the price it fetched.</summary>
+public sealed record BuybackEntry(ItemStack Stack, int Price);

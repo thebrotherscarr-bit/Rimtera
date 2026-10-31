@@ -237,6 +237,16 @@ public static class ParityWorldTests
         var refused = town.AssignHome(second, otherHouse);
         check(moved.Contains("will live here", StringComparison.Ordinal) && nowThere && refused.Contains("Someone else", StringComparison.Ordinal),
             "a resident can be assigned to a valid room, and a room someone already lives in is refused");
+
+        // Terraria's buyback: a sale can be bought back for what it fetched, newest first.
+        var trader = town.TownNpcs.First(npc => npc.Kind == TownNpcKind.Quartermaster);
+        town.Player.Inventory.Add(ItemId.CopperOre, 20);
+        var oreSlot = Enumerable.Range(0, town.Player.Inventory.SlotCount).First(slot => town.Player.Inventory.Slots[slot].ItemId == ItemId.CopperOre);
+        var earned = town.Sell(trader, oreSlot);
+        var listed = town.Buyback.Count == 1 && town.Buyback[0].Price == earned && town.Player.Inventory.Count(ItemId.CopperOre) == 0;
+        var boughtBack = town.BuyBack(0);
+        check(earned > 0 && listed && boughtBack && town.Player.Inventory.Count(ItemId.CopperOre) == 20 && town.Buyback.Count == 0,
+            $"a sale ({earned} credits) goes on the buyback list and can be bought back for what it fetched");
     }
 
     // ---- D2: town NPCs move in (day only, one at a time), die and come back ----
