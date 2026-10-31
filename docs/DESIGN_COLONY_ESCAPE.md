@@ -20,7 +20,7 @@ You crash-land alone with the station AI on a world shaped and played like Terra
 | 8 | Nothing carries over between runs. |
 | 9 | Winning means getting off the planet and beating the end boss. How many survivors come with you is the story of the run. |
 | 10 | Ironman is the "impossible run": a hardcore mode on top of Hard, where the character dies for good. |
-| 11 | Each town NPC's type decides the shop it runs, as in Terraria. |
+| 11 | Each town NPC's type decides the shop it runs, as in Terraria. Town NPCs also work stations and jobs to help: they make things faster and better, never automatic. |
 | 12 | A pylon needs a staffed outpost, as Terraria's pylons need residents nearby. Items and potions take you home, as Terraria's recall items do. |
 | 13 | The storyteller is picked at world creation and fixed for the run. |
 | 14 | A run takes 10–14 hours from landfall to launch on a medium world (8–15 is the outer range). |
@@ -92,7 +92,9 @@ Colonists already have twelve skills with passions. Each work type uses one skil
 | Research | Intellectual | Unlocks recipes and the ship's parts |
 | Trade | Social | Better prices with traders and town NPCs |
 
-**Rule:** crew make things faster and better, never fully hands-off. The player still fights the bosses, explores, and decides what gets made. A strong colony shortens the grind; a weak one makes the player do it.
+Town NPCs work too: alongside running their shop, they operate stations and take jobs like the crew.
+
+**Rule:** crew and town NPCs make things faster and better, never fully hands-off. The player still fights the bosses, explores, and decides what gets made. A strong colony shortens the grind; a weak one makes the player do it.
 
 ### 3.4 The station AI
 - It is the colony's heart. It holds the ship's plans and the recipe guide.
@@ -244,11 +246,11 @@ To go into `design/cards/` in the StewBones Mixer format once this direction is 
 |---|---|
 | Hard drop and Ironman | Ironman stays as its own setting: the "impossible run", a hardcore mode where the character dies for good, on top of Hard's drop rules |
 | Town NPCs and shops | Each town NPC's type decides the shop it runs, as in Terraria |
+| Shopkeepers and work | Town NPCs also operate stations and take jobs, for efficiency: they help the player's work, they do not automate it |
 | Outposts and pylons | Every pylon needs a staffed outpost, as in Terraria. Items and potions take you home |
 | Zealot conversion | On hold. Discuss when act 5 (the zealots) is built |
 | Storyteller choice | Picked at world creation, fixed for the run |
 | Run length | 10–14 hours from landfall to launch on a medium world; 8–15 is the outer range |
 
 ### 7.2 Still open
-1. **Shopkeepers and work:** a town NPC's type sets its shop. Do shopkeepers also take colony jobs (a farmer-merchant tending crops), or only trade?
-2. **Zealots:** whether a converted colonist can be won back, and how conversion works, when act 5 is designed.
+1. **Zealots:** whether a converted colonist can be won back, and how conversion works, when act 5 is designed.
