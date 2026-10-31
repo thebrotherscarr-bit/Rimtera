@@ -140,6 +140,34 @@ public static partial class GraphicalSandbox
             SyncCanvas();
         }
 
+        /// <summary>
+        /// The end of a run: why it ended and its chronicle, newest last, then back to the title. The world is saved with
+        /// its outcome, so loading it again shows this screen rather than playing on.
+        /// </summary>
+        private void ShowRunEnd(GameSimulation game)
+        {
+            var title = game.Outcome == RunOutcome.Won ? "Escaped" : "The colony has fallen";
+            var entries = new List<MenuEntry> { new("— The story of this run —", Enabled: false) };
+            entries.AddRange(game.Chronicle.Select((entry, index) => new MenuEntry(
+                $"Day {entry.Day}, {(int)entry.Hour:00}:{(int)((entry.Hour % 1f) * 60f):00}   ·   {entry.Text}", Enabled: false, Tag: index)));
+            entries.Add(new MenuEntry("Return to title", ReturnFromRunEnd));
+            _down.Clear();
+            _menuDown.Clear();
+            var screen = new MenuScreen("run-end", title, entries, "↑ ↓  read      Enter  return to title",
+                body: game.OutcomeReason ?? "The run is over.");
+            screen.SelectIndex(entries.Count - 1);
+            _menu.ShowDirect(screen, ReturnFromRunEnd);
+            _menuOpen = true;
+            UpdateMenuViewport();
+            SyncCanvas();
+        }
+
+        private void ReturnFromRunEnd()
+        {
+            TrySaveGame(out _);
+            QuitToTitle(_game?.OutcomeReason);
+        }
+
         /// <summary>"FrozenWasteland" → "Frozen wasteland".</summary>
         private static string SplitWords(string name) =>
             string.Concat(name.Select((c, i) => i > 0 && char.IsUpper(c) ? " " + char.ToLowerInvariant(c) : c.ToString()));

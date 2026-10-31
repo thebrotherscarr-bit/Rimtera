@@ -269,6 +269,7 @@ public sealed partial class GameSimulation : IStoryHost
         PlayerAmbientTemperature = AmbientAt(PlayerCenter, CurrentBiome);
         PlayerComfort = TemperatureModel.Evaluate(PlayerAmbientTemperature, Player.Stats.ImmunityTags);
         PostMessage($"{PlayerProfile.Name} touches down; the station AI flickers awake beside the landing site. Seed {seed}.");
+        Record($"{PlayerProfile.Name} touched down with the station AI.");
         OnSimulationCreated(loaded is not null);
     }
 
@@ -401,7 +402,8 @@ public sealed partial class GameSimulation : IStoryHost
             RaidEnemyIds: _raidEnemyIds.ToArray(),
             NightBossIds: _nightBossIds.ToArray(),
             WhipMarkedEnemy: _whipMarkedEnemy,
-            WhipBuffSeconds: _whipBuffSeconds) { CellData = cellData };
+            WhipBuffSeconds: _whipBuffSeconds,
+            Run: CaptureRun()) { CellData = cellData };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -506,6 +508,7 @@ public sealed partial class GameSimulation : IStoryHost
             throw new InvalidDataException("The saved status layout is invalid.");
         game.RestoreContent(snapshot.Content);
         game.RestoreEntities(snapshot);
+        game.RestoreRun(snapshot.Run);
         game.LoadWiringFromFlags();
 
         var motion = game.Player.Motion;
@@ -1578,6 +1581,7 @@ public sealed partial class GameSimulation : IStoryHost
         PostMessage(agent.Health.DeathCause is { } cause
             ? $"{agent.Name} has died ({cause})."
             : $"{agent.Name} has died.");
+        Record(agent.Health.DeathCause is { } died ? $"{agent.Name} died ({died})." : $"{agent.Name} died.");
         ColonySocialSystem.NotifyDeath(agent, ColonyPawns);
     }
 
@@ -1700,6 +1704,8 @@ public sealed partial class GameSimulation : IStoryHost
 
             if (enemy.IsBoss)
             {
+                if (!_defeatedBosses.Contains(enemy.Kind))
+                    Record($"The {enemy.DisplayName} was defeated.");
                 _defeatedBosses.Add(enemy.Kind);
                 AddColonyMemory(ThoughtId.BossDefeated);
                 PostMessage(enemy.Kind == EnemyKind.StoneSentinel
@@ -2400,7 +2406,8 @@ public sealed partial class GameSimulation : IStoryHost
             Flags.Clear(LostFlag(lost));
             var resident = AddTownNpc(lost, StandingAt(house), bound: false);
             resident.HomeCell = house;
-            summary = $"{resident.Name}, a {resident.Definition.Role.ToLowerInvariant()}, arrives looking for a home and moves in.";
+            summary = $"{resident.Name} the {resident.Definition.Role} arrives looking for a home and moves in.";
+            Record($"{resident.Name} arrived to take up the {resident.Definition.Role}'s trade.");
             return true;
         }
         // Crew are limited by what the colony can support (CrewCapacity), not by how many came before: the dead are replaced.
@@ -2412,6 +2419,7 @@ public sealed partial class GameSimulation : IStoryHost
         agent.WanderTarget = agent.Motion.Position;
         joinedCrew = true;
         summary = $"{agent.Profile.Name} arrives, asks to join the crew, and moves in.";
+        Record($"{agent.Profile.Name} joined the crew.");
         return true;
     }
 
@@ -2595,6 +2603,7 @@ public sealed partial class GameSimulation : IStoryHost
         var column = Math.Clamp(SpawnColumn == 0 ? World.Width / 2 : SpawnColumn, 2, World.Width - 3);
         Player.Respawn(new Vector2(column, FindSurface(column) - Player.Motion.Size.Y));
         var message = $"{Player.Colonist.Name} wakes at the landing site.";
+        Record($"{Player.Colonist.Name} fell, and woke at the landing site.");
         if (creditsDropped > 0)
             message += $" {creditsDropped} credits lie where you fell.";
         PostMessage(message);

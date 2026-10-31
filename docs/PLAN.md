@@ -90,5 +90,8 @@ From the design conversation; reopened only at a discussion point.
 - People die for good. The player respawns, except on Ironman (the impossible run).
 - The storyteller is picked at world creation. Time is real-time; there are no speed buttons.
 
-## Step 1 progress
-See the 0.1.8 PR for what shipped. Later steps update this section.
+## Progress
+| Step | Status | What shipped |
+|---|---|---|
+| 0.1.8 Stakes | Done | Death drops by difficulty (Easy part of the money, Medium money and items, Hard everything but tools, Ironman the impossible run). People die for good on every setting with stakes; a storyteller arrival stream (by day, into a free house, likelier the more people the colony is short) brings new crew and fills roles left by the dead. The station AI warns when hurt and its death ends the run. The run chronicle (landing, arrivals, deaths, bosses, the Fracture, falls) is saved with the world, and the end screen shows it. |
+| 0.1.9 Terraria basics | Next | |

@@ -218,8 +218,14 @@ public sealed partial class GameSimulation
         npc.HitPoints = Math.Max(0f, npc.HitPoints - amount);
         npc.HurtCooldown = 0.6f;
         if (npc.IsAlive)
+        {
+            WarnStationAiHurt(npc);
             return false;
+        }
         _townNpcs.Remove(npc);
+        Record($"{npc.Name} the {npc.Definition.Role} was slain.");
+        if (StationAiDefeat(npc))
+            return true;
         if (PeopleDieForGood)
         {
             // Permadeath: the role stays empty until the arrival stream brings someone new to take it up.

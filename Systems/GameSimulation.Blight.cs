@@ -410,6 +410,7 @@ public sealed partial class GameSimulation
         FractureActive = true;
         _ticker.Fractured = true;
         PostMessage("The planet's crust fractures! The blight tears across the land and the altars' wards fail.");
+        Record("The Fracture tore the surface open.");
         OnFractureContent();
         var blight = Blight;
         var changed = new List<GridPoint>();

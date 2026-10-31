@@ -1,4 +1,5 @@
 using System.Numerics;
+using Rimtera.Characters;
 using Rimtera.Entities;
 using Rimtera.World;
 
@@ -80,6 +81,7 @@ public static class ParityWorldTests
         DayNight(check);
         TownNpcArrivals(check);
         SoloStartAndCrew(check);
+        StationAiHeart(check);
         Housing(check);
         Happiness(check);
         InventoryStacking(check);
@@ -192,6 +194,38 @@ public static class ParityWorldTests
         check(guideFollows && crewBefore == 0 && housedFirst && colony.Colonists.Count >= 1 && colony.Colonists.Count <= colony.CrewCapacity && feetOnFloor &&
               colony.Storyteller.RecentIncidents.Any(record => record.IncidentId == Storyteller.ArrivalId),
             "the guide moves into the first house and is found there; crew arrive through the storyteller's arrival stream, into a free house, up to one per two housed residents");
+    }
+
+    // ---- 0.1.8: the station AI is the colony's heart; the run's chronicle survives a save ----
+    private static void StationAiHeart(Action<bool, string> check)
+    {
+        GameSimulation Housed(CharacterDifficulty difficulty, int seed)
+        {
+            var profile = CharacterDraft.CreateRandom(seed, "Keeper").ToProfile(Guid.NewGuid(), DateTimeOffset.UtcNow) with { Difficulty = difficulty };
+            var game = new GameSimulation(seed: seed, width: 80, height: 48, colonist: profile) { FamilySpawnsEnabled = false };
+            Calm(game);
+            BuildRoom(game, 6);
+            game.CheckTownArrivals();
+            return game;
+        }
+        TownNpc Ai(GameSimulation game) => game.TownNpcs.First(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound);
+
+        var stakes = Housed(CharacterDifficulty.Classic, 9430);
+        var ai = Ai(stakes);
+        stakes.HurtTownNpc(ai, 20f);
+        var warned = stakes.LastMessage.Contains("under attack", StringComparison.Ordinal) && !stakes.RunOver;
+        stakes.HurtTownNpc(ai, 1e6f);
+        var lost = stakes.Outcome == RunOutcome.Lost && stakes.OutcomeReason is { Length: > 0 } &&
+                   stakes.Chronicle.Any(entry => entry.Text.Contains("touched down", StringComparison.Ordinal)) &&
+                   stakes.Chronicle.Any(entry => entry.Text.Contains("Station AI was slain", StringComparison.Ordinal));
+        var restored = GameSimulation.Restore(stakes.CaptureSnapshot());
+        var keptOnLoad = restored.Outcome == RunOutcome.Lost && restored.Chronicle.Count == stakes.Chronicle.Count &&
+                         restored.OutcomeReason == stakes.OutcomeReason;
+
+        var explorer = Housed(CharacterDifficulty.Explorer, 9431);
+        explorer.HurtTownNpc(Ai(explorer), 1e6f);
+        check(warned && lost && keptOnLoad && !explorer.RunOver && !explorer.PeopleDieForGood,
+            "the station AI warns when hurt and its death ends the run (not on Explorer); the outcome and chronicle survive a save");
     }
 
     // ---- D2: town NPCs move in (day only, one at a time), die and come back ----
