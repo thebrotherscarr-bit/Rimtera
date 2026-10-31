@@ -19,6 +19,11 @@ You crash-land alone with the station AI on a world shaped and played like Terra
 | 7 | The guide (the station AI) is important and must be protected. Rebuilding it after it falls is parked for later. |
 | 8 | Nothing carries over between runs. |
 | 9 | Winning means getting off the planet and beating the end boss. How many survivors come with you is the story of the run. |
+| 10 | Ironman is the "impossible run": a hardcore mode on top of Hard, where the character dies for good. |
+| 11 | Each town NPC's type decides the shop it runs, as in Terraria. Town NPCs also work stations and jobs to help: they make things faster and better, never automatic. |
+| 12 | A pylon needs a staffed outpost, as Terraria's pylons need residents nearby. Items and potions take you home, as Terraria's recall items do. |
+| 13 | The storyteller is picked at world creation and fixed for the run. |
+| 14 | A run takes 10–14 hours from landfall to launch on a medium world (8–15 is the outer range). |
 
 ### 1.2 Target aesthetics (MDA)
 
@@ -48,7 +53,7 @@ Acts are the storyteller's chapters. Each one unlocks new incidents and raises t
 
 **A run is lost** when you can no longer launch: the colony has fallen and nobody is left to rebuild it (or, until the guide-rebuild rules exist, when the station AI is destroyed). See §3.4.
 
-**Run length target:** 8–15 hours from landfall to launch on a medium world. The double ladder is the main risk to that. The hardmode ladder must be shorter than the first, not a repeat of it.
+**Run length target:** 10–14 hours from landfall to launch on a medium world (8–15 is the outer range). The double ladder is the main risk to that. The hardmode ladder must be shorter than the first, not a repeat of it.
 
 ## 3. Core rules
 
@@ -64,7 +69,8 @@ The player respawns at their bed or the landing site and goes back for what they
 |---|---|---|---|
 | **Easy** | Money | Classic drops 40% of credits | Rename to Easy; drop all carried money |
 | **Medium** | Money and items | Salvager drops every carried item | Rename to Medium; add money |
-| **Hard** | Everything except tools | Ironman (permadeath) | New: drop the whole bag except tools, keep respawning. Ironman stays as an extra option on top |
+| **Hard** | Everything except tools | — | New: drop the whole bag except tools, keep respawning |
+| **Ironman** (the impossible run) | Everything except tools, and the character dies for good | Ironman (permadeath) | Hardcore mode on top of Hard: one life for the whole run |
 | Explorer, Creative | Nothing | Exist | Unchanged (no-stakes modes) |
 
 Dying always costs time: while you are dead and walking back, the colony is on its own.
@@ -86,7 +92,9 @@ Colonists already have twelve skills with passions. Each work type uses one skil
 | Research | Intellectual | Unlocks recipes and the ship's parts |
 | Trade | Social | Better prices with traders and town NPCs |
 
-**Rule:** crew make things faster and better, never fully hands-off. The player still fights the bosses, explores, and decides what gets made. A strong colony shortens the grind; a weak one makes the player do it.
+Town NPCs work too: alongside running their shop, they operate stations and take jobs like the crew.
+
+**Rule:** crew and town NPCs make things faster and better, never fully hands-off. The player still fights the bosses, explores, and decides what gets made. A strong colony shortens the grind; a weak one makes the player do it.
 
 ### 3.4 The station AI
 - It is the colony's heart. It holds the ship's plans and the recipe guide.
@@ -110,14 +118,14 @@ What each system needs, what exists, and what is missing. Sizes are rough: S (da
 | 5 | **Cooking and food** | Food items and needs | Meals with skill-based quality, cook bills, crew eating from storage | M |
 | 6 | **Fishing by crew** | Player fishing, quest fish | A fishing spot job for crew | S |
 | 7 | **Hauling and storage** | Chests | Storage zones or tagged chests; crew haul drops and products to them | M |
-| 8 | **Outposts and pylons** | Pylons need two housed residents nearby | Outposts as named bases with their own crew and storage; raids can hit an outpost while you are away | M |
+| 8 | **Outposts and pylons** | Pylons need two housed residents nearby; recall items | Every pylon needs a staffed outpost (decided); outposts as named bases with their own crew and storage; raids can hit an outpost while you are away; recall items and potions to get home | M |
 | 9 | **Permadeath** | Town NPCs respawn on a timer; crew can die | Turn off the respawn timer; graves; death mood thoughts; replacements only from arrivals | S |
 | 10 | **Death drops** | Explorer, Classic, Salvager, Ironman, Creative | Easy / Medium / Hard as in §3.2 | S |
 | 11 | **Colony defence** | Raids spawn waves; crew can fight | Raids aim at the colony (and outposts), not just the player; guard posts; doors and walls matter; town NPCs fight back | L |
 | 12 | **Mood, health, breaks** | Mood, thoughts, health with body parts, a mental break state | Three break levels with thresholds, time below threshold and a cooldown; break behaviours that cause trouble (wandering off, refusing work, smashing things); the "final straw" in the break message; inspirations | M |
 | 13 | **Station AI protection** | AI moves into the first house; hologram until then | Health and damage, raids that target it, run loss on its destruction; rebuild parked | S |
 | 14 | **The arc** | Core gate boss, the Fracture, cultist ritual, obelisks, Astro-God | Act tracking; core boss on arrival; obelisks re-themed as fuel cores; collapse ritual | M |
-| 15 | **Zealots** | Cultist ritual as a boss gate | Zealot incidents: preaching, conversion of a colonist, sabotage, desertion | M |
+| 15 | **Zealots** | Cultist ritual as a boss gate | Zealot incidents: preaching, conversion of a colonist, sabotage, desertion. **On hold:** details to be discussed when act 5 is built | M |
 | 16 | **Ship and launch** | — | Ship blueprint and parts (research and boss drops), a buildable ship, the fuel-up siege, boarding, liftoff | L |
 | 17 | **Run end** | Death and respawn screens | Win and loss screens with the story log: who joined, who died and how, who escaped | S |
 | 18 | **Run pacing** | World sizes, Terraria-paced ladder | A shorter, steeper hardmode ladder; tuning to the 8–15 hour target | M |
@@ -188,7 +196,7 @@ Built on the existing pipeline (`Systems/Storyteller.cs`), with each part below 
 - **Breaks and inspirations.** Three break levels (minor, major, extreme) with their own mood thresholds. Mood must stay low for a while before a break can roll, there is a cooldown after one, and the break names its final straw ("broke after Mira died"). Above a mood threshold, inspirations roll instead (a colonist works much faster for a day).
 - **Related arrivals.** A joiner can be related to a living or dead colonist (a sibling looking for them), which feeds the narrative aesthetic.
 
-**Personalities**, as presets of the components above:
+**Personalities**, as presets of the components above. The storyteller is picked at world creation and stays for the whole run.
 
 | | Steady | Wild | Builder |
 |---|---|---|---|
@@ -231,10 +239,18 @@ To go into `design/cards/` in the StewBones Mixer format once this direction is 
 | Launch siege | core | RimWorld's ship launch | Hold the colony while the ship fuels; board whoever lives | challenge |
 | Planet secrets | variety | Terraria biomes | Diesel seas at the edges, an irradiated core, the surface torn by the Fracture | discovery |
 
-## 7. Open questions
-1. **Hard drop:** keep Ironman (character permadeath) as a separate option, or fold it into Hard?
-2. **Town NPCs vs crew:** are shopkeepers colonists who can work, or a separate class who only trade?
-3. **Outposts:** does every pylon need an outpost, or only pylons beyond the first?
-4. **Zealot conversion:** can a converted colonist be won back (Social skill), or are they lost?
-5. **Storyteller choice:** picked at world creation only, or changeable during a run?
-6. **Run length:** is 8–15 hours on a medium world the right target?
+## 7. Decisions and open questions
+
+### 7.1 Decided (2026-10-31)
+| Question | Decision |
+|---|---|
+| Hard drop and Ironman | Ironman stays as its own setting: the "impossible run", a hardcore mode where the character dies for good, on top of Hard's drop rules |
+| Town NPCs and shops | Each town NPC's type decides the shop it runs, as in Terraria |
+| Shopkeepers and work | Town NPCs also operate stations and take jobs, for efficiency: they help the player's work, they do not automate it |
+| Outposts and pylons | Every pylon needs a staffed outpost, as in Terraria. Items and potions take you home |
+| Zealot conversion | On hold. Discuss when act 5 (the zealots) is built |
+| Storyteller choice | Picked at world creation, fixed for the run |
+| Run length | 10–14 hours from landfall to launch on a medium world; 8–15 is the outer range |
+
+### 7.2 Still open
+1. **Zealots:** whether a converted colonist can be won back, and how conversion works, when act 5 is designed.
