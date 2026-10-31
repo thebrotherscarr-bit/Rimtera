@@ -2553,30 +2553,17 @@ public sealed partial class GameSimulation : IStoryHost
     private float ScaleOutgoing(float damage) => damage / WorldSettings.EnemyScale(Difficulty);
 
     /// <summary>
-    /// Brings a dead player back at the landing site. Classic characters lose half of each
-    /// carried material stack; Explorer characters keep everything. Ironman never respawns
-    /// (the host ends the run instead). Returns the player-facing message.
+    /// Brings a dead player back at the landing site. What is left where they fell depends on the difficulty: Easy drops
+    /// part of the money, Medium the money and every carried item, Hard the money and everything but tools; Explorer and
+    /// Creative keep everything. Ironman never respawns (the host ends the run instead). Returns the player-facing message.
     /// </summary>
     public string RespawnPlayer(CharacterDifficulty difficulty)
     {
-        var lost = 0;
         var creditsDropped = DropDeathCredits(difficulty);
-        if (difficulty == CharacterDifficulty.Classic)
-        {
-            for (var slot = 0; slot < Player.Inventory.Slots.Count; slot++)
-            {
-                var stack = Player.Inventory.Slots[slot];
-                if (stack.IsEmpty || stack.ItemId == ItemId.Credits || !Items[stack.ItemId].IsMaterial || stack.Count < 2)
-                    continue;
-                lost += Player.Inventory.TakeFromSlot(slot, stack.Count / 2).Count;
-            }
-        }
 
         var column = Math.Clamp(SpawnColumn == 0 ? World.Width / 2 : SpawnColumn, 2, World.Width - 3);
         Player.Respawn(new Vector2(column, FindSurface(column) - Player.Motion.Size.Y));
-        var message = lost > 0
-            ? $"{Player.Colonist.Name} wakes at the landing site. {lost} materials were lost."
-            : $"{Player.Colonist.Name} wakes at the landing site.";
+        var message = $"{Player.Colonist.Name} wakes at the landing site.";
         if (creditsDropped > 0)
             message += $" {creditsDropped} credits lie where you fell.";
         PostMessage(message);

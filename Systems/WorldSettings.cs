@@ -37,8 +37,10 @@ public enum CharacterDifficulty : byte
     Ironman,
     /// <summary>Research and duplicate items; time, spawn and difficulty powers (Systems/Creative.cs).</summary>
     Creative,
-    /// <summary>Drops every carried item at the death site to be recovered (Mediumcore analog).</summary>
-    Salvager
+    /// <summary>Drops every carried item at the death site to be recovered (Mediumcore analog). Shown as Medium.</summary>
+    Salvager,
+    /// <summary>Drops the whole bag except tools, and every credit, at the death site; the character still respawns.</summary>
+    Hard
 }
 
 /// <summary>Display text and tuning for the creation options.</summary>
@@ -105,22 +107,35 @@ public static class WorldSettings
         _ => 1f
     };
 
+    /// <summary>
+    /// Player-facing names. The stored values keep their old names (Classic, Salvager) so saves stay valid; the design's
+    /// tiers are Easy (drop money), Medium (money and items), Hard (everything but tools) and Ironman (the impossible run).
+    /// </summary>
     public static string Name(CharacterDifficulty difficulty) => difficulty switch
     {
         CharacterDifficulty.Explorer => "Explorer",
         CharacterDifficulty.Ironman => "Ironman",
         CharacterDifficulty.Creative => "Creative",
-        CharacterDifficulty.Salvager => "Salvager",
-        _ => "Classic"
+        CharacterDifficulty.Salvager => "Medium",
+        CharacterDifficulty.Hard => "Hard",
+        _ => "Easy"
     };
+
+    /// <summary>The order character creation steps through: the stakes rise, then the two no-stakes modes.</summary>
+    public static IReadOnlyList<CharacterDifficulty> CreationOrder { get; } =
+    [
+        CharacterDifficulty.Classic, CharacterDifficulty.Salvager, CharacterDifficulty.Hard, CharacterDifficulty.Ironman,
+        CharacterDifficulty.Explorer, CharacterDifficulty.Creative
+    ];
 
     public static string Describe(CharacterDifficulty difficulty) => difficulty switch
     {
-        CharacterDifficulty.Explorer => "Keep everything on death and respawn quickly.",
-        CharacterDifficulty.Ironman => "Death is permanent: the character is lost and cannot be played again.",
-        CharacterDifficulty.Salvager => "Drop everything you carry where you fall (worn gear stays on), plus part of your credits; go back and salvage it.",
+        CharacterDifficulty.Explorer => "No stakes: keep everything on death and respawn quickly.",
+        CharacterDifficulty.Ironman => "The impossible run: you drop everything but your tools, and you die for good. The run ends with you.",
+        CharacterDifficulty.Salvager => "Drop your money and every item you carry where you fall (worn gear stays on). Go back and get it.",
+        CharacterDifficulty.Hard => "Drop your whole bag except tools, and all your money, where you fall. Go back and get it.",
         CharacterDifficulty.Creative => "Research items to duplicate them freely; bend time, spawns and difficulty from the pause menu.",
-        _ => "Drop part of your carried materials on death, then respawn at the landing site."
+        _ => "Drop part of your money where you fall, then respawn. Go back and pick it up."
     };
 
     private static readonly string[] NamePrefixes =

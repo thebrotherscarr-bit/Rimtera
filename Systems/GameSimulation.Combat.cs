@@ -568,12 +568,14 @@ public sealed partial class GameSimulation
         var share = difficulty switch
         {
             CharacterDifficulty.Explorer or CharacterDifficulty.Creative => 0f,
-            // Salvager's item drop is handled elsewhere; its credit share matches Classic.
+            // Easy and Medium drop a share of the money; Medium's items are dropped below.
             CharacterDifficulty.Classic or CharacterDifficulty.Salvager => ClassicDeathCreditShare,
             _ => 1f
         };
         if (difficulty == CharacterDifficulty.Salvager)
             DropSalvagerStash(PlayerCenter);
+        else if (difficulty is CharacterDifficulty.Hard or CharacterDifficulty.Ironman)
+            DropSalvagerStash(PlayerCenter, keepTools: true);
         var carried = Player.Inventory.Count(ItemId.Credits);
         var drop = (int)MathF.Ceiling(carried * share);
         if (drop <= 0)
@@ -592,20 +594,25 @@ public sealed partial class GameSimulation
         return dropped;
     }
 
+    /// <summary>Tools a Hard death leaves in the bag: drills, cutters, wall hammers, bug nets and utility tools.</summary>
+    public static bool IsTool(ItemDefinition item) =>
+        item.UseKind is ItemUseKind.Pickaxe or ItemUseKind.Cutter or ItemUseKind.Demolisher or ItemUseKind.BugNet or ItemUseKind.Utility;
+
     /// <summary>Extra seconds a Salvager death pile lasts beyond the normal ground-item lifetime.</summary>
     public const float SalvagerStashExtraSeconds = 1200f;
 
     /// <summary>
-    /// Salvager deaths: every carried stack except credits (those follow the Classic share) drops as ground items at the
-    /// death site, with a longer lifetime so the run back can recover it. Worn gear stays equipped. Returns stacks dropped.
+    /// Medium (Salvager) and Hard deaths: every carried stack except credits (those are dropped by their own share) drops as
+    /// ground items at the death site, with a longer lifetime so the run back can recover it. Worn gear stays equipped.
+    /// With <paramref name="keepTools"/> (Hard), mining and building tools stay in the bag. Returns stacks dropped.
     /// </summary>
-    private int DropSalvagerStash(Vector2 site)
+    private int DropSalvagerStash(Vector2 site, bool keepTools = false)
     {
         var stacks = 0;
         for (var slot = 0; slot < Player.Inventory.Slots.Count; slot++)
         {
             var stack = Player.Inventory.Slots[slot];
-            if (stack.IsEmpty || stack.ItemId == ItemId.Credits)
+            if (stack.IsEmpty || stack.ItemId == ItemId.Credits || keepTools && IsTool(Items[stack.ItemId]))
                 continue;
             var taken = Player.Inventory.TakeFromSlot(slot, stack.Count);
             if (taken.IsEmpty)

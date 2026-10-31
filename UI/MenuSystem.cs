@@ -828,7 +828,9 @@ public sealed class MenuFlow
         new MenuEntry($"Difficulty: {WorldSettings.Name(_characterDraft.Difficulty)}",
             Adjust: amount =>
             {
-                _characterDraft.Difficulty = Cycle(_characterDraft.Difficulty, amount);
+                var order = WorldSettings.CreationOrder;
+                var at = Math.Max(0, order.ToList().IndexOf(_characterDraft.Difficulty));
+                _characterDraft.Difficulty = order[(at + Math.Sign(amount) + order.Count) % order.Count];
                 ReplaceCurrent(CreateCharacterCreationMenu());
             },
             Description: WorldSettings.Describe(_characterDraft.Difficulty)),
