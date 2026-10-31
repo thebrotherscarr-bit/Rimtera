@@ -232,6 +232,29 @@ public sealed partial class GameSimulation
         }
     }
 
+    /// <summary>
+    /// Terraria's right-click on a buff: ends a helpful status, sends away a pet or light pet, or dismounts. Debuffs,
+    /// banners and drowning cannot be cancelled. Returns true if something ended.
+    /// </summary>
+    public bool CancelBuff(string key)
+    {
+        if (ActiveBuffs.FirstOrDefault(buff => buff.Key == key) is not { } buff || buff.IsDebuff)
+            return false;
+        switch (key)
+        {
+            case "mount":
+                Dismount();
+                return true;
+            case "pet":
+                _pet = null;
+                return true;
+            case "light-pet":
+                _lightPet = null;
+                return true;
+        }
+        return buff.Status is { } status && Player.Statuses.Remove(status);
+    }
+
     private static string StatusName(StatusId id) => id switch
     {
         StatusId.ManaFocus => "Charge focus",

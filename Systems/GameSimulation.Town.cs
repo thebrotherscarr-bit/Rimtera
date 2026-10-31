@@ -111,6 +111,25 @@ public sealed partial class GameSimulation
             Unlock(TownNpcKind.RelicWarden);
     }
 
+    /// <summary>
+    /// Terraria's housing assignment: moves a resident into the valid room at <paramref name="cell"/>, unless another
+    /// resident already lives there. Returns the player-facing result.
+    /// </summary>
+    public string AssignHome(TownNpc npc, GridPoint cell)
+    {
+        ArgumentNullException.ThrowIfNull(npc);
+        if (npc.IsBound || !_townNpcs.Contains(npc))
+            return $"{npc.Name} cannot move right now.";
+        _regions.EnsureCurrent();
+        var result = HousingValidator.Check(World, _regions, cell);
+        if (!result.Valid || result.Room is not { } room)
+            return $"Not valid housing: {result.Reason}";
+        if (_townNpcs.Any(other => !ReferenceEquals(other, npc) && other.HomeCell is { } home && _regions.GetRegion(home) == room))
+            return "Someone else already lives in this room.";
+        npc.HomeCell = FloorCellOf(room) ?? cell;
+        return $"{npc.Name} the {npc.Definition.Role} will live here.";
+    }
+
     private GridPoint? FindFreeHouse()
     {
         _regions.EnsureCurrent();
@@ -251,7 +270,7 @@ public sealed partial class GameSimulation
     private static string LostFlag(TownNpcKind kind) => $"npc.{WorldFlags.Key(kind)}.lost";
 
     /// <summary>Unlocked town roles emptied by a death and not yet filled again.</summary>
-    internal IEnumerable<TownNpcKind> LostResidentKinds() => TownNpcCatalog.All
+    public IEnumerable<TownNpcKind> LostResidentKinds() => TownNpcCatalog.All
         .Select(definition => definition.Kind)
         .Where(kind => Flags.IsSet(LostFlag(kind)) && !_townNpcs.Any(npc => npc.Kind == kind));
 

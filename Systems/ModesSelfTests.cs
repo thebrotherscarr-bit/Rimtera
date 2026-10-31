@@ -207,6 +207,16 @@ public static class ModesSelfTests
               WorldSettings.CreationOrder.Take(4).SequenceEqual([CharacterDifficulty.Classic, CharacterDifficulty.Salvager, CharacterDifficulty.Hard, CharacterDifficulty.Ironman]),
             "death drops by difficulty: Easy loses only part of its money; Hard drops every credit and everything but its tools");
 
+        // ---- 0.1.9: right-click cancels a helpful buff, never a debuff ----
+        var buffs = NewGame(9309);
+        buffs.Player.Statuses.Apply(StatusId.Regeneration, 2f);
+        buffs.Player.Statuses.Apply(StatusId.Poison, 2f);
+        var cancelledHelp = buffs.CancelBuff(nameof(StatusId.Regeneration));
+        var cancelledHarm = buffs.CancelBuff(nameof(StatusId.Poison));
+        check(cancelledHelp && !cancelledHarm && buffs.ActiveBuffs.All(buff => buff.Status != StatusId.Regeneration) &&
+              buffs.ActiveBuffs.Any(buff => buff.Status == StatusId.Poison),
+            "right-clicking a buff cancels a helpful status but not a debuff");
+
         // ---- G16: Annihilation scaling, defense and relics ----
         var defenseHit = DefenseBalance.ApplyDefense(40f, 20, WorldDifficulty.Annihilation);
         check(WorldSettings.EnemyScale(WorldDifficulty.Annihilation) == 2f && WorldSettings.EnemyScale(WorldDifficulty.Brutal) == 1.4f &&

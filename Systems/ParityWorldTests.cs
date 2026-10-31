@@ -226,6 +226,17 @@ public static class ParityWorldTests
         explorer.HurtTownNpc(Ai(explorer), 1e6f);
         check(warned && lost && keptOnLoad && !explorer.RunOver && !explorer.PeopleDieForGood,
             "the station AI warns when hurt and its death ends the run (not on Explorer); the outcome and chronicle survive a save");
+
+        // Terraria's housing assignment: a resident moves into the room the player names; a claimed room is refused.
+        var town = Housed(CharacterDifficulty.Classic, 9432);
+        var otherHouse = BuildRoom(town, 30);
+        var guide = Ai(town);
+        var moved = town.AssignHome(guide, otherHouse);
+        var nowThere = guide.HomeCell is { } newHome && town.Regions.GetRegion(newHome) == town.Regions.GetRegion(otherHouse);
+        var second = town.AddTownNpc(TownNpcKind.Quartermaster, town.StandingAt(otherHouse), bound: false);
+        var refused = town.AssignHome(second, otherHouse);
+        check(moved.Contains("will live here", StringComparison.Ordinal) && nowThere && refused.Contains("Someone else", StringComparison.Ordinal),
+            "a resident can be assigned to a valid room, and a room someone already lives in is refused");
     }
 
     // ---- D2: town NPCs move in (day only, one at a time), die and come back ----
