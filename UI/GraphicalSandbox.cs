@@ -926,6 +926,13 @@ public static partial class GraphicalSandbox
                 SyncCanvas();
                 return;
             }
+            // A run that has ended (lost now, or loaded already ended) shows its end screen instead of playing on.
+            if (_game.RunOver)
+            {
+                ShowRunEnd(_game);
+                SyncCanvas();
+                return;
+            }
 
             var overInterface = _canvas.MousePosition is { } pointer && PointerOverInterface(pointer);
             var mapOpen = _canvas.FullscreenMapOpen;

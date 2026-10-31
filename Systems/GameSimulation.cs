@@ -269,6 +269,7 @@ public sealed partial class GameSimulation : IStoryHost
         PlayerAmbientTemperature = AmbientAt(PlayerCenter, CurrentBiome);
         PlayerComfort = TemperatureModel.Evaluate(PlayerAmbientTemperature, Player.Stats.ImmunityTags);
         PostMessage($"{PlayerProfile.Name} touches down; the station AI flickers awake beside the landing site. Seed {seed}.");
+        Record($"{PlayerProfile.Name} touched down with the station AI.");
         OnSimulationCreated(loaded is not null);
     }
 
@@ -401,7 +402,8 @@ public sealed partial class GameSimulation : IStoryHost
             RaidEnemyIds: _raidEnemyIds.ToArray(),
             NightBossIds: _nightBossIds.ToArray(),
             WhipMarkedEnemy: _whipMarkedEnemy,
-            WhipBuffSeconds: _whipBuffSeconds) { CellData = cellData };
+            WhipBuffSeconds: _whipBuffSeconds,
+            Run: CaptureRun()) { CellData = cellData };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -506,6 +508,7 @@ public sealed partial class GameSimulation : IStoryHost
             throw new InvalidDataException("The saved status layout is invalid.");
         game.RestoreContent(snapshot.Content);
         game.RestoreEntities(snapshot);
+        game.RestoreRun(snapshot.Run);
         game.LoadWiringFromFlags();
 
         var motion = game.Player.Motion;
@@ -527,7 +530,8 @@ public sealed partial class GameSimulation : IStoryHost
             game.AddLegacyStartingCrew(savedCrew - joined);
         if (snapshot.Storyteller is { } story)
         {
-            if (story.WanderersJoined is < 0 or > WandererJoinsIncident.MaximumCrew)
+            // Crew arrivals are no longer capped over a run (the dead are replaced), only by what housing supports at once.
+            if (story.WanderersJoined is < 0 or > 1024)
                 throw new InvalidDataException("The saved storyteller state is invalid.");
             for (var wanderer = 0; wanderer < story.WanderersJoined; wanderer++)
                 game.AddWanderer(wanderer, game.PlayerCenter);
@@ -1577,6 +1581,7 @@ public sealed partial class GameSimulation : IStoryHost
         PostMessage(agent.Health.DeathCause is { } cause
             ? $"{agent.Name} has died ({cause})."
             : $"{agent.Name} has died.");
+        Record(agent.Health.DeathCause is { } died ? $"{agent.Name} died ({died})." : $"{agent.Name} died.");
         ColonySocialSystem.NotifyDeath(agent, ColonyPawns);
     }
 
@@ -1699,6 +1704,8 @@ public sealed partial class GameSimulation : IStoryHost
 
             if (enemy.IsBoss)
             {
+                if (!_defeatedBosses.Contains(enemy.Kind))
+                    Record($"The {enemy.DisplayName} was defeated.");
                 _defeatedBosses.Add(enemy.Kind);
                 AddColonyMemory(ThoughtId.BossDefeated);
                 PostMessage(enemy.Kind == EnemyKind.StoneSentinel
@@ -2319,7 +2326,10 @@ public sealed partial class GameSimulation : IStoryHost
         ColonyWealth,
         _enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive),
         RadiatedTerrainNearby(),
-        Player.MaximumHitPoints <= 0f ? 0f : Player.HitPoints / Player.MaximumHitPoints);
+        Player.MaximumHitPoints <= 0f ? 0f : Player.HitPoints / Player.MaximumHitPoints,
+        CrewShortage: Math.Max(0, CrewCapacity - _colonists.Count(agent => agent.IsAlive)),
+        LostResidents: LostResidentKinds().Count(),
+        FreeHouse: FindFreeHouse() is not null);
 
     int IStoryHost.SpawnRaidWave(BiomeZone biome, float threatPoints, out string description)
     {
@@ -2381,6 +2391,35 @@ public sealed partial class GameSimulation : IStoryHost
     {
         var agent = AddWanderer(wandererIndex, PlayerCenter);
         name = agent.Profile.Name;
+        return true;
+    }
+
+    bool IStoryHost.TryWelcomeArrival(out string summary, out bool joinedCrew)
+    {
+        summary = string.Empty;
+        joinedCrew = false;
+        if (FindFreeHouse() is not { } house)
+            return false;
+        // A role lost to a death is filled first: someone new takes up the dead resident's trade.
+        if (LostResidentKinds().Take(1).ToList() is [var lost])
+        {
+            Flags.Clear(LostFlag(lost));
+            var resident = AddTownNpc(lost, StandingAt(house), bound: false);
+            resident.HomeCell = house;
+            summary = $"{resident.Name} the {resident.Definition.Role} arrives looking for a home and moves in.";
+            Record($"{resident.Name} arrived to take up the {resident.Definition.Role}'s trade.");
+            return true;
+        }
+        // Crew are limited by what the colony can support (CrewCapacity), not by how many came before: the dead are replaced.
+        if (_colonists.Count(agent => agent.IsAlive) >= CrewCapacity)
+            return false;
+        var agent = AddWanderer(_storyteller.WanderersJoined, StandingAt(house));
+        agent.Motion.Position = StandingAt(house);
+        agent.HomePosition = agent.Motion.Position;
+        agent.WanderTarget = agent.Motion.Position;
+        joinedCrew = true;
+        summary = $"{agent.Profile.Name} arrives, asks to join the crew, and moves in.";
+        Record($"{agent.Profile.Name} joined the crew.");
         return true;
     }
 
@@ -2553,30 +2592,18 @@ public sealed partial class GameSimulation : IStoryHost
     private float ScaleOutgoing(float damage) => damage / WorldSettings.EnemyScale(Difficulty);
 
     /// <summary>
-    /// Brings a dead player back at the landing site. Classic characters lose half of each
-    /// carried material stack; Explorer characters keep everything. Ironman never respawns
-    /// (the host ends the run instead). Returns the player-facing message.
+    /// Brings a dead player back at the landing site. What is left where they fell depends on the difficulty: Easy drops
+    /// part of the money, Medium the money and every carried item, Hard the money and everything but tools; Explorer and
+    /// Creative keep everything. Ironman never respawns (the host ends the run instead). Returns the player-facing message.
     /// </summary>
     public string RespawnPlayer(CharacterDifficulty difficulty)
     {
-        var lost = 0;
         var creditsDropped = DropDeathCredits(difficulty);
-        if (difficulty == CharacterDifficulty.Classic)
-        {
-            for (var slot = 0; slot < Player.Inventory.Slots.Count; slot++)
-            {
-                var stack = Player.Inventory.Slots[slot];
-                if (stack.IsEmpty || stack.ItemId == ItemId.Credits || !Items[stack.ItemId].IsMaterial || stack.Count < 2)
-                    continue;
-                lost += Player.Inventory.TakeFromSlot(slot, stack.Count / 2).Count;
-            }
-        }
 
         var column = Math.Clamp(SpawnColumn == 0 ? World.Width / 2 : SpawnColumn, 2, World.Width - 3);
         Player.Respawn(new Vector2(column, FindSurface(column) - Player.Motion.Size.Y));
-        var message = lost > 0
-            ? $"{Player.Colonist.Name} wakes at the landing site. {lost} materials were lost."
-            : $"{Player.Colonist.Name} wakes at the landing site.";
+        var message = $"{Player.Colonist.Name} wakes at the landing site.";
+        Record($"{Player.Colonist.Name} fell, and woke at the landing site.");
         if (creditsDropped > 0)
             message += $" {creditsDropped} credits lie where you fell.";
         PostMessage(message);

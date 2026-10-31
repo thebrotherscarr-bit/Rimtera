@@ -54,7 +54,8 @@ public sealed record GameSnapshot(
     long[]? RaidEnemyIds = null,
     long[]? NightBossIds = null,
     long? WhipMarkedEnemy = null,
-    float? WhipBuffSeconds = null)
+    float? WhipBuffSeconds = null,
+    RunStateSnapshot? Run = null)
 {
     public const int CurrentFormatVersion = 2;
 

@@ -18,7 +18,10 @@ public readonly record struct StoryContext(
     float ColonyWealth,
     bool BossActive,
     bool RadiatedNearby,
-    float PlayerHealthFraction);
+    float PlayerHealthFraction,
+    int CrewShortage = 0,
+    int LostResidents = 0,
+    bool FreeHouse = false);
 
 /// <summary>Parameters handed to one incident execution.</summary>
 public readonly record struct IncidentParms(float ThreatPoints, BiomeZone Biome, bool Forced);
@@ -53,6 +56,11 @@ public interface IStoryHost
     /// <summary>Adds supplies to the player's inventory and returns a short manifest.</summary>
     string DeliverCargo(BiomeZone biome, float threatPoints);
     bool TryAddWanderer(int wandererIndex, out string name);
+    /// <summary>
+    /// Brings one arrival into a free house: a town resident whose role was lost to a death, or else a new crew
+    /// member. <paramref name="joinedCrew"/> says which. False if nobody could come.
+    /// </summary>
+    bool TryWelcomeArrival(out string summary, out bool joinedCrew);
     void Announce(string message);
 }
 
@@ -104,9 +112,16 @@ public sealed class Storyteller
         Register(new ToxicFalloutIncident());
         Register(new SolarFlareIncident());
         Register(new CargoDropIncident());
-        // Crew no longer wander in at random: they arrive like Terraria's town NPCs, into free housing
-        // (GameSimulation.Town.cs). WandererJoinsIncident stays defined; its WanderersJoined counter now counts every arrival.
+        // Arrivals (new crew, and town residents replacing the dead) come through their own stream, OnHour's TryArrival,
+        // not this roll. WandererJoinsIncident stays defined; WanderersJoined counts every crew arrival.
     }
+
+    /// <summary>Id under which the last arrival's hour is kept with the incident cooldowns.</summary>
+    public const string ArrivalId = "arrival";
+    /// <summary>Least hours between two arrivals.</summary>
+    public const float ArrivalGapHours = 8f;
+    /// <summary>Hourly arrival chance for each person the colony is short (capped at half).</summary>
+    public const float ArrivalChancePerNeed = 0.05f;
 
     public IReadOnlyList<IStoryIncident> Incidents => _incidents;
     public IReadOnlyList<StoryIncidentRecord> RecentIncidents => _recent.ToArray();
@@ -147,6 +162,8 @@ public sealed class Storyteller
         AdvanceTimers(host, 1f);
         var context = host.CaptureStoryContext();
         LastThreatPoints = ComputeThreatPoints(context.Day, context.ColonyWealth, context.ColonistCount, context.DefeatedBosses);
+        if (TryArrival(context, host) is { } arrival)
+            return arrival;
         if (CooldownHours > 0f)
         {
             CooldownHours = Math.Max(0f, CooldownHours - 1f);
@@ -174,6 +191,35 @@ public sealed class Storyteller
         var context = host.CaptureStoryContext();
         LastThreatPoints = ComputeThreatPoints(context.Day, context.ColonyWealth, context.ColonistCount, context.DefeatedBosses);
         return incident.CanFire(context, this) ? Execute(incident, context, host, forced: true) : null;
+    }
+
+    /// <summary>
+    /// The arrival stream, a background component beside the threat roll (it ignores the opening grace and threat
+    /// cooldowns). Population intent in small: the more people the colony is short (crew below what its housing and
+    /// victories support, plus town residents lost to deaths), the likelier someone turns up, by day, into a free house.
+    /// Permadeath stays playable because the dead are replaced this way, over time.
+    /// </summary>
+    private StoryIncidentRecord? TryArrival(StoryContext context, IStoryHost host)
+    {
+        var needed = Math.Max(0, context.CrewShortage) + Math.Max(0, context.LostResidents);
+        if (needed == 0 || !context.FreeHouse || context.ClockHour < 6f || context.ClockHour >= 19f)
+            return null;
+        if (_lastFired.TryGetValue(ArrivalId, out var last) && HoursElapsed - last < ArrivalGapHours)
+            return null;
+        if (NextUnit() >= Math.Min(0.5f, ArrivalChancePerNeed * needed))
+            return null;
+        if (!host.TryWelcomeArrival(out var summary, out var joinedCrew))
+            return null;
+        if (joinedCrew)
+            WanderersJoined++;
+        _lastFired[ArrivalId] = HoursElapsed;
+        IncidentsFired++;
+        var record = new StoryIncidentRecord(context.Day, context.ClockHour, ArrivalId, "Arrival", summary, LastThreatPoints);
+        _recent.Enqueue(record);
+        while (_recent.Count > RecentLogSize)
+            _recent.Dequeue();
+        host.Announce(summary);
+        return record;
     }
 
     public bool FiredTooRecently(IStoryIncident incident) =>

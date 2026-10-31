@@ -179,9 +179,33 @@ public static class ModesSelfTests
         Tick(salvage, 240);
         var recovered = Carried(salvage);
         check(emptied && onGround == before && credits == 40 && nearSite && geared && recovered == before &&
-              WorldSettings.Name(CharacterDifficulty.Salvager) == "Salvager" &&
+              WorldSettings.Name(CharacterDifficulty.Salvager) == "Medium" &&
               salvage.GetRespawnDelay(CharacterDifficulty.Salvager) == salvage.GetRespawnDelay(CharacterDifficulty.Classic),
             $"a Salvager death drops all {before} carried items (not worn gear) and 40% of credits at the death site; walking back recovers {recovered}");
+
+        // ---- 0.1.8 stakes: Easy drops money only; Hard drops everything but tools, and all the money ----
+        GameSimulation Died(CharacterDifficulty difficulty)
+        {
+            var game = NewGame(9308);
+            game.Player.Inventory.Add(ItemId.Credits, 100);
+            game.Player.Inventory.Add(ItemId.CopperOre, 25);
+            game.Player.Inventory.Add(ItemId.MedStim, 3);
+            game.Player.TakeDamage(1e6f);
+            Tick(game, 2);
+            game.RespawnPlayer(difficulty);
+            return game;
+        }
+        int Held(GameSimulation game, ItemId item) => game.Player.Inventory.Count(item);
+        int Dropped(GameSimulation game, ItemId item) => game.GroundItems.Where(pile => pile.ItemId == item).Sum(pile => pile.Count);
+        var easy = Died(CharacterDifficulty.Classic);
+        var hard = Died(CharacterDifficulty.Hard);
+        var drillBefore = NewGame(9308).Player.Inventory.Count(ItemId.CopperPickaxe);
+        check(Held(easy, ItemId.CopperOre) == 25 && Held(easy, ItemId.MedStim) == 3 && Dropped(easy, ItemId.Credits) is > 0 and < 100 &&
+              Held(hard, ItemId.CopperOre) == 0 && Dropped(hard, ItemId.CopperOre) == 25 && Dropped(hard, ItemId.MedStim) == 3 &&
+              Dropped(hard, ItemId.Credits) == 100 && drillBefore > 0 && Held(hard, ItemId.CopperPickaxe) == drillBefore &&
+              WorldSettings.Name(CharacterDifficulty.Classic) == "Easy" && WorldSettings.Name(CharacterDifficulty.Hard) == "Hard" &&
+              WorldSettings.CreationOrder.Take(4).SequenceEqual([CharacterDifficulty.Classic, CharacterDifficulty.Salvager, CharacterDifficulty.Hard, CharacterDifficulty.Ironman]),
+            "death drops by difficulty: Easy loses only part of its money; Hard drops every credit and everything but its tools");
 
         // ---- G16: Annihilation scaling, defense and relics ----
         var defenseHit = DefenseBalance.ApplyDefense(40f, 20, WorldDifficulty.Annihilation);
