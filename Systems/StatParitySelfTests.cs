@@ -122,7 +122,7 @@ public static class StatParitySelfTests
         var dummy = game.SpawnCreatureAt(EnemyKind.AstroBeast, game.Player.Motion.Position + new Vector2(30f, -5f));
         var hp = dummy.HitPoints;
         var shown = game.ProbeStrike(dummy, 50f, true, 20);
-        check(shown == 80f && Near(hp - dummy.HitPoints, 80f / WorldSettings.EnemyScale(game.Difficulty), 0.01f),
+        check(shown == 80f && Near(hp - dummy.HitPoints, 80f / WorldSettings.EnemyHealthScale(game.Difficulty), 0.01f),
             $"stats damage: a landed crit on a 20-defense creature deals (50 - 10) x 2 = {shown:0}");
         dummy.TakeDamage(1e6f);
 

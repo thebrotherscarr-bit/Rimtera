@@ -4,6 +4,9 @@ Evidence: REA metadata of `Terraria.exe` 1.4.5.8. Earlier files in `docs/terrari
 
 Status key: ✅ present · ◐ partial · ❌ missing.
 
+> **These tables record the state before Batches A–C** and are kept as the original diff. For the state at 0.2.0, read
+> "Status after Batches A–C" and "0.2.0 status" at the end of this page, and `docs/TERRARIA_GAPS.md`.
+
 ## Player
 | Terraria element (evidence) | Rimtera | Notes |
 |---|---|---|
@@ -109,10 +112,32 @@ Status key: ✅ present · ◐ partial · ❌ missing.
   - drawing for slopes, platforms, ropes, trees, wires (wire view), ground items, pets, mounts, tombstones and worm segments
 
 ## Status after Batches A–C
-All three batches are in. This section records that milestone; the current `--self-test` suite passes 550 checks.
+All three batches are in. This section records that milestone; at the time the `--self-test` suite passed 550 checks.
 - **A (world):** slopes and half blocks, platforms, ropes and ladders, trees, plants and herbs, falling sand, liquid mixing, torches, wiring with gates, actuators, traps and teleporters, bombs, dungeon with guardian, cabins, shrines, pots.
 - **B (player):** ground items with a magnet, immunity frames, breath, fall damage, swimming, mobility gear, grappling hook, quick heal/charge/buff with potion sickness, tombstones, respawn blocked while a boss lives, loadouts, Cargo Pod bank, trash, favorites, sort, quick stack, signs, pets, hover-bike, recall and phase rod, character files, kill banners, worm/caster/diver/mimic/hopper AI, bestiary, achievements.
 - **C (UI):** drawing for all of the above (wire view while holding wire tools, `L` cycles layer), buff bar, breath bubbles, keys (`Q` heal, `J` charge, `Y` buff, `T` hook, `U` mount, `F1`–`F3` loadouts, `N` bestiary, `O` achievements, `?` controls), inventory actions, bank and sign screens, achievement toasts, procedural audio.
 - **HUD:** Terraria-style layout. Hotbar top-left, vitals above the minimap, buffs under the hotbar, boss bar bottom-centre, events bottom-right, and the world fills the window.
 - **Still open:** projectile collision ignores slopes and actuated blocks; mined supports drop nothing from collapsed trees, vines and ropes; climbing has no animation of its own. Meteor showers are implemented (`MeteorFall`/`MeteorStrike`).
 - **Saves:** a world's cells go in a raw-deflate sidecar (`<id>.rimtera.cells`) beside a small JSON envelope. Generation metadata is saved too, so loading never regenerates. On a Large world (8400×2400), a save is about 8 MB and takes 0.35 s; a load takes 0.7 s; the game runs in about 700 MB. Older saves with base64 cells inside the JSON still load. `--engine-bench --leak` checks that saving and loading leave no world-sized buffers behind.
+
+## 0.2.0 status (2026-11-01)
+What changed after Batches A–C, for the rows in the tables above. Release numbers are Rimtera's own (see `docs/PLAN.md`).
+
+| Area | 0.2.0 status |
+|---|---|
+| Run, jump, gravity | ✅ Terraria's numbers (0.1.14): top run about 11 tiles/s, held jump about 6.5 tiles, gravity 90 tiles/s², fall 37.5 tiles/s |
+| Breath, drowning, fall damage, swimming | ✅ 0.1.12 and 0.1.14: about 23 s of air; 10 damage per tile beyond 25; swimming needs fins |
+| Buffs, potion sickness, healing | ✅ 0.1.11 and 0.1.15: real-time durations; right-click cancels a helpful buff (0.1.9); a four-tier healing and charge ladder; 60 s potion sickness |
+| Death and respawn | ✅ death drops by character difficulty (0.1.8); Terraria's respawn timer with no boss extension (0.1.11); bed spawn point (0.1.12); Ironman spectate (0.2.0) |
+| Character across worlds | ✅ separate character files; Creative characters play only Creative worlds (0.1.13) |
+| Inventory slots | ✅ coin and ammo slots (0.1.10); pet, light pet, mount and hook slots (0.1.9). Vanity slots exist; dye slots and visibility toggles are still missing (PU-19 → 0.6.0) |
+| Shops | ◐ selling any stack and buyback of the last ten sales (0.1.9); no shop grid (PU-21 → 0.5.0) |
+| Audio | ◐ sound events for every simulation action (0.1.15); biome, event and boss-tier music and ambience beds. Per-creature voices and screen shake are missing (PE-18 → 0.4.0, PE-16 not scheduled) |
+| Particles | ✅ block dust and death gore; combat text for crits, damage over time and charge (0.1.15) |
+| Combat against creatures | ✅ creature defense, immunities, lava; 77 creatures inflict debuffs; box contact (0.1.15) |
+| Enemy AI families | ◐ worms, casters, divers, mimics and hoppers exist. Ranged and stationary attackers, fighter pathing, swimmers, chargers and wall climbers are planned (parity 0.1.10 → 0.4.0) |
+| Bosses | ◐ one shared controller for most bosses; patterns, minions, enrage, worm and multi-part bodies are planned (0.4.0 and 0.6.0) |
+| Wiring | ◐ no junction box; fewer triggers and outputs than Terraria (WT-16 → 0.6.0) |
+| Paint | ◐ 12 paints and a glow coating (WT-18 → 0.6.0) |
+| Lighting | ✅ coloured light on High (0.2.0) |
+| Still open from "Still open" above | Projectile collision with slopes and actuated blocks, drops from collapsed supports, and a climbing animation were not re-checked for 0.2.0 |

@@ -144,15 +144,32 @@ Terraria's tin can, seaweed and old shoe, which no recipe uses.
 **Guide-taught recipes** (`RequiresGuideUnlock`, `_knownGuideRecipes`): unchanged. Every reveal material is also an
 ingredient of its recipe, so the audit treats a guide recipe as known once its ingredients are in hand.
 
-**Open finding (informational, not changed):** 97 items of tier 4 or higher are obtainable before the Fracture.
-- 72 are crafted at early stations: 35 accessory combinations at the Tinker Bench, 13 ammo types at the Ammo Press, 10
-  tonics at the Chem Lab, and some from the Cooking Station, Research Terminal and Bio Lab. Their inputs are all
-  pre-Fracture materials.
-- The rest are tier-4/5 uniques that pre-Fracture creatures drop, or fishing finds.
-- In Terraria, combinations at the Tinkerer's Workshop happen before hardmode, but hardmode combinations need hardmode
-  parts. Rimtera's item tiers and recipes disagree here. Fixing it means re-tiering those items or giving them
-  tier-matched inputs. That is a balance pass for the gear docs (`GEAR_DIFF_ITEMS.md`), so it is left alone here.
-  `--craft-audit` lists every such item.
+**Tier 4+ before the Fracture: closed with a whitelist (X-CR-1, 0.2.0).** The audit finds 98 items of tier 4 or higher
+that a Classic character can obtain before the Fracture (97 when this was first measured). They are all on
+`CraftingAudit.EarlyGearWhitelist`, each with a reason, and `CraftingAuditSelfTests` fails if any other item turns up.
+`--craft-audit` prints the list with each reason, any item outside it, and any entry that is no longer early.
+
+| Group | Items | Reason | Permanent? |
+|---|---|---|---|
+| Tinker Bench combinations (35) | Arcanist's Circlet, Architect's Frame, Ballistics Emblem Mk II, Ballistics Module, Berserker Rig, Bio-weave, Bulwark Core, Close-quarters emblem Mk II, Command Emblem Mk II, Command Module, Drone Controller, Duelist Harness, Energy Shield Emitter, Environmental Suit, Excavation Suite (T5), Excavator Rig, Fortune Matrix, Gunner's Harness, Heart Pump, Inferno Treads (T5), Core-plated skin, Master Tackle Kit, Close-quarters module, Reinforced Armor Suit, Retribution Mesh (T5), Rocket Pack, Sanguine Reactor (T5), Servo Grip, Spike Lattice, Targeting Lens Mk II, Tech Emblem Mk II, Tech Module, Telescopic Arm, Vital Core (T5), Warden's Uplink | Combinations of pre-Fracture parts. In Terraria, hardmode combinations need hardmode parts. | No: until PC-16 gives each a tier-matched input |
+| Ammo Press ammunition (13) | Cryo Rocket, Crystal Darts (T5), Flechette Rounds, Incendiary Rocket, Overcharged Cell, Plasma Fuel (T5), Prism Cell (T5), Seeker Bolts, Shard Bolts (T5), Viridium Bolts, Viridium Rounds, Void Darts (T6), Void Fuel (T6) | Pressed from pre-Fracture materials: viridium bars and the void essence that coastal hab pods hold. | No: until PC-6 re-tiers or re-gates them |
+| Tonics and food (13) | Greater ballistics, close-quarters, command and tech tonics (T5), Heavy Fortify Stim, Hunter's Focus, Lifeforce Serum, Wrath Draught, Astro-burger, Colony Feast, Koi flambe, Prism Sorbet (T5), Void Noodles (T5) | Consumable buffs brewed or cooked from pre-Fracture ingredients. | No: until PC-6 |
+| Optional boss summons without a gate (7) | Bounty Notice, Claim Marker, Dreadnought Flag, Rusted lure (Moon Eater), Protocol Key, Sunspot Lens, Void Lure | These bosses have no Fracture gate. Summoning one early is the player's risk. PC-1 (parity 0.1.7) meant to gate the Moon Eater and its lure behind the Fracture; that is not done. | Reviewed with the boss framework (parity 0.1.10) |
+| Gated boss summons (3) | Mutagen Bloom, Tainted Tissue, Vault Core (T6) | The item can be made early, but the boss refuses until its gate (`HardmodeSummonRefusal`: the trio, the Fracture, the opened vault). | Yes |
+| Defense Protocol (2) | Signal Core, Protocol Shard | The event's starter and its drop. The Defense Protocol is a pre-Fracture event (Terraria: the Old One's Army, tier 1). | Yes |
+| Station (1) | Ore Refinery Mk2 | The viridium refinery, a pre-Fracture station (Terraria: the Hellforge). Its recipes keep their own tiers. | Yes |
+| Fishing finds, crates and quest rewards (9) | Astral Crate (T6), Astral fishing rod (T7, Tide-Warden reward), Hive Familiar, Hive Stinger Rapier, Reactor crate, Core wader boots, Fission rod, Uranium lure, Royal Nectar | Terraria's fishing also gives high-tier gear before hardmode. Crates hold hardmode ores only after the Fracture. | Yes |
+| Rare creature and event drops (9) | Aurora Ring, Canopy Longbow, Codex: Tidal surge, Hive Lash, Splice Needle, Sky-ray Wings, Storm Repeater, Phase Dirk (T6), Wisp Staff | Rare drops, as Terraria's dungeon and jungle drops are before hardmode. | Yes |
+| Crystal Spires drops (4) | Codex: Shard storm, Prismatic crate, Halo Gyre, Prism Ribbon | Their creatures also spawn in the Crystal Spires before the Fracture. | No: until PC-6 moves them to the post-Fracture roster |
+| Town shops (2) | Mini Rocket (Demolitionist), Mortar turret kit (the Mechanic, after the hearts) | Sold behind the seller's own unlock. | Yes |
+
+**Tier 6+ before the Fracture is not 0.** Six items: Astral crate, Astral fishing rod, Phase Dirk, Vault Core, Void Darts
+and Void Fuel. The 0.2.0 release acceptance asks for 0. The crate's loot and the Vault Core's boss are gated, so they are
+labels only. Void Darts and Void Fuel are a real early-power leak, and Phase Dirk is a rare dungeon drop. They wait for
+PC-6 with the rest of the "until" rows.
+
+The "until PC-6" and "until PC-16" rows belong to parity steps 0.1.11 and 0.1.13, which `docs/PLAN.md` moved to
+milestone 0.5.0 ("Pressure"). When those land, their rows leave the whitelist.
 
 ## 7. What the audit models (and does not)
 

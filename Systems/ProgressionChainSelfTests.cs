@@ -82,7 +82,7 @@ public static class ProgressionChainSelfTests
         for (var h = 0; h < 3; h++)
             BreakHeart(hearts, TileId.ReactorCore, 20 + h * 5);
         var avenger = hearts.Enemies.FirstOrDefault(enemy => enemy.IsBoss && enemy.IsAlive);
-        check(hive.Tier == BossTier.Easy && hive.Flying && hive.HitPoints is >= 700f and <= 900f &&
+        check(hive.Tier == BossTier.Easy && hive.Flying && hive.HitPoints is >= 9000f and <= 17000f &&
               !EnemyArchetypes.BossProgression.Contains(EnemyKind.FalloutHivemind) && GameSimulation.LastEasyBoss == EnemyKind.ScoutMech &&
               avenger?.Kind == EnemyKind.FalloutHivemind && hearts.Enemies.All(enemy => enemy.Kind != EnemyKind.CyberSwarmLeader),
             "G1 before the Fracture the third radiated heart summons the easy-tier Fallout Hive-mind, not the Cyber-Swarm Leader");

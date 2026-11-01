@@ -2,6 +2,21 @@
 
 Rimtera is an original, engine-neutral 2D sandbox game prototype written in C#. Its current playable slice composes world generation, tile placement/mining, inventory, movement, weapons/projectiles, autonomous enemies, a phased boss, survival needs, world events, and local liquid simulation into one deterministic fixed-step runtime.
 
+## Features (0.2.0)
+
+Terraria is the baseline for feel and base mechanics; Rimtera adds a colony layer, a station AI and a storyteller. Terraria is used as behavioural evidence only: no code, names or assets are copied. What is still missing is listed in [docs/TERRARIA_GAPS.md](docs/TERRARIA_GAPS.md) and planned in [docs/PLAN.md](docs/PLAN.md).
+
+- **Movement:** Terraria's run, jump, gravity and fall numbers; double jump, wall jump, rocket boots, wings, hooks, ropes, platforms, slopes. Swimming needs fins (the Diver's kit). Six mounts, each with its own fall rule.
+- **Clock:** Terraria's 24-minute day (15 minutes of day, 9 of night). Buffs, regeneration and needs run on real time.
+- **Stakes:** death drops by character difficulty (Explorer keeps everything; Easy, Medium, Hard; Ironman is the impossible run, with a ghost camera after death). Town NPCs and crew die for good, and a storyteller arrival stream brings new people. The station AI is the colony's heart: if it dies, the run ends. A run chronicle records the story and is shown on the end screen.
+- **Combat:** creature defense, immunities and lava; 77 creatures inflict debuffs; weapon afflictions; box contact and ±15% hit variance; a four-tier healing and charge ladder with 60 s potion sickness; boss potions and hearts; heart and charge pickups; drop chances and conditions; stacks of 9999. Combat text, block dust and death gore, and a sound for every action.
+- **World:** seeded worlds in three sizes with biomes, a dungeon, a temple, sky islands, six liquids, flora that grows and spreads, wiring, paint, glide-walks, and the Fracture as hardmode. World creation has a Hazard row.
+- **Content:** 33 bosses and 9 event mini-bosses, 330 hostile creature kinds, 102 critters, 1,990 items, events and weather, fishing, the bestiary, feats, banners, trophies, golf and kites.
+- **Town and colony:** town NPCs with housing, happiness and shops (sell any stack, buy back the last ten sales); crew with skills, moods and needs.
+- **Inventory:** Terraria's 50-slot bag with coin and ammo slots, trash, favourites, loadouts, the Cargo Pod bank, and pet, light pet, mount and hook slots.
+- **Presentation:** generated creature animation, biome, event and boss-tier music, ambience beds, coloured lighting on High quality.
+- **Saves:** separate world and character files; autosave every 2, 5, 10 (default) or 15 minutes, or off; the bed sets the spawn point. Creative characters play only Creative worlds.
+
 ## Run
 
 ```powershell
@@ -33,7 +48,10 @@ As in Terraria 1.4, the inventory is where everything lives:
 - Beside it: **Sort**, **Quick stack** (to nearby chests), the **Cargo pod** when you have one, the **Wires** builder toggle, and the **trash slot** (drop a held stack on it; click it empty-handed to take the stack back, or Shift-click it to send it back to the bag).
 - **Chests** open underneath with **Loot all**, **Deposit all**, **Quick stack**, **Restock**, **Sort** and **Rename**.
 - **Crafting** underneath that: everything craftable nearby as a grid; click a result to see its materials, click it again to craft; the wheel scrolls. **Ask station AI** suggests what your materials make.
-- Down the right: worn **gear** (armor, accessories, vanity), **Loadouts 1-3**, and tabs for **Housing** (check the room you stand in; see your crew), **Crew**, **Bestiary** and **Feats**.
+- Beside the bag: four **coin slots** and four **ammo slots**, as in Terraria. Credits and ammunition go there first; weapons fire from the ammo slots before the bag.
+- Down the right: tabs for **Gear** (armor, accessories, vanity, and the pet, light pet, mount and hook slots), **Housing** (check the room you stand in; residents with role and happiness, Move here, the crew and empty roles), **Crew**, **Bestiary**, **Feats** and **Emotes** (click an emote to show it over your head), plus **Loadouts 1-3**.
+- **Buffs:** right-click a helpful buff to cancel it (not debuffs). Tooltips compare armor with what you wear, and weapons and drills with what you hold.
+- **Shops:** sell any carried stack (not favorites); the shop keeps a buyback list of your last ten sales.
 - **Settings** in the bottom-right corner.
 
 Right-click a **bed** to sleep and the **station AI** for guidance, as with Terraria's beds and Guide.
@@ -61,9 +79,11 @@ Defaults are Terraria 1.4.5.8's PC layout (see `docs/CONTROLS_PARITY.md`), and e
 | Numpad `+` / `-`, `PgUp` / `PgDn` | Map zoom, map opacity |
 | `=` / `-` | Camera zoom (also Settings → Zoom) |
 | `F1` / `F2` / `F3` | Loadouts 1-3 |
+| `F8` | Cycle frame skip (On, Subtle, Off) |
+| `F9` | Cycle lighting (Low, Standard, High, Off); High tints light by colour |
 | `F10` / `F11` / `Alt+Enter` | Frame rate / hide the interface / fullscreen |
 | `C` | Creative menu (creative worlds) |
-| `` ` `` (hold) + `1`–`8` | Emotes |
+| `` ` `` (hold) + `1`–`8` | Emotes (or the Emotes tab in the inventory) |
 
 ### Terminal gameplay controls
 
@@ -87,6 +107,40 @@ The terminal reads the same bindings where they make sense and fixes a few keys 
 | `Esc` / `I` | Open inventory UI |
 | `P` | Pause / resume |
 | `Q` | End the session and save |
+
+## Release notes
+
+Release numbers follow [docs/PLAN.md](docs/PLAN.md). The parity roadmap ([docs/ROADMAP_0.2.0.md](docs/ROADMAP_0.2.0.md)) uses its own step numbers; its status block says which parity step shipped in which release.
+
+- **0.2.0 Baseline release** (in progress). CI gates: `--asset-check` (a missing sprite fails Prove) and soft bench budgets. Coloured lighting on High quality. The Emotes tab. `F8` and `F9` cycle frame skip and lighting. Ironman spectate: after an Ironman death a ghost camera stays on the world until `Esc`. The craft audit's tier-4+ before-the-Fracture list is held to a whitelist with reasons. Docs pass (this file, the parity docs, the breakdown status columns). Still to come before release: the boss and difficulty balance pass, and the D3 play-through below.
+- **0.1.15 Combat core.** Creature defense tiers, immunities and lava; 77 creatures inflict debuffs; weapon afflictions; box contact, ±15% hit variance; the healing ladder (50/100/150/200 plus a restoration stim), 60 s potion sickness, boss potions and hearts, heart and charge pickups, drop rules, stacks of 9999; sound events, silent despawns, dust and gore, combat text and the item tooltip.
+- **0.1.14 Movement.** Terraria's movement numbers, per-mount falls, fins for swimming, camera snap with a smoothing setting, Terraria's pause rules.
+- **0.1.13 Creative split, Hazard row, autosave interval.**
+- **0.1.12 Fall damage, air and the bed.** 10 damage per tile beyond 25; about 23 s of air; the bed sets the spawn point.
+- **0.1.11 Clock.** Terraria's 24-minute day with real-time statuses; events end at dawn or dusk; Terraria's respawn timer.
+- **0.1.10 Coin and ammo slots.**
+- **0.1.9 Terraria basics.** Buff cancel, tooltip comparison, the housing page, pet, light pet, mount and hook slots, selling and buyback.
+- **0.1.8 Stakes.** Death drops by difficulty, permadeath for town NPCs and crew with storyteller arrivals, the station AI's heart, the run chronicle and end screen. Also the music and ambience work that landed after 0.1.7 (streamed music, the music player, ambience beds).
+- **0.1.7** The crafting chain fix and `--craft-audit`, crafting guidance, controls parity phase 2, no automatic eating or healing for the player, and the generated creature animation frames.
+
+### Save compatibility
+
+Worlds and characters saved by any 0.1.x release load in 0.2.0. The world format is still version 2: every field added since then is optional, and a missing field takes its default (for example, the coin and ammo slots start empty and the misc slots start unequipped). This pass did not load real saves from each release; D3 item 8 checks a 0.1.7 save by hand.
+
+### 0.2.0 sign-off (D3)
+
+A person signs this off; the sign-off goes in the release PR. See `docs/roadmap/0.2.0.md` D3 for the full list. Two runs on Release builds, without debug keys: Classic on a Medium world, and Brutal on a Small world, each with a new character.
+
+- [ ] Opening: the kit, a tree, the Fabricator, the guidance tips; a 24-minute day.
+- [ ] Early game: each drill opens new ore; the healing tiers unlock in order; the Overseer arrives and leaves at dawn.
+- [ ] Pre-hardmode: the Rust Moon, a raid, the Mechanic, the dungeon, the Fission Tyrant.
+- [ ] Hardmode: the scars, altar ore, the trio, Mutated Flora, the temple, the Colossus.
+- [ ] Endgame: the obelisks, the Astro-God, life reaches 500.
+- [ ] Colony: crew live at home and never touch the player's inventory or heal the player.
+- [ ] Presentation: sounds, event skies, boss music, visible armour, memory within budget on Large.
+- [ ] Saves: autosave, closing the window saves, a 0.1.7 save loads.
+
+Some D3 items depend on work that is not done yet (event skies, visible armour, per-boss patterns, crew homes, life to 500, the temple seal); see [docs/ROADMAP_0.2.0.md](docs/ROADMAP_0.2.0.md). Expect those boxes to fail until it lands.
 
 ## Integrated modules
 

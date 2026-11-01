@@ -37,8 +37,16 @@ Refinements:
 
 Two facts drive how the numbers are mapped.
 
-1. **Rimtera's creatures have no defense**, while Terraria's NPCs subtract half their defense from each hit
-   (`NPC.StrikeNPC`). A zombie with 6 defense turns a copper broadsword's 9 into 6.
+1. **Creatures have defense since 0.1.15**, as Terraria's NPCs do: half of it comes off each hit, minimum 1
+   (`CombatTuning.CreatureDamageTaken`; Terraria: `NPC.StrikeNPC`). A zombie with 6 defense turns a copper broadsword's 9
+   into 6. The values come from a tier table in `ContentCreatures.TierDefense`, with hand-set exceptions:
+   - before the Fracture: 2-6 for early creatures (gels 2, walkers 6), 8-14 for mid ones, by hit points;
+   - after the Fracture: 16-30; the late tier (post-Mutated-Flora dungeon, Dark Sun, late moons, obelisk sieges): 30-50;
+   - bosses: 10 for the early ones, 16 or 30 for event bosses, 26 for hard-tier bosses, 50 for the Astro-God;
+   - wildlife: 0.
+
+   The weapon numbers in this document were set **before** creature defense existed (when every creature had 0). They
+   were not re-derived for it. The 0.2.0 balance pass (PC-15, BO-23) re-checks boss time-to-kill against this defense.
 2. **The hit-point curve differs.** Below are the medians of the non-passive spawn-table rosters
    (`BiomeSpawnTables`), set against Terraria's typical tier creatures *(knowledge)*:
 
@@ -269,7 +277,7 @@ counting `EquipmentSlot.Accessory` items by field or tag.
 | Info and utility | 78 | 24 | Rimtera has fewer info displays ◐ |
 | Mining / building | 6 | 8 | |
 | Luck / fishing | 26 | 4 | ◐ |
-| Armor penetration | 2 | 0 | No NPC defense, so not needed |
+| Armor penetration | 2 | 0 | Written when creatures had no defense; they have it since 0.1.15 (§1) |
 | Thorns, lifesteal, charge on hit | 13 | 17 | |
 | Max life | 0 (only buffs) | 12 | Rimtera-only; its life cap is 200-300, not 500 |
 
@@ -292,7 +300,8 @@ The core-chips in `PlayerSystemsContent` (defense 2 + tier, capped at 6) are out
 
 1. **Damage scale.** Tier 1 is Terraria × 1.33, held by `ArsenalSelfTests` (ferrite longblade 12-22). With Rimtera
    creatures having no defense, a strict tier-1 match would be about 6. **Recommendation for the combat and creature
-   owners:** either give creatures a small defense value, or allow the longblade floor to drop to 8.
+   owners:** either give creatures a small defense value, or allow the longblade floor to drop to 8. *(0.1.15 took the
+   first option: creatures now have defense, see §1.)*
 2. **Hardmode pick power is compressed** so Terraria's 110 and 150 gates fall on the existing 85 and 100 gates.
 3. **Yo-yo and flail timings were kept.** Rimtera yo-yos re-hit on a fixed cooldown, and flails hit once per launch.
    Terraria's channelled and spinning models are different mechanics.

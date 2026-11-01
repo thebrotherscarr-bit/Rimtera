@@ -55,7 +55,7 @@ public static class CreatureCoverageData
         new(EnemyKind.HexNecrotech, "Hex necrotech", "dungeon-hard", true, 0.2f, 0.2f, C, 0.9f, 1.7f, 310f, 36f, false, 20, [(ItemId.VoidEssence, 3)], "Necromancer / Diabolist / Ragged Caster"),
         new(EnemyKind.CryptMarksman, "Crypt marksman", "dungeon-hard", true, 0.2f, 0.2f, G, 0.9f, 1.7f, 290f, 38f, false, 20, [(ItemId.PowerCell, 2)], "Skeleton Sniper / Commando"),
         new(EnemyKind.CryptSpirit, "Crypt spirit", "dungeon-hard", true, 0.2f, 0.25f, G, 0.9f, 1.2f, 250f, 34f, true, 18, [(ItemId.VoidEssence, 2)], "Dungeon Spirit"),
-        new(EnemyKind.CryptPaladin, "Crypt paladin", "dungeon-hard", true, 0.04f, 0.04f, G, 1.4f, 2.3f, 1250f, 44f, false, 120,
+        new(EnemyKind.CryptPaladin, "Crypt paladin", "dungeon-hard", true, 0.04f, 0.04f, G, 1.4f, 2.3f, 24000f, 23f, false, 120,
             [(ItemId.AlabasterBlock, 10), (ItemId.AncientPowerCell, 1)], "Paladin", Mini),
         // ---- Hardmode extras for the thin hard rosters ----
         new(EnemyKind.VenomRecluse, "Venom recluse", "mite", true, 0.25f, 0.25f, G, 1.3f, 0.8f, 330f, 36f, false, 20, [(ItemId.SilkThread, 8)], "Black Recluse"),
@@ -69,11 +69,11 @@ public static class CreatureCoverageData
         // ---- Blizzard: snow-biome rain and the frost golem ----
         new(EnemyKind.WhiteoutWisp, "Whiteout wisp", "event:Blizzard", false, 0.4f, 0.4f, G, 0.8f, 0.8f, 42f, 11f, true, 3, [(ItemId.FrostCrystal, 1)], "Snow Flinx / blizzard spawns"),
         new(EnemyKind.DriftStalker, "Drift stalker", "event:Blizzard", false, 0.3f, 0.3f, G, 1.2f, 0.9f, 72f, 14f, false, 4, [(ItemId.FrostCrystal, 2)], "Wolf (blizzard)"),
-        new(EnemyKind.BlizzardColossus, "Blizzard colossus", "event:Blizzard", true, 0f, 0f, G, 2f, 2.6f, 1150f, 42f, false, 100,
+        new(EnemyKind.BlizzardColossus, "Blizzard colossus", "event:Blizzard", true, 0f, 0f, G, 2f, 2.6f, 26000f, 23f, false, 100,
             [(ItemId.FrostCrystal, 12), (ItemId.GlacialOre, 10)], "Ice Golem", Mini, Speed: 0.7f),
         // ---- Dust storm (hardmode): Terraria's sandstorm ----
         new(EnemyKind.DuneRazorfin, "Dune razorfin", "event:DustStorm", true, 0f, 0f, G, 1.6f, 0.6f, 310f, 34f, true, 18, [(ItemId.OxidizedShard, 4)], "Sand Shark"),
-        new(EnemyKind.GritElemental, "Grit elemental", "event:DustStorm", true, 0f, 0f, G, 1.6f, 2.2f, 1050f, 40f, true, 100,
+        new(EnemyKind.GritElemental, "Grit elemental", "event:DustStorm", true, 0f, 0f, G, 1.6f, 2.2f, 26000f, 23f, true, 100,
             [(ItemId.ScrapIronOre, 12), (ItemId.PowerCell, 3)], "Sand Elemental", Mini),
         // ---- Swarm Rain (slime-rain analog) ----
         new(EnemyKind.ArmoredSwarmer, "Armored swarmer", "event:SwarmRain", false, 0f, 0f, H, 0.8f, 0.6f, 44f, 11f, false, 2, [(ItemId.BioGel, 2)], "Spiked Slime (slime rain)"),
@@ -83,13 +83,13 @@ public static class CreatureCoverageData
         new(EnemyKind.GustMite, "Gust mite", "event:WindyDay", false, 0.4f, 0f, S, 0.6f, 0.45f, 26f, 9f, false, 1, [(ItemId.SilkThread, 1)], "Windy-day critter swarm"),
         // ---- Rust Moon after the Fracture (blood moon hardmode) ----
         new(EnemyKind.RustJester, "Rust jester", "event:RustMoon", true, 0f, 0f, G, 1f, 1.8f, 310f, 35f, false, 18, [(ItemId.OxidizedShard, 4)], "Clown"),
-        new(EnemyKind.CorrosionNautilus, "Corrosion nautilus", "event:RustMoon", true, 0f, 0f, G, 2.2f, 1.8f, 1450f, 44f, true, 140,
+        new(EnemyKind.CorrosionNautilus, "Corrosion nautilus", "event:RustMoon", true, 0f, 0f, G, 2.2f, 1.8f, 30000f, 23f, true, 140,
             [(ItemId.VoidEssence, 4), (ItemId.OxidizedShard, 10)], "Dreadnautilus", Mini),
         // ---- Dark Sun after the Mutated Flora (post-Plantera eclipse) ----
         new(EnemyKind.EclipseSlasher, "Eclipse slasher", "event:DarkSun", true, 0f, 0f, G, 1f, 1.8f, 350f, 40f, false, 22, [(ItemId.VoidEssence, 2)], "Psycho / Butcher"),
         new(EnemyKind.EclipseSphere, "Eclipse sphere", "event:DarkSun", true, 0f, 0f, G, 0.9f, 0.9f, 310f, 38f, true, 20, [(ItemId.PowerCell, 2)], "Deadly Sphere"),
         // ---- Scavenger Raid after the Fracture: its hex-caster ----
-        new(EnemyKind.ScavengerHexer, "Scavenger hexer", "event:ScavengerRaid", true, 0f, 0f, C, 0.9f, 1.8f, 950f, 36f, false, 90,
+        new(EnemyKind.ScavengerHexer, "Scavenger hexer", "event:ScavengerRaid", true, 0f, 0f, C, 0.9f, 1.8f, 25000f, 23f, false, 90,
             [(ItemId.ScrapCrate, 1), (ItemId.CircuitBoard, 4)], "Goblin Summoner", Mini),
 
         // ---- Hollow Moon (pumpkin-moon analog) ----
@@ -97,8 +97,8 @@ public static class CreatureCoverageData
         new(EnemyKind.EmberSplinter, "Ember splinter", "event:HollowMoon", true, 0f, 0f, H, 0.8f, 0.8f, 210f, 30f, false, 12, [(ItemId.HollowEmber, 1), (ItemId.WoodBlock, 4)], "Splinterling"),
         new(EnemyKind.CinderHound, "Cinder hound", "event:HollowMoon", true, 0f, 0f, G, 1.3f, 0.9f, 290f, 34f, false, 16, [(ItemId.HollowEmber, 2)], "Hellhound"),
         new(EnemyKind.StaticPoltergeist, "Static poltergeist", "event:HollowMoon", true, 0f, 0f, G, 0.9f, 1.2f, 250f, 32f, true, 14, [(ItemId.HollowEmber, 1), (ItemId.PowerCell, 1)], "Poltergeist"),
-        new(EnemyKind.HollowLancer, "Hollow lancer", "event:HollowMoon", true, 0f, 0f, G, 1.6f, 2.2f, 1350f, 42f, false, 110, [(ItemId.HollowEmber, 8)], "Headless Horseman", Mini, Speed: 1.3f),
-        new(EnemyKind.EmberRootwalker, "Ember rootwalker", "event:HollowMoon", true, 0f, 0f, G, 2.2f, 3.2f, 1550f, 40f, false, 130,
+        new(EnemyKind.HollowLancer, "Hollow lancer", "event:HollowMoon", true, 0f, 0f, G, 1.6f, 2.2f, 24000f, 23f, false, 110, [(ItemId.HollowEmber, 8)], "Headless Horseman", Mini, Speed: 1.3f),
+        new(EnemyKind.EmberRootwalker, "Ember rootwalker", "event:HollowMoon", true, 0f, 0f, G, 2.2f, 3.2f, 23000f, 23f, false, 130,
             [(ItemId.HollowEmber, 10), (ItemId.WoodBlock, 30)], "Mourning Wood", Mini, Speed: 0.6f),
         // ---- Rime Moon (frost-moon analog) ----
         new(EnemyKind.FrostSapper, "Frost sapper", "event:RimeMoon", true, 0f, 0f, G, 0.9f, 1.6f, 250f, 32f, false, 14, [(ItemId.RimeShard, 1)], "Zombie Elf / Elf Archer"),
@@ -106,8 +106,8 @@ public static class CreatureCoverageData
         new(EnemyKind.FlurryFlake, "Flurry flake", "event:RimeMoon", true, 0f, 0f, G, 0.9f, 0.9f, 230f, 32f, true, 14, [(ItemId.RimeShard, 1)], "Flocko"),
         new(EnemyKind.CargoMimic, "Cargo mimic", "event:RimeMoon", true, 0f, 0f, M, 1f, 1f, 620f, 40f, false, 60, [(ItemId.RimeShard, 4), (ItemId.Credits, 100)], "Present Mimic"),
         new(EnemyKind.SnowHulk, "Snow hulk", "event:RimeMoon", true, 0f, 0f, G, 1.6f, 2f, 430f, 38f, false, 20, [(ItemId.RimeShard, 2), (ItemId.FrostCrystal, 3)], "Yeti"),
-        new(EnemyKind.FrostspirePine, "Frostspire pine", "event:RimeMoon", true, 0f, 0f, G, 2.2f, 3.6f, 1550f, 40f, false, 130, [(ItemId.RimeShard, 10)], "Everscream", Mini, Stationary: true),
-        new(EnemyKind.CryoTank, "Cryo tank", "event:RimeMoon", true, 0f, 0f, G, 2.6f, 2f, 1650f, 44f, false, 140, [(ItemId.RimeShard, 8), (ItemId.CircuitBoard, 4)], "Santa-NK1", Mini, Speed: 0.8f),
+        new(EnemyKind.FrostspirePine, "Frostspire pine", "event:RimeMoon", true, 0f, 0f, G, 2.2f, 3.6f, 25000f, 23f, false, 130, [(ItemId.RimeShard, 10)], "Everscream", Mini, Stationary: true),
+        new(EnemyKind.CryoTank, "Cryo tank", "event:RimeMoon", true, 0f, 0f, G, 2.6f, 2f, 27000f, 23f, false, 140, [(ItemId.RimeShard, 8), (ItemId.CircuitBoard, 4)], "Santa-NK1", Mini, Speed: 0.8f),
         // ---- Cryo Brigade (frost-legion analog) ----
         new(EnemyKind.BrigadeTrooper, "Brigade trooper", "event:CryoBrigade", true, 0f, 0f, G, 0.9f, 1.7f, 200f, 30f, false, 10, [(ItemId.RimeShard, 1)], "Snowman Gangsta"),
         new(EnemyKind.BrigadeShiv, "Brigade shiv", "event:CryoBrigade", true, 0f, 0f, G, 0.8f, 1.5f, 160f, 32f, false, 10, [(ItemId.FrostCrystal, 2)], "Mister Stabby", Speed: 1.45f),
@@ -132,13 +132,13 @@ public static class CreatureCoverageData
 
     public static readonly CoverageBoss[] Bosses =
     [
-        new(EnemyKind.HoarfrostBehemoth, "Hoarfrost Behemoth", BossTier.Easy, 3.2f, 3f, 1000f, 22f, false, 9f, 4, 100, ItemId.FrostbittenLure,
+        new(EnemyKind.HoarfrostBehemoth, "Hoarfrost Behemoth", BossTier.Easy, 3.2f, 3f, 13600f, 19f, false, 9f, 4, 100, ItemId.FrostbittenLure,
             [(ItemId.FrostCrystal, 14), (ItemId.GlacialOre, 18), (ItemId.EnergyCrystal, 6)], "Deerclops"),
-        new(EnemyKind.GelSovereign, "Gel Sovereign", BossTier.Hard, 3f, 2.6f, 2300f, 30f, false, 11f, 6, 200, ItemId.PrismGelLattice,
+        new(EnemyKind.GelSovereign, "Gel Sovereign", BossTier.Hard, 3f, 2.6f, 45000f, 33f, false, 11f, 6, 200, ItemId.PrismGelLattice,
             [(ItemId.BioGel, 30), (ItemId.PrismShard, 12), (ItemId.PrismEssence, 10)], "Queen Slime"),
-        new(EnemyKind.HollowRegent, "Hollow Regent", BossTier.Event, 3f, 3f, 3400f, 40f, true, 13f, 6, 300, ItemId.RegentWick,
+        new(EnemyKind.HollowRegent, "Hollow Regent", BossTier.Event, 3f, 3f, 55000f, 31f, true, 13f, 6, 300, ItemId.RegentWick,
             [(ItemId.HollowEmber, 20), (ItemId.LumeniteBar, 6), (ItemId.VoidEssence, 6)], "Pumpking"),
-        new(EnemyKind.RimeSeraph, "Rime Seraph", BossTier.Event, 2.8f, 3.2f, 3600f, 42f, true, 14f, 7, 320, ItemId.SeraphFrostCore,
+        new(EnemyKind.RimeSeraph, "Rime Seraph", BossTier.Event, 2.8f, 3.2f, 57000f, 31f, true, 14f, 7, 320, ItemId.SeraphFrostCore,
             [(ItemId.RimeShard, 20), (ItemId.LumeniteBar, 6), (ItemId.FrostCrystal, 12)], "Ice Queen")
     ];
 }

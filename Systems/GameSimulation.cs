@@ -2614,9 +2614,9 @@ public sealed partial class GameSimulation : IStoryHost
     /// <summary>Column the colony landed on; respawns return here.</summary>
     public int SpawnColumn { get; private set; }
 
-    private float ScaleIncoming(float damage) => damage * WorldSettings.EnemyScale(Difficulty);
+    private float ScaleIncoming(float damage) => damage * WorldSettings.EnemyDamageScale(Difficulty);
 
-    private float ScaleOutgoing(float damage) => damage / WorldSettings.EnemyScale(Difficulty);
+    private float ScaleOutgoing(float damage) => damage / WorldSettings.EnemyHealthScale(Difficulty);
 
     /// <summary>
     /// Brings a dead player back at the landing site. What is left where they fell depends on the difficulty: Easy drops
