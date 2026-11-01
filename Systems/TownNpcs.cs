@@ -179,8 +179,23 @@ public sealed class TownNpc : IStationWorker
     /// <summary>Where they grew up and what they did after (null only before a story is set).</summary>
     public BackgroundDefinition? Childhood { get; private set; }
     public BackgroundDefinition? Adulthood { get; private set; }
-    /// <summary>The work their story leaves them unwilling or unable to do.</summary>
-    public IReadOnlyList<WorkType> Refuses => Backgrounds.Refused(Childhood, Adulthood).ToArray();
+    /// <summary>The work their story leaves them unwilling to do, or their injuries unable to (0.5.3).</summary>
+    public IReadOnlyList<WorkType> Refuses => Backgrounds.Refused(Childhood, Adulthood).Concat(GameSimulation.RuledOutBy(_injuries)).Distinct().ToArray();
+
+    // ---- 0.5.3: lasting injuries ----
+    private readonly List<LastingInjury> _injuries = new();
+    public IReadOnlyList<LastingInjury> Injuries => _injuries;
+    internal void AddInjury(LastingInjury injury)
+    {
+        _injuries.Add(injury);
+        RefreshWork();
+    }
+    internal void RestoreInjuries(IEnumerable<LastingInjury>? saved)
+    {
+        _injuries.Clear();
+        _injuries.AddRange((saved ?? []).Where(Enum.IsDefined));
+        RefreshWork();
+    }
     public bool WillDo(WorkType work) => !Refuses.Contains(work);
 
     internal void SetStory(BackgroundDefinition childhood, BackgroundDefinition adulthood)
@@ -291,7 +306,9 @@ public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, flo
     // 0.5.1: their story.
     string? Childhood = null, string? Adulthood = null,
     // 0.5.2: practice toward each skill's next level.
-    float[]? Practice = null);
+    float[]? Practice = null,
+    // 0.5.3: lasting injuries.
+    LastingInjury[]? Injuries = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 

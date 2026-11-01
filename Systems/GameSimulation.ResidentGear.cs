@@ -138,6 +138,8 @@ public sealed partial class GameSimulation
         var skill = melee ? ColonistSkill.Melee : ColonistSkill.Shooting;
         var damage = definition.Damage * (0.75f + stats.Level(skill) * 0.025f) *
                      (melee ? stats.MeleeDamageMultiplier : stats.ShootingDamageMultiplier);
+        if (!melee) // 0.5.3: a lost eye blunts their aim
+            damage *= npc.Injuries.Count(injury => injury == LastingInjury.LostEye) switch { 0 => 1f, 1 => 0.75f, _ => 0.4f };
         var reach = melee ? Math.Max(UnarmedReach + 0.4f, definition.Reach > 0f ? definition.Reach : 1.6f) : RangedGuardReach;
         var seconds = Math.Max(0.25f, (definition.UseCooldownTicks > 0 ? definition.UseCooldownTicks : 30) / 60f);
         return (damage, reach, seconds);

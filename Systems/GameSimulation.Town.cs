@@ -255,11 +255,13 @@ public sealed partial class GameSimulation
         ArgumentNullException.ThrowIfNull(npc);
         if (amount <= 0f || npc.IsBound || !npc.IsAlive || !_townNpcs.Contains(npc))
             return false;
-        npc.HitPoints = Math.Max(0f, npc.HitPoints - ResidentDamageTaken(npc, amount)); // 0.4.0: their armour's defense
+        var damage = ResidentDamageTaken(npc, amount); // 0.4.0: their armour's defense
+        npc.HitPoints = Math.Max(0f, npc.HitPoints - damage);
         npc.HurtCooldown = 0.6f;
         if (npc.IsAlive)
         {
             WarnStationAiHurt(npc);
+            MaybeInjure(npc, damage); // 0.5.3: a grave hit may leave a lasting injury
             return false;
         }
         DropColonistLoad(npc);
@@ -489,6 +491,7 @@ public sealed partial class GameSimulation
         var dx = target.X - center.X;
         var horizontal = MathF.Abs(dx) > 0.6f ? MathF.Sign(dx) : 0f;
         var jump = horizontal != 0f && npc.Motion.Grounded && IsGroundBlockedAhead(npc.Motion, horizontal);
+        pace *= LegFactor(npc.Injuries); // 0.5.3: a lost leg slows them
         _colonistMovement.Step(npc.Motion, new MovementInput(horizontal, JumpPressed: jump, SpeedMultiplier: pace), deltaSeconds, World, Tiles);
     }
 
@@ -683,7 +686,8 @@ public sealed partial class GameSimulation
         npc.Profile, npc.Kind == TownNpcKind.Settler ? npc.Look : null,
         npc.Pouch.Count == 0 ? null : npc.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
         CaptureResidentGear(npc), npc.Post?.X, npc.Post?.Y, npc.Childhood?.Id, npc.Adulthood?.Id,
-        npc.CapturePractice().Any(value => value > 0f) ? npc.CapturePractice() : null)).ToArray();
+        npc.CapturePractice().Any(value => value > 0f) ? npc.CapturePractice() : null,
+        npc.Injuries.Count == 0 ? null : npc.Injuries.ToArray())).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -715,6 +719,7 @@ public sealed partial class GameSimulation
             // NC-20: a hurt resident loads as hurt. Saves from before the field (or a bad value) load at full health; a
             // living resident never loads dead.
             npc.RestorePractice(saved.Practice);
+            npc.RestoreInjuries(saved.Injuries);
             RestoreResidentGear(npc, saved.Gear); // before the hit points: gear sets the maximum they are clamped to
             if (saved.PostX is { } px && saved.PostY is { } py && World.Contains(px, py) && npc.IsArmed)
                 npc.Post = new GridPoint(px, py);
