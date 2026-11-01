@@ -51,7 +51,7 @@ public sealed record StorytellerSnapshot(
 public interface IStoryHost
 {
     StoryContext CaptureStoryContext();
-    /// <summary>Spawns a raid wave off-screen and returns how many creatures arrived.</summary>
+    /// <summary>Plans a raid (0.4.3: announced ahead, it arrives later at its target) and returns how many will come.</summary>
     int SpawnRaidWave(BiomeZone biome, float threatPoints, out string description);
     /// <summary>Adds supplies to the player's inventory and returns a short manifest.</summary>
     string DeliverCargo(BiomeZone biome, float threatPoints);
@@ -380,7 +380,7 @@ public sealed class Storyteller
     }
 }
 
-/// <summary>A wave of local creatures arrives from beyond the view, sized by threat points.</summary>
+/// <summary>A wave of local creatures, sized by threat points, announced ahead and aimed at the base or an outpost (0.4.3).</summary>
 public sealed class RaidIncident : IStoryIncident
 {
     public string Id => "raid";
@@ -393,8 +393,9 @@ public sealed class RaidIncident : IStoryIncident
 
     public string? TryExecute(IncidentParms parms, Storyteller teller, IStoryHost host)
     {
+        // 0.4.3: the host plans the raid and warns; it arrives at its target later.
         var count = host.SpawnRaidWave(parms.Biome, parms.ThreatPoints, out var description);
-        return count <= 0 ? null : $"Raid! {description} closing in from beyond the ridge.";
+        return count <= 0 ? null : $"Raid warning! {description}";
     }
 }
 

@@ -24,6 +24,9 @@ public static class HudStatusLine
         var people = game.People.Count;
         if (people > 0)
             parts.Add($"People {people}");
+        // 0.4.3: a raid on its way: where, from which side and how long you have.
+        if (game.PendingRaid is { } raid)
+            parts.Add($"RAID → {raid.TargetName} from the {raid.SideName} in {game.RaidHoursLeft:0.0} h");
         var held = game.Player.Inventory.SelectedItem?.Summons is { } kind ? MinionCatalog.Get(kind) : null;
         if (game.ActiveDrones > 0 || held is { IsSentry: false })
             parts.Add($"Drones {game.ActiveDrones}/{game.DroneSlots}");
