@@ -386,7 +386,8 @@ public sealed partial class GameSimulation : IStoryHost
             Players: CapturePlacements(),
             Bills: CaptureBills(),
             ChestFilters: CaptureChestFilters(),
-            Research: CaptureColonyResearch()) { CellData = cellData, CellRuns = cellRuns };
+            Research: CaptureColonyResearch(),
+            ColonySentries: CaptureColonySentries()) { CellData = cellData, CellRuns = cellRuns };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -561,6 +562,7 @@ public sealed partial class GameSimulation : IStoryHost
         foreach (var body in game.TownNpcs.Select(npc => npc.Motion).Prepend(game.Player.Motion))
             game.LiftClear(body);
         game.RestoreColonyResearch(snapshot.Research); // 0.3.7: after the flags and the defeated bosses it reads
+        game.RestoreColonySentries(snapshot.ColonySentries); // 0.7.3
         game.SettleLegacyCrew(snapshot); // 0.3.10: crew saved before the merge come back as settlers
         return game;
     }

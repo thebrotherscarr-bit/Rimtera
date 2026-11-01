@@ -349,6 +349,12 @@ public sealed partial class GameSimulation
         {
             SoundEvents.Emit(SoundEventKind.Use, "command", minion.Position, (int)item.Id);
             SetPlayerCooldown(item.UseCooldownTicks);
+            // 0.7.3: a sentry set down by an armed resident's home or post goes to the colony, which mans it.
+            if (minion.IsSentry && HandSentryToColony(minion) is { } keeper)
+            {
+                PostMessage($"Deployed {CraftingGuide.Article(minion.Spec.DisplayName)} {minion.Spec.DisplayName} for the colony: {keeper.Name} will man it.");
+                return;
+            }
             PostMessage(minion.IsSentry
                 ? $"Deployed a {minion.Spec.DisplayName} ({ActiveSentries}/{SentrySlots} sentries)."
                 : $"Launched a {minion.Spec.DisplayName} ({ActiveDrones}/{DroneSlots} drones).");
@@ -483,6 +489,7 @@ public sealed partial class GameSimulation
         UpdateChargeRegen(deltaSeconds);
         UpdateLifeRegen(deltaSeconds);
         UpdateMinions(deltaSeconds);
+        UpdateDefences(deltaSeconds); // 0.7.3: colony sentries and manned traps
         UpdateWeaponStyles(deltaSeconds);
         UpdateHazards(deltaSeconds);
         GearTick(deltaSeconds);
