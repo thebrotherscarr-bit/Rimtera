@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <!-- Single source of truth for the release version; .github/workflows/version.yml validates it. -->
-    <Version>0.5.5</Version>
+    <Version>0.5.6</Version>
   </PropertyGroup>
   <ItemGroup>
     <!-- tools/ holds external repos and asset scripts, not game code. -->

@@ -77,6 +77,8 @@ public static class Backgrounds
             [(ColonistSkill.Mining, 5), (ColonistSkill.Construction, 1)], []),
         new("hunter", "Wilds hunter", false, "Tracked and trapped game beyond the colony walls.",
             [(ColonistSkill.Shooting, 3), (ColonistSkill.Animals, 3)], []),
+        new("wasteland-raider", "Wasteland raider", false, "Ran with a raiding crew, taking what the settlements would not give.",
+            [(ColonistSkill.Melee, 3), (ColonistSkill.Shooting, 3)], [WorkType.Trade]),
         new("ai-caretaker", "AI caretaker", false, "Kept a station AI's cores clean and its mind sane.",
             [(ColonistSkill.Intellectual, 3), (ColonistSkill.Crafting, 2)], [], [TownNpcKind.StationAi])
     ];

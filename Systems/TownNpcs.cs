@@ -190,6 +190,11 @@ public sealed class TownNpc : IStationWorker
         _injuries.Add(injury);
         RefreshWork();
     }
+    /// <summary>Held in a cell (0.5.6): no work, no guarding; the colony's best talker works on recruiting them.</summary>
+    public bool IsPrisoner { get; internal set; }
+    /// <summary>A prisoner's will to resist; at zero they join.</summary>
+    public float Resistance { get; internal set; }
+
     /// <summary>Food, 0 (starving) to 1 (full) (0.5.5).</summary>
     public float Food { get; internal set; } = 1f;
 
@@ -332,7 +337,9 @@ public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, flo
     // 0.5.4: fitted bionics.
     BionicPart[]? Bionics = null,
     // 0.5.5: food (older saves: full).
-    float? Food = null);
+    float? Food = null,
+    // 0.5.6: a prisoner and their resistance.
+    bool? Prisoner = null, float? Resistance = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 

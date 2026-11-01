@@ -59,6 +59,8 @@ public sealed partial class GameSimulation
         };
         if (npc.Work.Order().FirstOrDefault() is var first && npc.Work.Order().Any())
             lines.Add($"Drawn to: {string.Join(", ", npc.Work.Order().Where(type => npc.Work.Priority(type) == WorkCatalog.Highest).Select(type => WorkCatalog.Get(type).Label))}");
+        if (npc.IsPrisoner)
+            lines.Add($"Prisoner · resistance {npc.Resistance:0.#} · {(Recruiter is { } talker ? $"{talker.Name} is working on them" : "nobody is talking to them")}");
         if (npc.Injuries.Count > 0)
             lines.Add($"Lasting injuries: {string.Join(", ", npc.Injuries.Select(injury => injury switch
             {

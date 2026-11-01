@@ -760,6 +760,8 @@ public sealed class InventoryUiState : UiState
             var resident = npc;
             var home = npc.HomeCell is null ? "homeless" : $"happiness {game.GetHappiness(npc):+0.0;-0.0;0}";
             var where = game.OutpostOf(npc) is { } outpost ? $" · {outpost.Label}" : "";
+            if (npc.IsPrisoner)
+                where += $" · prisoner (resistance {npc.Resistance:0.#})";
             Line($"{npc.Name} · {npc.Definition.Role} · {home}{where}", $"housing-npc-{npc.Id}", new UiColor(226, 230, 238));
             if (npc.Gear.Count > 0)
                 Line($"   {string.Join(", ", npc.Gear.OrderBy(pair => pair.Key).Select(pair => game.Items[pair.Value].Name))} · DEF {game.ResidentDefense(npc)}",
@@ -775,7 +777,11 @@ public sealed class InventoryUiState : UiState
                 _housingReport = game.AssignHome(resident, new GridPoint((int)center.X, (int)center.Y));
             });
             // 0.4.0: hand a resident the item in your hand (a weapon, armour or an accessory), or take their gear back.
-            RowButton("Give held", $"housing-equip-{npc.Id}", -190f, () => _housingReport = game.EquipResident(resident));
+            if (!npc.IsPrisoner)
+                RowButton("Give held", $"housing-equip-{npc.Id}", -190f, () => _housingReport = game.EquipResident(resident));
+            // 0.5.6: settlers and prisoners can be sent away.
+            if (npc.Kind == TownNpcKind.Settler && npc.Gear.Count == 0 && !npc.IsArmed)
+                RowButton(npc.IsPrisoner ? "Release" : "Send away", $"housing-send-{npc.Id}", -130f, () => _housingReport = game.SendAway(resident));
             if (npc.Gear.Count > 0)
                 RowButton("Take gear", $"housing-unequip-{npc.Id}", -130f, () =>
                 {
