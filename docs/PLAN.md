@@ -11,6 +11,9 @@ Written 2026-10-31. This is the path from today's build to 1.0. It ties together
 - **Terraria first.** The foundations (world, chests, items, crafting, progression, enemies, town NPCs) should feel like Terraria and keep Terraria's progress loops. 0.3.x diffs each foundation against Terraria and fixes the gaps.
 - **The colony waits for 0.4.0.** No RimWorld-style management (no blueprints and the like). The colonists are the NPCs: assistive, and acting like sentries for their area.
 - **RimWorld's part is the pressure.** Invasion-style raids and calamities, paced by a storyteller, on top of Terraria's progression.
+- **Owner's calls:**
+  - The 0.2.x colony systems (Work tab, bills, farm zones, chest filters and priority, research, crew cooking and fishing) stay as they are and are revisited when 0.4.0 is designed.
+  - The crew merge into the town NPCs: one kind of character that moves in like Terraria's, runs its shop, and guards and helps its own area.
 
 ## How versions work
 - **Milestones** are minor versions: 0.2.0, 0.3.0 … 1.0.0. Each has a goal and a discussion point.
@@ -123,4 +126,4 @@ From the design conversation; reopened only at a discussion point.
 | 0.3.3 Foundations: crafting and progression | Planned | The recipe chain, stations, ore to bar to gear, the boss order and gates, the Fracture as hardmode, and the early-game pace (time to first boss), against Terraria's loop (docs/PROGRESSION_DIFF.md, docs/CRAFTING_PROGRESSION.md, docs/HARDMODE_DIFF.md). |
 | 0.3.4 Foundations: enemies, spawning and events | Planned | Spawn rates and caps by biome, depth and time; enemy stats per stage; drops; Terraria-style invasions as the base for 0.4.0's raids. |
 | 0.3.5 Foundations: town NPCs | Planned | Move-in conditions, housing, shops, happiness and prices, and who arrives when, against Terraria: the base for 0.4.0's NPC colonists. |
-| 0.4.0 The colony: NPC sentries and invasions | Planned | NPCs as assistive colonists guarding their area; RimWorld-style invasions aimed at the base and the NPCs' areas, paced by a storyteller and tied to Terraria's progression. Details after the owner's calls on the 0.2.x colony systems. |
+| 0.4.0 The colony: NPC sentries and invasions | Planned | The crew merge into the town NPCs, which become assistive colonists guarding their area. RimWorld-style invasions are aimed at the base and the NPCs' areas, paced by a storyteller and tied to Terraria's progression. The 0.2.x colony systems are kept, cut or folded in here. |
