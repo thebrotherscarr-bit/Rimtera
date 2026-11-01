@@ -32,12 +32,15 @@ public static class EngineBenchmark
         var onlyIndex = Array.FindIndex(args, arg => string.Equals(arg, "--only", StringComparison.OrdinalIgnoreCase));
         if (onlyIndex >= 0 && onlyIndex + 1 < args.Length)
             sizes = sizes.Where(size => args[onlyIndex + 1].Split(',').Contains(size.Name, StringComparer.OrdinalIgnoreCase)).ToArray();
+        var titleMegabytes = Process.GetCurrentProcess().PrivateMemorySize64 / 1048576.0;
+        var generationSeconds = 0.0;
         GameSimulation? large = null;
         foreach (var (name, width, height) in sizes)
         {
             var watch = Stopwatch.StartNew();
             var sim = new GameSimulation(seed: 20261020, width: width, height: height, blight: WorldBlight.Random);
             watch.Stop();
+            generationSeconds = watch.Elapsed.TotalSeconds;
             Console.WriteLine($"{name} {width}x{height}: {watch.Elapsed.TotalSeconds:0.00} s total, blight {sim.Blight}, " +
                               $"hearts {sim.Features!.Hearts.Count}, altars {sim.Features.Altars.Count}, zones {sim.Features.BlightZones.Count}, " +
                               $"life cores {sim.Features.LifeCores.Count}, caches {sim.Features.SupplyCaches.Count}, pods {sim.Features.SalvagePods.Count}, " +
@@ -119,7 +122,36 @@ public static class EngineBenchmark
         compressedJson = null;
         GC.KeepAlive(restored);
         Console.WriteLine($"Memory after load (old world and save text released): {Megabytes()} MiB managed; old world collected: {!oldWorld.IsAlive}");
-        return 0;
+        return args.Contains("--budget", StringComparer.OrdinalIgnoreCase)
+            ? Budget(generationSeconds, tickWatch.Elapsed.TotalMilliseconds / ticks, worst, titleMegabytes)
+            : 0;
+    }
+
+    /// <summary>
+    /// The soft performance budgets (roadmap 0.2.0 PE-20, for a Small world): generation 8 s, a tick 5 ms, the worst flood
+    /// tick 50 ms, and 450 MB before any world exists. Every number is reported (and written to the CI step summary);
+    /// only a value past twice its budget fails.
+    /// </summary>
+    public static int Budget(double generationSeconds, double tickMilliseconds, double floodWorstMilliseconds, double titleMegabytes)
+    {
+        var rows = new (string Name, double Value, double Limit, string Unit)[]
+        {
+            ("World generation", generationSeconds, 8, "s"), ("Tick", tickMilliseconds, 5, "ms"),
+            ("Worst tick in a flood", floodWorstMilliseconds, 50, "ms"), ("Memory before a world", titleMegabytes, 450, "MB")
+        };
+        var lines = new List<string> { "| Measure | Value | Budget | |", "|---|---|---|---|" };
+        var failed = false;
+        foreach (var (name, value, limit, unit) in rows)
+        {
+            var verdict = value <= limit ? "within" : value <= 2 * limit ? "over (soft)" : "over 2× (fails)";
+            failed |= value > 2 * limit;
+            lines.Add($"| {name} | {value:0.00} {unit} | {limit:0} {unit} | {verdict} |");
+        }
+        foreach (var line in lines)
+            Console.WriteLine(line);
+        if (Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY") is { Length: > 0 } summary)
+            File.AppendAllLines(summary, new[] { "### Engine bench (Small)", "" }.Concat(lines));
+        return failed ? 1 : 0;
     }
 
     /// <summary>Every feature count a detailed world records, on one line (structures, sites and scattered tallies).</summary>

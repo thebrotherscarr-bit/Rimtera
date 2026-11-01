@@ -398,6 +398,20 @@ public static class CoreSelfTests
               !MenuPauseRules.WorldRuns(shopScreen, autoPause: true),
             "Terraria's pause rules: with Autopause off a shop keeps the world running and the settings pause it; with it on, both pause");
 
+        // The art gate: clean against the sprites on disk; a sprite the game needs that git does not track is reported.
+        var assetRoot = AppContext.BaseDirectory;
+        var onDisk = Directory.Exists(ItemAudit.SpriteDirectory(assetRoot))
+            ? Directory.EnumerateFiles(ItemAudit.SpriteDirectory(assetRoot), "*.png").Select(Path.GetFileNameWithoutExtension).OfType<string>()
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var cleanAssets = AssetCheck.Problems(assetRoot, onDisk);
+        var dropped = SpriteCatalog.ForEnemy(EnemyKind.MossSlime);
+        var droppedResolved = SpriteAtlas.ResolveName(dropped, onDisk.Contains);
+        var withoutOne = AssetCheck.Problems(assetRoot, onDisk.Where(name => !string.Equals(name, droppedResolved, StringComparison.OrdinalIgnoreCase))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase));
+        Check(cleanAssets.Count == 0 && withoutOne.Any(problem => problem.Contains(droppedResolved, StringComparison.OrdinalIgnoreCase)),
+            $"the asset check is clean, and a needed sprite missing from git is reported ({string.Join("; ", cleanAssets.Take(3))})");
+
         var tempRoot = Path.Combine(Path.GetTempPath(), $"rimtera-ui-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempRoot);
         var profilesPath = Path.Combine(tempRoot, "profiles.json");

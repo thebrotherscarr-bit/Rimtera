@@ -69,6 +69,9 @@ if (args.Contains("--item-audit", StringComparer.OrdinalIgnoreCase))
 if (args.Contains("--craft-audit", StringComparer.OrdinalIgnoreCase))
     return CraftingAudit.Report(args);
 
+if (args.Contains("--asset-check", StringComparer.OrdinalIgnoreCase))
+    return AssetCheck.Report(args);
+
 if (args.Contains("--engine-bench", StringComparer.OrdinalIgnoreCase))
     return EngineBenchmark.Run(args);
 
