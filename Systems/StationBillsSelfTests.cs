@@ -180,25 +180,11 @@ public static class StationBillsSelfTests
               GameSimulation.Restore(gone.CaptureSnapshot()).Bills.Count == 0,
             "bills and fetched ingredients are saved with the world; a station that is gone takes its bills with it");
 
-        // ---- the Bills tab in the inventory hub, and Operate in the Work tab ----
+        // ---- 0.3.9: no Bills tab; nobody sets bills, the colony keeps its own stock ----
         var tabbed = Workshop(9709);
-        tabbed.Player.Motion.Position = new Vector2(Bench.X - 2f, Floor - tabbed.Player.Motion.Size.Y - 0.01f);
         var hub = new Rimtera.UI.InventoryUiState(tabbed.Player.Inventory, game: tabbed);
-        Rimtera.UI.UiButtonElement? Button(string id) =>
-            hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
-        Button("tab-bills")?.Command?.Invoke();
-        var hadAdd = Button("bills-add") is not null;
-        Button("bills-add")?.Command?.Invoke();
-        var addedBill = tabbed.BillsAt(Bench).FirstOrDefault();
-        var before = addedBill?.Target ?? 0;
-        Button("bill-0-more")?.Command?.Invoke();
-        Button("bill-0-mode")?.Command?.Invoke();
-        Button("bill-0-pause")?.Command?.Invoke();
-        var changed = addedBill is not null && addedBill.Target == before + 1 && addedBill.Mode == BillMode.UntilHave && addedBill.Suspended;
-        Button("bill-0-delete")?.Command?.Invoke();
-        Button("tab-work")?.Command?.Invoke();
-        var operateButton = Button($"work-{tabbed.Colonists[0].Id}-{WorkType.Operate}");
-        check(hadAdd && changed && tabbed.BillsAt(Bench).Count == 0 && operateButton is not null && WorkCatalog.Get(WorkType.Operate).HasJobs,
-            "the hub's Bills tab adds a bill at the station in reach, changes its count, mode and pause, and deletes it; the Work tab has Operate");
+        check(hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().All(button => button.Id is not ("tab-bills" or "bills-add")) &&
+              WorkCatalog.Get(WorkType.Operate).HasJobs,
+            "there is no Bills tab: stations keep their stock by themselves (StockingSelfTests), and Operate is still work people do");
     }
 }

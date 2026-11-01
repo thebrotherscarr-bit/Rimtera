@@ -189,10 +189,8 @@ public static class FarmingSelfTests
         Button("farm-zone-0-more")?.Command?.Invoke();
         var wider = added && ui.GrowZones[0].Width == 9;
         Button("farm-zone-0-delete")?.Command?.Invoke();
-        Button("tab-work")?.Command?.Invoke();
-        var id = ui.Colonists[0].Id;
-        check(added && herbChanged && wider && ui.GrowZones.Count == 0 &&
-              Button($"work-{id}-{WorkType.Farm}") is not null && Button($"work-{id}-{WorkType.Brew}") is not null,
-            "the hub's Farm tab marks a zone, cycles its herb, widens and removes it; the Work tab has Farm and Brew");
+        check(added && herbChanged && wider && ui.GrowZones.Count == 0 && Button("tab-work") is null &&
+              WorkCatalog.Get(WorkType.Farm).HasJobs && WorkCatalog.Get(WorkType.Brew).HasJobs,
+            "the hub's Farm tab marks a zone, cycles its herb, widens and removes it; Farm and Brew are work people choose by skill (no Work tab since 0.3.9)");
     }
 }

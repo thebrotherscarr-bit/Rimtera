@@ -583,7 +583,7 @@ public sealed partial class GameSimulation : IStoryHost
                     colonistSnapshot.RestReserve,
                     colonistSnapshot.JoyReserve,
                     colonistSnapshot.ComfortReserve);
-                agent.Work.Restore(colonistSnapshot.WorkPriorities);
+                // 0.3.9: no Work tab; people choose their work from their skills, so saved priorities are not restored.
                 agent.FollowsPlayer = colonistSnapshot.FollowsPlayer;
                 if (!colonistSnapshot.Carried.IsEmpty && game.Items.Contains(colonistSnapshot.Carried.ItemId))
                     agent.Carried = colonistSnapshot.Carried;
@@ -734,6 +734,7 @@ public sealed partial class GameSimulation : IStoryHost
         UpdateColonists(deltaSeconds, vitalHours);
         UpdateTownNpcs(deltaSeconds);
         UpdateResearch(deltaSeconds); // 0.3.7: the station AI studies the open research tier
+        UpdateStocking(deltaSeconds); // 0.3.9: labs and cooking stations keep healing and food in stock by themselves
         UpdateEnemies(deltaSeconds);
         UpdatePlayerSystems(deltaSeconds);
         UpdateContentPerTick(deltaSeconds);
