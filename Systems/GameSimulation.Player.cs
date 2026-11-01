@@ -74,10 +74,14 @@ public sealed record BannerTileSnapshot(int X, int Y, EnemyKind Kind);
 public sealed partial class GameSimulation
 {
     // ------------------------------------------------------------------ tuning
-    public const float BaseBreathSeconds = 12f;
-    public const float RebreatherBreathMultiplier = 3f;
+    /// <summary>Terraria's air: about 23 seconds under water, refilled within a second of surfacing.</summary>
+    public const float BaseBreathSeconds = 23f;
+    public const float RebreatherBreathMultiplier = 6f;
+    /// <summary>Hit points per second lost while drowning (Terraria's is about 17).</summary>
+    public const float DrownDamagePerSecond = 17f;
     public const float SafeFallTiles = 25f;
-    public const float FallDamagePerTile = 7f;
+    /// <summary>Terraria's fall damage: 10 per whole tile fallen beyond 25, measured from the highest point.</summary>
+    public const float FallDamagePerTile = 10f;
     /// <summary>Upward speed (tiles/s) given when swimming up out of a liquid with jump held.</summary>
     public const float LiquidExitBoost = 11.5f;
     public const float PotionSicknessSeconds = 45f;
@@ -442,11 +446,11 @@ public sealed partial class GameSimulation
         AfterMountMovement(movement, ref velocity);
         motion.Velocity = velocity;
 
-        // Fall damage: beyond 25 tiles, scaled; featherfall, flight gear, the mount and liquids negate it.
+        // Fall damage: 10 per tile beyond 25; featherfall, flight gear, the mount and liquids negate it.
         var fall = motion.LastLandingFallDistance;
-        if (fall > SafeFallTiles && !FallNegated())
+        if (FallDamage(fall) > 0f && !FallNegated())
         {
-            var damage = 10f + (fall - SafeFallTiles) * FallDamagePerTile;
+            var damage = FallDamage(fall);
             var applied = Player.TakeDamage(damage, DamageKind.Blunt);
             ReportPartLoss(Player, Player.LastDamage);
             if (applied > 0f)
@@ -459,6 +463,9 @@ public sealed partial class GameSimulation
         UpdateBreath(deltaSeconds);
         UpdateLiquidContact(deltaSeconds);
     }
+
+    /// <summary>Damage from a fall of <paramref name="tiles"/> (whole tiles beyond 25, ten each): 26 → 10, 30 → 50, 35 → 100.</summary>
+    public static float FallDamage(float tiles) => Math.Max(0f, MathF.Floor(tiles + 0.001f) - SafeFallTiles) * FallDamagePerTile;
 
     private bool FallNegated() =>
         IsMounted || HasTag("featherfall") || HasTag("flight") || HasTag("rocket-boots") ||
@@ -483,16 +490,16 @@ public sealed partial class GameSimulation
                 if (!_drownWarned)
                     PostMessage($"{Player.Name} is drowning!");
                 _drownWarned = true;
-                while (_drownTimer >= 0.5f)
+                while (_drownTimer >= 0.25f)
                 {
-                    _drownTimer -= 0.5f;
-                    Player.TakeDamage(6f, DamageKind.Toxin);
+                    _drownTimer -= 0.25f;
+                    Player.TakeDamage(DrownDamagePerSecond * 0.25f, DamageKind.Toxin);
                 }
             }
         }
         else
         {
-            _breath = Math.Min(maximum, _breath + deltaSeconds * 4f);
+            _breath = Math.Min(maximum, _breath + deltaSeconds * BaseBreathSeconds); // full air within about a second
             _drownTimer = 0f;
             _drownWarned = false;
         }

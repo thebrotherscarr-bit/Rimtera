@@ -300,6 +300,28 @@ public static class ModesSelfTests
             GameSimulation.FastClock = fast;
         }
 
+        // ---- 0.1.12: a bed in a proper room is the spawn point; without it, the landing site ----
+        var bedroom = NewGame(9316);
+        BuildRoom(bedroom, 20);
+        bedroom.World.SetTile(new GridPoint(30, 19), TileId.BunkBed);
+        bedroom.Regions.ForceFullRebuild();
+        bedroom.Player.Motion.Position = new Vector2(28.6f, 20f - bedroom.Player.Motion.Size.Y);
+        bedroom.Player.Motion.Velocity = Vector2.Zero;
+        bedroom.TrySleep();
+        var bedSet = bedroom.BedSpawn == new GridPoint(30, 19);
+        var bedKept = GameSimulation.Restore(bedroom.CaptureSnapshot()).BedSpawn == bedroom.BedSpawn;
+        bedroom.Player.Motion.Position = new Vector2(60f, bedroom.Player.Motion.Position.Y);
+        bedroom.Player.TakeDamage(1e6f);
+        Tick(bedroom, 2);
+        bedroom.RespawnPlayer(CharacterDifficulty.Classic);
+        var wokeInBed = MathF.Abs((bedroom.Player.Motion.Position.X + bedroom.Player.Motion.Size.X / 2f) - 30.5f) < 1.5f && MathF.Abs((bedroom.Player.Motion.Position.Y + bedroom.Player.Motion.Size.Y / 2f) - 18.5f) < 2f;
+        bedroom.World.SetTile(new GridPoint(30, 19), TileId.Air);
+        bedroom.Player.TakeDamage(1e6f);
+        Tick(bedroom, 2);
+        var lostMessage = bedroom.RespawnPlayer(CharacterDifficulty.Classic);
+        check(bedSet && bedKept && wokeInBed && lostMessage.Contains("missing or obstructed", StringComparison.Ordinal) && bedroom.BedSpawn is null,
+            "using a bed in a proper room sets the spawn point (saved with the world); the player respawns beside it, and at the landing site once it is gone");
+
         // ---- 0.1.11: moons end at dawn and day events at dusk; outlasting one is not clearing it ----
         var skies = new GameSimulation(seed: 9315, width: 80, height: 48) { FamilySpawnsEnabled = false };
         skies.Flags.Set("boss.stone_sentinel.down");

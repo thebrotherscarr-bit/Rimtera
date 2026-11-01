@@ -416,12 +416,31 @@ public sealed partial class GameSimulation : IWorldEventHost
 
     // ------------------------------------------------------------------ time, sleep and boundaries
 
-    /// <summary>Starts sleeping when the player stands by a bed at night; time runs ×4 until dawn or any action.</summary>
+    /// <summary>
+    /// Using a bed: as in Terraria, a bed in a valid room becomes the spawn point (day or night). At night the player
+    /// also sleeps there; time runs ×4 until dawn or any action.
+    /// </summary>
     public bool TrySleep()
     {
-        if (!IsNight || !NearTileWith(TileTraits.Bed, 2))
+        if (NearestTileWith(TileTraits.Bed, 2) is not { } bed)
         {
             PostMessage("You can only sleep in a bed at night.");
+            return false;
+        }
+        if (_bedSpawn != bed)
+        {
+            _regions.EnsureCurrent();
+            if (HousingValidator.Check(World, _regions, PlayerCell()).Valid)
+            {
+                _bedSpawn = bed;
+                PostMessage("Spawn point set.");
+            }
+            else
+                PostMessage("This bed is not in a proper room, so it can't be your spawn point.");
+        }
+        if (!IsNight)
+        {
+            PostMessage("You can only sleep at night.");
             return false;
         }
         if (EventBlocksSleep)
@@ -435,6 +454,42 @@ public sealed partial class GameSimulation : IWorldEventHost
     }
 
     public void WakeUp() => _sleeping = false;
+
+    /// <summary>The bed the player respawns beside, once set (Terraria's spawn point); null means the landing site.</summary>
+    private GridPoint? _bedSpawn;
+
+    public GridPoint? BedSpawn => _bedSpawn;
+
+    /// <summary>Where to stand beside the spawn bed, or null when it is gone or the space is blocked.</summary>
+    private Vector2? BedSpawnPosition()
+    {
+        if (_bedSpawn is not { } bed || !World.Contains(bed) || !ContentTiles.Has(World.TileAt(bed.X, bed.Y), TileTraits.Bed))
+            return null;
+        for (var y = bed.Y; y < Math.Min(World.Height - 1, bed.Y + 4); y++)
+        {
+            if (!Tiles[World.TileAt(bed.X, y + 1)].IsSolid)
+                continue;
+            var position = new Vector2(bed.X + 0.5f - Player.Motion.Size.X / 2f, y + 1 - Player.Motion.Size.Y);
+            return IsSolidActorPosition(position, Player.Motion.Size) ? null : position;
+        }
+        return null;
+    }
+
+    private GridPoint? NearestTileWith(TileTraits trait, int radius)
+    {
+        var cell = PlayerCell();
+        GridPoint? best = null;
+        var bestDistance = int.MaxValue;
+        for (var dy = -radius; dy <= radius; dy++)
+        for (var dx = -radius; dx <= radius; dx++)
+            if (World.Contains(cell.X + dx, cell.Y + dy) && ContentTiles.Has(World.TileAt(cell.X + dx, cell.Y + dy), trait) &&
+                dx * dx + dy * dy < bestDistance)
+            {
+                bestDistance = dx * dx + dy * dy;
+                best = new GridPoint(cell.X + dx, cell.Y + dy);
+            }
+        return best;
+    }
 
     private bool NearTileWith(TileTraits trait, int radius)
     {
