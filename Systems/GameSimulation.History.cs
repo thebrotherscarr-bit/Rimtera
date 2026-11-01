@@ -41,13 +41,21 @@ public sealed partial class GameSimulation
             new($"Day {Day} · Act {(int)act}: {ActName(act)}. {ActGoal(act)}"),
             new($"People: {people} living here{(prisoners > 0 ? $", {prisoners} held prisoner" : "")} · {Deaths} lost"),
             new(bosses.Length == 0 ? "Bosses defeated: none yet" : $"Bosses defeated ({bosses.Length}): {string.Join(", ", bosses)}"),
-            new($"Raids weathered: {RaidsWeathered} · invasions beaten: {invasions}"),
+            new($"Raids weathered: {RaidsWeathered} · invasions beaten: {invasions} · outposts founded: {OutpostsFounded}"),
             new($"Storyteller: {Storyteller.Name(_storyteller.Kind)}, threat ×{_storyteller.ThreatScale:0.##} · next threat about {threat * _storyteller.ThreatScale * (1f - _storyteller.Adaptation):0} points" +
                 (_storyteller.Adaptation > 0f ? $" (eased {_storyteller.Adaptation:P0} after losses)" : "")),
             new("Acts", Heading: true)
         };
         for (var passed = RunAct.Landfall; passed <= act; passed++)
             lines.Add(new($"Act {(int)passed}: {ActName(passed)} · " + (ActBeganDay(passed) is { } day ? $"began on day {day}" : "began earlier")));
+        // 0.7.1: the outposts, where they lie, and who guards them.
+        var outposts = Outposts;
+        lines.Add(new("Outposts", Heading: true));
+        if (outposts.Count == 0)
+            lines.Add(new(OutpostsFounded == 0 ? "None yet: move people to a house far from the base to found one." : "None standing now."));
+        foreach (var outpost in outposts)
+            lines.Add(new($"{outpost.Label} · {OutpostBearing(outpost)} · {outpost.People.Count} living there, " +
+                          (outpost.Guards == 0 ? "unguarded" : $"{outpost.Guards} armed")));
         lines.Add(new("Chronicle, newest first", Heading: true));
         if (_chronicle.Count == 0)
             lines.Add(new("Nothing has happened yet."));
