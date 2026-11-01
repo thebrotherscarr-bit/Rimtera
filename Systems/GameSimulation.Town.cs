@@ -335,7 +335,7 @@ public sealed partial class GameSimulation
             }
             if (attacker is not null)
                 HurtTownNpc(npc, attacker.AttackDamage);
-            else
+            else if (!(Eats(npc) && npc.Food <= 0f)) // 0.5.5: a starving body does not heal
                 npc.HitPoints = Math.Min(npc.MaximumHitPoints, npc.HitPoints + TownNpcRegenPerSecond * deltaSeconds);
         }
     }
@@ -362,6 +362,7 @@ public sealed partial class GameSimulation
                 continue;
             }
             var center = npc.Motion.Position + npc.Motion.Size / 2f;
+            UpdateHunger(npc, deltaSeconds); // 0.5.5: food is the one need
             if (npc.HomeCell is not null)
             {
                 if (npc.Work.Priority(WorkType.Guard) != WorkCatalog.Off)
@@ -406,6 +407,12 @@ public sealed partial class GameSimulation
                     npc.CurrentWork = null;
                     npc.Activity = "Taking cover";
                     StepColonistToward(npc, center, npc.HomePosition, deltaSeconds, 1.1f);
+                    continue;
+                }
+                // 0.5.5: below half food they eat from the chests near home (by night too), before working.
+                if (TryEatFromStorage(npc, center, deltaSeconds))
+                {
+                    npc.CurrentWork = null;
                     continue;
                 }
                 if (!shelter && TryColonyWork(npc, center, deltaSeconds, elapsedHours))
@@ -491,7 +498,7 @@ public sealed partial class GameSimulation
         var dx = target.X - center.X;
         var horizontal = MathF.Abs(dx) > 0.6f ? MathF.Sign(dx) : 0f;
         var jump = horizontal != 0f && npc.Motion.Grounded && IsGroundBlockedAhead(npc.Motion, horizontal);
-        pace *= LegFactor(npc.Injuries) * (npc.Bionics.Contains(BionicPart.Leg) ? 1.05f : 1f); // 0.5.3: a lost leg slows them; 0.5.4: a bionic one is quick
+        pace *= LegFactor(npc.Injuries) * (npc.Bionics.Contains(BionicPart.Leg) ? 1.05f : 1f) * HungerFactor(npc.Food); // 0.5.3: a lost leg slows them; 0.5.4: a bionic one is quick
         _colonistMovement.Step(npc.Motion, new MovementInput(horizontal, JumpPressed: jump, SpeedMultiplier: pace), deltaSeconds, World, Tiles);
     }
 
@@ -688,7 +695,8 @@ public sealed partial class GameSimulation
         CaptureResidentGear(npc), npc.Post?.X, npc.Post?.Y, npc.Childhood?.Id, npc.Adulthood?.Id,
         npc.CapturePractice().Any(value => value > 0f) ? npc.CapturePractice() : null,
         npc.Injuries.Count == 0 ? null : npc.Injuries.ToArray(),
-        npc.Bionics.Count == 0 ? null : npc.Bionics.ToArray())).ToArray();
+        npc.Bionics.Count == 0 ? null : npc.Bionics.ToArray(),
+        npc.Food < 1f ? npc.Food : null)).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -722,6 +730,7 @@ public sealed partial class GameSimulation
             npc.RestorePractice(saved.Practice);
             npc.RestoreInjuries(saved.Injuries);
             npc.RestoreBionics(saved.Bionics);
+            npc.Food = saved.Food is { } food && float.IsFinite(food) ? Math.Clamp(food, 0f, 1f) : 1f;
             RestoreResidentGear(npc, saved.Gear); // before the hit points: gear sets the maximum they are clamped to
             if (saved.PostX is { } px && saved.PostY is { } py && World.Contains(px, py) && npc.IsArmed)
                 npc.Post = new GridPoint(px, py);

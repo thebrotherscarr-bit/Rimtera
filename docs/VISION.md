@@ -137,7 +137,7 @@ launch you may continue the world, and the story from there is yours.
 | 0.5.2 | **Skills grow by doing.** A chemist gets better the more they brew. *(Done.)* |
 | 0.5.3 | **Health and lasting injuries.** Wounds land on body parts. A lost arm limits someone to one-handed work. *(Done.)* |
 | 0.5.4 | **Bionics.** Replacement limbs and implants, crafted and fitted. *(Done.)* |
-| 0.5.5 | **Food as the one need.** People eat from storage; going hungry slows them, then hurts them. |
+| 0.5.5 | **Food as the one need.** People eat from storage; going hungry slows them, then hurts them. *(Done.)* |
 | 0.5.6 | **Prisoners and conversion.** Down a raider, hold them in a cell, and recruit them. Send away anyone you'd rather not keep. |
 
 ### 4.3 0.6.0: The storyteller
