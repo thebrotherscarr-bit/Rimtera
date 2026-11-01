@@ -663,11 +663,11 @@ public sealed class InventoryUiState : UiState
         }
         var working = WorkCatalog.All.Where(info => info.HasJobs).ToArray();
         // A grid, as in RimWorld's work tab: one column per work type (headed by its first letters), then where they stay.
-        const float column = 34f;
+        const float column = 27f;
         if (crew.Length > 0)
         {
             for (var c = 0; c < working.Length; c++)
-                Add(new UiTextElement(working[c].Label[..Math.Min(5, working[c].Label.Length)], $"work-head-{working[c].Type}", new UiStyle
+                Add(new UiTextElement(working[c].Label[..Math.Min(4, working[c].Label.Length)], $"work-head-{working[c].Type}", new UiStyle
                 {
                     Left = UiLength.Mixed(-250f + c * column, 1f), Top = UiLength.Px(top + 24f), Width = UiLength.Px(column), Height = UiLength.Px(14f)
                 }) { Scale = 0.45f, Color = new UiColor(170, 178, 192) });
@@ -726,7 +726,7 @@ public sealed class InventoryUiState : UiState
             }) { TextScale = 0.5f, Color = npc.WorksStations ? UiColor.ButtonActive : UiColor.ButtonDefault });
             y2 += 26f;
         }
-        Add(new UiTextElement("Operate and Brew work the Bills tab's bills (Brew at chem labs); Farm works the Farm tab's zones. Cook, fish, build, research and trade come later.",
+        Add(new UiTextElement("Operate, Brew and Cook work the Bills tab's bills (chem labs brew, cooking stations cook); Farm works the Farm tab's zones; Fish fishes water near home. Hungry crew eat from the chests near home.",
             "work-later", new UiStyle
             {
                 Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y2 + 4f), Width = UiLength.Px(240f), Height = UiLength.Px(32f)

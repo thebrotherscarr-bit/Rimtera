@@ -160,15 +160,7 @@ public sealed partial class GameSimulation
         // A full load, or herbs in hand and nothing left to harvest: take them to storage, one stack at a time.
         var produce = Produce(agent.Pouch);
         if (produce > 0 && (produce >= HarvestLoad || harvest is null))
-        {
-            var (item, count) = agent.Pouch.First(pair => IsSeed(pair.Key) ? pair.Value > SeedsKept : pair.Value > 0);
-            var take = IsSeed(item) ? count - SeedsKept : count;
-            Unpouch(agent, item, take);
-            agent.Carried = new ItemStack(item, take);
-            agent.FarmTarget = null;
-            agent.Activity = $"Taking {Items[item].Name} to storage";
-            return true;
-        }
+            return UnloadPouch(agent);
 
         if (harvest is { } ripe)
             return WorkCell(agent, center, deltaSeconds, ripe, $"Harvesting {Tiles[World.TileAt(ripe.X, ripe.Y)].Name.ToLowerInvariant()}", Move, () => Harvest(agent, ripe));

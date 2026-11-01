@@ -1394,6 +1394,9 @@ public sealed partial class GameSimulation : IStoryHost
             var urgentNeed = agent.Needs.RestReserve < 0.35f || agent.Needs.FoodReserve < 0.35f;
             if (!urgentNeed && (!agent.FollowsPlayer || distance <= 9f) && TryColonyWork(agent, center, deltaSeconds, elapsedHours))
                 continue;
+            // 0.2.6: a hungry colonist at home eats from the chests near home (meals first) before foraging.
+            if ((!agent.FollowsPlayer || distance <= 9f) && TryEatFromStorage(agent, center, deltaSeconds))
+                continue;
 
             if (agent.FollowsPlayer && distance > 9f)
             {
