@@ -1714,6 +1714,7 @@ public static class CoreSelfTests
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         BalanceSelfTests.Run(Check); // 0.2.0 A: the boss curve (--boss-balance), the 60-180 s band and D-6 difficulty scaling (PC-15, BO-23)
+        SpriteMemorySelfTests.Run(Check); // 0.2.2 (0.1.7 A2, PE-2): lazy sprite loading: an index at load, decoded and scaled LRUs with byte budgets
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }

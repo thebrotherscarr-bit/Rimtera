@@ -198,6 +198,7 @@ public static partial class GraphicalSandbox
             var sprite = SpriteCatalog.ForTile(cell.TileId);
             var art = _tileArt ??= new TileArt(_sprites);
             art.UseSize(TileSize);
+            _sprites.UseZoom(TileSize);
             var shaped = cell.Shape != TileShape.Full && TilePhysics.IsShapeable(cell.TileId, game.Tiles);
             if (!shaped)
             {

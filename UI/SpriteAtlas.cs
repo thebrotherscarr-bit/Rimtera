@@ -15,10 +15,26 @@ namespace Rimtera.UI;
 /// </summary>
 internal sealed class SpriteAtlas : IDisposable
 {
-    private readonly Dictionary<string, Bitmap> _sprites = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<(string Name, int Width, int Height, bool Flip), Bitmap> _scaled = new();
-    private readonly HashSet<string> _opaque = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>PE-2: decoded sprites kept in memory (4 bytes a pixel). All 6,800 decoded at once came to about 640 MB.</summary>
+    public const long DecodedBudgetBytes = 192L << 20;
+    /// <summary>PE-2: scaled and flipped copies kept in memory.</summary>
+    public const long ScaledBudgetBytes = 64L << 20;
 
+    /// <summary>One sprite file on disk: its path and size from the PNG header (nothing is decoded at load).</summary>
+    internal readonly record struct SpriteFile(string Path, int Width, int Height);
+
+    private readonly Dictionary<string, SpriteFile> _files = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, (string Source, Func<Color, Color> Recolor)> _variants = new(StringComparer.OrdinalIgnoreCase);
+    private readonly SpriteCache<string, Bitmap> _decoded = new(DecodedBudgetBytes, bitmap => bitmap.Dispose(), StringComparer.OrdinalIgnoreCase);
+    private readonly SpriteCache<(string Name, int Width, int Height, bool Flip), Bitmap> _scaled = new(ScaledBudgetBytes, bitmap => bitmap.Dispose());
+    private readonly HashSet<string> _opaque = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _broken = new(StringComparer.OrdinalIgnoreCase);
+    private int _zoom;
+
+    /// <summary>
+    /// PE-2: indexes every PNG in the sprite folder (name, path, size from the header) without decoding any.
+    /// Sprites decode on first <see cref="Get"/>, into an LRU bounded by <see cref="DecodedBudgetBytes"/>.
+    /// </summary>
     public static SpriteAtlas Load(string? directory = null)
     {
         var atlas = new SpriteAtlas();
@@ -26,34 +42,60 @@ internal sealed class SpriteAtlas : IDisposable
         if (!Directory.Exists(directory))
             return atlas;
         foreach (var file in Directory.EnumerateFiles(directory, "*.png"))
-        {
-            try
-            {
-                using var source = new Bitmap(file);
-                var copy = new Bitmap(source.Width, source.Height, PixelFormat.Format32bppPArgb);
-                using (var g = Graphics.FromImage(copy))
-                    g.DrawImage(source, 0, 0, source.Width, source.Height);
-                var name = Path.GetFileNameWithoutExtension(file);
-                atlas._sprites[name] = copy;
-                if (IsFullyOpaque(source))
-                    atlas._opaque.Add(name);
-            }
-            catch (Exception exception) when (exception is ArgumentException or IOException or OutOfMemoryException)
-            {
-                // A damaged sprite falls back to flat-colour drawing.
-            }
-        }
+            // A file without a readable PNG header is left out, as a damaged sprite was before: callers fall back to flat colour.
+            if (AssetCheck.PngSize(file) is var (width, height) && width > 0 && height > 0)
+                atlas._files[Path.GetFileNameWithoutExtension(file)] = new SpriteFile(file, width, height);
         return atlas;
     }
 
-    public int Count => _sprites.Count;
+    /// <summary>Sprites on disk (the index), decoded or not.</summary>
+    public int Count => _files.Count;
+    /// <summary>Sprites (and recoloured variants) decoded and held now.</summary>
+    public int DecodedCount => _decoded.Count;
+    public long DecodedBytes => _decoded.Bytes;
+    public long ScaledBytes => _scaled.Bytes;
+    public int ScaledCount => _scaled.Count;
+
+    /// <summary>Whether a sprite (or registered variant) of exactly this name exists. Index only: decodes nothing.</summary>
+    public bool Exists(string name) => _files.ContainsKey(name) || _variants.ContainsKey(name);
+
+    /// <summary>A sprite's pixel size from its PNG header (or its variant's source), without decoding it.</summary>
+    public Size? SizeOf(string? name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return null;
+        var key = Exists(name) ? name : Resolve(name);
+        if (_variants.TryGetValue(key, out var recipe))
+            key = recipe.Source;
+        return _files.TryGetValue(key, out var file) ? new Size(file.Width, file.Height) : null;
+    }
+
+    /// <summary>
+    /// PE-2: starts a new frame. Bitmaps handed out during the previous frame may now be evicted (anything handed
+    /// out in the current frame stays pinned), and evicted bitmaps retired long enough ago are disposed.
+    /// </summary>
+    public void BeginFrame()
+    {
+        _decoded.BeginFrame();
+        _scaled.BeginFrame();
+    }
+
+    /// <summary>Drops every scaled copy when the tile size (zoom) changes, as <see cref="TileArt.UseSize"/> does.</summary>
+    public void UseZoom(int tileSize)
+    {
+        if (tileSize == _zoom)
+            return;
+        if (_zoom != 0)
+            _scaled.Clear();
+        _zoom = tileSize;
+    }
 
     /// <summary>Prefixes used by the generated sheets (tools/sprites/grid_sheets.py), tried in order.</summary>
     internal static readonly string[] SheetPrefixes =
         ["", "weapon_", "tech_", "cmd_", "armor_", "ammo_", "item_", "tool_", "station_", "furn_", "struct_", "npc_", "critter_", "event_", "creature_", "boss_", "minion_", "sentry_", "deco_", "flora_"];
 
     /// <summary>The first existing sprite among name and prefixed variants, or the name itself.</summary>
-    public string Resolve(string? name) => string.IsNullOrEmpty(name) ? string.Empty : ResolveName(name, _sprites.ContainsKey);
+    public string Resolve(string? name) => string.IsNullOrEmpty(name) ? string.Empty : ResolveName(name, Exists);
 
     /// <summary><see cref="Resolve"/> against any sprite set (the item audit checks the files on disk).</summary>
     internal static string ResolveName(string name, Func<string, bool> exists)
@@ -64,28 +106,70 @@ internal sealed class SpriteAtlas : IDisposable
         return name;
     }
 
-    /// <summary>Resolves a convention name, or null when no prefix variant exists.</summary>
+    /// <summary>Resolves a convention name, or null when no prefix variant exists. Index only: decodes nothing.</summary>
     public string? Find(string? name)
     {
         var resolved = Resolve(name);
-        return _sprites.ContainsKey(resolved) ? resolved : null;
+        return resolved.Length > 0 && Exists(resolved) ? resolved : null;
     }
 
-    public Bitmap? Get(string? name) => name is not null && (_sprites.TryGetValue(name, out var bitmap) || _sprites.TryGetValue(Resolve(name), out bitmap)) ? bitmap : null;
+    /// <summary>The decoded sprite, decoding it on first use (PE-2). Valid at least until the next frame begins.</summary>
+    public Bitmap? Get(string? name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return null;
+        var key = Exists(name) ? name : Resolve(name);
+        if (_decoded.TryGet(key, out var bitmap))
+            return bitmap;
+        if (!Exists(key) || _broken.Contains(key) || Decode(key) is not { } decoded)
+            return null;
+        _decoded.Add(key, decoded, 4L * decoded.Width * decoded.Height);
+        return decoded;
+    }
+
+    private Bitmap? Decode(string name)
+    {
+        if (_variants.TryGetValue(name, out var recipe))
+            return Get(recipe.Source) is { } source ? Recolor(source, recipe.Recolor) : null;
+        if (!_files.TryGetValue(name, out var file))
+            return null;
+        try
+        {
+            using var source = new Bitmap(file.Path);
+            var copy = new Bitmap(source.Width, source.Height, PixelFormat.Format32bppPArgb);
+            using (var g = Graphics.FromImage(copy))
+                g.DrawImage(source, 0, 0, source.Width, source.Height);
+            if (IsFullyOpaque(source))
+                _opaque.Add(name);
+            return copy;
+        }
+        catch (Exception exception) when (exception is ArgumentException or IOException or OutOfMemoryException)
+        {
+            // A damaged sprite falls back to flat-colour drawing (and is not retried every frame).
+            _broken.Add(name);
+            return null;
+        }
+    }
 
     /// <summary>
     /// Registers (once) a per-pixel recolour of a sprite as "name#key" and returns that name.
     /// Only fully opaque pixels are recoloured so anti-aliased edges keep their original tint.
-    /// Returns the original name when the source sprite is missing.
+    /// Returns the original name when the source sprite is missing. The recolour runs on first use, and again
+    /// if the variant was evicted.
     /// </summary>
     public string Variant(string name, string key, Func<Color, Color> recolor)
     {
         var variantName = $"{name}#{key}";
-        if (_sprites.ContainsKey(variantName))
+        if (_variants.ContainsKey(variantName))
             return variantName;
-        if (Get(name) is not { } source)
+        if (Find(name) is not { } source)
             return name;
+        _variants[variantName] = (source, recolor);
+        return variantName;
+    }
 
+    private static Bitmap Recolor(Bitmap source, Func<Color, Color> recolor)
+    {
         using var editable = new Bitmap(source.Width, source.Height, PixelFormat.Format32bppArgb);
         using (var g = Graphics.FromImage(editable))
             g.DrawImage(source, 0, 0, source.Width, source.Height);
@@ -111,19 +195,21 @@ internal sealed class SpriteAtlas : IDisposable
         var result = new Bitmap(source.Width, source.Height, PixelFormat.Format32bppPArgb);
         using (var g = Graphics.FromImage(result))
             g.DrawImage(editable, 0, 0, source.Width, source.Height);
-        _sprites[variantName] = result;
-        return variantName;
+        return result;
     }
 
-    /// <summary>Returns the sprite scaled to exactly width x height, cached.</summary>
+    /// <summary>Returns the sprite scaled to exactly width x height, cached (bounded by <see cref="ScaledBudgetBytes"/>).</summary>
     public Bitmap? GetScaled(string? name, int width, int height, bool flip = false)
     {
-        if (Get(name) is not { } source || width <= 0 || height <= 0)
+        if (string.IsNullOrEmpty(name) || width <= 0 || height <= 0)
             return null;
-        name = _sprites.ContainsKey(name!) ? name : Resolve(name);
-        var key = (name!, width, height, flip);
-        if (_scaled.TryGetValue(key, out var cached))
+        name = Exists(name) ? name : Resolve(name);
+        var key = (name, width, height, flip);
+        // A cached scaled copy does not need its source decoded (or kept) at all.
+        if (_scaled.TryGet(key, out var cached))
             return cached;
+        if (Get(name) is not { } source)
+            return null;
 
         var scaled = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
         using (var g = Graphics.FromImage(scaled))
@@ -142,9 +228,9 @@ internal sealed class SpriteAtlas : IDisposable
         }
         // Resampling leaves faintly transparent edge texels; tiles that were solid must stay solid,
         // otherwise the sky shows through as specks where four tiles meet.
-        if (_opaque.Contains(name!))
+        if (_opaque.Contains(name))
             ForceOpaque(scaled);
-        _scaled[key] = scaled;
+        _scaled.Add(key, scaled, 4L * width * height);
         return scaled;
     }
 
@@ -186,7 +272,7 @@ internal sealed class SpriteAtlas : IDisposable
     /// <summary>Scales a sprite to fit inside a box while keeping its aspect ratio.</summary>
     public Bitmap? GetFitted(string? name, int maxWidth, int maxHeight, bool flip = false)
     {
-        if (Get(name) is not { } source || maxWidth <= 0 || maxHeight <= 0)
+        if (SizeOf(name) is not { } source || maxWidth <= 0 || maxHeight <= 0)
             return null;
         var scale = Math.Min(maxWidth / (float)source.Width, maxHeight / (float)source.Height);
         return GetScaled(name, Math.Max(1, (int)(source.Width * scale)), Math.Max(1, (int)(source.Height * scale)), flip);
@@ -194,12 +280,8 @@ internal sealed class SpriteAtlas : IDisposable
 
     public void Dispose()
     {
-        foreach (var bitmap in _scaled.Values)
-            bitmap.Dispose();
-        foreach (var bitmap in _sprites.Values)
-            bitmap.Dispose();
-        _scaled.Clear();
-        _sprites.Clear();
+        _scaled.ReleaseAll();
+        _decoded.ReleaseAll();
     }
 }
 

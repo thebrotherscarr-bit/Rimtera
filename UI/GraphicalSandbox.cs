@@ -1983,6 +1983,8 @@ public static partial class GraphicalSandbox
         {
             var g = e.Graphics;
             _profiler.Begin();
+            // PE-2: sprites used last frame may now be evicted; anything fetched during this frame stays pinned.
+            _sprites.BeginFrame();
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.NearestNeighbor;
             g.Clear(Color.FromArgb(12, 14, 22));
@@ -2194,7 +2196,7 @@ public static partial class GraphicalSandbox
             var walkerColumn = (int)(width * 0.36f / tile);
             if (surfaces.TryGetValue(walkerColumn, out var walkerGround))
             {
-                var animated = _sprites.Get("anim_walk_1") is not null;
+                var animated = _sprites.Find("anim_walk_1") is not null;
                 var frame = animated ? $"anim_walk_{(int)(time * 9) % 8 + 1}"
                     : ((int)(time * 6) & 1) == 0 ? "colonist_side_a" : "colonist_side_b";
                 DrawPropOnGround(g, frame, width * 0.36f, walkerGround, 70, 96, flip: !animated);
@@ -2338,7 +2340,7 @@ public static partial class GraphicalSandbox
             var viewH = Math.Max(1, (Height - HudHeight) / TileSize + 2);
             _viewStartX = startX + offsetX / (float)TileSize;
             _viewStartY = startY + offsetY / (float)TileSize;
-            _animator.HasAnimationFrames = _sprites.Get("anim_walk_1") is not null;
+            _animator.HasAnimationFrames = _sprites.Find("anim_walk_1") is not null;
             _animator.ShowDamageNumbers = _menu.Preferences.DamageNumbers;
             _animator.ParticleScale = (int)_menu.Preferences.Particles;
             _animator.Update(game, now, frameDelta);
@@ -2650,7 +2652,7 @@ public static partial class GraphicalSandbox
             var maxW = (int)MathF.Max(6f, boxW * scale * 1.6f);
             var maxH = (int)MathF.Max(6f, boxH * scale);
             Bitmap? bitmap;
-            if (reference is not null && _sprites.Get(reference) is { } model && _sprites.Get(sprite) is { } frame)
+            if (reference is not null && _sprites.SizeOf(reference) is { } model && _sprites.SizeOf(sprite) is { } frame)
             {
                 var fit = MathF.Min(maxW / (float)model.Width, maxH / (float)model.Height);
                 bitmap = _sprites.GetScaled(sprite, Math.Max(1, (int)MathF.Round(frame.Width * fit)), Math.Max(1, (int)MathF.Round(frame.Height * fit)), flip);
