@@ -281,7 +281,7 @@ public static class TownNpcCatalog
              "Heart fragments refine viridium. Overseer circuits forge the trio."]);
         yield return new(TownNpcKind.Quartermaster, "Quartermaster", "npc_store_clerk", ["Dorrin Vask", "Imke Oyelaran", "Pell Hatchway"],
             [(BiomeZone.Grassland, Affection.Love), (BiomeZone.JunkWasteland, Affection.Dislike)],
-            [(TownNpcKind.Cook, Affection.Like), (TownNpcKind.TradeConsul, Affection.Dislike)],
+            [(TownNpcKind.Cook, Affection.Like), (TownNpcKind.Demolitionist, Affection.Dislike)],
             [(ItemId.Berry, null), (ItemId.WallTorch, null), (ItemId.RopeCoil, null), (ItemId.WoodBlock, null), (ItemId.FerriteBar, null),
              (ItemId.PlankChair, null), (ItemId.PlankTable, null), (ItemId.PlankDoor, null), (ItemId.BugNet, null), (ItemId.FishingRod, null),
              (ItemId.EmptyBucket, null), (ItemId.GlowSticks, null), (ItemId.CompanionPermit, null),
@@ -361,7 +361,7 @@ public static class TownNpcCatalog
             ["If it rattles, it works. If it stops rattling, run.", "Your drones need oil. And love."], Survivor: true);
         yield return new(TownNpcKind.Pilot, "Pilot", "npc_pilot", ["Skye Morrow", "Dax Ilunga"],
             [(BiomeZone.Grassland, Affection.Love), (BiomeZone.Caverns, Affection.Hate)],
-            [(TownNpcKind.TradeConsul, Affection.Like), (TownNpcKind.Armorer, Affection.Dislike)],
+            [(TownNpcKind.Aeronaut, Affection.Like), (TownNpcKind.Armorer, Affection.Dislike)],
             [(ItemId.RocketPack, "ore.voidsteel"), (ItemId.GliderWings, null), (ItemId.DoubleJumpCanister, null), (ItemId.GrappleHook, null)],
             ["Nothing beats open sky.", "Pirates fly old hulls. Shoot the engines."], Survivor: true);
         yield return new(TownNpcKind.Cook, "Cook", "npc_cook", ["Mama Teodora", "Chef Kwame"],

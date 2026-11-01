@@ -45,7 +45,7 @@ public static class ContentFillTown
         yield return new(TownNpcKind.TravellingMerchant, "Travelling Merchant", "npc_travelling_merchant",
             ["Quill Marrow", "Ondine Faraday", "Barnaby Keel", "Tess Voorhees"],
             [(BiomeZone.Grassland, Affection.Like), (BiomeZone.Caverns, Affection.Dislike)],
-            [(TownNpcKind.TradeConsul, Affection.Dislike), (TownNpcKind.Quartermaster, Affection.Like)],
+            [(TownNpcKind.Demolitionist, Affection.Dislike), (TownNpcKind.Quartermaster, Affection.Like)],
             MerchantPool,
             ["Fresh off the transit line. What I carry today is gone by dusk.", "Never the same crate twice. That is the charm.",
              "Credits only. Barter makes my ledger itch."]);

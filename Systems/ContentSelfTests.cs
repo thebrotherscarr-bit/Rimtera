@@ -319,7 +319,7 @@ public static class ContentSelfTests
         var quartermaster = town.TownNpcs.First(npc => npc.Kind == TownNpcKind.Quartermaster);
         var calmPrice = town.GetShop(quartermaster).First(offer => offer.Item == ItemId.WallTorch).Price;
         var calmMultiplier = town.GetPriceMultiplier(quartermaster);
-        town.AddTownNpc(TownNpcKind.TradeConsul, quartermaster.Motion.Position + new Vector2(1f, 0f), bound: false);
+        town.AddTownNpc(TownNpcKind.Demolitionist, quartermaster.Motion.Position + new Vector2(1f, 0f), bound: false);
         var grumpyMultiplier = town.GetPriceMultiplier(quartermaster);
         town.AddTownNpc(TownNpcKind.Cook, quartermaster.Motion.Position + new Vector2(-1f, 0f), bound: false);
         town.AddTownNpc(TownNpcKind.Cook, quartermaster.Motion.Position + new Vector2(-2f, 0f), bound: false);
