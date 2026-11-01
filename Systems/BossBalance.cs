@@ -106,7 +106,7 @@ public static class BossBalance
     {
         ArgumentNullException.ThrowIfNull(audit);
         if (audit.BossReach.TryGetValue(kind, out var reach))
-            return reach;
+            return Math.Max(reach, LifecycleFloor(kind, audit));
         var fracture = audit.FractureStage; // the stage the Tyrant's fall opens (other pre-Fracture bosses may come between, PC-7)
         var row = CreatureCoverageData.Creatures.FirstOrDefault(entry => entry.Kind == kind);
         if (row is null)
@@ -119,6 +119,22 @@ public static class BossBalance
             audit.EventReach.TryGetValue(eventKind, out var eventStage))
             return Math.Max(floor, eventStage);
         return floor;
+    }
+
+    /// <summary>
+    /// 0.2.2 stream C: the game's own lifecycle gates that put a boss later than its first summon. PC-1: the Moon Eater (its
+    /// lure refuses and the Rust Moon brings no boss) only after the Fracture; PC-2: the Protocol Dragon only ends a Defense
+    /// Protocol once the Vault Colossus has fallen. A no-op once the crafting audit models the same gates.
+    /// </summary>
+    public static int LifecycleFloor(EnemyKind kind, CraftingAudit.Result audit)
+    {
+        ArgumentNullException.ThrowIfNull(audit);
+        return kind switch
+        {
+            EnemyKind.MoonEater => DefeatStage(GameSimulation.CoreGateBoss, audit),
+            EnemyKind.ProtocolDragon => DefeatStage(EnemyKind.VaultColossus, audit),
+            _ => 0
+        };
     }
 
     /// <summary>

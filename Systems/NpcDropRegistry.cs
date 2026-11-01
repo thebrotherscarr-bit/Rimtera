@@ -234,7 +234,13 @@ public static class NpcDropRegistry
         [EnemyKind.BloomMatriarch] = Drops(EnemyKind.BloomMatriarch, (ItemId.HiveStingerRapier, 1), (ItemId.HiveFamiliar, 1)),
         [EnemyKind.PrismEmpress] = Drops(EnemyKind.PrismEmpress, (ItemId.PrismShard, 25), (ItemId.LumeniteBar, 10), (ItemId.CrystalCrate, 2)),
         [EnemyKind.VaultColossus] = Drops(EnemyKind.VaultColossus, (ItemId.PrecursorRelic, 2), (ItemId.AncientPowerCell, 4), (ItemId.AstralHalo, 1)),
-        [EnemyKind.MoonEater] = Drops(EnemyKind.MoonEater, (ItemId.VoidEssence, 6), (ItemId.Credits, 150)),
+        // PC-1: void essence is a post-Fracture material; a Moon Eater felled before it (it can no longer come then) sheds rust scrap.
+        [EnemyKind.MoonEater] =
+        [
+            new NpcDropDefinition(EnemyKind.MoonEater, ItemId.VoidEssence, 6) { Conditions = DropCondition.Fracture },
+            new NpcDropDefinition(EnemyKind.MoonEater, ItemId.OxidizedShard, 6) { Conditions = DropCondition.PreFracture },
+            new NpcDropDefinition(EnemyKind.MoonEater, ItemId.Credits, 150)
+        ],
         [EnemyKind.EclipseLord] = Drops(EnemyKind.EclipseLord, (ItemId.VoidEssence, 10), (ItemId.EclipseOrb, 1)),
         [EnemyKind.ScavengerWarlord] = Drops(EnemyKind.ScavengerWarlord, (ItemId.MechCompanionKey, 1), (ItemId.ScrapCrate, 3)),
         [EnemyKind.PirateDreadnought] = Drops(EnemyKind.PirateDreadnought, (ItemId.AlloyCrate, 3), (ItemId.Credits, 400)),

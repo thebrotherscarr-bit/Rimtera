@@ -64,7 +64,10 @@ public interface IWorldEventHost
     int TownNpcCount { get; }
     /// <summary>Spawns <paramref name="count"/> creatures from the roster near the player, tagged with the event.</summary>
     int SpawnEventCreatures(WorldEventKind kind, IReadOnlyList<(EnemyKind Kind, float Weight)> roster, int count);
-    /// <summary>Spawns a boss tagged with the event; returns false if one is already active.</summary>
+    /// <summary>
+    /// Spawns the event's finale (a boss, or a tier's mini-boss) tagged with the event through the one boss spawn path
+    /// (BO-9); a living boss of the same kind is adopted instead. Returns false when no finale could come.
+    /// </summary>
     bool SpawnEventBoss(WorldEventKind kind, EnemyKind boss);
     void GrantRewards(IReadOnlyList<(ItemId Item, int Count)> rewards);
     void Announce(string message);
@@ -93,9 +96,31 @@ public sealed record WorldEventSpec(
     EnemyKind? FinalBoss = null,
     (ItemId Item, int Count)[]? Rewards = null,
     int CooldownDays = 2,
-    bool SheltersTown = false)
+    bool SheltersTown = false,
+    bool NoExpiry = false,
+    Func<IWorldEventHost, bool>? FinalBossGate = null,
+    EventTier[]? Tiers = null,
+    Func<IWorldEventHost, int>? TierOf = null)
 {
     public bool IsInvasion => Waves > 0;
+
+    /// <summary>
+    /// PC-1 (D-3, D-24): when set and false, the event's <see cref="FinalBoss"/> does not come; a quota event completes on
+    /// its quota with its rewards instead. The Rust Moon's gate is the Fracture.
+    /// </summary>
+    public bool FinalBossAllowed(IWorldEventHost host) => FinalBossGate?.Invoke(host) ?? true;
+
+    /// <summary>PC-2: the tier a fresh start picks (0 when the event is not tiered).</summary>
+    public int StartTier(IWorldEventHost host) =>
+        Tiers is { Length: > 0 } tiers && TierOf is { } pick ? Math.Clamp(pick(host), 0, tiers.Length - 1) : 0;
+
+    /// <summary>The waves of a running state (its tier's, or the spec's).</summary>
+    public int WavesFor(ActiveEventState state) =>
+        Tiers is { Length: > 0 } tiers ? tiers[Math.Clamp(state.Tier, 0, tiers.Length - 1)].Waves : Waves;
+
+    /// <summary>The finale of a running state (its tier's, or the spec's <see cref="FinalBoss"/>).</summary>
+    public EnemyKind? FinaleFor(ActiveEventState state) =>
+        Tiers is { Length: > 0 } tiers ? tiers[Math.Clamp(state.Tier, 0, tiers.Length - 1)].Finale : FinalBoss;
     public string FlagName => "event." + WorldFlags.Key(Kind) + ".cleared";
 
     /// <summary>
@@ -116,7 +141,12 @@ public sealed record WorldEventSpec(
     public bool ClearsOnTimeout => EndsAt is null && !IsInvasion && KillsPerWave == 0;
 }
 
-/// <summary>Live state of one running event (saved).</summary>
+/// <summary>
+/// One progression tier of a tiered invasion (PC-2): how many waves it runs and the finale that ends it (null: waves only).
+/// </summary>
+public sealed record EventTier(int Waves, EnemyKind? Finale);
+
+/// <summary>Live state of one running event (saved). <paramref name="Tier"/> indexes <see cref="WorldEventSpec.Tiers"/> (0 in old saves).</summary>
 public sealed record ActiveEventState(
     WorldEventKind Kind,
     float HoursLeft,
@@ -124,7 +154,8 @@ public sealed record ActiveEventState(
     int Kills,
     int KillsNeeded,
     bool BossSpawned,
-    bool Forced);
+    bool Forced,
+    int Tier = 0);
 
 /// <summary>Progress line for a UI bar.</summary>
 public readonly record struct WorldEventProgress(WorldEventKind Kind, string Name, float Progress, int Wave, int Waves, float HoursLeft,
@@ -167,12 +198,12 @@ public sealed class WorldEventSystem
         float progress;
         if (spec.IsInvasion)
             progress = Math.Clamp((state.Wave - 1 + (state.KillsNeeded == 0 ? 1f : state.Kills / (float)state.KillsNeeded)) /
-                                  (spec.Waves + (spec.FinalBoss is null ? 0 : 1)), 0f, 1f);
+                                  (spec.WavesFor(state) + (spec.FinaleFor(state) is null ? 0 : 1)), 0f, 1f);
         else if (spec.KillsPerWave > 0)
             progress = Math.Clamp(state.Kills / (float)Math.Max(1, state.KillsNeeded), 0f, 1f);
         else
             progress = Math.Clamp(1f - state.HoursLeft / Math.Max(0.01f, spec.DurationHours), 0f, 1f);
-        return new WorldEventProgress(state.Kind, spec.Name, progress, state.Wave, spec.Waves, state.HoursLeft, spec.Category);
+        return new WorldEventProgress(state.Kind, spec.Name, progress, state.Wave, spec.WavesFor(state), state.HoursLeft, spec.Category);
     }).ToArray();
 
     /// <summary>Spawn multipliers and whether hostile spawning is suppressed.</summary>
@@ -266,7 +297,7 @@ public sealed class WorldEventSystem
             return false;
         var spec = _specs[kind];
         var state = new ActiveEventState(kind, spec.DurationHours, spec.IsInvasion ? 1 : 0, 0,
-            spec.IsInvasion ? spec.KillsPerWave : spec.KillsPerWave, false, forced);
+            spec.KillsPerWave, false, forced, spec.StartTier(host));
         _active.Add(state);
         host.Announce($"Event started: {spec.Name}.");
         if (spec.Category == WorldEventCategory.Weather)
@@ -289,7 +320,8 @@ public sealed class WorldEventSystem
             Replace(state, next);
             // Invasions end by clearing waves, not by time (they give up after a long while). Moons end at dawn and day
             // events at dusk, whatever time they have left. Neither way counts as a clear unless the event clears on timeout.
-            var expired = next.HoursLeft <= 0f && (!spec.IsInvasion || next.HoursLeft <= -spec.DurationHours * 2f) ||
+            // EV-1: NoExpiry events (the obelisk sieges) never time out.
+            var expired = !spec.NoExpiry && next.HoursLeft <= 0f && (!spec.IsInvasion || next.HoursLeft <= -spec.DurationHours * 2f) ||
                           boundary is { } passed && spec.EndsAt == passed;
             if (expired)
                 End(next, host, completed: spec.ClearsOnTimeout);
@@ -334,7 +366,8 @@ public sealed class WorldEventSystem
         if (state is null)
             return;
         var spec = _specs[kind];
-        if (wasBoss && spec.FinalBoss == killed)
+        // The finale ends the event: a boss, or (PC-2) a tier's mini-boss once the waves are through.
+        if (spec.FinaleFor(state) is { } finale && killed == finale && (wasBoss || state.BossSpawned))
         {
             End(state, host, completed: true);
             return;
@@ -346,30 +379,51 @@ public sealed class WorldEventSystem
         if (next.Kills < next.KillsNeeded)
             return;
 
+        var waves = spec.WavesFor(next);
         if (spec.IsInvasion)
         {
-            if (next.Wave < spec.Waves)
+            if (next.Wave < waves)
             {
                 var wave = next.Wave + 1;
                 var needed = spec.KillsPerWave + (wave - 1) * Math.Max(2, spec.KillsPerWave / 3);
                 Replace(next, next with { Wave = wave, Kills = 0, KillsNeeded = needed });
-                host.Announce($"{spec.Name}: wave {wave} of {spec.Waves}!");
+                host.Announce($"{spec.Name}: wave {wave} of {waves}!");
                 host.SpawnEventCreatures(kind, spec.Roster, needed);
             }
-            else if (spec.FinalBoss is { } boss && !next.BossSpawned)
+            else if (spec.FinaleFor(next) is { } boss && spec.FinalBossAllowed(host) && !next.BossSpawned)
             {
-                Replace(next, next with { BossSpawned = true, Kills = 0, KillsNeeded = 1, Wave = spec.Waves + 1 });
-                host.SpawnEventBoss(kind, boss);
+                var spawning = next with { BossSpawned = true, Kills = 0, KillsNeeded = 1, Wave = waves + 1 };
+                Replace(next, spawning);
+                if (!host.SpawnEventBoss(kind, boss))
+                    End(spawning, host, completed: true);
             }
-            else if (spec.FinalBoss is null)
+            else if (spec.FinaleFor(next) is null || !spec.FinalBossAllowed(host))
                 End(next, host, completed: true);
         }
-        else if (spec.FinalBoss is { } boss && !next.BossSpawned)
+        else if (spec.FinaleFor(next) is { } boss && !next.BossSpawned)
         {
-            // Quota events (Swarm Rain, Rust Moon, Dark Sun) summon their boss and keep running.
-            Replace(next, next with { BossSpawned = true, Wave = next.Wave + 1 });
+            // Quota events (Swarm Rain, Rust Moon, Dark Sun) summon their boss and keep running. PC-1: a gated boss does not
+            // come (the Moon Eater before the Fracture): the event completes on its quota with its rewards instead.
+            if (!spec.FinalBossAllowed(host))
+            {
+                End(next, host, completed: true);
+                return;
+            }
+            var spawning = next with { BossSpawned = true, Wave = next.Wave + 1 };
+            Replace(next, spawning);
             host.SpawnEventBoss(kind, boss);
         }
+    }
+
+    /// <summary>
+    /// BO-17: living bosses are not saved, so after a load no event finale is on the field; BO-6: a finale can also leave.
+    /// Running events whose finale had come are re-armed: the next tagged kill brings it again (nothing is given back).
+    /// </summary>
+    public void RearmFinales(WorldEventKind? only = null)
+    {
+        for (var index = 0; index < _active.Count; index++)
+            if (_active[index].BossSpawned && (only is null || _active[index].Kind == only))
+                _active[index] = _active[index] with { BossSpawned = false };
     }
 
     /// <summary>Ends an event (completed events grant rewards and set the first-clear flag).</summary>
@@ -432,9 +486,14 @@ public sealed class WorldEventSystem
             _completions[kind] = count;
     }
 
+    /// <summary>PC-2: the Defense Protocol's tier (0 before the Fracture, 1 after it, 2 once the Vault Colossus has fallen).</summary>
+    public static int DefenseProtocolTier(IWorldEventHost host) =>
+        host.Flags.IsSet($"boss.{WorldFlags.Key(EnemyKind.VaultColossus)}.down") ? 2 : host.Flags.IsSet("blight.fracture") ? 1 : 0;
+
     private static IEnumerable<WorldEventSpec> BuildSpecs()
     {
         static bool Always(IWorldEventHost _) => true;
+        static bool Fractured(IWorldEventHost host) => host.Flags.IsSet("blight.fracture");
         foreach (var seasonal in SeasonalEvents.Specs()) yield return seasonal; // GameSimulation.Seasons.cs
         // Creature coverage: rain brings its own creatures (Terraria's umbrella slimes, flying fish and raincoat zombies).
         yield return new(WorldEventKind.Rain, "Rainfall", WorldEventCategory.Weather, WorldEventMoment.Never, 0f, 8f, Always,
@@ -456,7 +515,8 @@ public sealed class WorldEventSystem
             [(EnemyKind.EventHusk, 0.35f), (EnemyKind.EventRustWraith, 0.2f), (EnemyKind.EventRustHound, 0.25f),
              (EnemyKind.EventEyeDrone, 0.12f), (EnemyKind.EventCorrodedMech, 0.08f)],
             SpawnMultiplier: 2.2f, PopulationMultiplier: 1.8f, KillsPerWave: 25, FinalBoss: EnemyKind.MoonEater,
-            Rewards: [(ItemId.Credits, 120), (ItemId.MoonEaterLure, 1)], CooldownDays: 3, SheltersTown: true);
+            Rewards: [(ItemId.Credits, 120), (ItemId.MoonEaterLure, 1)], CooldownDays: 3, SheltersTown: true,
+            FinalBossGate: Fractured); // PC-1: no Moon Eater before the Fracture; the moon completes on its quota instead
         yield return new(WorldEventKind.DarkSun, "Dark Sun", WorldEventCategory.Day, WorldEventMoment.Dawn, 0.06f, 9f,
             host => host.Flags.IsSet("blight.fracture"),
             [(EnemyKind.EventEclipseShade, 0.45f), (EnemyKind.EventEclipseReaper, 0.25f), (EnemyKind.EventEclipseMothMech, 0.3f)],
@@ -485,7 +545,10 @@ public sealed class WorldEventSystem
             [(EnemyKind.EventProtocolGrunt, 0.4f), (EnemyKind.EventProtocolShieldbearer, 0.2f), (EnemyKind.EventProtocolWyvern, 0.15f),
              (EnemyKind.EventProtocolOgre, 0.1f), (EnemyKind.EventProtocolMage, 0.15f)],
             Waves: 3, KillsPerWave: 10, FinalBoss: EnemyKind.ProtocolDragon,
-            Rewards: [(ItemId.Credits, 300), (ItemId.CircuitBoard, 8)], CooldownDays: 0, SheltersTown: true);
+            Rewards: [(ItemId.Credits, 300), (ItemId.CircuitBoard, 8)], CooldownDays: 0, SheltersTown: true,
+            // PC-2: the finale follows progression. Before the Fracture: three waves, no boss; after it: five waves and the
+            // Protocol ogre; once the Vault Colossus has fallen: seven waves and the Protocol Dragon.
+            Tiers: [new(3, null), new(5, EnemyKind.EventProtocolOgre), new(7, EnemyKind.ProtocolDragon)], TierOf: DefenseProtocolTier);
         yield return new(WorldEventKind.PrecursorProbes, "Precursor Probes", WorldEventCategory.Invasion, WorldEventMoment.Dusk, 0.05f, 12f,
             host => host.Flags.IsSet("ore.voidsteel"),
             [(EnemyKind.EventPrecursorProbe, 0.35f), (EnemyKind.EventProbeGunner, 0.3f), (EnemyKind.EventProbeTeslaWalker, 0.15f),
@@ -505,16 +568,16 @@ public sealed class WorldEventSystem
         static bool CantorDown(IWorldEventHost host) => host.Flags.IsSet("boss.void_cantor.down");
         yield return new(WorldEventKind.EmberObelisk, "Ember obelisk siege", WorldEventCategory.Invasion, WorldEventMoment.Never, 0f, 48f,
             CantorDown, [(EnemyKind.CinderImp, 0.4f), (EnemyKind.SlagCentipede, 0.25f), (EnemyKind.PyreLancer, 0.35f)],
-            SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0);
+            SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0, NoExpiry: true);
         yield return new(WorldEventKind.RiftObelisk, "Rift obelisk siege", WorldEventCategory.Invasion, WorldEventMoment.Never, 0f, 48f,
             CantorDown, [(EnemyKind.RiftSeer, 0.3f), (EnemyKind.MindLeech, 0.4f), (EnemyKind.RiftFloater, 0.3f)],
-            SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0);
+            SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0, NoExpiry: true);
         yield return new(WorldEventKind.GaleObelisk, "Gale obelisk siege", WorldEventCategory.Invasion, WorldEventMoment.Never, 0f, 48f,
             CantorDown, [(EnemyKind.GaleDiver, 0.35f), (EnemyKind.SquallHornet, 0.35f), (EnemyKind.TempestLarva, 0.3f)],
-            SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0);
+            SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0, NoExpiry: true);
         yield return new(WorldEventKind.ShardObelisk, "Shard obelisk siege", WorldEventCategory.Invasion, WorldEventMoment.Never, 0f, 48f,
             CantorDown, [(EnemyKind.StarCell, 0.4f), (EnemyKind.LatticeWeaver, 0.2f), (EnemyKind.ShardInvader, 0.4f)],
-            SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0);
+            SpawnMultiplier: 1.6f, PopulationMultiplier: 1.5f, KillsPerWave: ObeliskShieldKills, CooldownDays: 0, NoExpiry: true);
         // Creature coverage: the Lumen Tempest (torch-god analog). A light hoard deep underground calls swarms of light
         // creatures; clearing the swarm grants the Lumen accord the first time (GameSimulation.CreatureCoverage.cs).
         yield return new(WorldEventKind.LumenTempest, "Lumen Tempest", WorldEventCategory.World, WorldEventMoment.Never, 0f, 2f, Always,

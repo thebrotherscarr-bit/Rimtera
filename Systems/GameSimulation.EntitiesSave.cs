@@ -39,6 +39,10 @@ public sealed partial class GameSimulation
         foreach (var saved in snapshot.Enemies ?? [])
         {
             ValidateEnemy(saved, remap);
+            // BO-17 (D-13): living bosses never survive a save and quit (old saves still carry them): the fight is dropped,
+            // nothing is given back, and running events re-arm their finale (below).
+            if (EnemyArchetypes.Get(saved.Kind).IsBoss)
+                continue;
             var id = AllocateEntityId(saved.Id, used);
             remap.Add(saved.Id, id);
             var enemy = new EnemyAgent(id, saved.Kind, new Vector2(saved.X, saved.Y));
@@ -76,6 +80,7 @@ public sealed partial class GameSimulation
         foreach (var oldId in snapshot.NightBossIds ?? [])
             if (remap.TryGetValue(oldId, out var id))
                 _nightBossIds.Add(id);
+        _worldEvents.RearmFinales();
 
         if (snapshot.WhipMarkedEnemy is { } marked && remap.TryGetValue(marked, out var mapped))
             _whipMarkedEnemy = mapped;

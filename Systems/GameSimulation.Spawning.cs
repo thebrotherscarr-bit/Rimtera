@@ -8,7 +8,7 @@ namespace Rimtera.Systems;
 /// Natural creature spawning and leaving (MECHANICS_PARITY.md C9, C10, C12): spawns land just off-screen and never
 /// inside the safe radius; rate and cap rise at night, underground, in the blight and during events, and fall near
 /// a populated town or while a boss lives; far creatures wander off (bosses and event units stay); bosses leave
-/// when the player dies and dusk bosses leave at dawn. Tuning lives in <see cref="CombatTuning"/>.
+/// when the player dies, and by their own leave rules (BO-6, GameSimulation.BossSpawn.cs). Tuning lives in <see cref="CombatTuning"/>.
 /// </summary>
 public sealed partial class GameSimulation
 {
@@ -16,7 +16,6 @@ public sealed partial class GameSimulation
     private const float BaseSpawnChance = 0.16f;
     private const float BasePopulationCap = 4f;
     private readonly Dictionary<long, float> _farSeconds = new();
-    private float _bossClockHour = -1f;
 
     /// <summary>Live town NPCs (not bound survivors) close enough to calm the player's surroundings.</summary>
     public int TownNpcsCalmingSpawns => _townNpcs.Count(npc => !npc.IsBound &&
@@ -24,6 +23,12 @@ public sealed partial class GameSimulation
 
     private bool PlayerInBlight(BiomeZone zone) =>
         zone == BiomeZone.Overgrowth || zone == BiomeZone.RadiatedDeeps && Blight == WorldBlight.Radiated;
+
+    /// <summary>
+    /// The running events' spawn modifiers (EV-2, D-28): the product of every active <see cref="WorldEventSpec"/>'s
+    /// multipliers, from <see cref="WorldEventSystem"/> alone (the legacy event manager is gone).
+    /// </summary>
+    public (float Spawn, float Population, bool NoHostiles, bool Shelter) EventSpawnFactors => _worldEvents.Modifiers;
 
     /// <summary>Spawn rate and cap multipliers for where the player stands right now.</summary>
     public (float Rate, float Cap) CurrentSpawnFactors()
@@ -37,21 +42,20 @@ public sealed partial class GameSimulation
     {
         _playerDeadSeconds = 0f;
         UpdateDespawning(deltaSeconds);
-        UpdateBossesAtDawn();
+        UpdateBossLeaving(deltaSeconds); // BO-6: lost targets and left biomes (dawn and dusk run on the clock)
         _spawnTimer += deltaSeconds;
         if (_spawnTimer < SpawnIntervalSeconds)
             return;
         _spawnTimer %= SpawnIntervalSeconds;
 
-        var modifiers = _eventManager.GetSpawnModifiers();
-        var content = _worldEvents.Modifiers;
+        var content = EventSpawnFactors; // EV-2: the one event system's multipliers
         // One biome scan per spawn attempt decides which roster this attempt draws from.
         var reading = BiomeScanner.Scan(World, PlayerCell());
         var (rateFactor, capFactor) = CombatTuning.SpawnFactors(IsNight, reading.Underground, PlayerInBlight(reading.Zone),
             TownNpcsCalmingSpawns, _enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive));
-        var spawnMultiplier = modifiers.SpawnAttemptMultiplier * content.Spawn * rateFactor *
+        var spawnMultiplier = content.Spawn * rateFactor *
                               (Weather.Dust > 0.4f && CurrentBiome.Zone == BiomeZone.JunkWasteland ? 1.3f : 1f);
-        var limit = Math.Clamp((int)MathF.Ceiling(BasePopulationCap * modifiers.PopulationCapMultiplier * content.Population * capFactor), 1, 20);
+        var limit = Math.Clamp((int)MathF.Ceiling(BasePopulationCap * content.Population * capFactor), 1, 20);
         var population = _enemies.Count(enemy => !enemy.IsBoss && enemy.IsAlive);
         if (population >= limit || _random.NextDouble() >= Math.Min(0.85f, BaseSpawnChance * spawnMultiplier))
             return;
@@ -232,21 +236,6 @@ public sealed partial class GameSimulation
         }
     }
 
-    /// <summary>Dusk (event) bosses still alive when dawn breaks leave the world.</summary>
-    private void UpdateBossesAtDawn()
-    {
-        var previous = _bossClockHour;
-        _bossClockHour = ClockHour;
-        if (previous < 0f || !CrossedBoundary(previous, ClockHour, 6f, 0f))
-            return;
-        foreach (var boss in _enemies.Where(enemy => enemy.IsBoss && enemy.IsAlive && EnemyArchetypes.EventBosses.Contains(enemy.Kind)).ToArray())
-        {
-            RecordDeath(boss, DeathReason.Despawned);
-            _enemies.Remove(boss);
-            PostMessage($"The {boss.DisplayName} retreats from the dawn light.");
-        }
-    }
-
     /// <summary>Seconds the player must stay dead before living bosses give up and leave.</summary>
     public const float BossLeaveAfterDeathSeconds = 3f;
     private float _playerDeadSeconds;
@@ -258,11 +247,7 @@ public sealed partial class GameSimulation
         if (_playerDeadSeconds < BossLeaveAfterDeathSeconds)
             return;
         foreach (var boss in _enemies.Where(enemy => enemy.IsBoss && enemy.IsAlive).ToArray())
-        {
-            RecordDeath(boss, DeathReason.Despawned);
-            _enemies.Remove(boss);
-            PostMessage($"The {boss.DisplayName} loses interest and leaves.");
-        }
+            BossLeaves(boss, "it loses interest");
     }
 
     // ---- test probes ----

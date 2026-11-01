@@ -56,8 +56,8 @@ public sealed partial class GameSimulation : IStoryHost
     private const float PlayerReach = 5f;
     private const float ViewHalfWidth = 18f;
     private const float SafeSpawnHalfWidth = 22f;
-    private const string IncursionEventId = "hostile-incursion";
-    private const string EasyBossDefeatedTag = "easy-boss-defeated";
+    /// <summary>Chance per dusk of a hostile incursion (one dusk event boss) once the Fracture has come (PC-4).</summary>
+    public const float IncursionChance = 0.3f;
 
     private readonly Random _random;
     // Separate stream so boss choices never shift the ambient spawn sequence.
@@ -83,7 +83,6 @@ public sealed partial class GameSimulation : IStoryHost
     });
     private readonly PlacementSystem _placement = new();
     private readonly TileFramingSystem _framing = new();
-    private readonly EventManager _eventManager;
     private readonly PawnMovementSystem _colonistMovement = new(new PawnMovementSettings
     {
         GroundAcceleration = 20f,
@@ -246,33 +245,6 @@ public sealed partial class GameSimulation : IStoryHost
                 AddTownNpc(TownNpcCatalog.SurvivorKinds[index % TownNpcCatalog.SurvivorKinds.Length], StandingAt(spot), bound: true);
             }
 
-        _eventManager = new EventManager(seed ^ 0x51ED270B);
-        _eventManager.Register(new WorldEventDefinition(
-            Id: "mothfall",
-            Boundary: WorldEventBoundary.Dusk,
-            ChancePerBoundary: 0.16f,
-            DurationHours: 7f,
-            SpawnAttemptMultiplier: 1.6f,
-            PopulationCapMultiplier: 1.3f,
-            DisplayName: "Moth-ray swarm"));
-        _eventManager.Register(new WorldEventDefinition(
-            Id: "deep-earth-awakening",
-            Boundary: WorldEventBoundary.Dawn,
-            ChancePerBoundary: 0.08f,
-            DurationHours: 5f,
-            SpawnAttemptMultiplier: 1.35f,
-            PopulationCapMultiplier: 1.5f,
-            RequiresProgression: true,
-            DisplayName: "Deep-core tremors"));
-        // Dusk incursions bring one event boss once an easy-tier boss has fallen.
-        _eventManager.Register(new WorldEventDefinition(
-            Id: IncursionEventId,
-            Boundary: WorldEventBoundary.Dusk,
-            ChancePerBoundary: 0.3f,
-            DurationHours: 6f,
-            RequiredBiomeTag: EasyBossDefeatedTag,
-            DisplayName: "Hostile incursion"));
-
         ClockHour = 8f;
         Day = 1;
         CurrentBiome = BiomeScanner.Scan(World, PlayerCell());
@@ -294,7 +266,8 @@ public sealed partial class GameSimulation : IStoryHost
     public IReadOnlyList<ColonistAgent> Colonists => _colonists;
     public IReadOnlyList<EnemyAgent> Enemies => _enemies;
     public IReadOnlyList<ProjectileState> Projectiles => _projectiles;
-    public IReadOnlyList<ActiveWorldEvent> ActiveEvents => _eventManager.ActiveEvents;
+    /// <summary>Every running world event (EV-2: the one event system, <see cref="WorldEventSystem"/>).</summary>
+    public IReadOnlyList<ActiveEventState> ActiveEvents => _worldEvents.Active;
     public IReadOnlyList<string> RecentMessages => _recentMessages.ToArray();
     public long TickNumber { get; private set; }
     public int Day { get; private set; }
@@ -415,7 +388,7 @@ public sealed partial class GameSimulation : IStoryHost
             Content: CaptureContent(),
             PlayerWorld: CapturePlayerWorld(),
             Character: CaptureCharacterForSnapshot(),
-            Enemies: _enemies.Select(enemy => enemy.CaptureState()).ToArray(),
+            Enemies: _enemies.Where(enemy => !enemy.IsBoss).Select(enemy => enemy.CaptureState()).ToArray(), // BO-17: bosses are not saved
             Projectiles: _projectiles.Select(projectile => projectile.CaptureState()).ToArray(),
             RaidEnemyIds: _raidEnemyIds.ToArray(),
             NightBossIds: _nightBossIds.ToArray(),
@@ -770,21 +743,8 @@ public sealed partial class GameSimulation : IStoryHost
         return CurrentResult();
     }
 
-    /// <summary>Legacy entry point for the challenge key; summons the next boss in the progression.</summary>
-    public bool TrySummonSentinel() => TrySummonNextBoss();
-
-    /// <summary>Summons the next undefeated boss (gate, easy, hard, then Astro-God) if no boss is active.</summary>
-    public bool TrySummonNextBoss()
-    {
-        if (_enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive))
-            return false;
-        var kind = NextBoss;
-        SpawnBoss(kind);
-        PostMessage($"The {EnemyArchetypes.Get(kind).DisplayName} has answered the challenge.");
-        return true;
-    }
-
-    private EnemyAgent SpawnBoss(EnemyKind kind)
+    /// <summary>Places a boss near the player. Only <see cref="TrySpawnBoss"/> calls it (BO-9: one spawn path).</summary>
+    private EnemyAgent PlaceBoss(EnemyKind kind)
     {
         var archetype = EnemyArchetypes.Get(kind);
         var playerX = (int)MathF.Floor(Player.Motion.Position.X);
@@ -2495,29 +2455,35 @@ public sealed partial class GameSimulation : IStoryHost
         Day = 1 + (int)MathF.Floor(absoluteHour / 24f);
         ClockHour = absoluteHour % 24f;
 
-        WorldEventBoundary? boundary = null;
-        if (CrossedBoundary(previous, ClockHour, 6f, elapsedHours))
-            boundary = WorldEventBoundary.Dawn;
-        else if (CrossedBoundary(previous, ClockHour, 18f, elapsedHours))
-            boundary = WorldEventBoundary.Dusk;
+        WorldEventMoment? boundary = null;
+        if (BoundaryPassed(WorldEventMoment.Dawn, previous, ClockHour, elapsedHours))
+            boundary = WorldEventMoment.Dawn;
+        else if (BoundaryPassed(WorldEventMoment.Dusk, previous, ClockHour, elapsedHours))
+            boundary = WorldEventMoment.Dusk;
 
-        var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ClockHour >= 18f || ClockHour < 6f ? "night" : "surface" };
-        if (_defeatedBosses.Any(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Easy))
-            tags.Add(EasyBossDefeatedTag);
-        var context = new WorldEventContext(
-            ProgressionUnlocked: Day >= 2 || _defeatedBosses.Count > 0,
-            BiomeTags: tags);
-        var result = _eventManager.Advance(elapsedHours, boundary, context);
-        foreach (var id in result.Ended)
-            PostMessage($"Event ended: {_eventManager.GetDisplayName(id)}.");
-        foreach (var id in result.Started)
-        {
-            PostMessage($"Event started: {_eventManager.GetDisplayName(id)}.");
-            if (string.Equals(id, IncursionEventId, StringComparison.OrdinalIgnoreCase))
-                TrySpawnEventBoss();
-        }
+        // EV-2 (D-28): the legacy event manager is gone; the dusk incursion is a plain dusk roll (PC-4: after the Fracture).
+        if (boundary == WorldEventMoment.Dusk && IncursionRoll(Day) < IncursionChance && IncursionEligible)
+            TrySpawnEventBoss();
+        if (boundary is { } passed)
+            BossesLeaveAtBoundary(passed); // BO-6: night bosses leave at dawn, day bosses at dusk
         AdvanceContentClock(previous, elapsedHours, boundary);
         AdvanceHardmodeClock(boundary);
+    }
+
+    /// <summary>A dusk incursion may come once the Fracture has happened and an easy-tier boss has fallen (PC-4, D-3).</summary>
+    public bool IncursionEligible => FractureActive && _defeatedBosses.Any(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Easy);
+
+    /// <summary>Deterministic dusk roll in [0,1) for a hostile incursion (seed and day).</summary>
+    public double IncursionRoll(int day)
+    {
+        unchecked
+        {
+            var hash = (uint)Seed * 668265263u ^ (uint)day * 2654435761u ^ 0x51ED270Bu;
+            hash ^= hash >> 15;
+            hash *= 2246822519u;
+            hash ^= hash >> 13;
+            return (hash & 0xFFFFFF) / (double)0x1000000;
+        }
     }
 
     /// <summary>
@@ -2537,27 +2503,17 @@ public sealed partial class GameSimulation : IStoryHost
         var pool = eligible.Where(kind => !_defeatedBosses.Contains(kind)).ToArray();
         if (pool.Length == 0)
             pool = eligible;
-        var boss = SpawnBoss(pool[_bossRandom.Next(pool.Length)]);
-        PostMessage($"Warning: the {boss.DisplayName} descends on the colony at dusk!");
+        if (!TrySpawnBoss(pool[_bossRandom.Next(pool.Length)], BossSpawnSource.DuskIncursion, out var boss, out _))
+            return false;
+        PostMessage($"Warning: the {boss!.DisplayName} descends on the colony at dusk!");
         return true;
     }
 
-    /// <summary>Pre-Fracture dusk incursions only bring event bosses under this many hit points (G2).</summary>
-    public const float PreFractureEventBossMaxHitPoints = 1000f;
-
     /// <summary>
-    /// Event bosses a dusk incursion may bring. After the Fracture: all of them. Before it: only those under
-    /// <see cref="PreFractureEventBossMaxHitPoints"/>, or, when none qualify, all of them once the Scout Mech has fallen.
+    /// Event bosses a dusk incursion may bring: all of them after the Fracture, none before it (PC-4, D-3: no 9,000+ HP
+    /// incursion bosses in the pre-Fracture game, whatever has fallen).
     /// </summary>
-    public EnemyKind[] EventBossPool()
-    {
-        if (FractureActive)
-            return EnemyArchetypes.EventBosses.ToArray();
-        var light = EnemyArchetypes.EventBosses.Where(kind => EnemyArchetypes.Get(kind).HitPoints < PreFractureEventBossMaxHitPoints).ToArray();
-        if (light.Length > 0)
-            return light;
-        return _defeatedBosses.Contains(EnemyKind.ScoutMech) ? EnemyArchetypes.EventBosses.ToArray() : [];
-    }
+    public EnemyKind[] EventBossPool() => FractureActive ? EnemyArchetypes.EventBosses.ToArray() : [];
 
     /// <summary>Test hook: runs the dusk incursion's boss pick.</summary>
     internal bool ProbeSpawnEventBoss() => TrySpawnEventBoss();

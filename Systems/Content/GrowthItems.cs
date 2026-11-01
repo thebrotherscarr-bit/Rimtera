@@ -56,7 +56,10 @@ public static class GrowthItems
         [PermanentUpgrade.LumenAccord] = ItemId.LumenAccord
     };
 
-    /// <summary>Late bosses and the upgrade each one sheds (always on Brutal and Annihilation, a third of the time otherwise).</summary>
+    /// <summary>
+    /// Late bosses and the upgrade each one sheds (always on Brutal and Annihilation, a third of the time otherwise), only
+    /// after the Fracture (PC-4).
+    /// </summary>
     public static readonly IReadOnlyDictionary<EnemyKind, ItemId> UpgradeBosses = new Dictionary<EnemyKind, ItemId>
     {
         [EnemyKind.VoidStalker] = ItemId.NaniteMarrow,
@@ -351,7 +354,8 @@ public sealed partial class GameSimulation
             SpawnGroundItem(ItemId.AuxiliarySocket, 1, center + new Vector2(0.4f, 0f), pickupDelay: 1f);
             PostMessage("Something glints in the Tyrant's wreckage: an auxiliary socket.");
         }
-        if (GrowthItems.UpgradeBosses.TryGetValue(enemy.Kind, out var upgrade) && (hard || GrowthRandom.Next(3) == 0))
+        // PC-4 (D-3): the permanent upgrades are post-Fracture rewards; a late boss forced before it drops none.
+        if (FractureActive && GrowthItems.UpgradeBosses.TryGetValue(enemy.Kind, out var upgrade) && (hard || GrowthRandom.Next(3) == 0))
             SpawnGroundItem(upgrade, 1, center + new Vector2(-0.4f, 0f), pickupDelay: 1f);
     }
 

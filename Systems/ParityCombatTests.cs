@@ -301,7 +301,8 @@ public static class ParityCombatTests
         var dawn = NewGame(9719);
         dawn.ProbeAdvanceHours(13f); // 21:00
         var nightBoss = dawn.SpawnCreatureAt(EnemyArchetypes.EventBosses[0], dawn.Player.Motion.Position + new Vector2(8f, -6f));
-        var gateBoss = dawn.SpawnCreatureAt(EnemyKind.StoneSentinel, dawn.Player.Motion.Position + new Vector2(-8f, -3f));
+        // BO-6 (0.2.2): the Overseer mech is a night boss now and leaves at dawn too; an easy-tier day boss stays.
+        var gateBoss = dawn.SpawnCreatureAt(EnemyKind.AlphaSkitter, dawn.Player.Motion.Position + new Vector2(-8f, -3f));
         dawn.ProbeSpawnTick(0.01f);
         var atNight = dawn.Enemies.Contains(nightBoss);
         dawn.ProbeAdvanceHours(9.5f); // 06:30, crossing dawn

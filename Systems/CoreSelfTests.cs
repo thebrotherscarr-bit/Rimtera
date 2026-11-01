@@ -83,7 +83,7 @@ public static class CoreSelfTests
         Check(Math.Abs(grid.TotalLiquidDepth() - before) < 0.001,
             "liquid relaxation conserves volume");
 
-        var game = new GameSimulation(seed: 918273, width: 80, height: 48);
+        var game = new GameSimulation(seed: 918273, width: 80, height: 48) { DebugSummonKeyEnabled = true }; // BO-18: the key is a --kit tool
         var pickSlot = game.Player.Inventory.FindSlot(ItemId.CopperPickaxe); // the starting ferrite drill
         game.TrySelectInventorySlot(pickSlot);
         var center = game.Player.Motion.Position + game.Player.Motion.Size / 2f;
@@ -123,12 +123,9 @@ public static class CoreSelfTests
         Check(archer.Player.Inventory.Count(ItemId.Arrow) == arrowsBefore - 1 && archer.Projectiles.Count == 1,
             "ranged item consumes ammunition and creates a projectile entity");
 
-        var eventManager = new EventManager(seed: 7);
-        eventManager.Register(new WorldEventDefinition("test-dusk", WorldEventBoundary.Dusk, 1f, 2f,
-            SpawnAttemptMultiplier: 1.5f, PopulationCapMultiplier: 1.25f));
-        var eventResult = eventManager.Advance(0f, WorldEventBoundary.Dusk, new WorldEventContext());
-        Check(eventResult.Started.Contains("test-dusk") &&
-              Math.Abs(eventManager.GetSpawnModifiers().SpawnAttemptMultiplier - 1.5f) < 0.0001f,
+        // EV-2 (D-28): the legacy EventManager is retired; WorldEventSystem's modifiers feed the spawner (BossSelfTests).
+        var eventSystem = new WorldEventSystem(seed: 7);
+        Check(Math.Abs(eventSystem.Modifiers.Spawn - 1f) < 0.0001f && eventSystem.Spec(WorldEventKind.RustMoon).SpawnMultiplier > 1f,
             "event start modifiers are exposed to the spawn pipeline");
 
         var spawner = new GameSimulation(seed: 48271, width: 160, height: 72);
@@ -825,7 +822,11 @@ public static class CoreSelfTests
             "boss flags, tiers, and large boss sizes come from the archetype table");
 
         // Boss progression: gate, easy tier, hard tier, then the Astro-God.
-        var progression = new GameSimulation(seed: 31337, width: 80, height: 48);
+        var progression = new GameSimulation(seed: 31337, width: 80, height: 48) { DebugSummonKeyEnabled = true };
+        // BO-18 (0.2.2): the key goes through the item refusals, so the run stands in the Irradiated Core (the igniter's
+        // place) and the obelisks are down (the sigil's gate); the bulb boss waits for the whole hard trio.
+        progression.Player.Motion.Position = progression.Player.Motion.Position with { Y = progression.World.Height * 0.85f };
+        progression.Flags.Set("obelisks.down");
         Check(progression.TrySummonSentinel() && !progression.TrySummonNextBoss() &&
               progression.Enemies.Single(enemy => enemy.IsBoss).Kind == EnemyKind.StoneSentinel,
             "the challenge key summons the Overseer mech first and only one boss at a time");
@@ -843,10 +844,14 @@ public static class CoreSelfTests
             boss.TakeDamage(boss.MaximumHitPoints);
             progression.Tick(new GameInput(new MovementInput(0f)));
         }
-        Check(summoned.SequenceEqual(EnemyArchetypes.BossProgression) &&
+        // BO-18 changed expectation: the bulb boss refuses until the whole trio is down, so the key skips it until then.
+        var refusalOrder = EnemyArchetypes.BossProgression.Where(kind => kind != GameSimulation.BulbBoss && kind != EnemyKind.AstroGod)
+            .Append(GameSimulation.BulbBoss).Append(EnemyKind.AstroGod);
+        Check(summoned.SequenceEqual(refusalOrder) &&
               summoned.Skip(1).Take(4).All(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Easy) &&
               summoned[5] == GameSimulation.CoreGateBoss && EnemyArchetypes.Get(summoned[5]).Tier == BossTier.Gate &&
               summoned.Skip(6).Take(5).All(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Hard) &&
+              summoned.IndexOf(GameSimulation.BulbBoss) > GameSimulation.HardTrio.Max(kind => summoned.IndexOf(kind)) &&
               summoned[^1] == EnemyKind.AstroGod &&
               progression.DefeatedBosses.Count == EnemyArchetypes.BossProgression.Count &&
               progression.NextBoss == EnemyKind.AstroGod,
@@ -1726,6 +1731,7 @@ public static class CoreSelfTests
         SpriteMemorySelfTests.Run(Check); // 0.2.2 (0.1.7 A2, PE-2): lazy sprite loading: an index at load, decoded and scaled LRUs with byte budgets
         MenuParitySelfTests.Run(Check); // 0.2.2 (0.1.8 D3-D7, E1): map preferences and NPC heads, title feats and credits, video rows, screen shake, audio latency
         SaveSafetySelfTests.Run(Check); // 0.2.2 D: save backups and migrations, the 0.1.6 fixture, threaded autosave, any character on any world, the HP-only player, minions, statue spawns (PU-11/12, PU-9, IC-4, IC-7, EN-6)
+        BossSelfTests.Run(Check); // 0.2.2 C: boss and event lifecycle (BO-24 suite; PC-1/2/4, BO-6/9/17/18, EV-1/2, EN-7)
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }
