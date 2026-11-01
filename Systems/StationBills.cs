@@ -96,4 +96,8 @@ internal interface IStationWorker
     float SpeedFor(WorkType work);
     /// <summary>The skill level behind <paramref name="work"/> (extra batches above 10).</summary>
     int LevelFor(WorkType work);
+    /// <summary>Whether this worker takes bills at a station of this kind (0.3.5: residents keep to their trade).</summary>
+    bool CanWorkAt(CraftingStationId station) => true;
+    /// <summary>A fixed skill level at this kind of station, or null to use <see cref="LevelFor"/> (0.3.5: residents' trade skill).</summary>
+    int? SkillAt(CraftingStationId station) => null;
 }

@@ -1,4 +1,5 @@
 using System.Numerics;
+using Rimtera.Entities;
 using Rimtera.World;
 
 namespace Rimtera.Systems;
@@ -79,5 +80,58 @@ public static class TownParitySelfTests
         var healed = clinic.HealAtMedic(medic);
         check(healed && !clinic.Player.Statuses.IsActive(StatusId.Poison) && clinic.Player.Statuses.IsActive(StatusId.PotionSickness),
             "the medic clears debuffs for a fee, as Terraria's Nurse does, but not potion sickness");
+
+        // ---- trades: every station has a resident skilled at it; residents keep to their trade and the basic benches ----
+        var stations = Enum.GetValues<CraftingStationId>().Where(station => station != CraftingStationId.None).ToArray();
+        var unstaffed = stations.Where(station => !TownTrades.BasicBenches.Contains(station) &&
+                                                  !TownTrades.Stations.Values.Any(trade => trade.Contains(station))).ToArray();
+        var untraded = TownNpcCatalog.All.Select(definition => definition.Kind)
+            .Where(kind => !TownTrades.Idle(kind) && TownTrades.TradeOf(kind).Count == 0).ToArray();
+        check(unstaffed.Length == 0 && untraded.Length == 0 &&
+              TownTrades.Skill(TownNpcKind.Medic, CraftingStationId.ChemLab) == TownTrades.TradeSkill &&
+              TownTrades.Skill(TownNpcKind.Medic, CraftingStationId.Workbench) == TownTrades.GeneralSkill &&
+              TownTrades.Skill(TownNpcKind.Cook, CraftingStationId.ChemLab) is null &&
+              !TownTrades.CanWork(TownNpcKind.TradeConsul, CraftingStationId.Workbench) &&
+              TownTrades.Speed(TownTrades.TradeSkill) > TownTrades.Speed(TownTrades.GeneralSkill),
+            $"every crafting station has a resident skilled at it and every working resident has a trade " +
+            $"(unstaffed: {string.Join(", ", unstaffed)}; no trade: {string.Join(", ", untraded)})");
+
+        int Brewed(TownNpcKind kind)
+        {
+            var game = Town(9805);
+            const int floor = 40;
+            for (var y = 1; y < game.World.Height - 1; y++)
+            for (var x = 1; x < game.World.Width - 1; x++)
+            {
+                var cell = new GridPoint(x, y);
+                game.World.SetTile(cell, y >= floor ? TileId.Rock : TileId.Air);
+                var data = game.World.GetCell(cell);
+                data.LiquidDepth = 0f;
+                data.LiquidKind = LiquidKind.None;
+                game.World.SetCell(cell, data);
+            }
+            var lab = new GridPoint(72, floor - 1);
+            var chest = new GridPoint(66, floor - 1);
+            game.World.SetTile(lab, TileId.ChemLab);
+            game.World.SetTile(chest, TileId.StorageCrate);
+            game.SetTimeOfDay(9f);
+            var recipe = game.BillRecipesAt(lab).First(candidate => candidate.Output == ItemId.MedStim);
+            foreach (var group in recipe.Ingredients)
+                game.GetContainer(chest)!.Add(group.Alternatives[0], group.Quantity * 3);
+            var npc = game.AddTownNpc(kind, new Vector2(68f, floor - 3f), bound: false);
+            npc.HomeCell = new GridPoint(68, floor - 2);
+            var bill = game.AddBill(lab, recipe.Id, BillMode.DoCount, 1)!;
+            for (var i = 0; i < 3600 && !(bill.Done >= 1 && npc.Carried.IsEmpty); i++)
+            {
+                game.Tick(new GameInput(new MovementInput(0f)));
+                foreach (var enemy in game.Enemies.ToArray())
+                    enemy.TakeDamage(1e6f);
+            }
+            return bill.Done;
+        }
+        var byMedic = Brewed(TownNpcKind.Medic);
+        var byCook = Brewed(TownNpcKind.Cook);
+        check(byMedic >= 1 && byCook == 0,
+            $"a resident works the stations of their trade: the medic brews med stims at the chem lab, the cook does not (medic {byMedic}, cook {byCook})");
     }
 }
