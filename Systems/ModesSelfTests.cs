@@ -231,6 +231,34 @@ public static class ModesSelfTests
         check(wrongRefused && petIn && petOut && kept && misc.ActiveBuffs.All(buff => buff.Key != "pet") && !misc.HasGrapple,
             "an item in a misc slot works as if carried (the pet follows, the hook throws), is saved, and stops when taken out");
 
+        // ---- 0.1.10: coin and ammo slots beside the bag ----
+        var pouch = new Inventory(misc.Items, 10, coinSlots: 2, ammoSlots: 2);
+        pouch.Add(ItemId.Credits, 40);
+        pouch.Add(ItemId.Arrow, 30);
+        pouch.Add(ItemId.CopperOre, 5);
+        var filled = pouch.Slots[10].ItemId == ItemId.Credits && pouch.Slots[12].ItemId == ItemId.Arrow && pouch.Slots[0].ItemId == ItemId.CopperOre;
+        var refusesOre = pouch.PlaceIntoSlot(11, new ItemStack(ItemId.CopperOre, 1)).Count == 1 &&
+                         pouch.PlaceIntoSlot(13, new ItemStack(ItemId.CopperOre, 1)).Count == 1;
+        var held = new ItemStack(ItemId.CopperOre, 1);
+        pouch.SwapWithCursor(11, ref held);
+        var swapRefused = held.ItemId == ItemId.CopperOre && pouch.Slots[11].IsEmpty;
+        pouch.PlaceIntoSlot(1, new ItemStack(ItemId.Arrow, 10));
+        pouch.TryConsume(ItemId.Arrow);
+        var ammoFirst = pouch.Slots[12].Count == 29 && pouch.Slots[1].Count == 10;
+        pouch.Sort(0);
+        var chestBox = new Inventory(misc.Items, 10);
+        pouch.MoveAllTo(chestBox);
+        var stayPut = pouch.Slots[10].Count == 40 && pouch.Slots[12].Count == 29 && chestBox.Count(ItemId.CopperOre) == 5;
+        var coinsKept = NewGame(9311);
+        coinsKept.Player.Inventory.Add(ItemId.Credits, 7);
+        var coinSlot = coinsKept.Player.Inventory.CoinSlotStart;
+        var inCoinSlot = coinsKept.Player.Inventory.Slots[coinSlot].ItemId == ItemId.Credits;
+        var reloaded = GameSimulation.Restore(coinsKept.CaptureSnapshot());
+        check(filled && refusesOre && swapRefused && ammoFirst && stayPut && inCoinSlot &&
+              reloaded.Player.Inventory.Slots[coinSlot] == coinsKept.Player.Inventory.Slots[coinSlot] &&
+              coinsKept.Player.Inventory.SlotCount == GameSimulation.PlayerTotalSlots,
+            "credits fill the coin slots and ammunition the ammo slots first; those slots refuse anything else, ammo is spent from them first, sort and deposit leave them alone, and they are saved");
+
         // ---- G16: Annihilation scaling, defense and relics ----
         var defenseHit = DefenseBalance.ApplyDefense(40f, 20, WorldDifficulty.Annihilation);
         check(WorldSettings.EnemyScale(WorldDifficulty.Annihilation) == 2f && WorldSettings.EnemyScale(WorldDifficulty.Brutal) == 1.4f &&

@@ -509,9 +509,10 @@ public sealed partial class GameSimulation
 
     private ItemId? FindAmmo(ItemDefinition item)
     {
+        // The ammo slots are searched first, as Terraria fires from them before the bag.
         if (item.UsesAmmo != AmmoClass.None)
-            foreach (var stack in Player.Inventory.Slots)
-                if (!stack.IsEmpty && Items[stack.ItemId].AmmoKind == item.UsesAmmo)
+            foreach (var slot in Player.Inventory.UseOrder())
+                if (Player.Inventory.Slots[slot] is { IsEmpty: false } stack && Items[stack.ItemId].AmmoKind == item.UsesAmmo)
                     return stack.ItemId;
         if (item.AmmoType is { } fallback && Player.Inventory.Count(fallback) > 0)
             return fallback;

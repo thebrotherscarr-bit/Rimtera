@@ -129,10 +129,17 @@ public static class InventoryLayout
     public const float Slot = 46f;
     public const float Stride = 50f;
     public const int Columns = 10;
-    public const float SideColumn = Left + Columns * Stride + 10f;
+    /// <summary>The coin and ammo columns beside the grid: smaller slots, one per bag row under the hotbar, as in Terraria.</summary>
+    public const float SmallSlot = 36f;
+    public const float CoinColumn = Left + Columns * Stride + 4f;
+    public const float AmmoColumn = CoinColumn + SmallSlot + 6f;
+    public const float SideColumn = AmmoColumn + SmallSlot + 12f;
     public const float SideWidth = 118f;
 
     public static float GridHeight(int slots) => (slots + Columns - 1) / Columns * Stride;
+
+    /// <summary>The top of the <paramref name="index"/>th coin or ammo slot: centred in bag row <paramref name="index"/> + 1.</summary>
+    public static float SmallSlotTop(int index) => Top + (index + 1) * Stride + (Slot - SmallSlot) / 2f;
     public static float HintTop(int playerSlots) => Top + GridHeight(playerSlots);
     public static float ChestTop(int playerSlots) => HintTop(playerSlots) + 30f;
     public static float CraftingTop(int playerSlots, int chestSlots) =>
@@ -205,8 +212,8 @@ public sealed class InventoryUiState : UiState
 
     /// <summary>Where the canvas draws the crafting list or, with the guide open, the guide's recipe list.</summary>
     public float CraftingTop => Guide is not null
-        ? InventoryLayout.GuideListTop(PlayerInventory.SlotCount)
-        : InventoryLayout.CraftingTop(PlayerInventory.SlotCount, ChestInventory?.SlotCount ?? 0);
+        ? InventoryLayout.GuideListTop(PlayerInventory.BagSlots)
+        : InventoryLayout.CraftingTop(PlayerInventory.BagSlots, ChestInventory?.BagSlots ?? 0);
 
     /// <summary>Opens the recipe guide in place of crafting (with <paramref name="item"/> in its slot, if given).</summary>
     public void OpenGuide(ItemId? item = null, GuideView? view = null)
@@ -286,7 +293,7 @@ public sealed class InventoryUiState : UiState
     {
         _slots.Clear();
         ClearChildren();
-        var playerSlots = PlayerInventory.SlotCount;
+        var playerSlots = PlayerInventory.BagSlots;
         Add(new UiTextElement("Inventory", "inventory-title", new UiStyle
         {
             Left = UiLength.Px(InventoryLayout.Left), Top = UiLength.Px(0f), Width = UiLength.Px(200f), Height = UiLength.Px(InventoryLayout.Top)
@@ -358,7 +365,7 @@ public sealed class InventoryUiState : UiState
 
         var trash = new UiStackSlotElement("inventory-trash", "Trash", () => game.TrashSlot, new UiStyle
         {
-            Left = UiLength.Px(x), Top = UiLength.Px(InventoryLayout.HintTop(PlayerInventory.SlotCount) - InventoryLayout.Stride),
+            Left = UiLength.Px(x), Top = UiLength.Px(InventoryLayout.HintTop(PlayerInventory.BagSlots) - InventoryLayout.Stride),
             Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot)
         });
         trash.ClickOnPress = true;
@@ -393,7 +400,7 @@ public sealed class InventoryUiState : UiState
         if (ChestInventory is null)
             return;
         var x = InventoryLayout.SideColumn;
-        var top = InventoryLayout.ChestTop(PlayerInventory.SlotCount) + 24f;
+        var top = InventoryLayout.ChestTop(PlayerInventory.BagSlots) + 24f;
         Button("chest-loot-all", "Loot all", x, top, InventoryLayout.SideWidth, () => Status($"Took {game.LootAll(_chestCell)} items."));
         Button("chest-deposit-all", "Deposit all", x, top + 30f, InventoryLayout.SideWidth, () => Status($"Stored {game.DepositAll(_chestCell)} items."));
         Button("chest-quick-stack", "Quick stack", x, top + 60f, InventoryLayout.SideWidth, () => Status($"Stacked {game.QuickStackInto(_chestCell)} items here."));
@@ -455,7 +462,7 @@ public sealed class InventoryUiState : UiState
     private void AddGuideSlot()
     {
         var guide = Guide!;
-        var playerSlots = PlayerInventory.SlotCount;
+        var playerSlots = PlayerInventory.BagSlots;
         Add(new UiTextElement("Station AI · recipe guide", "guide-heading", new UiStyle
         {
             Left = UiLength.Px(InventoryLayout.Left - 10f), Top = UiLength.Px(InventoryLayout.ChestTop(playerSlots)), Width = UiLength.Px(300f), Height = UiLength.Px(22f)
@@ -684,18 +691,33 @@ public sealed class InventoryUiState : UiState
     private void AddGrid(Inventory inventory, float top, string prefix)
     {
         var player = ReferenceEquals(inventory, PlayerInventory);
+        if (inventory.CoinSlots > 0)
+            ColumnLabel("Coins", $"{prefix}-coins-label", InventoryLayout.CoinColumn, top);
+        if (inventory.AmmoSlots > 0)
+            ColumnLabel("Ammo", $"{prefix}-ammo-label", InventoryLayout.AmmoColumn, top);
         for (var slot = 0; slot < inventory.SlotCount; slot++)
         {
             var slotIndex = slot;
-            var element = new UiItemSlotElement($"{prefix}-slot-{slotIndex}", inventory, slotIndex, new UiStyle
-            {
-                Left = UiLength.Px(InventoryLayout.Left + slotIndex % InventoryLayout.Columns * InventoryLayout.Stride),
-                Top = UiLength.Px(top + slotIndex / InventoryLayout.Columns * InventoryLayout.Stride),
-                Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot), Padding = UiThickness.Uniform(3f)
-            })
+            var coin = inventory.IsCoinSlot(slotIndex);
+            var ammo = inventory.IsAmmoSlot(slotIndex);
+            var style = coin || ammo
+                ? new UiStyle
+                {
+                    Left = UiLength.Px(coin ? InventoryLayout.CoinColumn : InventoryLayout.AmmoColumn),
+                    Top = UiLength.Px(top - InventoryLayout.Top +
+                        InventoryLayout.SmallSlotTop(slotIndex - (coin ? inventory.CoinSlotStart : inventory.AmmoSlotStart))),
+                    Width = UiLength.Px(InventoryLayout.SmallSlot), Height = UiLength.Px(InventoryLayout.SmallSlot), Padding = UiThickness.Uniform(2f)
+                }
+                : new UiStyle
+                {
+                    Left = UiLength.Px(InventoryLayout.Left + slotIndex % InventoryLayout.Columns * InventoryLayout.Stride),
+                    Top = UiLength.Px(top + slotIndex / InventoryLayout.Columns * InventoryLayout.Stride),
+                    Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot), Padding = UiThickness.Uniform(3f)
+                };
+            var element = new UiItemSlotElement($"{prefix}-slot-{slotIndex}", inventory, slotIndex, style)
             {
                 Badge = player && slotIndex < Inventory.HotbarSlots ? ((slotIndex + 1) % 10).ToString() : null,
-                ShowSelection = player,
+                ShowSelection = player && !coin && !ammo,
                 ClickOnPress = true
             };
             element.OnClick(input =>
@@ -708,6 +730,13 @@ public sealed class InventoryUiState : UiState
             Add(element);
         }
     }
+
+    /// <summary>The small heading over the coin or ammo column, in the hotbar row beside it.</summary>
+    private void ColumnLabel(string text, string id, float left, float gridTop) =>
+        Add(new UiTextElement(text, id, new UiStyle
+        {
+            Left = UiLength.Px(left - 10f), Top = UiLength.Px(gridTop + 14f), Width = UiLength.Px(InventoryLayout.SmallSlot + 22f), Height = UiLength.Px(18f)
+        }) { Scale = 0.6f, Color = new UiColor(200, 206, 218) });
 
     /// <summary>
     /// A press on a grid slot, as Terraria's <c>ItemSlot</c> handles it (<c>OverrideHover</c> / <c>GetAlternateClickAction</c> /

@@ -86,7 +86,11 @@ public sealed partial class GameSimulation
     public const int BankSlots = 40;
 
     /// <summary>The player's inventory: Terraria's ten columns by five rows, the top row being the hotbar.</summary>
+    /// <summary>The bag: the ten-slot hotbar and four more rows (Terraria's 10 × 5).</summary>
     public const int PlayerInventorySlots = 50;
+    /// <summary>The coin column and the ammo column beside the bag (Terraria's slots 50–53 and 54–57).</summary>
+    public const int PlayerCoinSlots = 4, PlayerAmmoSlots = 4;
+    public const int PlayerTotalSlots = PlayerInventorySlots + PlayerCoinSlots + PlayerAmmoSlots;
     public const float BankStationReach = 6f;
     public const float QuickStackRadius = 10f;
     public const int KillsPerBanner = 50;
