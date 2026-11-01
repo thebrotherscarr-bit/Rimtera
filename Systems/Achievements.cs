@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Rimtera.Entities;
 
 namespace Rimtera.Systems;
@@ -67,11 +68,26 @@ public static class AchievementCatalog
     public static AchievementDefinition? Get(string id) => ById.GetValueOrDefault(id);
 }
 
-/// <summary>Unlocked achievements (carried by the character file).</summary>
+/// <summary>
+/// Unlocked achievements. PU-24: feats are machine-global, as Terraria's achievements are. A tracker made while a
+/// <see cref="FeatStore"/> is active starts with every feat the machine has earned and records new unlocks there, so a feat
+/// unlocked by one character shows for every other. The character file still carries its own list, which is merged in too.
+/// </summary>
 public sealed class AchievementTracker
 {
     private readonly Dictionary<string, DateTimeOffset> _unlocked = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<AchievementDefinition> _recent = new();
+    private readonly FeatStore? _store;
+
+    public AchievementTracker(FeatStore? store = null)
+    {
+        _store = store;
+        if (store is null)
+            return;
+        foreach (var (id, time) in store.Unlocked)
+            if (AchievementCatalog.Get(id) is { } definition)
+                _unlocked.TryAdd(definition.Id, time);
+    }
 
     /// <summary>Raised once per newly unlocked achievement.</summary>
     public event Action<AchievementDefinition>? Unlocked;
@@ -89,7 +105,9 @@ public sealed class AchievementTracker
     {
         if (AchievementCatalog.Get(id) is not { } definition || _unlocked.ContainsKey(definition.Id))
             return false;
-        _unlocked[definition.Id] = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
+        _unlocked[definition.Id] = now;
+        _store?.Record(definition.Id, now);
         _recent.Add(definition);
         if (_recent.Count > 8)
             _recent.RemoveAt(0);
@@ -99,9 +117,12 @@ public sealed class AchievementTracker
 
     internal void Load(IEnumerable<string>? ids)
     {
+        var loaded = new List<string>();
         foreach (var id in ids ?? [])
-            if (AchievementCatalog.Get(id) is { } definition)
-                _unlocked.TryAdd(definition.Id, DateTimeOffset.UtcNow);
+            if (AchievementCatalog.Get(id) is { } definition && _unlocked.TryAdd(definition.Id, DateTimeOffset.UtcNow))
+                loaded.Add(definition.Id);
+        // A character's own feats join the machine's (a character file copied in from elsewhere brings its feats along).
+        _store?.RecordAll(loaded);
     }
 
     /// <summary>State-based checks (run every half second by the simulation).</summary>
@@ -176,7 +197,7 @@ public sealed partial class GameSimulation
         {
             if (_achievements is null)
             {
-                _achievements = new AchievementTracker();
+                _achievements = new AchievementTracker(FeatStore.Active);
                 _achievements.Unlocked += definition => PostSideMessage($"Achievement unlocked: {definition.Name}!");
             }
             return _achievements;
@@ -189,5 +210,121 @@ public sealed partial class GameSimulation
         _recentMessages.Enqueue(message);
         while (_recentMessages.Count > 5)
             _recentMessages.Dequeue();
+    }
+}
+
+/// <summary>
+/// PU-24: the machine-global feat list, feats.json beside the preferences (config.json). The first time it is opened it is
+/// built as the union of every character file's feats, so nothing earned before 0.2.2 is lost. Writes are atomic and an
+/// unwritable file only costs the save, never the game.
+/// </summary>
+public sealed class FeatStore
+{
+    private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
+    private readonly Dictionary<string, DateTimeOffset> _unlocked = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _gate = new();
+
+    private FeatStore(string path) => PathName = path;
+
+    /// <summary>The store new game sessions record into. Set by the game at start-up; null (nothing global) in tools and tests.</summary>
+    public static FeatStore? Active { get; set; }
+
+    public string PathName { get; }
+    /// <summary>True when this open built the file from the character files (the first run on 0.2.2).</summary>
+    public bool Migrated { get; private set; }
+
+    public IReadOnlyDictionary<string, DateTimeOffset> Unlocked
+    {
+        get { lock (_gate) return new Dictionary<string, DateTimeOffset>(_unlocked, StringComparer.OrdinalIgnoreCase); }
+    }
+
+    public int Count { get { lock (_gate) return _unlocked.Count; } }
+
+    public bool IsUnlocked(string id) { lock (_gate) return _unlocked.ContainsKey(id); }
+
+    /// <summary>Opens <paramref name="path"/>; when it does not exist yet, migrates from the character files in <paramref name="charactersDirectory"/>.</summary>
+    public static FeatStore Open(string path, string? charactersDirectory)
+    {
+        var store = new FeatStore(path);
+        if (File.Exists(path))
+        {
+            try
+            {
+                var saved = JsonSerializer.Deserialize<Dictionary<string, DateTimeOffset>>(File.ReadAllText(path), Options);
+                foreach (var (id, time) in saved ?? [])
+                    if (AchievementCatalog.Get(id) is { } definition)
+                        store._unlocked.TryAdd(definition.Id, time);
+            }
+            catch (Exception error) when (error is IOException or JsonException or UnauthorizedAccessException)
+            {
+                // A damaged feats file reads as empty; the next unlock rewrites it.
+            }
+            return store;
+        }
+
+        // First run: the union of every character's feats.
+        if (charactersDirectory is not null && Directory.Exists(charactersDirectory))
+            foreach (var file in Directory.EnumerateFiles(charactersDirectory, "*" + CharacterFileStore.Extension))
+                foreach (var id in FeatsInCharacterFile(file))
+                    if (AchievementCatalog.Get(id) is { } definition)
+                        store._unlocked.TryAdd(definition.Id, File.GetLastWriteTimeUtc(file));
+        store.Migrated = true;
+        store.Save();
+        return store;
+    }
+
+    /// <summary>The "Achievements" list of a character file, read loosely (any format version), or nothing.</summary>
+    private static IEnumerable<string> FeatsInCharacterFile(string path)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(path));
+            if (document.RootElement.ValueKind == JsonValueKind.Object &&
+                document.RootElement.TryGetProperty("Achievements", out var list) && list.ValueKind == JsonValueKind.Array)
+                return list.EnumerateArray().Where(item => item.ValueKind == JsonValueKind.String).Select(item => item.GetString()!).ToArray();
+        }
+        catch (Exception error) when (error is IOException or JsonException or UnauthorizedAccessException)
+        {
+        }
+        return [];
+    }
+
+    public void Record(string id, DateTimeOffset time)
+    {
+        lock (_gate)
+        {
+            if (!_unlocked.TryAdd(id, time))
+                return;
+        }
+        Save();
+    }
+
+    public void RecordAll(IEnumerable<string> ids)
+    {
+        var added = false;
+        lock (_gate)
+            foreach (var id in ids)
+                added |= _unlocked.TryAdd(id, DateTimeOffset.UtcNow);
+        if (added)
+            Save();
+    }
+
+    private void Save()
+    {
+        try
+        {
+            string json;
+            lock (_gate)
+                json = JsonSerializer.Serialize(_unlocked.OrderBy(pair => pair.Key, StringComparer.Ordinal).ToDictionary(pair => pair.Key, pair => pair.Value), Options);
+            if (Path.GetDirectoryName(PathName) is { Length: > 0 } directory)
+                Directory.CreateDirectory(directory);
+            var temporary = PathName + ".tmp";
+            File.WriteAllText(temporary, json);
+            File.Move(temporary, PathName, overwrite: true);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            // Feats stay unlocked in memory; the next unlock tries the write again.
+        }
     }
 }

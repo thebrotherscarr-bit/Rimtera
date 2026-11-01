@@ -646,8 +646,8 @@ public static class CoreSelfTests
             "Creative characters play only Creative worlds and the reverse (a character may always return to a world it saved)");
 
         menuFlow.Open();
-        Check(menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).SequenceEqual(["Single Player", "Settings", "Exit Game"]),
-            "the title menu follows Terraria: Single Player, Settings, Exit");
+        Check(menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).SequenceEqual(["Single Player", "Achievements", "Settings", "Credits", "Exit Game"]),
+            "the title menu follows Terraria: Single Player, Achievements, Settings, Credits, Exit (PU-24)");
         menuFlow.Close();
         Check(!menuFlow.IsOpen, "start menu closes without losing its host");
         menuFlow.Open();
@@ -1715,6 +1715,7 @@ public static class CoreSelfTests
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         BalanceSelfTests.Run(Check); // 0.2.0 A: the boss curve (--boss-balance), the 60-180 s band and D-6 difficulty scaling (PC-15, BO-23)
         SpriteMemorySelfTests.Run(Check); // 0.2.2 (0.1.7 A2, PE-2): lazy sprite loading: an index at load, decoded and scaled LRUs with byte budgets
+        MenuParitySelfTests.Run(Check); // 0.2.2 (0.1.8 D3-D7, E1): map preferences and NPC heads, title feats and credits, video rows, screen shake, audio latency
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }

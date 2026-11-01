@@ -13,6 +13,8 @@ public enum ParticleAmount : byte { Off, Low, High }
 public enum SmartCursorMode : byte { Toggle, Hold }
 public enum OptionsCategory : byte { General, Interface, Video, Volume, Cursor, Controls }
 public enum WindowMode : byte { Windowed, Borderless, Fullscreen }
+/// <summary>The in-world map style (Tab cycles it, as Terraria's map style key): the corner minimap, the full-screen overlay, or none.</summary>
+public enum MapOverlayStyle : byte { Minimap, Overlay, Off }
 
 public static class DisplayOptions
 {
@@ -96,6 +98,13 @@ public sealed record GamePreferences
     // General / Interface
     public bool DamageNumbers { get; set; } = true;
     public bool MinimapEnabled { get; set; } = true;
+    /// <summary>PU-15: the map style Tab last chose, kept across restarts.</summary>
+    public MapOverlayStyle MapView { get; set; } = MapOverlayStyle.Minimap;
+    /// <summary>PU-15: screen pixels per map tile on the minimap and overlay (1-6; = and - on the map keys change it).</summary>
+    public int MinimapScale { get; set; } = 2;
+    /// <summary>PU-15: minimap and overlay opacity (PageUp / PageDown), kept across restarts.</summary>
+    public float MinimapOpacity { get; set; } = 1f;
+    public float OverlayOpacity { get; set; } = 0.55f;
     public bool ShowFrameRate { get; set; }
     /// <summary>The station AI's one-line "next step" hint at the top of the screen.</summary>
     public bool GuideHints { get; set; } = true;
@@ -107,6 +116,8 @@ public sealed record GamePreferences
     public bool WeatherEffects { get; set; } = true;
     public bool FlashyEffects { get; set; } = true;
     public ParticleAmount Particles { get; set; } = ParticleAmount.High;
+    /// <summary>PE-16: the camera shakes briefly for boss roars, explosions and heavy landings.</summary>
+    public bool ScreenShake { get; set; } = true;
 
     // Cursor
     public int CursorColor { get; set; }
@@ -145,12 +156,15 @@ public sealed record GamePreferences
         if (!Enum.IsDefined(FrameSkip)) FrameSkip = FrameSkipMode.On;
         if (!Enum.IsDefined(Lighting)) Lighting = LightingQuality.Standard;
         if (!Enum.IsDefined(EnemyHealthBars)) EnemyHealthBars = HealthBarPlacement.Above;
-        // These no longer have menu entries, so a value saved by an older build can't strand anyone with them off.
+        // Background and parallax have no menu rows (0.1.3 took them out), so a value saved by an older build can't strand
+        // anyone with them off. Weather, flashing effects and particles have rows again (0.2.2, PU-26) and keep their value.
         BackgroundEnabled = true;
-        WeatherEffects = true;
-        FlashyEffects = true;
         BackgroundParallax = 1f;
-        Particles = ParticleAmount.High;
+        if (!Enum.IsDefined(Particles)) Particles = ParticleAmount.High;
+        if (!Enum.IsDefined(MapView)) MapView = MapOverlayStyle.Minimap;
+        MinimapScale = Math.Clamp(MinimapScale, 1, 6);
+        MinimapOpacity = ClampFinite(MinimapOpacity, 1f, 0.05f, 1f);
+        OverlayOpacity = ClampFinite(OverlayOpacity, 0.55f, 0.05f, 1f);
         if (!Enum.IsDefined(SmartCursor)) SmartCursor = SmartCursorMode.Toggle;
         CursorColor = Math.Clamp(CursorColor, 0, CursorColors.Length - 1);
         CursorScale = ClampFinite(CursorScale, 1f, 0.75f, 1.5f);
