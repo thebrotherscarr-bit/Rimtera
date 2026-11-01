@@ -173,7 +173,7 @@ public sealed class InventoryUiState : UiState
     private string? _housingReport;
     private UiTextElement? _guideCaption;
 
-    private enum Tab { Gear, Housing, Emotes }
+    private enum Tab { Gear, Housing, Emotes, Work }
 
     public InventoryUiState(Inventory playerInventory, InventoryUiController? controller = null, Inventory? chest = null,
         GameSimulation? game = null, GridPoint? chestCell = null, string chestTitle = "Chest", GuideLookupState? guide = null,
@@ -521,6 +521,7 @@ public sealed class InventoryUiState : UiState
         Tab("tab-bestiary", "Bestiary", 3, () => BestiaryRequested?.Invoke());
         Tab("tab-feats", "Feats", 4, () => FeatsRequested?.Invoke());
         Tab("tab-emotes", "Emotes", 5, () => SwitchTab(InventoryUiState.Tab.Emotes), _tab == InventoryUiState.Tab.Emotes);
+        Tab("tab-work", "Work", 6, () => SwitchTab(InventoryUiState.Tab.Work), _tab == InventoryUiState.Tab.Work);
         for (var i = 0; i < GameSimulation.LoadoutCount; i++)
         {
             var index = i;
@@ -530,7 +531,7 @@ public sealed class InventoryUiState : UiState
                 Rebuild();
             }, $"loadout-{i + 1}", new UiStyle
             {
-                Left = FromRight(258f), Top = UiLength.Px(gearTop + (6 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
+                Left = FromRight(258f), Top = UiLength.Px(gearTop + (7 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
             }) { TextScale = 0.75f, Color = game.ActiveLoadout == i ? UiColor.ButtonActive : UiColor.ButtonDefault });
         }
 
@@ -538,6 +539,8 @@ public sealed class InventoryUiState : UiState
             AddHousing(game, gearTop);
         else if (_tab == InventoryUiState.Tab.Emotes)
             AddEmotes(game, gearTop);
+        else if (_tab == InventoryUiState.Tab.Work)
+            AddWork(game, gearTop);
         else
             AddEquipment(game, gearTop);
     }
@@ -630,6 +633,65 @@ public sealed class InventoryUiState : UiState
     }
 
     /// <summary>Terraria's housing panel: check the room you stand in, and who lives with you.</summary>
+    /// <summary>
+    /// The Work tab (RimWorld's work priorities, in the hub): one row per crew member with the work that has jobs now
+    /// (Guard, Tend, Haul). Clicking a number cycles 1 → 2 → 3 → 4 → off; 1 is done first. The last button says whether they
+    /// stay home (and work there) or follow the player.
+    /// </summary>
+    private void AddWork(GameSimulation game, float top)
+    {
+        Add(new UiTextElement("Work (1 first, 4 last)", "work-title", new UiStyle
+        {
+            Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top), Width = UiLength.Px(240f), Height = UiLength.Px(24f)
+        }) { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
+        var crew = game.Colonists.Where(agent => agent.IsAlive).Take(8).ToArray();
+        if (crew.Length == 0)
+        {
+            Add(new UiTextElement("No crew yet: they arrive into free housing.", "work-empty", new UiStyle
+            {
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top + 28f), Width = UiLength.Px(240f), Height = UiLength.Px(18f)
+            }) { Scale = 0.7f, Color = new UiColor(170, 178, 192) });
+            return;
+        }
+        var working = WorkCatalog.All.Where(info => info.HasJobs).ToArray();
+        for (var row = 0; row < crew.Length; row++)
+        {
+            var agent = crew[row];
+            var y = top + 28f + row * 50f;
+            var doing = agent.CurrentWork is { } work ? WorkCatalog.Get(work).Label : agent.Activity;
+            Add(new UiTextElement($"{agent.Name} · {doing}", $"work-name-{agent.Id}", new UiStyle
+            {
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y), Width = UiLength.Px(240f), Height = UiLength.Px(18f)
+            }) { Scale = 0.7f, Color = new UiColor(226, 230, 238) });
+            for (var column = 0; column < working.Length; column++)
+            {
+                var info = working[column];
+                var priority = agent.Work.Priority(info.Type);
+                Add(new UiButtonElement($"{info.Label} {(priority == WorkCatalog.Off ? "–" : priority.ToString())}", () =>
+                {
+                    agent.Work.Cycle(info.Type);
+                    Rebuild();
+                }, $"work-{agent.Id}-{info.Type}", new UiStyle
+                {
+                    Left = UiLength.Mixed(-250f + column * 62f, 1f), Top = UiLength.Px(y + 20f), Width = UiLength.Px(58f), Height = UiLength.Px(24f)
+                }) { TextScale = 0.6f, Color = priority == WorkCatalog.Off ? UiColor.ButtonDefault : UiColor.ButtonActive });
+            }
+            Add(new UiButtonElement(agent.FollowsPlayer ? "Follows you" : "Stays home", () =>
+            {
+                agent.FollowsPlayer = !agent.FollowsPlayer;
+                Rebuild();
+            }, $"work-{agent.Id}-follow", new UiStyle
+            {
+                Left = UiLength.Mixed(-250f + working.Length * 62f, 1f), Top = UiLength.Px(y + 20f), Width = UiLength.Px(58f), Height = UiLength.Px(24f)
+            }) { TextScale = 0.55f });
+        }
+        Add(new UiTextElement("Operate, farm, brew, cook, fish, build, research and trade arrive with bills, zones and research.",
+            "work-later", new UiStyle
+            {
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top + 32f + crew.Length * 50f), Width = UiLength.Px(240f), Height = UiLength.Px(32f)
+            }) { Scale = 0.6f, Color = new UiColor(150, 160, 172) });
+    }
+
     /// <summary>The emote palette (Terraria's emote menu): one button per emote; the backtick + 1-8 shortcut stays.</summary>
     private void AddEmotes(GameSimulation game, float top)
     {
