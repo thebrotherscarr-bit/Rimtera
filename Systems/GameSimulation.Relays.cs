@@ -97,8 +97,34 @@ public sealed partial class GameSimulation
             SetFlagValue(RelayKey(cell) + ".charge", RelayStartCharge + 1); // stored one up, so an empty relay still reads as known
     }
 
-    private void SetRelayCharge(GridPoint cell, int charge) =>
-        SetFlagValue(RelayKey(cell) + ".charge", Math.Clamp(charge, 0, RelayCapacity) + 1);
+    /// <summary>0.7.9: below this a relay writes a warning letter (once, until it is charged above it again).</summary>
+    public const int RelayLowCharge = RelayCapacity / 5;
+
+    private void SetRelayCharge(GridPoint cell, int charge)
+    {
+        var before = Flags.IsSet(RelayKey(cell) + ".charge") ? (int)Flags.Get(RelayKey(cell) + ".charge") - 1 : RelayStartCharge;
+        var after = Math.Clamp(charge, 0, RelayCapacity);
+        SetFlagValue(RelayKey(cell) + ".charge", after + 1);
+        // 0.7.9: a relay running low writes a warning, once, while you still have time to get there.
+        if (before >= RelayLowCharge && after < RelayLowCharge && after > 0 && Pylons.FirstOrDefault(pylon => pylon.Cell == cell) is { Name: not null } pylon)
+            SendLetter(LetterKind.BadNews, $"Relay low: {PylonPlace(pylon)}",
+                $"The {pylon.Name.ToLowerInvariant()} at {PylonPlace(pylon)} is down to {after}/{RelayCapacity} charge. Bring it fuel crystals before it goes offline.",
+                tag: RelayKey(cell));
+    }
+
+    /// <summary>The power grid in one line (0.7.9): the station AI and the relays online.</summary>
+    public string GridSummary
+    {
+        get
+        {
+            var pylons = Pylons;
+            var ai = StationAiOnline ? $"AI {StationPower}/{MaxPower}, tier {StationPowerTier}" : "AI DOWN";
+            if (pylons.Count == 0)
+                return $"Grid: {ai} · no relays";
+            var low = pylons.Count(pylon => pylon.Active && RelayCharge(pylon.Cell) < RelayLowCharge);
+            return $"Grid: {ai} · relays {pylons.Count(pylon => pylon.Active)}/{pylons.Count} online" + (low > 0 ? $", {low} low" : "");
+        }
+    }
 
     internal void SetRelayChargeForConsole(GridPoint cell, int charge) => SetRelayCharge(cell, charge);
 

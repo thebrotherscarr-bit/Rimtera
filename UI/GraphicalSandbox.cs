@@ -3596,7 +3596,7 @@ public static partial class GraphicalSandbox
         private void DrawStatusPanel(Graphics g, GameSimulation game)
         {
             var incidents = game.IncidentLog.Reverse().Take(3).ToArray();
-            var lines = 4 + incidents.Length;
+            var lines = 5 + incidents.Length; // 0.7.9: + the grid line
             var minimapShown = MapDisplay.DrawsMinimap(_menu.Preferences);
             var panel = new RectangleF(Width - 290, minimapShown ? VitalsHeight + MinimapHeight + 12 : VitalsHeight + 4, 280, 22 + lines * 18);
             _hudRects.Add(panel);
@@ -3614,6 +3614,9 @@ public static partial class GraphicalSandbox
 
             var room = game.PlayerRoom;
             g.DrawString(room is null ? "Outdoors" : $"Indoors · room of {room.CellCount} cells", _small, _hudBrush, x, y);
+            y += 18;
+
+            g.DrawString(game.GridSummary, _small, game.StationAiOnline ? _hudBrush : _healthBar, x, y); // 0.7.9: the power grid
             y += 18;
 
             var events = new List<string>();
