@@ -860,8 +860,7 @@ public sealed partial class GameSimulation
             case ItemId.RecallCapsule:
                 if (!Player.Inventory.TryConsume(item.Id))
                     return true;
-                RespawnPlayerAtLanding();
-                PostMessage("The recall capsule folds you back to the landing site.");
+                PostMessage($"The recall capsule folds you back to {RecallHome()}."); // 0.7.2: home, not the landing site
                 Flags.Increment("player.teleports");
                 break;
             case ItemId.PhaseRod:

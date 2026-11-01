@@ -122,8 +122,9 @@ public static partial class GraphicalSandbox
                     g.DrawImageUnscaled(bitmap, (int)(at.X - bitmap.Width / 2f), (int)(at.Y - bitmap.Height / 2f));
                 else
                     g.FillEllipse(_pylonFallbackBrush, at.X - size / 4f, at.Y - size / 4f, size / 2f, size / 2f);
-                if (!pylon.Active)
-                    g.DrawString("dormant", _small, _dimTextBrush, at.X - size / 2f, at.Y + size / 2f);
+                // 0.7.2: an active pylon names where it stands (the base, or its outpost).
+                g.DrawString(pylon.Active ? game.PylonPlace(pylon) : "dormant", _small, pylon.Active ? _amberBrush : _dimTextBrush,
+                    at.X - size / 2f, at.Y + size / 2f);
             }
             if (canTravel)
                 g.DrawString("Click a ringed pylon to travel there.", _small, _amberBrush, 24, 72);

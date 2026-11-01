@@ -441,14 +441,15 @@ public sealed partial class GameSimulation
         if (Pylons.Any(other => other.Kind == pylon))
             return $"A {Tiles[pylon].Name.ToLowerInvariant()} already stands somewhere in this world.";
         if (CountResidentsNear(point) < PylonResidentsNeeded)
-            return $"A pylon needs at least {PylonResidentsNeeded} housed residents nearby.";
+            return $"A pylon needs a staffed home: at least {PylonResidentsNeeded} people living within {PylonTownRadius:0} tiles (the base, or an outpost).";
         if (checkBiome && TravelContent.PylonZone(pylon) is var zone && pylon != TileId.ColonyPylon &&
             BiomeScanner.Scan(World, point).Zone != zone)
             return $"The {Tiles[pylon].Name.ToLowerInvariant()} only works in the {BiomeScanner.DisplayName(zone)}.";
         return null;
     }
 
-    private int CountResidentsNear(GridPoint cell) => _townNpcs.Count(npc => !npc.IsBound && npc.IsAlive && npc.HomeCell is { } home &&
+    // 0.7.2: a pylon is staffed by the people who live around it (prisoners do not count).
+    private int CountResidentsNear(GridPoint cell) => _townNpcs.Count(npc => !npc.IsBound && !npc.IsPrisoner && npc.IsAlive && npc.HomeCell is { } home &&
         Vector2.Distance(new Vector2(home.X, home.Y), new Vector2(cell.X, cell.Y)) <= PylonTownRadius);
 
     // ------------------------------------------------------------------ pylons and fast travel
@@ -475,6 +476,16 @@ public sealed partial class GameSimulation
         }
     }
 
+    /// <summary>0.7.2: where a pylon stands: "the base", an outpost, or "the wilds" (nobody lives there).</summary>
+    public string PylonPlace(PylonInfo pylon)
+    {
+        var at = new Vector2(pylon.Cell.X + 0.5f, pylon.Cell.Y);
+        if (Vector2.Distance(at, BaseCenter) <= OutpostDistance)
+            return "the base";
+        return Outposts.Where(outpost => Vector2.Distance(outpost.Center, at) <= PylonTownRadius + OutpostSpread)
+            .OrderBy(outpost => Vector2.Distance(outpost.Center, at)).FirstOrDefault()?.Label ?? "the wilds";
+    }
+
     /// <summary>The active pylon within reach of the player, if any (the teleport source).</summary>
     public PylonInfo? PylonInRange => Pylons.Where(pylon => pylon.Active &&
             Vector2.Distance(PlayerCenter, new Vector2(pylon.Cell.X + 0.5f, pylon.Cell.Y)) <= PylonUseRadius)
@@ -494,7 +505,7 @@ public sealed partial class GameSimulation
             return false;
         if (!target.Active)
         {
-            PostMessage($"The {target.Name.ToLowerInvariant()} is dormant: it needs a settled town around it.");
+            PostMessage($"The {target.Name.ToLowerInvariant()} is dormant: it needs a staffed outpost ({PylonResidentsNeeded} people living around it).");
             return false;
         }
         if (target.Cell == source.Cell)
