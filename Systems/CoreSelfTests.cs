@@ -1726,6 +1726,7 @@ public static class CoreSelfTests
         HealingLadderSelfTests.Run(Check); // 0.1.9 C1: healing and charge ladders, their gates, potion sickness, quick heal, cooked food
         BuffCurveSelfTests.Run(Check); // 0.3.2: buff durations on Terraria's scale (real minutes), food, caps and saves
         SpawnRateSelfTests.Run(Check); // 0.3.4 EN-8: Terraria spawn rate, cap, factors and ramp; battle and calming stims
+        TownParitySelfTests.Run(Check); // 0.3.5: Terraria happiness factors, Nurse and Arms Dealer move-in, the medic clearing debuffs
         DropRuleSelfTests.Run(Check); // 0.1.9 C2-C5: drop chances and conditions, event drops, hearts and orbs, boss potions, 9999 stacks
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab

@@ -88,10 +88,13 @@ public sealed partial class GameSimulation
         if (Player.Inventory.Count(ItemId.Credits) >= 50)
             Unlock(TownNpcKind.Quartermaster);
         // Terraria's Nurse: the player's own progress (more than the starting health), not the crew's injuries.
-        if (Player.MaximumHitPoints > 120f)
+        // 0.3.5: as Terraria's Nurse, more than the starting 100 health (one life core) and the Quartermaster (Merchant) in town.
+        if (Player.MaximumHitPoints > 100f && _townNpcs.Any(npc => npc.Kind == TownNpcKind.Quartermaster && !npc.IsBound))
             Unlock(TownNpcKind.Medic);
-        if (Player.Inventory.Slots.Any(stack => !stack.IsEmpty && Items[stack.ItemId].EffectiveClass == DamageClass.Ranged &&
-                                                Items[stack.ItemId].UseKind == ItemUseKind.Ranged && stack.ItemId != ItemId.CopperBow))
+        // 0.3.5: as Terraria's Arms Dealer, a gun or bullets carried (bows no longer count).
+        if (Player.Inventory.Slots.Any(stack => !stack.IsEmpty && (Items[stack.ItemId].Style == WeaponStyle.Gun ||
+                                                                   Items[stack.ItemId].UsesAmmo == AmmoClass.Bullet ||
+                                                                   Items[stack.ItemId].AmmoKind == AmmoClass.Bullet)))
             Unlock(TownNpcKind.Armorer);
         if (Flags.IsSet("boss.stone_sentinel.down"))
             Unlock(TownNpcKind.ChiefEngineer);
@@ -384,34 +387,66 @@ public sealed partial class GameSimulation
 
     // ------------------------------------------------------------------ happiness and shops
 
-    /// <summary>
-    /// Happiness from the home biome and neighbours within <see cref="NeighbourRadius"/> tiles, minus crowding
-    /// (more than three neighbours) and homelessness. Roughly −6..+6.
-    /// </summary>
-    public float GetHappiness(TownNpc npc)
+    /// <summary>Terraria's price factor for each affection (1.4 happiness): love ×0.88, like ×0.94, dislike ×1.06, hate ×1.12.</summary>
+    public static float AffectionFactor(Affection feeling) => feeling switch
     {
-        var position = npc.HomeCell is { } home ? new Vector2(home.X + 0.5f, home.Y + 0.5f) : npc.Motion.Position;
-        var zone = BiomeScanner.Scan(World, ClampCell(RegionMap.CellAt(position))).Zone;
-        var score = 0f;
+        Affection.Hate => 1.12f,
+        Affection.Dislike => 1.06f,
+        > 0 when (int)feeling >= 2 => 0.88f,
+        > 0 => 0.94f,
+        _ => 1f
+    };
+
+    /// <summary>Residents that do not count as neighbours, as Terraria's <c>IsNotReallyTownNPC</c>: town gels and the travelling traders.</summary>
+    private static bool CountsAsNeighbour(TownNpc npc) =>
+        !npc.IsBound && !ContentFillTown.IsGel(npc.Kind) && npc.Kind is not (TownNpcKind.TravellingMerchant or TownNpcKind.TradeConsul);
+
+    /// <summary>
+    /// Terraria 1.4's shop-price factor (0.3.5, P1–P6), a product of: the home biome's affection; each neighbour's within
+    /// <see cref="NeighbourRadius"/> tiles of home; ×1.05 for each neighbour beyond three (crowded) or ×0.95 with two or
+    /// fewer nearby and four or fewer within 120 tiles (solitude); and the full 1.5 when homeless or more than 120 tiles
+    /// from home. Clamped to 0.75–1.5. Gels and travelling traders are not counted as neighbours.
+    /// </summary>
+    public float GetPriceFactor(TownNpc npc)
+    {
+        if (npc.HomeCell is not { } home || Vector2.Distance(npc.Motion.Position, new Vector2(home.X + 0.5f, home.Y + 0.5f)) > FarFromHome)
+            return 1.5f;
+        var position = new Vector2(home.X + 0.5f, home.Y + 0.5f);
+        var zone = BiomeScanner.Scan(World, ClampCell(home)).Zone;
+        var factor = 1f;
         foreach (var (biome, feeling) in npc.Definition.Biomes)
             if (biome == zone)
-                score += (int)feeling;
-        var neighbours = _townNpcs.Where(other => other != npc && !other.IsBound &&
-                                                  Vector2.Distance(other.Motion.Position, npc.Motion.Position) <= NeighbourRadius).ToArray();
+                factor *= AffectionFactor(feeling);
+        Vector2 Where(TownNpc other) => other.HomeCell is { } otherHome ? new Vector2(otherHome.X + 0.5f, otherHome.Y + 0.5f) : other.Motion.Position;
+        var others = _townNpcs.Where(other => other != npc && CountsAsNeighbour(other)).ToArray();
+        var neighbours = others.Where(other => Vector2.Distance(Where(other), position) <= NeighbourRadius).ToArray();
         foreach (var other in neighbours)
             foreach (var (kind, feeling) in npc.Definition.Neighbours)
                 if (kind == other.Kind)
-                    score += (int)feeling * 0.75f;
+                    factor *= AffectionFactor(feeling);
         if (neighbours.Length > 3)
-            score -= (neighbours.Length - 3) * 0.5f;
-        if (npc.HomeCell is null)
-            score -= 2f;
+            factor *= MathF.Pow(1.05f, neighbours.Length - 3);
+        else if (neighbours.Length <= 2 && others.Count(other => Vector2.Distance(Where(other), position) <= FarFromHome) <= 4)
+            factor *= 0.95f;
+        return Math.Clamp(factor, 0.75f, 1.5f);
+    }
+
+    /// <summary>Tiles from home beyond which a resident counts as far from home (Terraria's 120).</summary>
+    public const float FarFromHome = 120f;
+
+    /// <summary>
+    /// Happiness as a score for the UI and moods: how far the price factor sits below 1, in steps of 6% (Terraria's "like"
+    /// step), so +2 is about ×0.88 and −2 about ×1.12.
+    /// </summary>
+    public float GetHappiness(TownNpc npc)
+    {
+        var score = (1f - GetPriceFactor(npc)) / 0.06f;
         npc.Happiness = score;
         return score;
     }
 
-    /// <summary>Shop price multiplier from happiness: happy NPCs discount (to 0.75), miserable ones gouge (to 1.5).</summary>
-    public float GetPriceMultiplier(TownNpc npc) => Math.Clamp(1f - 0.06f * GetHappiness(npc), 0.75f, 1.5f) * (1f - TradeDiscount); // 0.2.9: Trade
+    /// <summary>Shop price multiplier: Terraria's happiness factor (0.75–1.5), then the 0.2.9 Trade discount.</summary>
+    public float GetPriceMultiplier(TownNpc npc) => GetPriceFactor(npc) * (1f - TradeDiscount);
 
     /// <summary>What an NPC sells right now (flag-gated stock) at happiness-adjusted prices.</summary>
     public IReadOnlyList<ShopOffer> GetShop(TownNpc npc)
@@ -506,10 +541,15 @@ public sealed partial class GameSimulation
         if (npc.Kind != TownNpcKind.Medic || npc.IsBound)
             return false;
         var missing = Player.MaximumHitPoints - Player.HitPoints;
-        var cost = Math.Max(1, (int)MathF.Ceiling(missing * 0.5f * GetPriceMultiplier(npc)));
-        if (missing <= 0f || !Player.Inventory.TryConsume(ItemId.Credits, cost))
+        // 0.3.5 (S1): like Terraria's Nurse, the medic also clears debuffs (not potion sickness), each for a small fee.
+        var debuffs = Player.Statuses.Active.Select(status => status.Id)
+            .Where(id => StatusEffectSystem.IsDebuff(id) && id != StatusId.PotionSickness).ToArray();
+        var cost = Math.Max(1, (int)MathF.Ceiling((missing * 0.5f + debuffs.Length * 5f) * GetPriceMultiplier(npc)));
+        if (missing <= 0f && debuffs.Length == 0 || !Player.Inventory.TryConsume(ItemId.Credits, cost))
             return false;
         Player.Heal(missing);
+        foreach (var id in debuffs)
+            Player.Statuses.Remove(id);
         PostMessage($"{npc.Name} patches you up for {cost} credits.");
         return true;
     }

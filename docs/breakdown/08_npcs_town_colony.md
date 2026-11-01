@@ -63,8 +63,8 @@ Catalog: `Systems/TownNpcs.cs:198–321`, `Systems/Content/ContentFillTown.cs:43
 |---|---|---|---|---|---|---|
 | R1 | Station AI (0) | Guide | T: present from world start, homeless until housed (knowledge). R: always unlocked (`Town.cs:97`); a hologram at the landing site until housed (`Town.cs:178–187`); advice from `GuideAdvisor` (`GameSimulation.Guide.cs:84`) read from the recipe data. | Sells a work bench, torch and rope (the Guide sells nothing) | ✅ | ✅ as audited |
 | R2 | Quartermaster (1) | Merchant | T: 50 silver carried, piggy bank included (knowledge). R: ≥ 50 credits **in the inventory only** (`Town.cs:98`). | 13 basics, none gated | ◐ | ❌ NC-14 → 0.5.0 |
-| R3 | Medic (2) | Nurse | T: max life > 100 and the Merchant present (knowledge). R: max HP > 120, no merchant check (`Town.cs:101`). Probe A: a fresh player has 100 HP, so this needs 3 life cores rather than 1. | Heal for credits (see T2-S1) | ◐ | ❌ NC-14 → 0.5.0 |
-| R4 | Armorer (3) | Arms Dealer | T: a gun or bullets carried (knowledge). R: any Ranged weapon except the Copper bow (`Town.cs:103–105`), so bows count too. | Ammo and guns, flag-gated | ◐ | ❌ NC-14 → 0.5.0 |
+| R3 | Medic (2) | Nurse | T: max life > 100 and the Merchant present (knowledge). R: max HP > 120, no merchant check (`Town.cs:101`). Probe A: a fresh player has 100 HP, so this needs 3 life cores rather than 1. | Heal for credits (see T2-S1) | ◐ | ✅ 0.3.5: max HP > 100 and the Quartermaster in town |
+| R4 | Armorer (3) | Arms Dealer | T: a gun or bullets carried (knowledge). R: any Ranged weapon except the Copper bow (`Town.cs:103–105`), so bows count too. | Ammo and guns, flag-gated | ◐ | ✅ 0.3.5: a gun or bullets carried |
 | R5 | Chief Engineer (4) | Steampunker or Mechanic role | R: after the first boss (`Town.cs:106`). | Wiring, drones, turrets | ➕ | ➕ kept |
 | R6 | Astro-Botanist (5) | Dryad / Witch Doctor | T Dryad: after any boss (knowledge). R: after placing hydroponics (`Town.cs:108`). | Purifier gel, planters; no purity report | ◐ | ❌ NC-14 → 0.5.0 |
 | R7 | Head Researcher (6) | Wizard-like | R: after a heart breaks (`Town.cs:110`). | Charge (magic) gear | ➕ | ➕ kept |
@@ -93,7 +93,7 @@ Catalog: `Systems/TownNpcs.cs:198–321`, `Systems/Content/ContentFillTown.cs:43
 
 | # | Feature | Terraria | Rimtera (verified) | Status | 0.2.0 status |
 |---|---|---|---|---|---|
-| S1 | Medic heal service | Nurse heals life and removes debuffs. Price scales with missing life, debuffs, progression and happiness (knowledge). | `HealAtMedic` (`Town.cs:412–423`): 0.5 credits × missing HP × price multiplier. Heals HP and injuries. Statuses are **not** cleared. Explicit player action. | ◐ | ❌ NC-13 → 0.5.0 |
+| S1 | Medic heal service | Nurse heals life and removes debuffs. Price scales with missing life, debuffs, progression and happiness (knowledge). | `HealAtMedic` (`Town.cs:412–423`): 0.5 credits × missing HP × price multiplier. Heals HP and injuries. Statuses are **not** cleared. Explicit player action. | ◐ | ✅ 0.3.5: the medic clears debuffs (not potion sickness) |
 | S2 | Angler quest | One fish a day, rewards scale with completions (knowledge). | ✅ as R9 | ✅ | ✅ as audited |
 | S3 | Party service | Random parties (knowledge) | Player-triggered (R29) | ➕ | ➕ kept |
 | S4 | Reforge | Goblin Tinkerer rerolls the prefix for coins (knowledge) | None | ❌ | ❌ NC-12 → 0.5.0 |
@@ -116,17 +116,17 @@ Catalog: `Systems/TownNpcs.cs:198–321`, `Systems/Content/ContentFillTown.cs:43
 | H10 | NPCs fight back | Town NPCs attack nearby enemies: throw, shoot or cast (knowledge, `AI_007_TownEntities`) | None. NPCs only take contact damage (`Town.cs:242–272`). | ❌ | ❌ NC-6 → 0.5.0 |
 | H11 | Distinct sprites | Each NPC is unique | 4 shared groups: `npc_colony_worker` (Head Researcher, Tide-Warden, Aeronaut, Greenskeeper), `npc_store_clerk` (Quartermaster, Trade Consul), `npc_base_engineer` (Chief Engineer, Isotopist), `npc_archivist` (Archivist, Relic Warden) | ◐ | ❌ NC-22 → 0.5.0 |
 | H12 | Death and respawn | Dies; comes back through a later daytime spawn check (knowledge) | 160 HP, 2 HP/s regen; on death a 10 h respawn flag, then a normal arrival (`Town.cs:224–239`) | ✅ | ✅ as audited |
-| H13 | Town NPC HP saved | n/a | `TownNpcSnapshot` has no HP, so HP resets to 160 on load (`TownNpcs.cs:104`) | ◐ | ❌ NC-20 not done, not scheduled |
+| H13 | Town NPC HP saved | n/a | `TownNpcSnapshot` has no HP, so HP resets to 160 on load (`TownNpcs.cs:104`) | ◐ | ✅ HP saved (`TownNpcSnapshot.Hp`) |
 | H14 | Town calms spawns | Fewer spawns near NPCs (knowledge) | `TownNpcsCalmingSpawns` (`GameSimulation.Spawning.cs:22`) | ✅ | ✅ as audited |
-| H15 | Unhappy NPC leaves | Never | Leaves at ≤ −5 (`Town.cs:46`); Probe C | ⚠ | ❌ NC-9 not done, not scheduled |
+| H15 | Unhappy NPC leaves | Never | Leaves at ≤ −5 (`Town.cs:46`); Probe C | ⚠ | ✅ NC-9: unhappy residents stay |
 | H16 | Bound survivors | Rescue by talking; then a normal resident (knowledge) | Talk frees them, they unlock and look for a house (`GameSimulation.Items.cs:594–598`, `Town.cs:209–216`) | ✅ | ✅ as audited |
 | H17 | Survivor progression gating | Bound NPCs appear after their boss or event (knowledge) | All 8 are placed at worldgen, so they are available from day 1 | ◐ | ❌ PC-20 → 0.5.0; NC-14 → 0.5.0 |
-| P1 | Happiness: biome | Love/like/dislike/hate multiply the price (×0.88/×0.94/×1.06/×1.12, knowledge) | Adds ±1/±2 to a score; price = 1 − 0.06·score (`Town.cs:330–353`) | ◐ | ❌ NC-10 → 0.5.0 |
-| P2 | Happiness: neighbours | Within 25 tiles (IL `GetNearbyResidentNPCs`, `ldc.r4 25`), multiplicative | Within 25 tiles ✅, ×0.75 per affection. Uses current positions, not homes. | ◐ | ❌ NC-10 → 0.5.0 |
-| P3 | Crowding / solitude | > 3 neighbours: ×1.05 each; ≤ 2: ×0.95 (IL `ProcessMood`, `1.05`/`0.95`) | Crowding −0.5 per neighbour above 3 ✅; **no solitude bonus** | ◐ | ❌ NC-10 → 0.5.0 |
-| P4 | Homeless / far from home / evil biome | Price to the maximum, clamped to 1.5 (IL `ProcessMood`: 1000; far = 120 tiles) | Homeless −2 (≈ ×1.12); no far-from-home or evil check | ◐ | ❌ NC-10 → 0.5.0 |
+| P1 | Happiness: biome | Love/like/dislike/hate multiply the price (×0.88/×0.94/×1.06/×1.12, knowledge) | Adds ±1/±2 to a score; price = 1 − 0.06·score (`Town.cs:330–353`) | ◐ | ✅ 0.3.5: Terraria's multiplicative factors (`GetPriceFactor`) |
+| P2 | Happiness: neighbours | Within 25 tiles (IL `GetNearbyResidentNPCs`, `ldc.r4 25`), multiplicative | Within 25 tiles ✅, ×0.75 per affection. Uses current positions, not homes. | ◐ | ✅ 0.3.5: Terraria's multiplicative factors (`GetPriceFactor`) |
+| P3 | Crowding / solitude | > 3 neighbours: ×1.05 each; ≤ 2: ×0.95 (IL `ProcessMood`, `1.05`/`0.95`) | Crowding −0.5 per neighbour above 3 ✅; **no solitude bonus** | ◐ | ✅ 0.3.5: Terraria's multiplicative factors (`GetPriceFactor`) |
+| P4 | Homeless / far from home / evil biome | Price to the maximum, clamped to 1.5 (IL `ProcessMood`: 1000; far = 120 tiles) | Homeless −2 (≈ ×1.12); no far-from-home or evil check | ◐ | ✅ 0.3.5: Terraria's multiplicative factors (`GetPriceFactor`) |
 | P5 | Clamp and rounding | 0.75–1.5, rounded to 0.01 (IL `LimitAndRoundMultiplier`) | Clamped 0.75–1.5, not rounded (`Town.cs:353`) | ✅ | ✅ as audited |
-| P6 | "Not really town NPC" | Pets, slimes and the merchant are excluded from neighbour counts (IL `IsNotReallyTownNPC`) | Gels and the merchant count as neighbours and crowd others | ◐ | ❌ NC-10 → 0.5.0 |
+| P6 | "Not really town NPC" | Pets, slimes and the merchant are excluded from neighbour counts (IL `IsNotReallyTownNPC`) | Gels and the merchant count as neighbours and crowd others | ◐ | ✅ 0.3.5: Terraria's multiplicative factors (`GetPriceFactor`) |
 | P7 | Dead helper | n/a | `Systems/NpcHappiness.cs` (`PriceMultiplier` from biome tags) is never called | ⚠ | ◐ NC-18 partly (0.1.8 storyteller arrivals replace the dead) |
 | Y1 | Pylon source | Sold by an NPC whose happiness gives a price ≤ 0.9, in the matching biome (knowledge) | Crafted at the anvil (`GameSimulation.Travel.cs:173–178`) | ◐ | ❌ NC-11 → 0.5.0 |
 | Y2 | Pylon activation | ≥ 2 NPCs nearby, in its biome, one per type (knowledge) | ≥ 2 housed residents within 40 tiles, biome checked on placement, one per type (`Travel.cs:431–445`) | ✅ | ✅ as audited |
