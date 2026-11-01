@@ -1940,11 +1940,17 @@ public sealed partial class GameSimulation : IStoryHost
     /// </summary>
     private TownNpc AddSettler(int arrivalIndex, Vector2 at, CharacterProfile? profile = null)
     {
+        // 0.5.1: a new settler's story adds to their skills; a known person (an older save's crew) keeps theirs as they were.
+        var known = profile is not null;
         profile ??= TownPeople.SettlerProfile(unchecked(Seed + 7919 * (arrivalIndex + 1)),
             _townNpcs.Select(npc => npc.Name).Append(PlayerProfile.Name));
+        var (storied, childhood, adulthood) = TownPeople.WithStory(TownNpcKind.Settler, profile, unchecked(Seed * 17 + TownPeople.NameSeed(profile.Name)));
+        if (!known)
+            profile = storied;
         var x = Math.Clamp((int)MathF.Floor(at.X), 2, World.Width - 3);
         var npc = new TownNpc(_nextEntityId++, TownNpcCatalog.Get(TownNpcKind.Settler), profile.Name,
             new Vector2(x, FindSurface(x) - HumanoidBody.Size.Y), profile) { Look = arrivalIndex };
+        npc.SetStory(childhood, adulthood);
         _townNpcs.Add(npc);
         return npc;
     }

@@ -89,6 +89,9 @@ public sealed class TownNpc : IStationWorker
         Motion = new PawnMotionState(position, HumanoidBody.Size);
         WanderTarget = position;
         SetProfile(profile ?? TownPeople.ProfileFor(definition.Kind, name, unchecked((int)id * 7919 + (int)definition.Kind)));
+        // 0.5.1: a story to go with it (new people get theirs, with its skills, from the world; see GameSimulation.AddTownNpc).
+        var (childhood, adulthood) = Backgrounds.For(definition.Kind, TownPeople.NameSeed(name));
+        SetStory(childhood, adulthood);
     }
 
     public long Id { get; }
@@ -150,11 +153,33 @@ public sealed class TownNpc : IStationWorker
     {
         Profile = profile;
         Stats = profile.Stats;
-        Work = TownPeople.WorkFor(Kind, Stats, IsArmed);
+        RefreshWork();
     }
 
-    /// <summary>Re-derives their work after gear changes (a weapon makes guarding their first call).</summary>
-    internal void RefreshWork() => Work = TownPeople.WorkFor(Kind, Stats, IsArmed);
+    // ---- 0.5.1: their story ----
+    /// <summary>Where they grew up and what they did after (null only before a story is set).</summary>
+    public BackgroundDefinition? Childhood { get; private set; }
+    public BackgroundDefinition? Adulthood { get; private set; }
+    /// <summary>The work their story leaves them unwilling or unable to do.</summary>
+    public IReadOnlyList<WorkType> Refuses => Backgrounds.Refused(Childhood, Adulthood).ToArray();
+    public bool WillDo(WorkType work) => !Refuses.Contains(work);
+
+    internal void SetStory(BackgroundDefinition childhood, BackgroundDefinition adulthood)
+    {
+        Childhood = childhood;
+        Adulthood = adulthood;
+        RefreshWork();
+    }
+
+    /// <summary>Re-derives their work after gear or story changes (a weapon makes guarding their first call).</summary>
+    internal void RefreshWork()
+    {
+        if (Stats is null)
+            return;
+        Work = TownPeople.WorkFor(Kind, Stats, IsArmed && WillDo(WorkType.Guard));
+        foreach (var refused in Refuses)
+            Work.Set(refused, WorkCatalog.Off);
+    }
 
     /// <summary>The stations of this person's trade (none for a settler, who works any station by skill).</summary>
     public IReadOnlyList<CraftingStationId> Trade => TownTrades.TradeOf(Kind);
@@ -243,7 +268,9 @@ public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, flo
     // 0.4.0: their gear, by ResidentGearSlot.
     ItemId?[]? Gear = null,
     // 0.4.1: an armed guard's post.
-    int? PostX = null, int? PostY = null);
+    int? PostX = null, int? PostY = null,
+    // 0.5.1: their story.
+    string? Childhood = null, string? Adulthood = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 

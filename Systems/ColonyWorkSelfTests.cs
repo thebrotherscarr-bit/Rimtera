@@ -131,11 +131,10 @@ public static class ColonyWorkSelfTests
 
         // ---- saves keep priorities, following and a carried stack ----
         var kept = Arena(9605);
-        kept.Settlers[0].Work.Set(WorkType.Fish, 1);
-        kept.Settlers[0].Work.Set(WorkType.Guard, 4);
         kept.Settlers[0].Carried = new ItemStack(ItemId.RockBlock, 7);
         var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
-        var derived = ColonyWorkSettings.For(reloaded.Settlers[0].Stats).Capture();
+        kept.Settlers[0].RefreshWork(); // the arena switched their work off; what their skills and story give them
+        var derived = kept.Settlers[0].Work.Capture();
         check(reloaded.Settlers.Count == 2 && reloaded.Settlers[0].Work.Capture().SequenceEqual(derived) &&
               reloaded.Settlers[0].Name == kept.Settlers[0].Name && reloaded.Settlers[0].Stats.SkillLevels.SequenceEqual(kept.Settlers[0].Stats.SkillLevels) &&
               reloaded.Settlers[0].Carried == new ItemStack(ItemId.RockBlock, 7),

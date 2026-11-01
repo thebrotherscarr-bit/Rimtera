@@ -55,6 +55,8 @@ public sealed partial class GameSimulation
             return "Hold the weapon, armour or accessory you want to hand over.";
         if (ResidentSlotFor(gear) is not { } kind)
             return $"{Items[gear].Name} is not something a resident can wear or wield.";
+        if (kind == ResidentGearSlot.Weapon && !npc.WillDo(WorkType.Guard))
+            return $"{npc.Name} will not fight ({npc.Adulthood?.Title ?? npc.Childhood?.Title}). Give the weapon to someone else.";
         if (Player.Inventory.Count(gear) <= 0 && Player.Inventory.SelectedStack.ItemId != gear)
             return $"You are not carrying {Items[gear].Name}.";
         var slot = kind == ResidentGearSlot.Accessory && npc.Gear.ContainsKey(ResidentGearSlot.Accessory) &&

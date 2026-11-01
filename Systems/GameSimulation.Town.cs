@@ -1,3 +1,4 @@
+using Rimtera.Characters;
 using System.Numerics;
 using Rimtera.Entities;
 using Rimtera.World;
@@ -212,14 +213,24 @@ public sealed partial class GameSimulation
     /// <summary>Adds a town NPC directly (debug tools, tests and survivor placement).</summary>
     public TownNpc AddTownNpc(TownNpcKind kind, Vector2 position, bool bound)
     {
+        if (kind == TownNpcKind.Settler) // a settler is a generated person, with their own name and story
+        {
+            var settler = AddSettlerAt(position);
+            settler.Motion.Position = position;
+            settler.IsBound = bound;
+            return settler;
+        }
         var definition = TownNpcCatalog.Get(kind);
         var taken = _townNpcs.Select(npc => npc.Name).ToHashSet();
         var offset = (int)((uint)(Seed * 31 + (int)kind * 7) % (uint)definition.Names.Length);
         var name = Enumerable.Range(0, definition.Names.Length).Select(i => definition.Names[(offset + i) % definition.Names.Length])
             .FirstOrDefault(candidate => !taken.Contains(candidate)) ?? definition.Names[0];
         // 0.3.10: every resident is a person, the same one for this world, trade and name.
-        var npc = new TownNpc(_nextEntityId++, definition, name, position,
-            TownPeople.ProfileFor(kind, name, unchecked(Seed * 131 + (int)kind))) { IsBound = bound };
+        // 0.5.1: and a story for this world: a childhood and adulthood that add to their skills.
+        var (person, childhood, adulthood) = TownPeople.WithStory(kind, TownPeople.ProfileFor(kind, name, unchecked(Seed * 131 + (int)kind)),
+            unchecked(Seed * 17 + TownPeople.NameSeed(name)));
+        var npc = new TownNpc(_nextEntityId++, definition, name, position, person) { IsBound = bound };
+        npc.SetStory(childhood, adulthood);
         _townNpcs.Add(npc);
         return npc;
     }
@@ -670,7 +681,7 @@ public sealed partial class GameSimulation
         npc.Carried.IsEmpty ? null : npc.Carried,
         npc.Profile, npc.Kind == TownNpcKind.Settler ? npc.Look : null,
         npc.Pouch.Count == 0 ? null : npc.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
-        CaptureResidentGear(npc), npc.Post?.X, npc.Post?.Y)).ToArray();
+        CaptureResidentGear(npc), npc.Post?.X, npc.Post?.Y, npc.Childhood?.Id, npc.Adulthood?.Id)).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -691,6 +702,14 @@ public sealed partial class GameSimulation
                 IsBound = saved.Bound,
                 HomeCell = saved.HomeX is { } hx && saved.HomeY is { } hy && World.Contains(hx, hy) ? new GridPoint(hx, hy) : null
             };
+            // 0.5.1: their story; a resident saved before then gets the one this world gives them (their skills stay as saved).
+            if (Backgrounds.Find(saved.Childhood) is { Childhood: true } childhood && Backgrounds.Find(saved.Adulthood) is { Childhood: false } adulthood)
+                npc.SetStory(childhood, adulthood);
+            else
+            {
+                var (born, grown) = Backgrounds.For(saved.Kind, unchecked(Seed * 17 + TownPeople.NameSeed(name)));
+                npc.SetStory(born, grown);
+            }
             // NC-20: a hurt resident loads as hurt. Saves from before the field (or a bad value) load at full health; a
             // living resident never loads dead.
             RestoreResidentGear(npc, saved.Gear); // before the hit points: gear sets the maximum they are clamped to
