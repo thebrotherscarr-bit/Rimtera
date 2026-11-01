@@ -95,12 +95,12 @@ public static class LetterSelfTests
         var restored = GameSimulation.Restore(pile.CaptureSnapshot());
         var fresh = restored.SendLetter(LetterKind.Neutral, "After", "text");
         var uniqueIds = restored.Letters.Select(letter => letter.Id).Distinct().Count() == restored.Letters.Count;
-        for (var i = 0; i < (int)((GameSimulation.LetterLifeHours + 1f) / GameSimulation.GameHoursPerRealSecond * 60f) && pile.Letters.Count > 0; i += 1)
+        for (var i = 0; i < (int)((GameSimulation.LetterLifeHours + 1f) / GameSimulation.GameHoursPerRealSecond * 60f) && pile.Letters.Any(letter => letter.Title.StartsWith("Note")); i += 1)
         {
             pile.Player.Heal(1e6f);
             pile.Tick(new GameInput(new MovementInput(0f)));
         }
-        check(capped && dismissed && uniqueIds && fresh.Id > 0 && pile.Letters.Count == 0,
+        check(capped && dismissed && uniqueIds && fresh.Id > 0 && !pile.Letters.Any(letter => letter.Title.StartsWith("Note")),
             $"letters are put away when read, the oldest go past {GameSimulation.LetterCapacity}, and unread ones fade after a day");
 
         // ---- a death eases the next threats, and the ease fades ----

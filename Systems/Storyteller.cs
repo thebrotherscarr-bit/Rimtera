@@ -30,7 +30,11 @@ public readonly record struct StoryContext(
     int LostResidents = 0,
     bool FreeHouse = false,
     // 0.6.2: the run's act (1 Landfall ... 7 Launch).
-    int Act = 1);
+    int Act = 1,
+    // 0.6.4: whether one of Terraria's invasions could be sent, the station AI is up with power to lose, and a trader could come.
+    bool InvasionReady = false,
+    bool PowerOnline = false,
+    bool TraderCanCome = false);
 
 /// <summary>Parameters handed to one incident execution.</summary>
 public readonly record struct IncidentParms(float ThreatPoints, BiomeZone Biome, bool Forced);
@@ -78,6 +82,15 @@ public interface IStoryHost
     void Announce(string message);
     /// <summary>0.6.3: an incident as a letter (the host decides which deserve one); by default just announced.</summary>
     void Report(string incidentId, IncidentCategory category, string title, string summary) => Announce(summary);
+    // ---- 0.6.4: the event catalogue (GameSimulation.StoryEvents.cs); a host without them sends nothing ----
+    /// <summary>Schedules one of Terraria's invasions, announced ahead; returns the warning, or null when none can come.</summary>
+    string? ScheduleInvasion(float threatPoints) => null;
+    /// <summary>Someone falls sick; returns what happened, or null.</summary>
+    string? StrikeSickness(float threatPoints) => null;
+    /// <summary>The station AI loses power; returns what happened, or null.</summary>
+    string? CutPower(float threatPoints) => null;
+    /// <summary>A trader comes today; returns who, or null.</summary>
+    string? CallTrader() => null;
 }
 
 /// <summary>
@@ -128,6 +141,11 @@ public sealed class Storyteller
         Register(new ToxicFalloutIncident());
         Register(new SolarFlareIncident());
         Register(new CargoDropIncident());
+        // 0.6.4: the event catalogue: Terraria's invasions under the storyteller, sickness, power outages, traders.
+        Register(new InvasionIncident());
+        Register(new SicknessIncident());
+        Register(new PowerOutageIncident());
+        Register(new TraderIncident());
         // Arrivals (new crew, and town residents replacing the dead) come through their own stream, OnHour's TryArrival,
         // not this roll. WandererJoinsIncident stays defined; WanderersJoined counts every crew arrival.
     }

@@ -664,6 +664,7 @@ public sealed partial class GameSimulation : IStoryHost
 
         UpdateTownNpcs(deltaSeconds, vitalHours); // 0.3.10: one kind of character (the crew are residents now)
         UpdateRaids(); // 0.4.3: a raid announced earlier arrives at its target
+        UpdateInvasions(); // 0.6.4: an invasion the storyteller announced begins
         UpdateLetters(); // 0.6.3: warnings go once due, other letters fade
         UpdateSurrenders(); // 0.5.6: human raiders brought low surrender
         UpdateResearch(deltaSeconds); // 0.3.7: the station AI studies the open research tier
@@ -2025,7 +2026,10 @@ public sealed partial class GameSimulation : IStoryHost
         CrewShortage: Math.Max(0, CrewCapacity - SettlerCount),
         LostResidents: LostResidentKinds().Count(),
         FreeHouse: FindFreeHouse() is not null,
-        Act: (int)Act);
+        Act: (int)Act,
+        InvasionReady: InvasionReady,
+        PowerOnline: PowerCanFail,
+        TraderCanCome: TraderCanCome);
 
     int IStoryHost.SpawnRaidWave(BiomeZone biome, float threatPoints, out string description) =>
         PlanRaid(threatPoints, out description); // 0.4.3: a raid is announced first and arrives later (GameSimulation.Raids.cs)
