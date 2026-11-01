@@ -1,6 +1,6 @@
 # 03 · Enemies and critters: Rimtera compared with Terraria
 
-> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open, with the milestone `docs/PLAN.md` now plans it for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
+> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open. An arrow gives the milestone `docs/PLAN.md` now plans the step for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "Not done, not scheduled" marks steps of parity 0.1.7 and 0.1.8 that no release shipped and no milestone holds yet: release 0.1.7 did not carry parity step 0.1.7's fix list. "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
 
 This is a read-only audit. No game code was changed. Terraria (v1.4.5.8) is used only as evidence of behaviour. Rimtera names, numbers, code and art stay original.
 
@@ -117,8 +117,8 @@ Terraria has about 127 aiStyles; named helpers include `AI_001_Slimes`, `AI_002_
 | C12 | Water spawns | Sharks, jellyfish and piranhas spawn in water. | `IsSwimmer` with `TryFindSwimSpot` needs at least 3 cells of water (Spawning.cs:150). | ✅ | ✅ as audited |
 | C13 | Event and weather rosters | Rain, blood moon, invasions and so on override pools. | `_worldEvents.PickSpawn`, `HardmodeEventCreature`, `CoverageSpawn` (GameSimulation.CreatureCoverage.cs:58). | ✅ | ✅ as audited |
 | C14 | Dungeon roster | ZoneDungeon pool. | Rolled while the player stands on dungeon wall (`PickDungeon`). | ✅ | ✅ as audited |
-| C15 | Side "family" spawn stream | n/a | `UpdateFamilySpawns` (EnemyAiFamilies.cs:300): every 45 s, at most 2 alive. **It ignores** `CreativeSpawnRate = 0`, `NoHostiles` events and the biome (except core and ocean). It spawns the 260-HP Tunnel wyrm and the Rift caster before the Fracture. | ⚠ | ✅ EN-7 0.1.7 |
-| C16 | Statue spawns | Statue NPCs drop no loot or coins and are flagged `SpawnedFromStatue` (knowledge). | `TriggerStatue` (GameSimulation.WorldGenContent.cs:109) calls `SpawnCreature`, so the creatures drop items, credits and banner counts. This is farmable. | ⚠ | ✅ EN-6 0.1.7 |
+| C15 | Side "family" spawn stream | n/a | `UpdateFamilySpawns` (EnemyAiFamilies.cs:300): every 45 s, at most 2 alive. **It ignores** `CreativeSpawnRate = 0`, `NoHostiles` events and the biome (except core and ocean). It spawns the 260-HP Tunnel wyrm and the Rift caster before the Fracture. | ⚠ | ❌ EN-7 not done, not scheduled |
+| C16 | Statue spawns | Statue NPCs drop no loot or coins and are flagged `SpawnedFromStatue` (knowledge). | `TriggerStatue` (GameSimulation.WorldGenContent.cs:109) calls `SpawnCreature`, so the creatures drop items, credits and banner counts. This is farmable. | ⚠ | ❌ EN-6 not done, not scheduled |
 | C17 | Critter spawning | Critters have their own conditions: daytime surface, town boosts, rain worms and so on. | Critters sit in the hostile tables and share the cap. Towns cut critters too (×0.12). | ◐ | ❌ EN-16 → 0.4.0 |
 
 ### D. Stats and combat on creatures

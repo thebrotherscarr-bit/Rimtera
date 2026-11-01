@@ -1,6 +1,6 @@
 # Breakdown 07: player, UI and persistence vs Terraria
 
-> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open, with the milestone `docs/PLAN.md` now plans it for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
+> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open. An arrow gives the milestone `docs/PLAN.md` now plans the step for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "Not done, not scheduled" marks steps of parity 0.1.7 and 0.1.8 that no release shipped and no milestone holds yet: release 0.1.7 did not carry parity step 0.1.7's fix list. "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
 
 Scope: player movement physics, the HUD, every screen and menu, pause and autopause, and saves. Key and mouse bindings are out of scope; see `docs/CONTROLS_PARITY.md`, which another agent is implementing now.
 
@@ -70,7 +70,7 @@ Nothing in this area **blocks play**. Items 3 and 4 can lose progress or a chara
 | M15 | Surface effects (ice, mud, webs, slopes, half blocks, platforms, ropes) | Yes | Parity A2, A5-A7 (`TilePhysics.SurfaceGrip`, `PawnMovement.cs:224-228`) | ✅ | ✅ as audited |
 | M16 | Respawn timer | 600 ticks = **10 s**, ×1.5 in Expert or above. A living boss adds 10 s **only in multiplayer** (`GetRespawnTime @0-127`) | 5 s (Explorer 3 s), 20 s while any boss lives, single-player included (`GameSimulation.Player.cs:95-96,1021-1022`) | ◐ | ✅ PU-5 0.1.11 |
 | M17 | Knockback and immunity flashing | Yes | Parity A10 (`Actors.cs:130` `HitImmunitySeconds` 0.67) | ✅ | ✅ as audited |
-| M18 | Water walking applied twice per tick | — | `GearWaterWalk` is called twice in a row (`GameSimulation.Player.cs:301-302`). It is harmless today only because the second call returns early when `velocity.Y < 0` | ⚠ | ✅ PU-8 0.1.7 |
+| M18 | Water walking applied twice per tick | — | `GearWaterWalk` is called twice in a row (`GameSimulation.Player.cs:301-302`). It is harmless today only because the second call returns early when `velocity.Y < 0` | ⚠ | ❌ PU-8 not done, not scheduled |
 
 ### H. HUD
 
@@ -80,7 +80,7 @@ Nothing in this area **blocks play**. Items 3 and 4 can lose progress or a chara
 | H2 | Hotbar with the selected item's name | 10 slots, name above | `DrawHud` (`:2597-2613`) | ✅ | ✅ as audited |
 | H3 | Buff bar | Icons with time. Hover shows name and description. **Right-click cancels** a removable buff | Icons, time and the name on hover. No description, no cancel (`UI/GraphicalSandbox.World.cs:458-490`) | ◐ | ✅ PU-16 0.1.9 |
 | H4 | Breath meter | Bubbles while submerged | 10 bubbles over the head (`GraphicalSandbox.World.cs:492-512`) | ✅ | ✅ as audited |
-| H5 | Minimap, overlay or off | `mapStyle` cycled with Tab and **saved** in config. "Map enabled" hides both minimap and overlay | Cycle works (`GraphicalSandbox.cs:439-440`), with zoom and opacity keys (`:928-929`). `MapView` is not saved and resets to Minimap each session. **The overlay ignores `MinimapEnabled`** (`:2381-2384`) | ⚠ | ❌ PU-15 not scheduled |
+| H5 | Minimap, overlay or off | `mapStyle` cycled with Tab and **saved** in config. "Map enabled" hides both minimap and overlay | Cycle works (`GraphicalSandbox.cs:439-440`), with zoom and opacity keys (`:928-929`). `MapView` is not saved and resets to Minimap each session. **The overlay ignores `MinimapEnabled`** (`:2381-2384`) | ⚠ | ❌ PU-15 not done, not scheduled |
 | H6 | Info accessory readouts | 12 info items (time, weather, moon, fishing power, compass, depth, ore, lifeform, radar, kill tally, DPS, speed), each with an on/off eye toggle, and readable from the inventory (`RefreshInfoAccsFromItemType`) | 4 readouts: compass, depth, ore, life (`Systems/GameSimulation.InfoGear.cs:36-62`), shown in the status panel (`GraphicalSandbox.cs:3320`). The clock is always on the HUD. No toggles | ◐ | ❌ PU-17 → 0.4.0 |
 | H7 | Boss and event bars | Yes | `DrawBossBar`, `DrawEventBars` (`:3171,3187`) | ✅ | ✅ as audited |
 | H8 | Item text and damage numbers (toggles) | Yes | General settings (`MenuSystem.cs:1211-1212`) | ✅ | ✅ as audited |
@@ -92,22 +92,22 @@ Nothing in this area **blocks play**. Items 3 and 4 can lose progress or a chara
 
 | # | Feature | Terraria | Rimtera | Status | 0.2.0 status |
 |---|---|---|---|---|---|
-| C1 | Title menu | Single Player, Multiplayer, Achievements, Workshop, Settings, Credits, Exit | Single Player, Settings, Exit Game (`MenuSystem.cs:734-743`) | ◐ | ❌ PU-24 not scheduled |
+| C1 | Title menu | Single Player, Multiplayer, Achievements, Workshop, Settings, Credits, Exit | Single Player, Settings, Exit Game (`MenuSystem.cs:734-743`) | ◐ | ❌ PU-24 not done, not scheduled |
 | C2 | Character list: favourite, rename, delete | Yes | Cards with face, backstory and difficulty; Favorite, Rename and Delete; delete moves the file to `deleted/` (`MenuSystem.cs:768-816`, `CharacterFile.cs:95-104`) | ✅ | ✅ as audited |
 | C3 | Character difficulty | Journey, Classic, Mediumcore, Hardcore | Creative, Classic, Salvager, Ironman, plus Explorer (`Systems/WorldSettings.cs:33-43`); credit share per difficulty (`GameSimulation.Combat.cs:570-576`) | ✅ | ✅ as audited |
 | C4 | Appearance | 160+ hair styles, free HSV colour for hair, eyes, skin, shirt, undershirt, pants and shoes, hex copy and paste, 10 clothing styles (knowledge) | Presets: 6 skin, 8 hair, 8 hair colours, 6 eyes, 6 outfit colours (`Characters/ColonistSystem.cs:77-81`, `MenuSystem.cs:884-939`). Adds backstory, traits and skills | ◐ | ❌ PU-25 → 0.5.0 |
 | C5 | World creation | Name, seed (with text), size, difficulty, evil | Name and random name, size (+Tiny), difficulty, Blight, seed (text hashed with FNV-1a) (`MenuSystem.cs:1089-1145`). **No Hazard row**: `_worldHazard` never changes from Random (`:326,1139`), although `UI_ARCHITECTURE.md:40` says it does | ⚠ | ✅ PU-14 0.1.13 |
 | C6 | Journey-only pairing | A Journey character plays only Journey worlds, and the reverse (knowledge) | A Creative character can enter any world (`Systems/Creative.cs:16`). The character file carries items across worlds (`CharacterFile.cs:7-36`), so duplicated items reach normal worlds | ⚠ | ✅ PU-10 0.1.13 |
-| C7 | Any character on any world | Yes | `ResolveCharacter` replaces the chosen character with the save's character whenever that character still exists (`MenuSystem.cs:1305-1326`) | ⚠ | ✅ PU-9 0.1.7 |
+| C7 | Any character on any world | Yes | `ResolveCharacter` replaces the chosen character with the save's character whenever that character still exists (`MenuSystem.cs:1305-1326`) | ⚠ | ❌ PU-9 not done, not scheduled |
 
 ### S. Settings
 
 | # | Feature | Terraria | Rimtera | Status | 0.2.0 status |
 |---|---|---|---|---|---|
 | S1 | General | Autosave, autopause, map, placement preview, … | Autosave, autopause, map enabled, placement preview, item text, damage text (`MenuSystem.cs:1206-1213`) | ✅ | ✅ as audited |
-| S2 | Video | Resolution, window mode, frame skip, lighting, quality, background, parallax, particles, … | Window mode, resolution, frame skip, lighting (`:1220-1238`). `BackgroundEnabled`, `BackgroundParallax`, `Particles`, `WeatherEffects`, `FlashyEffects` and `GraphicsQuality` exist in `GamePreferences` (`UI/PreferencesAndProfiles.cs:65-104`) but have no menu rows | ◐ | ❌ PU-26 not scheduled |
+| S2 | Video | Resolution, window mode, frame skip, lighting, quality, background, parallax, particles, … | Window mode, resolution, frame skip, lighting (`:1220-1238`). `BackgroundEnabled`, `BackgroundParallax`, `Particles`, `WeatherEffects`, `FlashyEffects` and `GraphicsQuality` exist in `GamePreferences` (`UI/PreferencesAndProfiles.cs:65-104`) but have no menu rows | ◐ | ❌ PU-26 not done, not scheduled |
 | S3 | Volume | Music, sound, ambient | Same (`:1239-1243`) | ✅ | ✅ as audited |
-| S4 | Interface | Zoom, UI scale, health bars, language, … | Zoom, UI scale, health bars, guide hints (`:1214-1219`). No language choice | ◐ | ❌ PU-26 not scheduled |
+| S4 | Interface | Zoom, UI scale, health bars, language, … | Zoom, UI scale, health bars, guide hints (`:1214-1219`). No language choice | ◐ | ❌ PU-26 not done, not scheduled |
 | S5 | Cursor | Colour, border, size, smart cursor mode | Same (`:1244-1252`) | ✅ | ✅ as audited |
 | S6 | Controls | Rebindable list | See `CONTROLS_PARITY.md` (in progress by another agent) | ✅ | ✅ as audited |
 
@@ -130,8 +130,8 @@ Nothing in this area **blocks play**. Items 3 and 4 can lose progress or a chara
 | I13 | Housing panel | NPC head list, housing query, drag an NPC to a room, room status | "Check this room" plus a list of **colonists** (`InventoryUi.cs:588-611`). Town NPCs aren't listed and can't be assigned (`GameSimulation.Town.cs:52-75` assigns them automatically) | ◐ | ◐ PU-22 partly (0.1.9 housing page lists residents) |
 | I14 | Emotes | Emote menu from an inventory button (~140), `/e` | Hold `` ` `` + 1-8: 8 emotes (`GraphicalSandbox.PlayerSystems.cs:127-188`) | ◐ | ✅ PU-27 0.2.0 |
 | I15 | Bestiary | Filters, sort, search, stats panel, drop rates, tiered unlocks | Card list: sighted or kills, biomes, up to 4 seen drops; percent complete (`GraphicalSandbox.Screens.cs:87-112`) | ◐ | ❌ PU-23 → 0.4.0 |
-| I16 | Achievements | 100+, global, reachable from the title and in game | 44 "Feats" per character (`Systems/Achievements.cs`), in game only (`GraphicalSandbox.Screens.cs:114-130`) | ◐ | ❌ PU-24 not scheduled |
-| I17 | Fullscreen map | Pan, zoom, every town NPC head, bosses, pylons, spawn, death, other players | Pan, zoom, pylon travel, spawn, death, colonists, Station AI, bosses, player (`GraphicalSandbox.cs:3066-3170`). Other town NPC heads missing | ◐ | ❌ PU-15 not scheduled |
+| I16 | Achievements | 100+, global, reachable from the title and in game | 44 "Feats" per character (`Systems/Achievements.cs`), in game only (`GraphicalSandbox.Screens.cs:114-130`) | ◐ | ❌ PU-24 not done, not scheduled |
+| I17 | Fullscreen map | Pan, zoom, every town NPC head, bosses, pylons, spawn, death, other players | Pan, zoom, pylon travel, spawn, death, colonists, Station AI, bosses, player (`GraphicalSandbox.cs:3066-3170`). Other town NPC heads missing | ◐ | ❌ PU-15 not done, not scheduled |
 | I18 | NPC dialogue | Chat, Shop, special services, happiness | Talk, shop, sell, Medic, party, quest fish, happiness and price line (`GraphicalSandbox.cs:1289-1329`) | ✅ | ✅ as audited |
 | I19 | Shop | Shop grid beside the inventory, click to buy, sell any item by shift-click or drag, buyback of sold items | Text list of offers; sells **only the held item**; no buyback (`GraphicalSandbox.cs:1331-1351`) | ◐ | ◐ PU-21 partly (0.1.9 selling and buyback; no shop grid) |
 | I20 | Signs and tombstones | Edit text | `OpenSignScreen` (`GraphicalSandbox.Screens.cs:65-84`) | ✅ | ✅ as audited |
@@ -144,9 +144,9 @@ Nothing in this area **blocks play**. Items 3 and 4 can lose progress or a chara
 | P1 | Pause and autopause rules | Single player: settings, the controls menu and achievements **always** pause. With autopause on: inventory (shops and chests included), sign editing and any in-game UI such as the bestiary (`Main::CanPauseGame @0-120`, `DoUpdate @2429-2460`) | Settings, NPC talk, shop, sign, bestiary and feats **always** pause. Inventory and colonist sheet pause only with autopause; with it off the player can move with the inventory open (`GraphicalSandbox.cs:631,914-926`) | ◐ | ✅ PU-13 0.1.14 |
 | P2 | Losing window focus | The world keeps running (knowledge) | Keys released; the world keeps running (`GraphicalSandbox.cs:175-180`) | ✅ | ✅ as audited |
 | P3 | Autosave cadence | Every **600,000 ms (10 min)** with autosave on (world + player) (`Main::DoUpdate_AutoSave @83-163`) | Every **90 s** when on; capture and write run **on the UI thread** (`GraphicalSandbox.cs:983-988,1382-1404`). Not measured on Large | ◐ | ✅ PU-12 0.1.13 |
-| P4 | Save when leaving | Save & Exit always saves (knowledge) | The pause menu's Save & Exit and Save & Quit always save, on a worker thread (`:1164-1189`). **Closing the window saves only when Autosave is on** (`:1448-1455`) | ⚠ | ✅ PU-11 0.1.7 |
-| P5 | Save format and versions | Binary `.wld` / `.plr` with version upgrade paths | JSON envelope plus a raw-deflate cells sidecar with atomic temp-file moves (`UI/WorldSaveRepository.cs:58-92`). Load needs **exact** version equality (`:108-110`), so the next version bump makes old saves unreadable (with a clear error). The sidecar is moved before the envelope, and both use fixed names, so a crash between the two moves pairs new cells with the old envelope | ◐ | ✅ PU-11 0.1.7 |
-| P6 | Backups | `.bak` copies of world and player before each save (knowledge; `FileUtilities.Copy`) | None for world, cells, `.rchar`, `.rmap` or the profile index | ❌ | ✅ PU-11 0.1.7 |
+| P4 | Save when leaving | Save & Exit always saves (knowledge) | The pause menu's Save & Exit and Save & Quit always save, on a worker thread (`:1164-1189`). **Closing the window saves only when Autosave is on** (`:1448-1455`) | ⚠ | ❌ PU-11 not done, not scheduled |
+| P5 | Save format and versions | Binary `.wld` / `.plr` with version upgrade paths | JSON envelope plus a raw-deflate cells sidecar with atomic temp-file moves (`UI/WorldSaveRepository.cs:58-92`). Load needs **exact** version equality (`:108-110`), so the next version bump makes old saves unreadable (with a clear error). The sidecar is moved before the envelope, and both use fixed names, so a crash between the two moves pairs new cells with the old envelope | ◐ | ❌ PU-11 not done, not scheduled |
+| P6 | Backups | `.bak` copies of world and player before each save (knowledge; `FileUtilities.Copy`) | None for world, cells, `.rchar`, `.rmap` or the profile index | ❌ | ❌ PU-11 not done, not scheduled |
 | P7 | Character file separate from worlds | Yes | `.rchar` carries inventory, gear, loadouts, bank, upgrades, pets and feats (`Systems/CharacterFile.cs:7-36`) | ✅ | ✅ as audited |
 | P8 | Map per character per world | Yes | `maps/<world>_<char>.rmap` (`GraphicalSandbox.cs:1353-1360`) | ✅ | ✅ as audited |
 | P9 | Multiple characters and worlds: favourite, rename, delete | Yes | Yes; deleted saves go to `saves/deleted` (`WorldSaveRepository.cs:44-56`, `MenuSystem.cs:746-797`) | ✅ | ✅ as audited |

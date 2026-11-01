@@ -1,6 +1,6 @@
 # 05 — World, tilemaps and world generation (breakdown vs Terraria)
 
-> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open, with the milestone `docs/PLAN.md` now plans it for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
+> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open. An arrow gives the milestone `docs/PLAN.md` now plans the step for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "Not done, not scheduled" marks steps of parity 0.1.7 and 0.1.8 that no release shipped and no milestone holds yet: release 0.1.7 did not carry parity step 0.1.7's fix list. "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
 
 Area: world sizes and layers, every generation pass, biomes and structures, the tile catalogue, walls, liquids, framing and slopes, falling blocks, blight and crystal spread, ores and the altar cycle, the Fracture, random tile updates, wiring, the map, and the save format.
 
@@ -143,7 +143,7 @@ Sources: `World/TileGrid.cs:3-~360` (enum) and `:639-702` (core definitions); `W
 | C6 | Pick gates: obsidian and evil ore | 55 (offsets 462-513) | obsidian 35, vitrified glass 35; no evil-ore tile | ◐ | ❌ WT-7 → 0.5.0 |
 | C7 | Pick gates: hellstone | 65 (offset 562) | pyrocite 35 | ◐ | ❌ WT-7 → 0.5.0 |
 | C8 | Pick gates: dungeon brick | 100 (offset 702, tileDungeon) | precursor dungeon brick 70; old derelict plating 0 | ◐ | ❌ WT-7 → 0.5.0 |
-| C9 | Pick gates: Lihzahrd brick and altar | 210 (offsets 588-639) | **precursor brick 0**, vault altar 85 | ⚠ | ✅ WT-1 0.1.7 |
+| C9 | Pick gates: Lihzahrd brick and altar | 210 (offsets 588-639) | **precursor brick 0**, vault altar 85 | ⚠ | ❌ WT-1 not done, not scheduled |
 | C10 | Pick gates: hardmode ores | cobalt/palladium 100, mythril/orichalcum 110, adamantite/titanium 150, chlorophyte 200 (offsets 771-861, 359) | viridium 35, lumenite 85, voidsteel 100 | ◐ (PROGRESSION_DIFF G4) | ❌ WT-7 → 0.5.0 |
 | C11 | Unbreakable tiles | none (world edge) | bedrock (255 HP, resistance 100); explosion-proof list (`GameSimulation.Physics.cs:1101-1105`) | ✅ | ✅ as audited |
 | C12 | Drops | per-tile item | Every natural block maps to an item; containers, pots and plants are handled by special handlers (`GameSimulation.Blight.cs:146-190`); biome-ore byproduct shards | ✅ | ✅ as audited |

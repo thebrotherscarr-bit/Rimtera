@@ -1,6 +1,6 @@
 # 08 · Town NPCs, housing and the colony: Rimtera vs Terraria
 
-> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open, with the milestone `docs/PLAN.md` now plans it for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
+> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open. An arrow gives the milestone `docs/PLAN.md` now plans the step for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "Not done, not scheduled" marks steps of parity 0.1.7 and 0.1.8 that no release shipped and no milestone holds yet: release 0.1.7 did not carry parity step 0.1.7's fix list. "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
 
 Area: every town NPC (move-in, shop, happiness, dialogue, services), housing validity, pylons, the travelling merchant, town pets and town gels, bound survivors, NPC death and respawn, the Station AI guide, and the RimWorld-side colony layer: crew colonists, their needs, moods, skills, jobs and AI, the storyteller and raids, the colony UI, drones and sentries on the HUD, and the "Crew 0" HUD line.
 
@@ -116,9 +116,9 @@ Catalog: `Systems/TownNpcs.cs:198–321`, `Systems/Content/ContentFillTown.cs:43
 | H10 | NPCs fight back | Town NPCs attack nearby enemies: throw, shoot or cast (knowledge, `AI_007_TownEntities`) | None. NPCs only take contact damage (`Town.cs:242–272`). | ❌ | ❌ NC-6 → 0.5.0 |
 | H11 | Distinct sprites | Each NPC is unique | 4 shared groups: `npc_colony_worker` (Head Researcher, Tide-Warden, Aeronaut, Greenskeeper), `npc_store_clerk` (Quartermaster, Trade Consul), `npc_base_engineer` (Chief Engineer, Isotopist), `npc_archivist` (Archivist, Relic Warden) | ◐ | ❌ NC-22 → 0.5.0 |
 | H12 | Death and respawn | Dies; comes back through a later daytime spawn check (knowledge) | 160 HP, 2 HP/s regen; on death a 10 h respawn flag, then a normal arrival (`Town.cs:224–239`) | ✅ | ✅ as audited |
-| H13 | Town NPC HP saved | n/a | `TownNpcSnapshot` has no HP, so HP resets to 160 on load (`TownNpcs.cs:104`) | ◐ | ✅ NC-20 0.1.7 |
+| H13 | Town NPC HP saved | n/a | `TownNpcSnapshot` has no HP, so HP resets to 160 on load (`TownNpcs.cs:104`) | ◐ | ❌ NC-20 not done, not scheduled |
 | H14 | Town calms spawns | Fewer spawns near NPCs (knowledge) | `TownNpcsCalmingSpawns` (`GameSimulation.Spawning.cs:22`) | ✅ | ✅ as audited |
-| H15 | Unhappy NPC leaves | Never | Leaves at ≤ −5 (`Town.cs:46`); Probe C | ⚠ | ✅ NC-9 0.1.7 |
+| H15 | Unhappy NPC leaves | Never | Leaves at ≤ −5 (`Town.cs:46`); Probe C | ⚠ | ❌ NC-9 not done, not scheduled |
 | H16 | Bound survivors | Rescue by talking; then a normal resident (knowledge) | Talk frees them, they unlock and look for a house (`GameSimulation.Items.cs:594–598`, `Town.cs:209–216`) | ✅ | ✅ as audited |
 | H17 | Survivor progression gating | Bound NPCs appear after their boss or event (knowledge) | All 8 are placed at worldgen, so they are available from day 1 | ◐ | ❌ PC-20 → 0.5.0; NC-14 → 0.5.0 |
 | P1 | Happiness: biome | Love/like/dislike/hate multiply the price (×0.88/×0.94/×1.06/×1.12, knowledge) | Adds ±1/±2 to a score; price = 1 − 0.06·score (`Town.cs:330–353`) | ◐ | ❌ NC-10 → 0.5.0 |
@@ -152,14 +152,14 @@ Catalog: `Systems/TownNpcs.cs:198–321`, `Systems/Content/ContentFillTown.cs:43
 | C9 | Skills used | n/a | Medical (tend quality), Plants (forage rate) | ◐ | ❌ NC-17 → 0.5.0 |
 | C10 | Moods and thoughts | RimWorld | Memories, situational thoughts, mood easing (`GameSimulation.cs:2004–2117`, `Characters/Thoughts.cs`) | ➕ | ➕ kept |
 | C11 | Mental breaks | RimWorld | Thresholds, rolls, states (`Characters/MentalBreaks.cs`). Behaviours in `GameSimulation.cs:1457–1555`. | ➕ | ➕ kept |
-| C12 | Break: tantrum | n/a | Damages crafting stations and furniture near the colonist (`GameSimulation.cs:1449–1453`, `1512–1531`) | ⚠ | ✅ NC-7 0.1.7 |
-| C13 | Break: food binge | n/a | Eats the **player's** Berries (`GameSimulation.cs:1497–1510`) | ⚠ | ✅ NC-7 0.1.7 |
+| C12 | Break: tantrum | n/a | Damages crafting stations and furniture near the colonist (`GameSimulation.cs:1449–1453`, `1512–1531`) | ⚠ | ❌ NC-7 not done, not scheduled |
+| C13 | Break: food binge | n/a | Eats the **player's** Berries (`GameSimulation.cs:1497–1510`) | ⚠ | ❌ NC-7 not done, not scheduled |
 | C14 | Relations and social | RimWorld | Opinions, interactions, social fights (`Characters/Relations.cs`; `GameSimulation.cs:2055–2059`) | ➕ | ➕ kept |
 | C15 | Crew medic tending | RimWorld doctors | Tends crew **and the player** (`GameSimulation.cs:2126–2153`). Probe D did not catch a tend within 1500 ticks, but the code path has no player exclusion. | ⚠ | ✅ NC-1 0.1.7 |
 | C16 | Emotes | n/a | Crew and residents emote and wave back (`GameSimulation.PlayerSystems.cs:650–705`) | ✅ | ✅ as audited |
 | C17 | Colony sheet UI | RimWorld pawn tabs | Overview, Skills, Health, Mood, Social and Crew pages, read-only (`UI/ColonistSheetState.cs:44–79`, `201–235`) | ◐ | ◐ unchanged since the audit |
 | C18 | Colony orders | Work priorities, draft, zones | None | ❌ | ❌ NC-25 → 0.5.0 |
-| C19 | "Crew N" HUD | n/a | Always shows "Crew 0", plus "Drones 0/1 · Sentries 0/1" (Probe A: base slots 1) and the player's mood (`GraphicalSandbox.cs:2368–2371`) | ⚠ | ✅ NC-16 0.1.7 |
+| C19 | "Crew N" HUD | n/a | Always shows "Crew 0", plus "Drones 0/1 · Sentries 0/1" (Probe A: base slots 1) and the player's mood (`GraphicalSandbox.cs:2368–2371`) | ⚠ | ❌ NC-16 not done, not scheduled |
 | C20 | Drones and sentries | Terraria minion and sentry slots | Combat-area feature (see 06); here only the HUD line | ✅ | ✅ as audited |
 | W1 | Storyteller | RimWorld storyteller | Hourly roll, categories, refire cooldowns, adaptive rest, 72 h opening grace (`Storyteller.cs:81–336`) | ➕ | ➕ kept |
 | W2 | Raids | Terraria invasions approach the town (knowledge) | After the first boss; 2–8 biome creatures spawn just off-screen **around the player, wherever they are** (`GameSimulation.cs:2321–2350`) | ◐ | ❌ NC-19 → 0.5.0 |
@@ -175,8 +175,8 @@ Catalog: `Systems/TownNpcs.cs:198–321`, `Systems/Content/ContentFillTown.cs:43
 | A1 | Player auto-eats | Removed: `UpdateAutonomousBehavior` is a no-op (`GameSimulation.cs:1911–1919`); `Player.Brain = null` (`GameSimulation.cs:228`). Eating is manual (`EatSelectedOrBerry`, `:1246`). | ✅ | ✅ as audited |
 | A2 | Player auto-rests or auto-heals at camp | Removed (same as A1) | ✅ | ✅ as audited |
 | A3 | Player tended by crew medics | Yes (C15) | ⚠ | ✅ NC-1 0.1.7 |
-| A4 | Player needs drain | Food, rest, joy and comfort drain (`GameSimulation.cs:650–653`); comfort drains with cold and rain (`:1968`, `GameSimulation.World.cs:521`) | ⚠ | ✅ NC-2 0.1.7 |
-| A5 | Player mood and break risk | Thoughts and mood run for the player; "on the edge" message; at extreme risk × 1.35 cooldowns (`GameSimulation.cs:2024–2033`, `Actors.cs:108–115`). Probe E: mood 10 %, on the edge after 144 h unfed. | ⚠ | ✅ NC-7 0.1.7 |
+| A4 | Player needs drain | Food, rest, joy and comfort drain (`GameSimulation.cs:650–653`); comfort drains with cold and rain (`:1968`, `GameSimulation.World.cs:521`) | ⚠ | ❌ NC-2 not done, not scheduled |
+| A5 | Player mood and break risk | Thoughts and mood run for the player; "on the edge" message; at extreme risk × 1.35 cooldowns (`GameSimulation.cs:2024–2033`, `Actors.cs:108–115`). Probe E: mood 10 %, on the edge after 144 h unfed. | ⚠ | ❌ NC-7 not done, not scheduled |
 | A6 | Player loses control in a break | No. The player is skipped (`GameSimulation.cs:2024–2033`). | ✅ | ✅ as audited |
 | A7 | Party, petting, Medic heal | Each needs a deliberate player action | ✅ | ✅ as audited |
 | A8 | Natural regeneration | Terraria-style `LifeRegenerationPerHour` (`GameSimulation.cs:661`). Not automation; covered by area 06. | ✅ | ✅ as audited |

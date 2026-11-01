@@ -4,6 +4,11 @@
 
 **Constraint:** numbers stay Rimtera's own, tuned to Rimtera's scale. Terraria is behavioural evidence only, so no copied code, constants or tables.
 
+> **Changed since this contract was written.** User decision 1 (`docs/ROADMAP_0.2.0.md` §1.2) now asks base mechanics,
+> controls, tools, gear and stats to work like Terraria's, including its numbers where they are known (movement, falls,
+> air, the clock, respawn, healing tiers). Terraria is still evidence only: no code or assets are copied. See
+> "0.2.0 status" at the end for what moved.
+
 **Evidence:** REA member names on `Terraria.Player`, `Projectile`, `NPC`, `WorldGen`, `Main` (`docs/terraria-evidence/*.json`). Examples:
 - movement: `JumpMovement`, `DashMovement`
 - health and charge: `HurtLifeRegen`, `ApplyManaRegenerationDelay`
@@ -187,4 +192,34 @@ The behaviours listed below are the parity contract.
 10. Saving: autosave on a timer and on exit; the world and the character are saved separately (done).
 
 ## Results
-Each audit fills in its table: behaviour, status (OK / FIXED / DIFF), test name, notes.
+Each audit fills in its table: behaviour, status (OK / FIXED / DIFF), test name, notes. The tables are in
+`docs/parity/A_movement.md`, `B_building.md`, `C_combat.md` and `D_world.md`. They record the first audit and are not
+rewritten; the section below says what has changed since.
+
+## 0.2.0 status (2026-11-01)
+
+Every behaviour in sections A to D still holds unless listed here. "Superseded" means the behaviour holds but with new
+rules or numbers.
+
+| Item | 0.2.0 status | What changed |
+|---|---|---|
+| A1 Running | ✅ superseded (0.1.14) | Terraria's numbers: top run about 11 tiles/s, reached in about half a second and lost in a quarter |
+| A3 Jumping | ✅ superseded (0.1.14) | A held jump is about 6.5 tiles high, a tap about 2 |
+| A4 Gravity and falls | ✅ superseded (0.1.12, 0.1.14) | Gravity 90 tiles/s² to a 37.5 tiles/s fall. Fall damage is 10 per tile beyond 25, from the highest point. Each mount has its own fall rule (the hover-bike, rotor skiff and spring hopper take none, the others half) |
+| A8 Water and breath | ✅ superseded (0.1.12, 0.1.14) | About 23 s of air, drowning at about 17 HP/s, refilled within a second; the rebreather gives six times the air. Swimming needs fins (the Diver's kit); without them the player only paddles up at 2 tiles/s |
+| A9 Dash | DIFF kept | Every player still has a dash key; Terraria needs dash gear |
+| C1 Damage spread and crits | ✅ superseded | ±15% spread and a 4% base crit since the gear mechanics pass (`docs/GEAR_DIFF_MECHANICS.md`); since 0.1.15, hits on the player vary ±15% too |
+| C4 Defense | ✅ extended (0.1.15) | Creatures now have tiered defense too (2-6 early, up to 30-50 late), explicit immunities and lava damage |
+| C7 Healing | ✅ extended (0.1.15) | A four-tier healing and charge ladder, a restoration stim, 60 s potion sickness, boss potions and hearts, heart and charge-orb pickups |
+| C8 Death | ✅ superseded (0.1.8, 0.1.11, 0.1.12) | Drops by character difficulty: Easy part of the money, Medium money and items, Hard everything but tools, Ironman the impossible run (the character dies for good). Terraria's respawn timer: 10 s, 15 s on Brutal and Annihilation, 3 s for Explorer, no boss extension. The bed sets the spawn point. The old "Classic halves material stacks" DIFF is gone |
+| C9 Spawning | ◐ unchanged | Spawn-rate items, ramp-down and Terraria's spawn areas are planned (EN-8 → 0.4.0) |
+| C10 Spawn locations | ◐ unchanged | Event creatures still spawn anywhere, not only on the surface or near their front (EV-3 → 0.4.0) |
+| C11 Contact damage | ✅ superseded (0.1.15) | Contact uses box overlap; immune players are passed by projectiles |
+| C12 Bosses leave | ◐ unchanged | Per-boss leave rules (dawn, target lost, biome; BO-6) were planned for parity step 0.1.7 and are not done |
+| D1 Day and night | ✅ superseded (0.1.11) | Terraria's 24-minute day: 15 minutes of day and 9 of night. Buffs, regeneration and needs run on real time; sleeping speeds the clock without draining buffs |
+| D2 Dead town NPCs respawn | ✗ replaced (0.1.8) | People die for good on every setting with stakes. A storyteller arrival stream brings new people into free houses and fills the empty roles. On Explorer and Creative, slain residents still come back |
+| D5 Inventory | ✅ extended (0.1.10, 0.1.15) | Four coin and four ammo slots beside the bag; credits and ammunition go there first. Stacks of 9999 |
+| D7 Events end | ✅ superseded (0.1.11) | Moons end at dawn and day events at dusk. Outlasting an event is not clearing it |
+| D8 Weather | ◐ unchanged | Weather is rolled from the zone the player stands in, not from the world's climate (EV-9 → 0.4.0) |
+| D10 Saving | ✅ superseded (0.1.13) | Autosave every 2, 5, 10 (default) or 15 minutes, or off, and on exit |
+
