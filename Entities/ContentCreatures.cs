@@ -197,7 +197,8 @@ internal static class ContentCreatures
             BossTier.Hard, ProjectileSpeed: 14f, VolleyCount: 7) { CreditDrop = 220, AttackRange = 14f };
         yield return new EnemyArchetype(EnemyKind.VaultColossus, "Vault Colossus", new(3.6f, 4.2f), 63000f, 31f, false,
             BossTier.Hard, ProjectileSpeed: 12f, VolleyCount: 5, PhaseThreshold: 0.4f) { CreditDrop = 260, AttackRange = 14f, MoveSpeedMultiplier = 0.7f };
-        yield return new EnemyArchetype(EnemyKind.MoonEater, "Moon Eater", new(3.2f, 2.4f), 10900f, 15f, true,
+        // 0.2.2 PC-1: the Moon Eater only comes after the Fracture now; re-curved for that kit (--boss-balance suggest).
+        yield return new EnemyArchetype(EnemyKind.MoonEater, "Moon Eater", new(3.2f, 2.4f), 34000f, 36f, true,
             BossTier.Event, ProjectileSpeed: 11f, VolleyCount: 4) { CreditDrop = 140 };
         yield return new EnemyArchetype(EnemyKind.EclipseLord, "Eclipse Lord", new(2.6f, 3.4f), 47000f, 32f, true,
             BossTier.Event, ProjectileSpeed: 14f, VolleyCount: 6) { CreditDrop = 200 };
@@ -205,13 +206,15 @@ internal static class ContentCreatures
             BossTier.Event, ProjectileSpeed: 12f, VolleyCount: 3) { CreditDrop = 120, MoveSpeedMultiplier = 1.1f };
         yield return new EnemyArchetype(EnemyKind.PirateDreadnought, "Pirate Dreadnought", new(4.4f, 2.6f), 9900f, 14f, true,
             BossTier.Event, ProjectileSpeed: 14f, VolleyCount: 6) { CreditDrop = 240, AttackRange = 15f };
-        yield return new EnemyArchetype(EnemyKind.ProtocolDragon, "Protocol Dragon", new(4f, 2.4f), 12200f, 14f, true,
+        // 0.2.2 PC-2: the Protocol Dragon only ends a Defense Protocol after the Vault Colossus; re-curved for that kit.
+        yield return new EnemyArchetype(EnemyKind.ProtocolDragon, "Protocol Dragon", new(4f, 2.4f), 38000f, 35f, true,
             BossTier.Event, ProjectileSpeed: 13f, VolleyCount: 5) { CreditDrop = 260 };
         yield return new EnemyArchetype(EnemyKind.BloodfinAmbusher, "Bloodfin ambusher", new(1.3f, 0.9f), 140f, 22f, false)
             { CreditDrop = 10, MoveSpeedMultiplier = 1.3f };
         yield return new EnemyArchetype(EnemyKind.VengefulWisp, "Vengeful wisp", new(0.9f, 1.2f), 120f, 20f, true)
             { CreditDrop = 8 };
-        yield return new EnemyArchetype(EnemyKind.AbyssLeviathan, "Abyss Leviathan", new(5.2f, 2.2f), 12500f, 14f, true,
+        // PC-3: a post-Fracture fight now (Terraria: Duke Fishron), tuned with --boss-balance suggest to its 120 s target.
+        yield return new EnemyArchetype(EnemyKind.AbyssLeviathan, "Abyss Leviathan", new(5.2f, 2.2f), 47000f, 32f, true,
             BossTier.Event, ProjectileSpeed: 13f, VolleyCount: 5) { CreditDrop = 280, AttackRange = 15f };
         // ---- Hardmode progression ----
         yield return new EnemyArchetype(EnemyKind.FissionTyrant, "Fission Tyrant", new(3f, 3.4f), 16600f, 24f, false,
@@ -300,9 +303,10 @@ public static class CreatureStatTable
         [EnemyKind.FissionTyrant] = 12
     };
 
-    /// <summary>Leaders of Fracture-gated events (Dark Sun, pirate boarding, probes, the late moons): the ~30 band.</summary>
+    /// <summary>Leaders of Fracture-gated events (Dark Sun, pirate boarding, probes, the late moons) and the Abyss Leviathan (PC-3): the ~30 band.</summary>
     private static readonly HashSet<EnemyKind> LateEventBosses =
-        [EnemyKind.EclipseLord, EnemyKind.PirateDreadnought, EnemyKind.MothershipCore, EnemyKind.HollowRegent, EnemyKind.RimeSeraph];
+        [EnemyKind.EclipseLord, EnemyKind.PirateDreadnought, EnemyKind.MothershipCore, EnemyKind.HollowRegent, EnemyKind.RimeSeraph,
+         EnemyKind.AbyssLeviathan];
 
     /// <summary>The Irradiated Core's natives: liquid uranium is their home (lava-immune).</summary>
     private static readonly HashSet<EnemyKind> CoreNatives =

@@ -297,6 +297,9 @@ public sealed partial class GameSimulation
         return enemy;
     }
 
+    /// <summary>Test hook: one ambient-family spawn attempt now (skips the 45-second timer).</summary>
+    internal void ProbeFamilySpawn() => UpdateFamilySpawns(45f);
+
     private void UpdateFamilySpawns(float deltaSeconds)
     {
         if (!FamilySpawnsEnabled || Player.IsDead)
@@ -305,10 +308,16 @@ public sealed partial class GameSimulation
         if (_familySpawnTimer < 45f)
             return;
         _familySpawnTimer = 0f;
-        if (_enemies.Count(enemy => enemy.Family != EnemyAiFamily.Default && enemy.IsAlive) >= 2 || FamilyRandom.NextDouble() > 0.5)
+        // EN-7: the family stream obeys the main spawner's off switches: the creative spawn slider (0 = none), events that
+        // stop hostile spawns, a populated town or a living boss, and the dungeon's own roster.
+        var rate = CreativeSpawnRate;
+        if (rate <= 0f || _worldEvents.Modifiers.NoHostiles)
             return;
-        // A populated town or a living boss keeps the ambient families away too.
+        if (_enemies.Count(enemy => enemy.Family != EnemyAiFamily.Default && enemy.IsAlive) >= 2 || FamilyRandom.NextDouble() > 0.5 * rate)
+            return;
         if (TownNpcsCalmingSpawns >= 3 || _enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive))
+            return;
+        if (World.GetCell(PlayerCell()).WallId == WallIds.Dungeon)
             return;
         var underground = CurrentBiome.Underground;
         var night = ClockHour >= 19f || ClockHour < 5f;
@@ -323,6 +332,11 @@ public sealed partial class GameSimulation
                     ? [EnemyKind.DiveKite, EnemyKind.GelHopper, EnemyKind.DuneBorer, EnemyKind.FleaHopper]
                     : [EnemyKind.GelHopper, EnemyKind.FleaHopper, EnemyKind.DiveKite]
         };
+        // The biome tables' Fracture gate: hard-roster families (the 260-HP tunnel wyrm) wait for the Fracture.
+        if (!FractureActive)
+            pool = pool.Where(candidate => !BiomeSpawnTables.FamilyNeedsFracture(candidate)).ToArray();
+        if (pool.Length == 0)
+            return;
         var kind = pool[FamilyRandom.Next(pool.Length)];
         // Underground mimics only appear once the world has fractured.
         if (kind == EnemyKind.CacheMimic && (FamilyRandom.NextDouble() > 0.25 || !FractureActive))

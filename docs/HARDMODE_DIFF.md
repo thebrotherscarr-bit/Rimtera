@@ -139,7 +139,7 @@ Every chain step is a world flag, so saves persist it.
 | 6 | Three summoned mechanical-tier bosses | Cyber-Swarm Leader, Renegade Overseer and Warship Core (`GameSimulation.HardTrio`). Their summons are now made from hardmode bars plus essences at the Alloy Anvil and refuse before the Fracture. At dusk after the Fracture an undefeated one may come on its own: a 20% deterministic roll, at most once per 3 days, with a warning line, and it leaves at dawn. They drop blight, prism and flight essence (20 each) | ✅ (no player-strength check) |
 | 6 | Wings need flight essence | viridium, lumenite, voidsteel and astral wingpacks need 4/8/12/16 flight essence | ✅ |
 | 7 | Bulbs after all three | flag `hardmode.trio.down`. Canopy bulbs (`TileId.CanopyBulb`) grow once in the underground band of the canopy columns (whole width on small worlds). Breaking one summons the **bulb boss** (Mutated Flora); its Mutagen bloom refuses until the trio is down | ✅ (bulbs do not regrow) |
-| 7 | Temple key, then temple boss | Mutated Flora now drops the vault key (moved from the Bloom Matriarch), which opens the vault door (`vault.opened`). The Vault Colossus comes from the vault altar, or from the Vault core, which refuses before the vault is open | ✅ |
+| 7 | Temple key, then temple boss | Mutated Flora now drops the vault key (moved from the Bloom Matriarch), which opens the vault door (`vault.opened`). The Vault Colossus comes from the vault altar, or from the Vault core, which refuses before the vault is open (and takes lumenite bars, so it is not made before the Fracture). The temple is **sealed** (WT-1, D-35, 0.2.2): its precursor brick and glyph need drill power 122 (Terraria's Lihzahrd brick, pickaxe power 210), above every drill before the Vault Colossus (the void auger, 120), and stay explosion-proof, so the maze and the vault door are the only way in | ✅ |
 | 7 | Cultist, then pillars, then the final boss | Vault Colossus down sets `ritual.ready`. Walking within 14 tiles of the dungeon entrance (`RitualSite`) wakes the **Void Cantor** (new Hard boss; the Void hymnal also summons it after the Colossus). Its death sets `obelisks.started` and raises four **obelisks** (ember, rift, gale, shard), each running its own siege event (new `WorldEventKind`s with a kill quota). Each obelisk stays shielded (`EnemyAgent.Shielded`) until 20 of its siege creatures die. All four down sets `obelisks.down` and starts the 60-second Astro-God countdown. Siege creatures spawn around the player, not around their obelisk | ✅ / ◐ |
 | 8 | Hardmode events, stronger blood moons | after the Fracture, 40% of upgradable event picks become hard creatures: the Rust Moon gains abominations, corroded mechs, eclipse shades and wisps; raids gain reavers, brutes and scrap elementals; the defence protocol gains ogres, wyverns and mages; acid rain and dust storms gain heavies. The Dark Sun (solar-flare eclipse, random dawn) and Pirate Boarding were already gated on the Fracture | ✅ (no seasonal wave-moons) |
 | 9 | NPCs after bosses | **Isotopist** (after the Fission Tyrant), **Aeronaut** (after any of the trio) and **Relic Warden** (after the bulb boss), each with a gated shop | ✅ |
@@ -153,3 +153,11 @@ Every chain step is a world flag, so saves persist it.
 - `deco_canopy_bulb`
 
 **Not covered:** the debug challenge key (`TrySummonNextBoss`) still walks the boss list without the summon gates.
+
+**Corrections (PC-21, 0.2.2):**
+- The Power Forge Mk2 (row 5) is also mined as the Reactor forge before the Overseer; only the crafted copy needs the Overseer circuit.
+- Duke Fishron's analog, the **Abyss Leviathan**, now waits for the Fracture (PC-3): abyss bait in acid does nothing before
+  it (the bait is kept, with a hint), and the bait takes flight essence.
+- The dusk incursions that "wait for the Scout Mech" admitted every incursion boss before the Fracture. PC-4 (stream C)
+  gates them; until then `--craft-audit` lists them under "Bosses reachable before the Fracture".
+- PC-1..4 status: PC-3 is closed in 0.2.2 (stream B); PC-1, PC-2 and PC-4 are stream C's in the same release.

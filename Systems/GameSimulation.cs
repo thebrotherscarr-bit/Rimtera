@@ -56,8 +56,8 @@ public sealed partial class GameSimulation : IStoryHost
     private const float PlayerReach = 5f;
     private const float ViewHalfWidth = 18f;
     private const float SafeSpawnHalfWidth = 22f;
-    private const string IncursionEventId = "hostile-incursion";
-    private const string EasyBossDefeatedTag = "easy-boss-defeated";
+    /// <summary>Chance per dusk of a hostile incursion (one dusk event boss) once the Fracture has come (PC-4).</summary>
+    public const float IncursionChance = 0.3f;
 
     private readonly Random _random;
     // Separate stream so boss choices never shift the ambient spawn sequence.
@@ -83,7 +83,6 @@ public sealed partial class GameSimulation : IStoryHost
     });
     private readonly PlacementSystem _placement = new();
     private readonly TileFramingSystem _framing = new();
-    private readonly EventManager _eventManager;
     private readonly PawnMovementSystem _colonistMovement = new(new PawnMovementSettings
     {
         GroundAcceleration = 20f,
@@ -126,7 +125,6 @@ public sealed partial class GameSimulation : IStoryHost
     private readonly Random _mindRandom;
     private readonly HashSet<int> _deathsHandled = new();
     private readonly HashSet<long> _raidEnemyIds = new();
-    private bool _playerEdgeWarned;
     private bool _playerDownedWarned;
 
     static GameSimulation()
@@ -247,33 +245,6 @@ public sealed partial class GameSimulation : IStoryHost
                 AddTownNpc(TownNpcCatalog.SurvivorKinds[index % TownNpcCatalog.SurvivorKinds.Length], StandingAt(spot), bound: true);
             }
 
-        _eventManager = new EventManager(seed ^ 0x51ED270B);
-        _eventManager.Register(new WorldEventDefinition(
-            Id: "mothfall",
-            Boundary: WorldEventBoundary.Dusk,
-            ChancePerBoundary: 0.16f,
-            DurationHours: 7f,
-            SpawnAttemptMultiplier: 1.6f,
-            PopulationCapMultiplier: 1.3f,
-            DisplayName: "Moth-ray swarm"));
-        _eventManager.Register(new WorldEventDefinition(
-            Id: "deep-earth-awakening",
-            Boundary: WorldEventBoundary.Dawn,
-            ChancePerBoundary: 0.08f,
-            DurationHours: 5f,
-            SpawnAttemptMultiplier: 1.35f,
-            PopulationCapMultiplier: 1.5f,
-            RequiresProgression: true,
-            DisplayName: "Deep-core tremors"));
-        // Dusk incursions bring one event boss once an easy-tier boss has fallen.
-        _eventManager.Register(new WorldEventDefinition(
-            Id: IncursionEventId,
-            Boundary: WorldEventBoundary.Dusk,
-            ChancePerBoundary: 0.3f,
-            DurationHours: 6f,
-            RequiredBiomeTag: EasyBossDefeatedTag,
-            DisplayName: "Hostile incursion"));
-
         ClockHour = 8f;
         Day = 1;
         CurrentBiome = BiomeScanner.Scan(World, PlayerCell());
@@ -295,7 +266,8 @@ public sealed partial class GameSimulation : IStoryHost
     public IReadOnlyList<ColonistAgent> Colonists => _colonists;
     public IReadOnlyList<EnemyAgent> Enemies => _enemies;
     public IReadOnlyList<ProjectileState> Projectiles => _projectiles;
-    public IReadOnlyList<ActiveWorldEvent> ActiveEvents => _eventManager.ActiveEvents;
+    /// <summary>Every running world event (EV-2: the one event system, <see cref="WorldEventSystem"/>).</summary>
+    public IReadOnlyList<ActiveEventState> ActiveEvents => _worldEvents.Active;
     public IReadOnlyList<string> RecentMessages => _recentMessages.ToArray();
     public long TickNumber { get; private set; }
     public int Day { get; private set; }
@@ -368,12 +340,17 @@ public sealed partial class GameSimulation : IStoryHost
     /// Put the deflated cells in <see cref="GameSnapshot.CellData"/> (raw bytes for a sidecar file) instead of the
     /// base64 <see cref="GameSnapshot.CompressedCells"/> string. Disk saves use this so large worlds stay out of JSON.
     /// </param>
-    public GameSnapshot CaptureSnapshot(bool binaryCells = false)
+    /// <param name="deferCellCompression">
+    /// With <paramref name="binaryCells"/>: take only the quick run pass now (<see cref="GameSnapshot.CellRuns"/>) and leave the
+    /// compression to the save worker (PU-12 autosaves).
+    /// </param>
+    public GameSnapshot CaptureSnapshot(bool binaryCells = false, bool deferCellCompression = false)
     {
         // Cells are saved run-length encoded and deflated; the JSON cell array stays null.
         SyncWiringToFlags();
         var compressed = binaryCells ? null : CellCodec.Encode(World.Cells);
-        var cellData = binaryCells ? CellCodec.EncodeBytes(World.Cells) : null;
+        var cellRuns = binaryCells && deferCellCompression ? CellCodec.EncodeRuns(World.Cells) : null;
+        var cellData = binaryCells && !deferCellCompression ? CellCodec.EncodeBytes(World.Cells) : null;
 
         var motion = Player.Motion;
         var colonistSnapshots = _colonists.Select((agent, index) => new ColonistSnapshot(
@@ -411,14 +388,15 @@ public sealed partial class GameSimulation : IStoryHost
             Content: CaptureContent(),
             PlayerWorld: CapturePlayerWorld(),
             Character: CaptureCharacterForSnapshot(),
-            Enemies: _enemies.Select(enemy => enemy.CaptureState()).ToArray(),
+            Enemies: _enemies.Where(enemy => !enemy.IsBoss).Select(enemy => enemy.CaptureState()).ToArray(), // BO-17: bosses are not saved
             Projectiles: _projectiles.Select(projectile => projectile.CaptureState()).ToArray(),
             RaidEnemyIds: _raidEnemyIds.ToArray(),
             NightBossIds: _nightBossIds.ToArray(),
             WhipMarkedEnemy: _whipMarkedEnemy,
             WhipBuffSeconds: _whipBuffSeconds,
             Run: CaptureRun(),
-            MiscEquipment: CaptureMisc(), BedSpawnX: _bedSpawn?.X, BedSpawnY: _bedSpawn?.Y) { CellData = cellData };
+            MiscEquipment: CaptureMisc(), BedSpawnX: _bedSpawn?.X, BedSpawnY: _bedSpawn?.Y,
+            Players: CapturePlacements()) { CellData = cellData, CellRuns = cellRuns };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -453,6 +431,7 @@ public sealed partial class GameSimulation : IStoryHost
     public static GameSimulation Restore(GameSnapshot snapshot, CharacterProfile? colonist = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        snapshot = SaveMigrations.Upgrade(snapshot).WithCompressedCells(); // PU-11: older formats migrate, newer ones are refused
         if (snapshot.FormatVersion != GameSnapshot.CurrentFormatVersion ||
             snapshot.WorldWidth is < 16 or > MaximumWorldWidth || snapshot.WorldHeight is < 16 or > MaximumWorldHeight ||
             (snapshot.Cells is null && snapshot.CompressedCells is null && snapshot.CellData is null) ||
@@ -500,7 +479,13 @@ public sealed partial class GameSimulation : IStoryHost
             game.AfterBulkLoad();
             game._framing.ReframeAll(game.World, game.Tiles);
         }
-        game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
+        // PU-9 (D-43): any character may play any world. A character other than the one that saved arrives with its own
+        // carried state (its character file) at its own last place here, or at the landing site the first time.
+        var savedBy = snapshot.Character?.CharacterId;
+        var arriving = colonist is not null && savedBy is { } saver && saver != Guid.Empty && saver != game.PlayerProfile.Id;
+        game.RestorePlacements(snapshot);
+        if (!arriving)
+            game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
         game._heartsBroken = snapshot.HeartsBroken ?? 0;
         game._altarsSmashed = snapshot.AltarsSmashed ?? 0;
         if (snapshot.FractureActive == true)
@@ -514,34 +499,42 @@ public sealed partial class GameSimulation : IStoryHost
         var savedSlots = snapshot.Inventory.Length < PlayerTotalSlots
             ? snapshot.Inventory.Concat(Enumerable.Repeat(default(ItemStack), PlayerTotalSlots - snapshot.Inventory.Length)).ToArray()
             : snapshot.Inventory;
-        if (!game.Player.Inventory.RestoreState(savedSlots, snapshot.SelectedInventorySlot))
-            throw new InvalidDataException("The saved inventory layout is invalid.");
-
-        if (snapshot.Equipment is not null && !game.Player.Equipment.Restore(snapshot.Equipment, game.Items))
-            throw new InvalidDataException("The saved equipment layout is invalid.");
-        game.RestoreAccessoryCalibrations(snapshot.Equipment);
-        if (snapshot.Statuses is not null && !game.Player.Statuses.Restore(snapshot.Statuses))
-            throw new InvalidDataException("The saved status layout is invalid.");
+        if (!arriving)
+        {
+            if (!game.Player.Inventory.RestoreState(savedSlots, snapshot.SelectedInventorySlot))
+                throw new InvalidDataException("The saved inventory layout is invalid.");
+            if (snapshot.Equipment is not null && !game.Player.Equipment.Restore(snapshot.Equipment, game.Items))
+                throw new InvalidDataException("The saved equipment layout is invalid.");
+            game.RestoreAccessoryCalibrations(snapshot.Equipment);
+            if (snapshot.Statuses is not null && !game.Player.Statuses.Restore(snapshot.Statuses))
+                throw new InvalidDataException("The saved status layout is invalid.");
+        }
         game.RestoreContent(snapshot.Content);
         game.RestoreEntities(snapshot);
         game.RestoreRun(snapshot.Run);
-        game.RestoreMisc(snapshot.MiscEquipment);
-        if (snapshot is { BedSpawnX: { } bedX, BedSpawnY: { } bedY } && game.World.Contains(bedX, bedY))
-            game._bedSpawn = new GridPoint(bedX, bedY);
+        if (!arriving)
+        {
+            game.RestoreMisc(snapshot.MiscEquipment);
+            if (snapshot is { BedSpawnX: { } bedX, BedSpawnY: { } bedY } && game.World.Contains(bedX, bedY))
+                game._bedSpawn = new GridPoint(bedX, bedY);
+        }
         game.LoadWiringFromFlags();
 
         var motion = game.Player.Motion;
-        motion.Position = new Vector2(
-            Math.Clamp(snapshot.PlayerX, 0f, game.World.Width - motion.Size.X),
-            Math.Clamp(snapshot.PlayerY, 0f, game.World.Height - motion.Size.Y));
-        motion.Velocity = new Vector2(snapshot.VelocityX, snapshot.VelocityY);
-        motion.Facing = snapshot.Facing < 0 ? -1 : 1;
-        game.Player.RestorePersistentState(
-            snapshot.HitPoints,
-            snapshot.FoodReserve,
-            snapshot.RestReserve,
-            snapshot.JoyReserve ?? 0.70f,
-            snapshot.ComfortReserve ?? 0.70f);
+        if (!arriving)
+        {
+            motion.Position = new Vector2(
+                Math.Clamp(snapshot.PlayerX, 0f, game.World.Width - motion.Size.X),
+                Math.Clamp(snapshot.PlayerY, 0f, game.World.Height - motion.Size.Y));
+            motion.Velocity = new Vector2(snapshot.VelocityX, snapshot.VelocityY);
+            motion.Facing = snapshot.Facing < 0 ? -1 : 1;
+            game.Player.RestorePersistentState(
+                snapshot.HitPoints,
+                snapshot.FoodReserve,
+                snapshot.RestReserve,
+                snapshot.JoyReserve ?? 0.70f,
+                snapshot.ComfortReserve ?? 0.70f);
+        }
         // Saves from before crew arrived through housing carry the two crew members a world used to start with.
         var savedCrew = snapshot.Colonists?.Length ?? 0;
         var joined = snapshot.Storyteller?.WanderersJoined ?? 0;
@@ -585,7 +578,7 @@ public sealed partial class GameSimulation : IStoryHost
                     agent.Carried = colonistSnapshot.Carried;
             }
         }
-        if (snapshot.PlayerState is { } playerState)
+        if (!arriving && snapshot.PlayerState is { } playerState)
             RestorePawn(game.Player, playerState);
         if (snapshot.ColonistStates is not null)
         {
@@ -625,7 +618,9 @@ public sealed partial class GameSimulation : IStoryHost
         game._temperature.OutdoorOffset = game._storyteller.TemperatureOffset;
         game.PlayerAmbientTemperature = game.AmbientAt(game.PlayerCenter, game.CurrentBiome);
         game.PlayerComfort = TemperatureModel.Evaluate(game.PlayerAmbientTemperature, game.Player.Stats.ImmunityTags);
-        game.RestoreBatchB(snapshot);
+        game.RestoreBatchB(snapshot, arriving);
+        if (arriving)
+            game.PlaceArrivingCharacter();
         // People grew to Terraria's body size (HumanoidBody); an older save can leave feet in the ground, so lift them clear.
         foreach (var body in game.TownNpcs.Select(npc => npc.Motion).Concat(game._colonists.Select(agent => agent.Motion)).Prepend(game.Player.Motion))
             game.LiftClear(body);
@@ -678,10 +673,8 @@ public sealed partial class GameSimulation : IStoryHost
         // not the buffs, as in Terraria.
         var vitalHours = deltaSeconds * VitalHoursPerRealSecond;
         AdvanceClock(elapsedHours * ClockPace); // nights pass faster than days (GameSimulation.World.cs)
-        Player.Needs.Advance(
-            vitalHours,
-            Player.ColonistStats.FoodConsumptionMultiplier,
-            Player.ColonistStats.RestRateMultiplier);
+        // D-48 (NC-2): the player has no needs upkeep. Food, rest, joy and comfort never drain for the player and drive
+        // nothing; colonists keep theirs (UpdateColonists).
         Player.Health.IsResting = Player.IsDowned;
         Player.Health.Tick(vitalHours);
         var statusDamage = Player.Statuses.Advance(vitalHours);
@@ -750,21 +743,8 @@ public sealed partial class GameSimulation : IStoryHost
         return CurrentResult();
     }
 
-    /// <summary>Legacy entry point for the challenge key; summons the next boss in the progression.</summary>
-    public bool TrySummonSentinel() => TrySummonNextBoss();
-
-    /// <summary>Summons the next undefeated boss (gate, easy, hard, then Astro-God) if no boss is active.</summary>
-    public bool TrySummonNextBoss()
-    {
-        if (_enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive))
-            return false;
-        var kind = NextBoss;
-        SpawnBoss(kind);
-        PostMessage($"The {EnemyArchetypes.Get(kind).DisplayName} has answered the challenge.");
-        return true;
-    }
-
-    private EnemyAgent SpawnBoss(EnemyKind kind)
+    /// <summary>Places a boss near the player. Only <see cref="TrySpawnBoss"/> calls it (BO-9: one spawn path).</summary>
+    private EnemyAgent PlaceBoss(EnemyKind kind)
     {
         var archetype = EnemyArchetypes.Get(kind);
         var playerX = (int)MathF.Floor(Player.Motion.Position.X);
@@ -995,7 +975,7 @@ public sealed partial class GameSimulation : IStoryHost
         var hitTicks = DrillHitTicks(item);
         if (item.ToolPower < definition.MinimumToolPower)
         {
-            PostMessage($"{definition.Name} needs a stronger drill.");
+            PostMessage(cell.TileId is TileId.PrecursorBrick or TileId.PrecursorGlyph ? ContentTiles.PrecursorSealMessage : $"{definition.Name} needs a stronger drill.");
             SetPlayerCooldown(hitTicks);
             return;
         }
@@ -1191,13 +1171,7 @@ public sealed partial class GameSimulation : IStoryHost
         }
         CutPlantsAround(target); // flora parity: swings cut grass plants, vines, herbs and pots
 
-        if (_random.NextDouble() > Player.ColonistStats.MeleeHitChance)
-        {
-            PostMessage($"The swing goes wide ({Player.ColonistStats.MeleeHitChance:P0} hit chance).");
-            SetPlayerCooldown(item.UseCooldownTicks);
-            return;
-        }
-
+        // D-36 (IC-4): the player's melee never misses; the colonist backstory's hit chance applies to colonists only.
         var targetPosition = new Vector2(target.X + 0.5f, target.Y + 0.5f);
         var enemy = _enemies
             .Where(candidate => candidate.IsAlive)
@@ -1255,9 +1229,9 @@ public sealed partial class GameSimulation : IStoryHost
             CritChanceFor(item, calibration), DamageClass.Ranged, item.PurifyRadius);
         if (item.Tier <= 0)
         {
-            // The colony-era energy guns keep their aim wobble: damaged eyes widen it on top of the shooter's accuracy.
+            // The colony-era energy guns wobble only with damaged eyes; D-36: the backstory's accuracy does not apply to the player.
             var sight = Player.Health.Sight;
-            var spread = (1f - Player.ColonistStats.ShootingAccuracy * sight) * 0.16f + (1f - sight) * 0.2f;
+            var spread = (1f - sight) * 0.16f + (1f - sight) * 0.2f;
             var angle = ((float)_random.NextDouble() * 2f - 1f) * spread;
             var (cos, sin) = (MathF.Cos(angle), MathF.Sin(angle));
             for (var i = before; i < _projectiles.Count; i++)
@@ -1280,15 +1254,20 @@ public sealed partial class GameSimulation : IStoryHost
             PostMessage("No food available.");
             return;
         }
-        Player.Needs.Restore(NeedKind.Food, food.FoodRestore);
         SoundEvents.Emit(SoundEventKind.Eat, string.Empty, PlayerCenter, (int)food.Id);
         if (food.FoodHeal > 0f) Player.Heal(food.FoodHeal); // cooked food heals a little (0.1.9 C1; a deliberate use)
+        // D-48: food gives buffs only. Cooked food applies its well-fed tier; raw food (nano-bananas, fish) a short Well Fed.
         GearOnAte(food);
+        if (food.GrantsStatus is null && !Player.Statuses.IsActive(StatusId.Satiated) && !Player.Statuses.IsActive(StatusId.Gourmet))
+            Player.Statuses.Apply(StatusId.WellFed, RawFoodWellFedHours(food), Player.Stats.ImmunityTags);
         if (food.Id == ItemId.Berry)
             Player.Mind.Thoughts.AddMemory(ThoughtId.AteNanoBanana);
         SetPlayerCooldown(Math.Max(Player.ActionCooldownTicks, 8));
         PostMessage($"Ate {food.Name}.");
     }
+
+    /// <summary>Vital hours of Well Fed that raw food (no well-fed tier of its own) gives: a nano-banana about two.</summary>
+    public static float RawFoodWellFedHours(ItemDefinition food) => Math.Clamp(food.FoodRestore * 10f, 1f, 4f);
 
     private void EquipSelected(bool vanity)
     {
@@ -1483,6 +1462,15 @@ public sealed partial class GameSimulation : IStoryHost
             Tiles);
     }
 
+    /// <summary>The needs the player's mood reads (D-48): fixed at the starting reserves, so needs never move the player's mood.</summary>
+    internal static SurvivalNeeds PlayerNeedsBaseline() => new(0.82f, 0.9f, 0.72f, 0.70f);
+    private readonly SurvivalNeeds PlayerNeutralNeeds = PlayerNeedsBaseline();
+    /// <summary>Food a binging colonist forages per bite (NC-7: from the land, never from the player's pack).</summary>
+    public const float BingeForageFood = 0.08f;
+    /// <summary>A binge forages, so there is always food to binge on (NC-7); the player's pack is never read.</summary>
+    private static bool ColonyHasFoodToBinge => true;
+
+    /// <summary>Furniture a tantrum kicks at (harmlessly, NC-7).</summary>
     private static readonly TileId[] FurnitureTiles =
     [
         TileId.Workbench, TileId.Furnace, TileId.Anvil, TileId.MiniTurret, TileId.HydroponicsTray,
@@ -1516,41 +1504,34 @@ public sealed partial class GameSimulation : IStoryHost
                 target = room?.Centroid ?? agent.HomePosition;
                 break;
             case MentalBreakKind.FoodBinge:
-                // The colony's food travels in the player's pack.
-                agent.Activity = "Food binge";
-                target = PlayerCenter;
+                // NC-7: a binge forages around home and gorges on what it finds. It never touches the player's pack.
+                agent.Activity = "Food binge (foraging)";
+                agent.WanderTimer -= deltaSeconds;
+                if (agent.WanderTimer <= 0f)
+                {
+                    agent.WanderTimer = 2f + (float)_mindRandom.NextDouble() * 2f;
+                    var offset = ((float)_mindRandom.NextDouble() * 2f - 1f) * 6f;
+                    agent.WanderTarget = new Vector2(
+                        Math.Clamp(agent.HomePosition.X + offset, 1f, World.Width - 2f), agent.HomePosition.Y);
+                }
+                target = agent.WanderTarget;
                 if (agent.BreakTimer <= 0f)
                 {
                     agent.BreakTimer = 0.4f;
-                    if (Player.Inventory.TryConsume(ItemId.Berry))
-                    {
-                        agent.Needs.Restore(NeedKind.Food, Items[ItemId.Berry].FoodRestore);
-                        agent.Mind.Thoughts.AddMemory(ThoughtId.AteNanoBanana);
-                    }
-                    else
-                    {
-                        agent.Activity = "Food binge (nothing left)";
-                    }
+                    agent.Needs.Restore(NeedKind.Food, BingeForageFood);
                 }
                 break;
             case MentalBreakKind.Tantrum:
+                // NC-7: a tantrum shouts and kicks at the furniture harmlessly. It never damages a station, turret,
+                // hydroponics tray, solar panel or oxygen unit (or any other tile).
                 agent.Activity = "Tantrum";
                 if (FindNearbyFurniture(center, 8) is { } spot)
                 {
                     target = new Vector2(spot.X + 0.5f, spot.Y + 0.5f);
                     if (agent.BreakTimer <= 0f && Vector2.Distance(center, target) <= 2.5f)
                     {
-                        agent.BreakTimer = 0.35f;
-                        var name = Tiles[World.GetCell(spot).TileId].Name;
-                        if (World.TryDamageTile(spot, 12, Tiles, out _))
-                        {
-                            _framing.ReframeRegion(World, Tiles, TileFramingSystem.GetDirtyRegion(World, new[] { spot }));
-                            PostMessage($"{agent.Name} smashed the {name} in a tantrum!");
-                        }
-                        else
-                        {
-                            PostMessage($"{agent.Name} is kicking the {name}.");
-                        }
+                        agent.BreakTimer = 2f;
+                        PostMessage($"{agent.Name} is shouting and kicking at the {Tiles[World.GetCell(spot).TileId].Name}.");
                     }
                 }
                 break;
@@ -1734,6 +1715,8 @@ public sealed partial class GameSimulation : IStoryHost
         var defeated = _enemies.Where(enemy => !enemy.IsAlive).ToArray();
         foreach (var enemy in defeated)
         {
+            if (enemy.FromStatue && RemoveStatueCreature(enemy)) // EN-6: statue spawns give nothing
+                continue;
             foreach (var drop in BossDropsOrBag(enemy))
                 DropLoot(enemy, drop.Item, drop.Quantity);
             DropSustainLoot(enemy); // boss potions, hearts and charge orbs (0.1.9 C2/C3; GroundItems.cs)
@@ -2013,7 +1996,7 @@ public sealed partial class GameSimulation : IStoryHost
 
         PlayerAmbientTemperature = AmbientAt(PlayerCenter, CurrentBiome);
         PlayerComfort = TemperatureModel.Evaluate(PlayerAmbientTemperature, Player.Stats.ImmunityTags);
-        ApplyThermalComfort(PlayerComfort, Player.Needs, hours,
+        ApplyThermalComfort(PlayerComfort, null, hours, // no comfort need for the player (D-48); the injury still applies
             (amount, cause) => Player.TakeExposureDamage(amount, cause));
         if (PlayerComfort.Dangerous && !_exposureWarned)
             PostMessage(PlayerComfort.TooCold
@@ -2065,19 +2048,15 @@ public sealed partial class GameSimulation : IStoryHost
             var mind = pawn.Mind;
             mind.Thoughts.Advance(hours);
             mind.Thoughts.SetSituational(ComputeSituationalThoughts(pawn, comfort, indoors, night, living));
-            mind.UpdateMood(pawn.Needs, pawn.ColonistStats, hours);
-            mind.Breaker.Track(mind.Mood.Current, hours);
-
             if (pawn.IsPlayerCharacter)
             {
-                // The player never loses control: they get a visible warning and, at the extreme, slower work.
-                if (Player.OnTheEdge && !_playerEdgeWarned)
-                    PostMessage($"{Player.Name} is on the edge ({mind.Breaker.StateLabel}).");
-                else if (!Player.OnTheEdge && _playerEdgeWarned)
-                    PostMessage($"{Player.Name} has steadied.");
-                _playerEdgeWarned = Player.OnTheEdge;
+                // D-48 (NC-2): the player has no needs upkeep, so needs never move their mood, and they have no break risk
+                // (no "on the edge" warning, no slower work). Thoughts still come and go for the social layer.
+                mind.UpdateMood(PlayerNeutralNeeds, pawn.ColonistStats, hours);
                 continue;
             }
+            mind.UpdateMood(pawn.Needs, pawn.ColonistStats, hours);
+            mind.Breaker.Track(mind.Mood.Current, hours);
 
             if (mind.Breaker.IsBreaking)
             {
@@ -2089,8 +2068,8 @@ public sealed partial class GameSimulation : IStoryHost
             }
             else
             {
-                var started = mind.Breaker.TryStartBreak(_mindRandom, hours, canBreak: !pawn.IsDowned,
-                    hasFood: Player.Inventory.Count(ItemId.Berry) > 0);
+                // A food binge forages (NC-7), so the colony always has food to binge on; never the player's pack.
+                var started = mind.Breaker.TryStartBreak(_mindRandom, hours, canBreak: !pawn.IsDowned, hasFood: ColonyHasFoodToBinge);
                 if (started != MentalBreakKind.None)
                     PostMessage($"{pawn.Name} is having a {mind.Breaker.ActiveSeverity.ToString().ToLowerInvariant()} " +
                                 $"mental break: {MentalBreaker.Describe(started)}.");
@@ -2136,10 +2115,13 @@ public sealed partial class GameSimulation : IStoryHost
             yield return (ThoughtId.Downed, 1f, null);
 
         var needs = pawn.Needs;
-        if (needs.FoodReserve < 0.08f) yield return (ThoughtId.Starving, 1f, null);
-        else if (needs.FoodReserve < 0.25f) yield return (ThoughtId.Hungry, 1f, null);
-        if (needs.RestReserve < 0.10f) yield return (ThoughtId.Exhausted, 1f, null);
-        else if (needs.RestReserve < 0.25f) yield return (ThoughtId.Tired, 1f, null);
+        if (!pawn.IsPlayerCharacter) // D-48: no Hungry, Starving, Tired or Exhausted for the player
+        {
+            if (needs.FoodReserve < 0.08f) yield return (ThoughtId.Starving, 1f, null);
+            else if (needs.FoodReserve < 0.25f) yield return (ThoughtId.Hungry, 1f, null);
+            if (needs.RestReserve < 0.10f) yield return (ThoughtId.Exhausted, 1f, null);
+            else if (needs.RestReserve < 0.25f) yield return (ThoughtId.Tired, 1f, null);
+        }
 
         if (!comfort.Comfortable)
         {
@@ -2211,12 +2193,12 @@ public sealed partial class GameSimulation : IStoryHost
                 pawn.Mind.Thoughts.AddMemory(id);
     }
 
-    private static void ApplyThermalComfort(ThermalComfort comfort, SurvivalNeeds needs, float hours, Action<float, string> injure)
+    private static void ApplyThermalComfort(ThermalComfort comfort, SurvivalNeeds? needs, float hours, Action<float, string> injure)
     {
         if (hours <= 0f)
             return;
         if (!comfort.Comfortable)
-            needs.Drain(NeedKind.Comfort, hours * 0.04f * Math.Min(3f, comfort.DegreesOutsideComfort / 8f + 0.25f));
+            needs?.Drain(NeedKind.Comfort, hours * 0.04f * Math.Min(3f, comfort.DegreesOutsideComfort / 8f + 0.25f));
         if (comfort.Dangerous)
             injure(hours * 1.5f * Math.Min(3f, comfort.DegreesOutsideSafe / 10f + 0.5f), comfort.TooCold ? "frostbite" : "heatstroke");
     }
@@ -2473,29 +2455,35 @@ public sealed partial class GameSimulation : IStoryHost
         Day = 1 + (int)MathF.Floor(absoluteHour / 24f);
         ClockHour = absoluteHour % 24f;
 
-        WorldEventBoundary? boundary = null;
-        if (CrossedBoundary(previous, ClockHour, 6f, elapsedHours))
-            boundary = WorldEventBoundary.Dawn;
-        else if (CrossedBoundary(previous, ClockHour, 18f, elapsedHours))
-            boundary = WorldEventBoundary.Dusk;
+        WorldEventMoment? boundary = null;
+        if (BoundaryPassed(WorldEventMoment.Dawn, previous, ClockHour, elapsedHours))
+            boundary = WorldEventMoment.Dawn;
+        else if (BoundaryPassed(WorldEventMoment.Dusk, previous, ClockHour, elapsedHours))
+            boundary = WorldEventMoment.Dusk;
 
-        var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ClockHour >= 18f || ClockHour < 6f ? "night" : "surface" };
-        if (_defeatedBosses.Any(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Easy))
-            tags.Add(EasyBossDefeatedTag);
-        var context = new WorldEventContext(
-            ProgressionUnlocked: Day >= 2 || _defeatedBosses.Count > 0,
-            BiomeTags: tags);
-        var result = _eventManager.Advance(elapsedHours, boundary, context);
-        foreach (var id in result.Ended)
-            PostMessage($"Event ended: {_eventManager.GetDisplayName(id)}.");
-        foreach (var id in result.Started)
-        {
-            PostMessage($"Event started: {_eventManager.GetDisplayName(id)}.");
-            if (string.Equals(id, IncursionEventId, StringComparison.OrdinalIgnoreCase))
-                TrySpawnEventBoss();
-        }
+        // EV-2 (D-28): the legacy event manager is gone; the dusk incursion is a plain dusk roll (PC-4: after the Fracture).
+        if (boundary == WorldEventMoment.Dusk && IncursionRoll(Day) < IncursionChance && IncursionEligible)
+            TrySpawnEventBoss();
+        if (boundary is { } passed)
+            BossesLeaveAtBoundary(passed); // BO-6: night bosses leave at dawn, day bosses at dusk
         AdvanceContentClock(previous, elapsedHours, boundary);
         AdvanceHardmodeClock(boundary);
+    }
+
+    /// <summary>A dusk incursion may come once the Fracture has happened and an easy-tier boss has fallen (PC-4, D-3).</summary>
+    public bool IncursionEligible => FractureActive && _defeatedBosses.Any(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Easy);
+
+    /// <summary>Deterministic dusk roll in [0,1) for a hostile incursion (seed and day).</summary>
+    public double IncursionRoll(int day)
+    {
+        unchecked
+        {
+            var hash = (uint)Seed * 668265263u ^ (uint)day * 2654435761u ^ 0x51ED270Bu;
+            hash ^= hash >> 15;
+            hash *= 2246822519u;
+            hash ^= hash >> 13;
+            return (hash & 0xFFFFFF) / (double)0x1000000;
+        }
     }
 
     /// <summary>
@@ -2515,27 +2503,17 @@ public sealed partial class GameSimulation : IStoryHost
         var pool = eligible.Where(kind => !_defeatedBosses.Contains(kind)).ToArray();
         if (pool.Length == 0)
             pool = eligible;
-        var boss = SpawnBoss(pool[_bossRandom.Next(pool.Length)]);
-        PostMessage($"Warning: the {boss.DisplayName} descends on the colony at dusk!");
+        if (!TrySpawnBoss(pool[_bossRandom.Next(pool.Length)], BossSpawnSource.DuskIncursion, out var boss, out _))
+            return false;
+        PostMessage($"Warning: the {boss!.DisplayName} descends on the colony at dusk!");
         return true;
     }
 
-    /// <summary>Pre-Fracture dusk incursions only bring event bosses under this many hit points (G2).</summary>
-    public const float PreFractureEventBossMaxHitPoints = 1000f;
-
     /// <summary>
-    /// Event bosses a dusk incursion may bring. After the Fracture: all of them. Before it: only those under
-    /// <see cref="PreFractureEventBossMaxHitPoints"/>, or, when none qualify, all of them once the Scout Mech has fallen.
+    /// Event bosses a dusk incursion may bring: all of them after the Fracture, none before it (PC-4, D-3: no 9,000+ HP
+    /// incursion bosses in the pre-Fracture game, whatever has fallen).
     /// </summary>
-    public EnemyKind[] EventBossPool()
-    {
-        if (FractureActive)
-            return EnemyArchetypes.EventBosses.ToArray();
-        var light = EnemyArchetypes.EventBosses.Where(kind => EnemyArchetypes.Get(kind).HitPoints < PreFractureEventBossMaxHitPoints).ToArray();
-        if (light.Length > 0)
-            return light;
-        return _defeatedBosses.Contains(EnemyKind.ScoutMech) ? EnemyArchetypes.EventBosses.ToArray() : [];
-    }
+    public EnemyKind[] EventBossPool() => FractureActive ? EnemyArchetypes.EventBosses.ToArray() : [];
 
     /// <summary>Test hook: runs the dusk incursion's boss pick.</summary>
     internal bool ProbeSpawnEventBoss() => TrySpawnEventBoss();

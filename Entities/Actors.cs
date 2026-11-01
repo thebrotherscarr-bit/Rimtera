@@ -70,7 +70,7 @@ public sealed class PlayerCharacter : IColonyPawn
         ColonistStats = colonist.Stats;
         Needs = new SurvivalNeeds(0.82f, 0.9f, 0.72f, 0.70f);
         _torso = ColonistAnatomy.CreateTorso();
-        Health = new HealthComponent(_torso, seed: healthSeed);
+        Health = new HealthComponent(_torso, seed: healthSeed) { HitPointsOnly = true }; // D-36: HP is the only way to die
         Mind = new ColonistMind(colonist, ColonistMoodCalculator.Calculate(Needs, ColonistStats));
         HitPoints = MaximumHitPoints;
     }
@@ -97,22 +97,24 @@ public sealed class PlayerCharacter : IColonyPawn
     public float Mood => Mind.Mood.Current;
     public string MoodLabel => ColonistMoodCalculator.Label(Mood);
     public IReadOnlyList<ThoughtView> Thoughts => Mind.CurrentThoughts;
-    public float MeleeDamageMultiplier => ColonistStats.MeleeDamageMultiplier;
-    public float ShootingDamageMultiplier => ColonistStats.ShootingDamageMultiplier;
+    /// <summary>D-36: the backstory's melee and shooting multipliers do not apply to the player (Terraria's player has none).</summary>
+    public float MeleeDamageMultiplier => 1f;
+    public float ShootingDamageMultiplier => 1f;
     public float MiningSpeedMultiplier => ColonistStats.MiningSpeed;
     public int ActionCooldownTicks { get; internal set; }
-    public bool IsDead => HitPoints <= 0f || Health.IsDead;
-    /// <summary>Down from pain shock, unconsciousness or ruined legs: cannot move or act until it passes.</summary>
-    public bool IsDowned => !IsDead && Health.IsDowned;
+    /// <summary>D-36: the player dies only when hit points reach 0.</summary>
+    public bool IsDead => HitPoints <= 0f;
+    /// <summary>D-36: the player is never downed (pain, consciousness and legs never stop them).</summary>
+    public bool IsDowned => false;
     /// <summary>The player never loses control, but below the minor break threshold they are "on the edge".</summary>
     public bool OnTheEdge => Mind.Breaker.OnTheEdge;
     /// <summary>At extreme break risk the player works noticeably slower.</summary>
     public bool AtBreakingPoint => Mind.Breaker.Risk == MentalBreakSeverity.Extreme;
-    /// <summary>Multiplier on maximum run speed from the moving capacity (0 when downed).</summary>
-    public float MoveCapacityFactor => IsDowned ? 0f : Math.Clamp(Health.Moving, 0f, 1f);
-    /// <summary>Multiplier on action cooldowns from manipulation and the extreme-mood work penalty.</summary>
+    /// <summary>D-36: body damage never slows the player (colonists keep the moving capacity).</summary>
+    public float MoveCapacityFactor => 1f;
+    /// <summary>Multiplier on action cooldowns from manipulation. No mood penalty: the player has no break risk (D-48, NC-2).</summary>
     public float ActionCooldownScale =>
-        1f / Math.Max(0.3f, Health.Manipulation) * (AtBreakingPoint ? 1.35f : 1f);
+        1f / Math.Max(0.3f, Health.Manipulation);
     public DamageResult LastDamage { get; private set; } = DamageResult.None;
 
     int IColonyPawn.SocialKey => 0;
@@ -152,18 +154,16 @@ public sealed class PlayerCharacter : IColonyPawn
         if (!float.IsFinite(amount) || amount <= 0f || IsDead)
             return 0f;
 
+        // D-36: hits cost hit points only; the player's body takes no wounds, loses no parts and never bleeds out.
         var applied = Math.Min(HitPoints, amount);
         HitPoints -= applied;
-        LastDamage = Health.ApplyDamage(applied * ColonistAnatomy.BodyDamageScale, kind);
-        SyncHealthDeath();
+        LastDamage = DamageResult.None;
         return applied;
     }
 
-    /// <summary>Zeroes the hit-point pool once the body itself has died (organ loss, blood loss, infection).</summary>
+    /// <summary>D-36: nothing in the player's body ends them, so there is nothing to sync (only hit points kill).</summary>
     public void SyncHealthDeath()
     {
-        if (Health.IsDead)
-            HitPoints = 0f;
     }
 
     /// <summary>Restores a dead player at a position: full hit points, body restored, motion reset.</summary>
@@ -631,6 +631,8 @@ public sealed class EnemyAgent
     public float FleeSeconds { get; internal set; }
     /// <summary>The world event that spawned this creature (kill quotas, wave progress), or null.</summary>
     public WorldEventKind? EventTag { get; internal set; }
+    /// <summary>Released by a wired statue (EN-6): its defeat drops nothing and counts toward no kill count or banner. Saved.</summary>
+    public bool FromStatue { get; internal set; }
     public bool IsPassive => Archetype.Passive;
     public bool IsBoss => Archetype.IsBoss;
     public bool IsAlive => HitPoints > 0f;
@@ -758,7 +760,8 @@ public sealed class EnemyAgent
             : null,
         _hitImmunity is { Count: > 0 }
             ? _hitImmunity.Select(pair => new HitImmunitySnapshot(pair.Key, pair.Value)).ToArray()
-            : null);
+            : null,
+        FromStatue);
 
     /// <summary>Applies a snapshot captured by <see cref="CaptureState"/> to this creature.</summary>
     internal void RestoreState(EnemySnapshot state)
@@ -778,6 +781,7 @@ public sealed class EnemyAgent
         Phase = state.Phase;
         FleeSeconds = state.FleeSeconds;
         EventTag = state.EventTag;
+        FromStatue = state.FromStatue;
         Disguised = state.Disguised;
         Lunging = state.Lunging;
         AiTimer = state.AiTimer;

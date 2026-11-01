@@ -83,7 +83,7 @@ public static class CoreSelfTests
         Check(Math.Abs(grid.TotalLiquidDepth() - before) < 0.001,
             "liquid relaxation conserves volume");
 
-        var game = new GameSimulation(seed: 918273, width: 80, height: 48);
+        var game = new GameSimulation(seed: 918273, width: 80, height: 48) { DebugSummonKeyEnabled = true }; // BO-18: the key is a --kit tool
         var pickSlot = game.Player.Inventory.FindSlot(ItemId.CopperPickaxe); // the starting ferrite drill
         game.TrySelectInventorySlot(pickSlot);
         var center = game.Player.Motion.Position + game.Player.Motion.Size / 2f;
@@ -123,12 +123,9 @@ public static class CoreSelfTests
         Check(archer.Player.Inventory.Count(ItemId.Arrow) == arrowsBefore - 1 && archer.Projectiles.Count == 1,
             "ranged item consumes ammunition and creates a projectile entity");
 
-        var eventManager = new EventManager(seed: 7);
-        eventManager.Register(new WorldEventDefinition("test-dusk", WorldEventBoundary.Dusk, 1f, 2f,
-            SpawnAttemptMultiplier: 1.5f, PopulationCapMultiplier: 1.25f));
-        var eventResult = eventManager.Advance(0f, WorldEventBoundary.Dusk, new WorldEventContext());
-        Check(eventResult.Started.Contains("test-dusk") &&
-              Math.Abs(eventManager.GetSpawnModifiers().SpawnAttemptMultiplier - 1.5f) < 0.0001f,
+        // EV-2 (D-28): the legacy EventManager is retired; WorldEventSystem's modifiers feed the spawner (BossSelfTests).
+        var eventSystem = new WorldEventSystem(seed: 7);
+        Check(Math.Abs(eventSystem.Modifiers.Spawn - 1f) < 0.0001f && eventSystem.Spec(WorldEventKind.RustMoon).SpawnMultiplier > 1f,
             "event start modifiers are exposed to the spawn pipeline");
 
         var spawner = new GameSimulation(seed: 48271, width: 160, height: 72);
@@ -573,7 +570,8 @@ public static class CoreSelfTests
         saveGame.World.SetCell(new GridPoint(12, 30), new WorldCell { TileId = TileId.Rock, Shape = TileShape.SlopeUpLeft });
         var sidecarSnapshot = saveGame.CaptureSnapshot(binaryCells: true);
         saveRepository.Save(sidecarWorld, sidecarSnapshot);
-        var sidecarPath = Path.Combine(tempRoot, "saves", $"{sidecarWorld:N}.rimtera.cells");
+        // PU-11 (0.2.2): sidecars are stamped per save (<id>.<stamp>.cells), so the envelope always names a complete one.
+        var sidecarPath = Directory.EnumerateFiles(Path.Combine(tempRoot, "saves"), $"{sidecarWorld:N}.*.cells").SingleOrDefault() ?? "missing";
         var envelopeText = File.ReadAllText(Path.Combine(tempRoot, "saves", $"{sidecarWorld:N}.rimtera.json"));
         var sidecarLoaded = saveRepository.TryLoad(sidecarWorld, out var sidecarState) && sidecarState?.CellData is not null;
         var sidecarGame = sidecarLoaded ? GameSimulation.Restore(sidecarState!) : null;
@@ -633,9 +631,10 @@ public static class CoreSelfTests
             .Select((entry, index) => (entry, index))
             .First(item => item.entry.Label.StartsWith(savedWorld.Name, StringComparison.Ordinal)).index);
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
-        Check(selectedSecond && savedWorldListed && continueCharacter?.Id == savedCharacter.Id &&
-              menuFlow.SelectedCharacter?.Id == savedCharacter.Id,
-            "Single Player's world list marks saved worlds, and a saved world launches with the character stored in it");
+        // D-43 (PU-9, 0.2.2): any character may play any world; the menu launches the chosen character (Continue alone uses the saved one).
+        Check(selectedSecond && savedWorldListed && continueCharacter?.Id == secondCharacter.Id &&
+              menuFlow.SelectedCharacter?.Id == secondCharacter.Id,
+            "Single Player's world list marks saved worlds, and a saved world launches with the character chosen in the menu (D-43)");
 
         // Creative characters and worlds stay apart (Terraria's Journey split).
         var journeyHero = savedCharacter with { Id = Guid.NewGuid(), Difficulty = CharacterDifficulty.Creative };
@@ -646,8 +645,8 @@ public static class CoreSelfTests
             "Creative characters play only Creative worlds and the reverse (a character may always return to a world it saved)");
 
         menuFlow.Open();
-        Check(menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).SequenceEqual(["Single Player", "Settings", "Exit Game"]),
-            "the title menu follows Terraria: Single Player, Settings, Exit");
+        Check(menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).SequenceEqual(["Single Player", "Achievements", "Settings", "Credits", "Exit Game"]),
+            "the title menu follows Terraria: Single Player, Achievements, Settings, Credits, Exit (PU-24)");
         menuFlow.Close();
         Check(!menuFlow.IsOpen, "start menu closes without losing its host");
         menuFlow.Open();
@@ -823,7 +822,11 @@ public static class CoreSelfTests
             "boss flags, tiers, and large boss sizes come from the archetype table");
 
         // Boss progression: gate, easy tier, hard tier, then the Astro-God.
-        var progression = new GameSimulation(seed: 31337, width: 80, height: 48);
+        var progression = new GameSimulation(seed: 31337, width: 80, height: 48) { DebugSummonKeyEnabled = true };
+        // BO-18 (0.2.2): the key goes through the item refusals, so the run stands in the Irradiated Core (the igniter's
+        // place) and the obelisks are down (the sigil's gate); the bulb boss waits for the whole hard trio.
+        progression.Player.Motion.Position = progression.Player.Motion.Position with { Y = progression.World.Height * 0.85f };
+        progression.Flags.Set("obelisks.down");
         Check(progression.TrySummonSentinel() && !progression.TrySummonNextBoss() &&
               progression.Enemies.Single(enemy => enemy.IsBoss).Kind == EnemyKind.StoneSentinel,
             "the challenge key summons the Overseer mech first and only one boss at a time");
@@ -841,10 +844,14 @@ public static class CoreSelfTests
             boss.TakeDamage(boss.MaximumHitPoints);
             progression.Tick(new GameInput(new MovementInput(0f)));
         }
-        Check(summoned.SequenceEqual(EnemyArchetypes.BossProgression) &&
+        // BO-18 changed expectation: the bulb boss refuses until the whole trio is down, so the key skips it until then.
+        var refusalOrder = EnemyArchetypes.BossProgression.Where(kind => kind != GameSimulation.BulbBoss && kind != EnemyKind.AstroGod)
+            .Append(GameSimulation.BulbBoss).Append(EnemyKind.AstroGod);
+        Check(summoned.SequenceEqual(refusalOrder) &&
               summoned.Skip(1).Take(4).All(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Easy) &&
               summoned[5] == GameSimulation.CoreGateBoss && EnemyArchetypes.Get(summoned[5]).Tier == BossTier.Gate &&
               summoned.Skip(6).Take(5).All(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Hard) &&
+              summoned.IndexOf(GameSimulation.BulbBoss) > GameSimulation.HardTrio.Max(kind => summoned.IndexOf(kind)) &&
               summoned[^1] == EnemyKind.AstroGod &&
               progression.DefeatedBosses.Count == EnemyArchetypes.BossProgression.Count &&
               progression.NextBoss == EnemyKind.AstroGod,
@@ -1197,18 +1204,22 @@ public static class CoreSelfTests
             legTopSpeed = MathF.Max(legTopSpeed, MathF.Abs(legGame.Player.Motion.Velocity.X));
             steadyTopSpeed = MathF.Max(steadyTopSpeed, MathF.Abs(steadyGame.Player.Motion.Velocity.X));
         }
+        // D-36 (IC-4, 0.2.2): the player is HP-only, so ruined legs no longer slow them; the body still records the damage.
         Check(legHealth.Moving < 0.5f && steadyGame.Player.Health.Moving > 0.95f &&
-              legGame.Player.MoveCapacityFactor < 0.5f && !legGame.Player.IsDowned &&
-              steadyTopSpeed > 0f && legTopSpeed < steadyTopSpeed * 0.6f,
-            "leg damage lowers the moving capacity and the player's run speed");
+              legGame.Player.MoveCapacityFactor == 1f && !legGame.Player.IsDowned &&
+              steadyTopSpeed > 0f && MathF.Abs(legTopSpeed - steadyTopSpeed) < 0.01f,
+            "leg damage lowers the body's moving capacity but never the player's run speed (D-36)");
 
         var brainGame = new GameSimulation(seed: 3232, width: 80, height: 48);
         var brainHealth = brainGame.Player.Health;
         brainHealth.ApplyDamageToPart(brainHealth.FindPart("brain")!, 50f, DamageKind.Shot);
         brainGame.Tick(new GameInput(new MovementInput(0f)));
-        Check(brainHealth.IsDead && brainHealth.DeathCause?.Contains("brain") == true &&
-              brainGame.Player.IsDead && brainGame.IsOver && brainGame.Player.HitPoints == 0f,
-            "destroying the brain kills even with hit points left");
+        // D-36 (IC-4, 0.2.2): a colonist's body still dies of a destroyed brain; the player dies only at 0 hit points.
+        var colonistBrain = new HealthComponent(ColonistAnatomy.CreateTorso(), seed: 5);
+        colonistBrain.ApplyDamageToPart(colonistBrain.FindPart("brain")!, 50f, DamageKind.Shot);
+        Check(colonistBrain.IsDead && colonistBrain.DeathCause?.Contains("brain") == true &&
+              !brainHealth.IsDead && !brainGame.Player.IsDead && !brainGame.IsOver && brainGame.Player.HitPoints > 0f,
+            "destroying the brain kills a colonist even with hit points left, never the HP-only player");
 
         // Thoughts and mood.
         var painGame = new GameSimulation(seed: 3333, width: 80, height: 48);
@@ -1344,7 +1355,7 @@ public static class CoreSelfTests
         static string Describe(HealthComponent health) => string.Join("|", health.Injuries
             .Select(injury => $"{injury.Kind}:{injury.Part.Name}:{injury.Severity:0.000}:{injury.IsTended}"));
         var legacyMind = GameSimulation.Restore(mindSnapshot with { PlayerState = null, ColonistStates = null });
-        Check(mindJson.FormatVersion == 2 && loadedPlayer.Health.FindPart("left hand")!.IsMissing &&
+        Check(mindJson.FormatVersion == GameSnapshot.CurrentFormatVersion && loadedPlayer.Health.FindPart("left hand")!.IsMissing &&
               Describe(loadedPlayer.Health) == Describe(savedPlayer.Health) &&
               Describe(loadedCrew.Health) == Describe(savedCrew.Health) &&
               loadedPlayer.Health.GetPartHealth(loadedPlayer.Health.FindPart("right leg")!) ==
@@ -1576,7 +1587,7 @@ public static class CoreSelfTests
         Check(bigSnapshot.Cells is null && bigSnapshot.CompressedCells is { Length: > 0 } packedCells &&
               CellCodec.Decode(packedCells, bigA.World.Count).AsSpan().SequenceEqual(bigA.World.Cells) &&
               bigRestored.World.Cells.SequenceEqual(bigA.World.Cells) && bigRestored.Blight == WorldBlight.Radiated &&
-              bigJson.Length * 40L < jsonCellBytes && bigSnapshot.FormatVersion == 2,
+              bigJson.Length * 40L < jsonCellBytes && bigSnapshot.FormatVersion == GameSnapshot.CurrentFormatVersion,
             "compressed cell saves round-trip a Large world exactly at a small fraction of the JSON cell size");
 
         var oldStyle = new GameSimulation(seed: 789, width: 80, height: 48);
@@ -1707,13 +1718,20 @@ public static class CoreSelfTests
         CraftingGuideSelfTests.Run(Check); // crafting guidance: recipe guide lookups, "close to" recipes, tooltips, the station AI's next steps
         PlayerDebuffSelfTests.Run(Check); // 0.1.9 combat core: creature debuffs, afflictions, contact boxes, hurt variance (stream B)
         CraftingAuditSelfTests.Run(Check); // crafting progression: a felled tree builds the first station; every station and item is reachable (docs/CRAFTING_PROGRESSION.md)
+        ProgressionGateSelfTests.Run(Check); // 0.2.2 stream B: the Leviathan waits for the Fracture, transitive stations, the sealed temple, no tier 6+ before the Fracture
         SoundEventSelfTests.Run(Check); // 0.1.9 feedback: simulation sound events, despawns are not kills, dust under the cap, crit records (PE-4/5/7/14)
         TooltipSelfTests.Run(Check); // 0.1.9 IC-17: the truthful item tooltip (class damage, real ammo, calibration, sets, sell value)
         HealingLadderSelfTests.Run(Check); // 0.1.9 C1: healing and charge ladders, their gates, potion sickness, quick heal, cooked food
         DropRuleSelfTests.Run(Check); // 0.1.9 C2-C5: drop chances and conditions, event drops, hearts and orbs, boss potions, 9999 stacks
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
+        ColonyRulingSelfTests.Run(Check); // 0.2.2 E: no auto-tend, no player needs, harmless breaks, unhappy residents stay, HUD, resident HP (NC-1/2/7/9/16/20)
+        CreativeResearchSelfTests.Run(Check); // 0.2.2 E: research on the character, old world flags migrated, weather and spread powers, the Creative kit (PC-13, X-CR-10, PC-14)
         BalanceSelfTests.Run(Check); // 0.2.0 A: the boss curve (--boss-balance), the 60-180 s band and D-6 difficulty scaling (PC-15, BO-23)
+        SpriteMemorySelfTests.Run(Check); // 0.2.2 (0.1.7 A2, PE-2): lazy sprite loading: an index at load, decoded and scaled LRUs with byte budgets
+        MenuParitySelfTests.Run(Check); // 0.2.2 (0.1.8 D3-D7, E1): map preferences and NPC heads, title feats and credits, video rows, screen shake, audio latency
+        SaveSafetySelfTests.Run(Check); // 0.2.2 D: save backups and migrations, the 0.1.6 fixture, threaded autosave, any character on any world, the HP-only player, minions, statue spawns (PU-11/12, PU-9, IC-4, IC-7, EN-6)
+        BossSelfTests.Run(Check); // 0.2.2 C: boss and event lifecycle (BO-24 suite; PC-1/2/4, BO-6/9/17/18, EV-1/2, EN-7)
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }

@@ -20,7 +20,7 @@ Rimtera's own code.
 | Wheel | Hotbar in the world; crafting list or hovered list with the hub open; zoom on the full map. **Ctrl+wheel zoom removed** (user decision). | `GraphicalSandbox.cs` |
 | Smaller | E always fires a hook (jump lets go); left+right cancel; T refuses favourites and waits for the swing; chest Rename (20 characters, saved); WASD pans and numpad +/- zooms the full map while the player stands still. | various |
 
-**Deliberate differences kept:** T is bound to Throw (Terraria 1.4.5.8 leaves Throw unbound; T was its legacy default); `I` also opens the inventory; the backtick emote key; `/` toggles the key help; Rimtera has hunger, so the player must eat food themselves. Not done: chat (Enter), camera mode (F4), lighting/diagnostic F-keys, armor set abilities (Rimtera has none), selling with Ctrl-click (Rimtera's shop is its own screen), carrying the favourite flag through `ReturnCursor` (returned stacks are not favourites).
+**Deliberate differences kept:** T is bound to Throw (Terraria 1.4.5.8 leaves Throw unbound; T was its legacy default); `I` also opens the inventory; the backtick emote key; `/` toggles the key help; Rimtera has hunger, so the player must eat food themselves. Not done: chat (Enter), camera mode (F4), lighting/diagnostic F-keys, armor set abilities (Rimtera has none), selling with Ctrl-click (Rimtera's shop is its own screen). The favourite flag survives `ReturnCursor` (0.2.2, X-CP-6): a returned favourite stays a favourite, also when it merges into a stack.
 
 **Correction to phase 1:** Terraria's Shift strategy 4 in liquid picks a *waterproof light* (glow sticks, water torch, flare), not a bucket (`SmartSelect_PickToolForStrategy @158-379`). Phase 2 follows the IL.
 

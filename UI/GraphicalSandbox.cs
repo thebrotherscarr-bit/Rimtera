@@ -72,10 +72,15 @@ public static partial class GraphicalSandbox
         private WorldProfile? _activeWorld;
         private CharacterProfile? _activeCharacter;
         private bool _menuOpen = true;
+        /// <summary>PU-15: the map opacity changed while PageUp/PageDown was held; saved once it is let go.</summary>
+        private bool _mapOpacityDirty;
         private readonly ScreenTransition _transition = new();
         private readonly AudioEngine _audio = new();
         private readonly AudioDirector _audioDirector;
         private float _autosaveSeconds;
+        private SaveCoordinator? _saveCoordinator;
+        /// <summary>PU-11/PU-12: autosaves on a worker, synchronous saves after it, and the save on close.</summary>
+        private SaveCoordinator Saving => _saveCoordinator ??= new SaveCoordinator(_menu.Saves);
         private bool _jump;
         private bool _dash;
         private bool _mine;
@@ -99,6 +104,8 @@ public static partial class GraphicalSandbox
 
             var dataDirectory = Environment.GetEnvironmentVariable("RIMTERA_DATA_DIR");
             _menu = string.IsNullOrWhiteSpace(dataDirectory) ? new MenuFlow() : new MenuFlow(dataDirectory: dataDirectory);
+            // PU-24: every game session records feats into the machine-wide store (feats.json beside config.json).
+            FeatStore.Active = _menu.Feats;
             _menu.ExitRequested += Close;
             _menu.WorldLaunchRequested += StartWorld;
             _menu.DisplayPreferencesChanged += ApplyDisplayPreferences;
@@ -454,8 +461,8 @@ public static partial class GraphicalSandbox
                         OpenCreativeMenu();
                     break;
                 case "MapStyle":
-                    _canvas.MapView = (GameCanvas.MapStyle)(((int)_canvas.MapView + 1) % 3);
-                    _canvas.Notify($"Map: {_canvas.MapView}.");
+                    _canvas.Notify($"Map: {MapDisplay.CycleStyle(_menu.Preferences)}.");
+                    _menu.SavePreferences();
                     break;
                 case "MinimapZoomIn": _canvas.ZoomMinimap(1); break;
                 case "MinimapZoomOut": _canvas.ZoomMinimap(-1); break;
@@ -984,8 +991,15 @@ public static partial class GraphicalSandbox
                 if (Held("MinimapZoomIn")) _canvas.ZoomFullscreenMap(1.05f);
                 if (Held("MinimapZoomOut")) _canvas.ZoomFullscreenMap(0.95f);
             }
-            if (!mapOpen && Held("MapAlphaUp")) _canvas.AdjustMapOpacity(0.015f);
-            if (!mapOpen && Held("MapAlphaDown")) _canvas.AdjustMapOpacity(-0.015f);
+            // PU-15: opacity is a preference; it is written once the key is let go, not every tick it is held.
+            var opacityHeld = !mapOpen && (Held("MapAlphaUp") || Held("MapAlphaDown"));
+            if (!mapOpen && Held("MapAlphaUp")) _mapOpacityDirty |= MapDisplay.AdjustOpacity(_menu.Preferences, MapDisplay.OpacityStep);
+            if (!mapOpen && Held("MapAlphaDown")) _mapOpacityDirty |= MapDisplay.AdjustOpacity(_menu.Preferences, -MapDisplay.OpacityStep);
+            if (_mapOpacityDirty && !opacityHeld)
+            {
+                _mapOpacityDirty = false;
+                _menu.SavePreferences();
+            }
             UpdateSmartSelect(overInterface);
             // Holding left and right together cancels out (Player.Update @3583-3602).
             var horizontal = mapOpen ? 0f : (Held("MoveRight") ? 1f : 0f) - (Held("MoveLeft") ? 1f : 0f);
@@ -1027,10 +1041,28 @@ public static partial class GraphicalSandbox
             }
 
             _autosaveSeconds += 1f / 60f;
-            if (_menu.Preferences.AutoSave && _autosaveSeconds >= _menu.Preferences.AutosaveMinutes * 60f)
+            if (_menu.Preferences.AutoSave && _autosaveSeconds >= _menu.Preferences.AutosaveMinutes * 60f && _activeWorld is { } autosaveWorld)
             {
+                // PU-12: capture here, compress and write on a worker; a save still writing skips this tick.
                 _autosaveSeconds = 0f;
-                SaveGame(showStatus: false);
+                Action? mapWriter = null;
+                if (_canvas.Map is { } autosaveMap && _activeCharacter is { } mapOwner)
+                {
+                    var writeMap = autosaveMap.CaptureForSave();
+                    var autosaveMapPath = MapPath(autosaveWorld, mapOwner);
+                    mapWriter = () =>
+                    {
+                        try
+                        {
+                            writeMap(autosaveMapPath);
+                        }
+                        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+                        {
+                            // The world is saved; the map keeps its previous file.
+                        }
+                    };
+                }
+                Saving.TryBeginAutosave(_game, autosaveWorld.Id, _activeCharacter?.Id, _activeCharacter?.Name, mapWriter);
             }
 
             SyncCanvas();
@@ -1053,11 +1085,14 @@ public static partial class GraphicalSandbox
                 Math.Clamp(y, 0, game.World.Height - 1));
         }
 
-        private async void StartWorld(WorldProfile world, CharacterProfile character)
+        private void StartWorld(WorldProfile world, CharacterProfile character) => StartWorld(world, character, fromBackup: false);
+
+        private async void StartWorld(WorldProfile world, CharacterProfile character, bool fromBackup)
         {
             if (_transition.BlocksGameplay)
                 return;
-            var hasSave = _menu.Saves.Exists(world.Id);
+            Saving.WaitForPending(); // never read a world while its last save is still being written
+            var hasSave = fromBackup || _menu.Saves.Exists(world.Id) || _menu.Saves.HasBackup(world.Id);
             _menu.Close();
             _menuOpen = false;
             _down.Clear();
@@ -1077,8 +1112,8 @@ public static partial class GraphicalSandbox
                 {
                     if (!hasSave)
                         return CreateSimulation(world, character, progress);
-                    if (!_menu.Saves.TryLoad(world.Id, out var snapshot) || snapshot is null)
-                        throw new InvalidDataException("the save file exists but could not be read");
+                    if (!_menu.Saves.TryLoad(world.Id, out var snapshot, out var loadError, backup: fromBackup) || snapshot is null)
+                        throw new InvalidDataException(loadError ?? "the save file exists but could not be read");
                     ((IProgress<GenerationProgress>)progress).Report(new GenerationProgress("Restoring the colony", 0.6, 0.6));
                     return GameSimulation.Restore(snapshot, character);
                 });
@@ -1087,8 +1122,9 @@ public static partial class GraphicalSandbox
             catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or ArgumentException)
             {
                 _transition.Clear();
-                _menu.Open();
-                _menu.SetStatus($"Could not load {world.Name}: {ex.Message}");
+                // PU-11: a failed load offers the backup of the previous save.
+                _menu.ShowLoadFailure(world, ex.Message.TrimEnd('.'), !fromBackup && _menu.Saves.HasBackup(world.Id),
+                    () => StartWorld(world, character, fromBackup: true));
                 _menuOpen = true;
                 UpdateMenuViewport();
                 SyncCanvas();
@@ -1255,7 +1291,7 @@ public static partial class GraphicalSandbox
             if (_game is null || _activeWorld is null || _transition.BlocksGameplay)
                 return;
             var world = _activeWorld;
-            var snapshot = _game.CaptureSnapshot(binaryCells: true);
+            var snapshot = _game.CaptureSnapshot(binaryCells: true, deferCellCompression: true); // compressed on the worker
             var characterId = _activeCharacter?.Id;
             var characterName = _activeCharacter?.Name;
             _menu.Close();
@@ -1265,13 +1301,14 @@ public static partial class GraphicalSandbox
             SyncCanvas();
             try
             {
-                var map = _canvas.Map;
+                var writeMap = _canvas.Map?.CaptureForSave();
                 var mapPath = _activeCharacter is { } mapCharacter ? MapPath(world, mapCharacter) : null;
                 await Task.Run(() =>
                 {
+                    Saving.WaitForPending();
                     _menu.Saves.Save(world.Id, snapshot, characterId, characterName);
-                    if (map is not null && mapPath is not null)
-                        map.Save(mapPath);
+                    if (writeMap is not null && mapPath is not null)
+                        writeMap(mapPath);
                 });
             }
             catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
@@ -1488,11 +1525,7 @@ public static partial class GraphicalSandbox
             }
             try
             {
-                _menu.Saves.Save(
-                    _activeWorld.Id,
-                    _game.CaptureSnapshot(binaryCells: true),
-                    _activeCharacter?.Id,
-                    _activeCharacter?.Name);
+                Saving.SaveNow(_game, _activeWorld.Id, _activeCharacter?.Id, _activeCharacter?.Name);
                 SaveMap();
                 return true;
             }
@@ -1549,8 +1582,10 @@ public static partial class GraphicalSandbox
             _audio.Dispose();
             Application.Idle -= OnIdle;
             timeEndPeriod(1);
-            if (_game is not null && _activeWorld is not null && _menu.Preferences.AutoSave)
+            // D-42 (PU-11): closing the window always saves an active world, whatever the Autosave setting.
+            if (_game is not null && SaveCoordinator.SavesOnClose(_activeWorld is not null, _menu.Preferences.AutoSave))
                 SaveGame(showStatus: false);
+            Saving.WaitForPending();
         }
     }
 
@@ -1642,7 +1677,7 @@ public static partial class GraphicalSandbox
         private int TileSize => Math.Clamp((int)MathF.Round(20f * _menu.Preferences.Zoom), 12, 40);
         // The world fills the window; HUD elements float over it (hotbar top-left, vitals and map top-right).
         private const int HudHeight = 0;
-        private const int VitalsHeight = 82;
+        private const int VitalsHeight = 60;
         private const int HotbarTop = 26;
         private const int HotbarSlot = 44;
         private readonly MenuFlow _menu;
@@ -1875,6 +1910,7 @@ public static partial class GraphicalSandbox
         /// <summary>Smoothed camera centre (tiles) and how quickly it closes on the player per axis (1/s).</summary>
         private Vector2 _camera;
         private bool _cameraReady;
+        private readonly ScreenShake _screenShake = new();
         private const float CameraFollowX = 14f;
         private const float CameraFollowY = 9f;
         private readonly List<(RectangleF Rect, int Slot)> _hotbarHits = new();
@@ -1911,17 +1947,9 @@ public static partial class GraphicalSandbox
         public bool HideUi { get; set; }
 
         /// <summary>Minimap and overlay opacity (PageUp / PageDown, Terraria's MapAlphaUp / MapAlphaDown).</summary>
-        public float MinimapOpacity { get; private set; } = 1f;
-        public float OverlayOpacity { get; private set; } = 0.55f;
-
-        /// <summary>Changes the opacity of whichever map is showing by <paramref name="step"/> (Terraria: ±0.015 a tick held).</summary>
-        public void AdjustMapOpacity(float step)
-        {
-            if (MapView == MapStyle.Overlay)
-                OverlayOpacity = Math.Clamp(OverlayOpacity + step, 0.05f, 1f);
-            else if (MapView == MapStyle.Minimap)
-                MinimapOpacity = Math.Clamp(MinimapOpacity + step, 0.05f, 1f);
-        }
+        /// <remarks>PU-15: kept in <see cref="GamePreferences"/>, so they survive a restart (MapDisplay.AdjustOpacity changes them).</remarks>
+        public float MinimapOpacity => _menu.Preferences.MinimapOpacity;
+        public float OverlayOpacity => _menu.Preferences.OverlayOpacity;
 
         /// <summary>Pans the fullscreen map by screen pixels (WASD while the map is open, as in Terraria).</summary>
         public void PanFullscreenMap(float dx, float dy)
@@ -1983,6 +2011,8 @@ public static partial class GraphicalSandbox
         {
             var g = e.Graphics;
             _profiler.Begin();
+            // PE-2: sprites used last frame may now be evicted; anything fetched during this frame stays pinned.
+            _sprites.BeginFrame();
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.NearestNeighbor;
             g.Clear(Color.FromArgb(12, 14, 22));
@@ -2194,7 +2224,7 @@ public static partial class GraphicalSandbox
             var walkerColumn = (int)(width * 0.36f / tile);
             if (surfaces.TryGetValue(walkerColumn, out var walkerGround))
             {
-                var animated = _sprites.Get("anim_walk_1") is not null;
+                var animated = _sprites.Find("anim_walk_1") is not null;
                 var frame = animated ? $"anim_walk_{(int)(time * 9) % 8 + 1}"
                     : ((int)(time * 6) & 1) == 0 ? "colonist_side_a" : "colonist_side_b";
                 DrawPropOnGround(g, frame, width * 0.36f, walkerGround, 70, 96, flip: !animated);
@@ -2330,6 +2360,12 @@ public static partial class GraphicalSandbox
             var screenTilesH = (Height - HudHeight) / (float)TileSize;
             var cameraLeft = Math.Clamp(_camera.X - screenTilesW / 2f, 0f, Math.Max(0f, game.World.Width - screenTilesW));
             var cameraTop = Math.Clamp(_camera.Y - screenTilesH / 2f, 0f, Math.Max(0f, game.World.Height - screenTilesH));
+            // PE-16: boss roars, explosions and heavy landings shake the view briefly (Settings → Interface → Screen shake).
+            // Only a running world shakes; the frozen image under a paused menu stays still (pausing ends a shake).
+            _screenShake.Observe(game);
+            var shake = _screenShake.Offset(frameDelta, _menu.Preferences.ScreenShake && (WorldRunsBehindMenu || !MenuOpen));
+            cameraLeft = MathF.Max(0f, cameraLeft + shake.X / TileSize);
+            cameraTop = MathF.Max(0f, cameraTop + shake.Y / TileSize);
             var startX = (int)MathF.Floor(cameraLeft);
             var startY = (int)MathF.Floor(cameraTop);
             var offsetX = (int)MathF.Round((cameraLeft - startX) * TileSize);
@@ -2338,7 +2374,7 @@ public static partial class GraphicalSandbox
             var viewH = Math.Max(1, (Height - HudHeight) / TileSize + 2);
             _viewStartX = startX + offsetX / (float)TileSize;
             _viewStartY = startY + offsetY / (float)TileSize;
-            _animator.HasAnimationFrames = _sprites.Get("anim_walk_1") is not null;
+            _animator.HasAnimationFrames = _sprites.Find("anim_walk_1") is not null;
             _animator.ShowDamageNumbers = _menu.Preferences.DamageNumbers;
             _animator.ParticleScale = (int)_menu.Preferences.Particles;
             _animator.Update(game, now, frameDelta);
@@ -2447,7 +2483,14 @@ public static partial class GraphicalSandbox
             {
                 var size = minion.IsSentry ? 1.6f : 1.1f;
                 var bob = minion.IsSentry ? 0f : (float)Math.Sin(now * 4 + minion.Id) * 0.15f;
-                DrawSpriteActor(g, minion.SpriteName, minion.Position - new Vector2(size / 2f, size / 2f - bob), new Vector2(size, size),
+                // IC-7: a minion's own art, else its summoning item's (D-39 stand-in); allies never fall back to the enemy brush.
+                var art = _sprites.Find(minion.SpriteName) ?? (minion.Spec.StandInSprite is { } standIn ? _sprites.Find(standIn) : null);
+                if (art is null)
+                {
+                    DrawAllyGlyph(g, minion.Position, size, bob, startX, startY);
+                    continue;
+                }
+                DrawSpriteActor(g, art, minion.Position - new Vector2(size / 2f, size / 2f - bob), new Vector2(size, size),
                     1f, minion.Position.X > game.Player.Motion.Position.X, startX, startY);
             }
             DrawCompanions(g, game, startX, startY, now);
@@ -2525,9 +2568,10 @@ public static partial class GraphicalSandbox
             }
             DrawHud(g, game);
             DrawBuffBar(g, game);
-            if (MapView == MapStyle.Overlay)
+            // PU-15: Settings → Map enabled hides the overlay as well as the minimap.
+            if (MapDisplay.DrawsOverlay(_menu.Preferences))
                 DrawMapOverlay(g, game);
-            else if (MapView == MapStyle.Minimap && _menu.Preferences.MinimapEnabled)
+            else if (MapDisplay.DrawsMinimap(_menu.Preferences))
                 DrawMinimap(g, game);
             DrawStatusPanel(g, game);
             DrawBossBar(g, game);
@@ -2641,6 +2685,16 @@ public static partial class GraphicalSandbox
         /// actor's idle pose or base sprite) the scale comes from that frame alone and every animation frame keeps it, so a
         /// body never grows or shrinks between frames; without one, the sprite is fitted to the box.
         /// </summary>
+        /// <summary>A neutral ally marker (a small player-coloured diamond) for a minion with no art: never the enemy's red box.</summary>
+        private void DrawAllyGlyph(Graphics g, Vector2 center, float size, float bob, int startX, int startY)
+        {
+            var cx = (center.X - startX) * TileSize;
+            var cy = (center.Y - startY) * TileSize + bob;
+            var r = Math.Max(3f, size * TileSize * 0.4f);
+            PointF[] diamond = [new(cx, cy - r), new(cx + r, cy), new(cx, cy + r), new(cx - r, cy)];
+            g.FillPolygon(_playerBrush, diamond);
+        }
+
         private void DrawSpriteActor(Graphics g, string sprite, Vector2 position, Vector2 size, float scale, bool flip,
             int startX, int startY, float bob = 0f, bool flash = false, bool flashWhite = false, float scaleX = 1f, float scaleY = 1f,
             string? reference = null, ImageAttributes? ghost = null)
@@ -2650,7 +2704,7 @@ public static partial class GraphicalSandbox
             var maxW = (int)MathF.Max(6f, boxW * scale * 1.6f);
             var maxH = (int)MathF.Max(6f, boxH * scale);
             Bitmap? bitmap;
-            if (reference is not null && _sprites.Get(reference) is { } model && _sprites.Get(sprite) is { } frame)
+            if (reference is not null && _sprites.SizeOf(reference) is { } model && _sprites.SizeOf(sprite) is { } frame)
             {
                 var fit = MathF.Min(maxW / (float)model.Width, maxH / (float)model.Height);
                 bitmap = _sprites.GetScaled(sprite, Math.Max(1, (int)MathF.Round(frame.Width * fit)), Math.Max(1, (int)MathF.Round(frame.Height * fit)), flip);
@@ -2761,24 +2815,13 @@ public static partial class GraphicalSandbox
 
             DrawVitals(g, game);
 
-            // Clock, defence, mood and money: one quiet line in the bottom-right corner.
-            var info = $"Day {game.Day}  {FormatClock(game.ClockHour)}   DEF {game.Player.Stats.Defense}   Mood {game.Player.Mood:P0} {game.Player.MoodLabel}   " +
-                       $"{game.Player.Inventory.Count(ItemId.Credits)} cr   Crew {game.Colonists.Count(agent => agent.IsAlive)}" +
-                       (game.DroneSlots > 0 ? $"   Drones {game.ActiveDrones}/{game.DroneSlots}" : string.Empty) +
-                       (game.SentrySlots > 0 ? $"   Sentries {game.ActiveSentries}/{game.SentrySlots}" : string.Empty) +
-                       (game.TimeRate > 1.01f ? $"   time ×{game.TimeRate:0}" : string.Empty);
+            // Clock, defence and money: one quiet line in the bottom-right corner (NC-16, UI/HudStatusLine.cs).
+            var info = HudStatusLine.Build(game);
             var infoSize = g.MeasureString(info, _small);
             DrawShadowed(g, info, _small, _hudBrush, Width - infoSize.Width - 10, Height - 22);
 
             DrawControlsHint(g);
             DrawGuideHint(g, game);
-        }
-
-        private static string FormatClock(float hour)
-        {
-            var h = (int)hour % 24;
-            var m = (int)((hour - MathF.Floor(hour)) * 60f);
-            return $"{(h % 12 == 0 ? 12 : h % 12)}:{m:00} {(h < 12 ? "AM" : "PM")}";
         }
 
         private static void DrawShadowed(Graphics g, string text, Font font, Brush brush, float x, float y)
@@ -2787,7 +2830,7 @@ public static partial class GraphicalSandbox
             g.DrawString(text, font, brush, x, y);
         }
 
-        /// <summary>Life, charge, food and rest in one panel above the minimap; low life pulses.</summary>
+        /// <summary>Life and charge in one panel above the minimap; low life pulses.</summary>
         private void DrawVitals(Graphics g, GameSimulation game)
         {
             var panel = new RectangleF(Width - MinimapWidth - 10, 8, MinimapWidth, VitalsHeight - 8);
@@ -2800,9 +2843,7 @@ public static partial class GraphicalSandbox
             DrawBar(g, x, panel.Y + 9, width, 16, life, lifeBrush, $"LIFE  {game.Player.HitPoints:0} / {game.Player.MaximumHitPoints:0}");
             if (game.MaximumCharge > 0f)
                 DrawBar(g, x, panel.Y + 29, width, 13, game.Charge / game.MaximumCharge, _chargeBar, $"CHARGE  {game.Charge:0} / {game.MaximumCharge:0}");
-            var half = (width - 8) / 2f;
-            DrawBar(g, x, panel.Y + 47, half, 5, game.Player.Needs.FoodReserve, _foodBar, $"FOOD {game.Player.Needs.FoodReserve:P0}");
-            DrawBar(g, x + half + 8, panel.Y + 47, half, 5, game.Player.Needs.RestReserve, _restBar, $"REST {game.Player.Needs.RestReserve:P0}");
+            // No FOOD or REST bars: the player has no needs upkeep (D-48, NC-2); Well Fed shows in the buff bar.
         }
 
         /// <summary>A bar with its label on top (or underneath, for thin bars).</summary>
@@ -2871,19 +2912,17 @@ public static partial class GraphicalSandbox
         private const int MinimapWidth = 280;
         private const int MinimapHeight = 150;
         /// <summary>Map style, cycled with F9 like the reference's map-style key: minimap → overlay → off.</summary>
-        public enum MapStyle : byte { Minimap, Overlay, Off }
+        /// <summary>The map style (PU-15: a preference, so it survives a restart).</summary>
+        private MapOverlayStyle MapView => _menu.Preferences.MapView;
 
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public MapStyle MapView { get; set; } = MapStyle.Minimap;
-
-        /// <summary>Screen pixels per map tile on the minimap and overlay; '=' and '-' change it.</summary>
-        private int _minimapScale = 2;
-        private int MinimapScale => _minimapScale;
+        /// <summary>Screen pixels per map tile on the minimap and overlay; '=' and '-' change it (a preference).</summary>
+        private int MinimapScale => Math.Clamp(_menu.Preferences.MinimapScale, 1, 6);
 
         public void ZoomMinimap(int delta)
         {
-            _minimapScale = Math.Clamp(_minimapScale + delta, 1, 6);
+            if (!MapDisplay.ZoomMinimap(_menu.Preferences, delta))
+                return;
+            _menu.SavePreferences();
             _minimap?.Dispose();
             _minimap = null;
             _overlayMap?.Dispose();
@@ -3149,6 +3188,14 @@ public static partial class GraphicalSandbox
                 if (frame.Contains(cx, cy))
                     g.FillEllipse(_restBar, cx - 2, cy - 2, 4, 4);
             }
+            // PU-15: every housed resident's head (the NPC sprite until head art exists).
+            foreach (var head in MapDisplay.NpcHeads(game))
+            {
+                var hx = frame.X + frame.Width / 2 + (head.Position.X - center.X) * MinimapScale;
+                var hy = frame.Y + frame.Height / 2 + (head.Position.Y - center.Y) * MinimapScale;
+                if (frame.Contains(hx, hy) && _sprites.GetFitted(head.Sprite, 14, 14) is { } face)
+                    g.DrawImageUnscaled(face, (int)(hx - face.Width / 2f), (int)(hy - face.Height / 2f));
+            }
             foreach (var enemy in game.Enemies.Where(enemy => enemy.IsAlive && enemy.IsBoss))
             {
                 var ex = frame.X + frame.Width / 2 + (enemy.Motion.Position.X - center.X) * MinimapScale;
@@ -3262,10 +3309,10 @@ public static partial class GraphicalSandbox
                 Icon(CharacterLook.Face(_sprites, agent.Profile.AppearanceValue.Normalized()), agent.Motion.Position.X, agent.Motion.Position.Y, iconSize - 4);
             if (!game.GuideMovedIn)
                 Icon("station_ai", game.Guide.Position.X, game.Guide.Position.Y, iconSize - 4);
-            // Town NPCs and bound survivors once their spot has been seen; blight hearts that were found and still stand.
-            foreach (var npc in game.TownNpcs)
-                if (Map.IsRevealed((int)npc.Motion.Position.X, (int)npc.Motion.Position.Y))
-                    Icon(npc.SpriteName, npc.Motion.Position.X, npc.Motion.Position.Y, iconSize - 4);
+            // PU-15: every housed resident's head wherever it is; bound survivors and homeless arrivals once their spot has
+            // been seen. Blight hearts that were found and still stand.
+            foreach (var head in MapDisplay.NpcHeads(game, Map.IsRevealed))
+                Icon(head.Sprite, head.Position.X, head.Position.Y, iconSize - 4);
             if (game.Features is { } features)
                 foreach (var heart in features.Hearts)
                     if (Map.IsRevealed(heart.X, heart.Y) && game.World.Contains(heart.X, heart.Y) &&
@@ -3458,7 +3505,7 @@ public static partial class GraphicalSandbox
         {
             var incidents = game.IncidentLog.Reverse().Take(3).ToArray();
             var lines = 4 + incidents.Length;
-            var minimapShown = _menu.Preferences.MinimapEnabled && MapView == MapStyle.Minimap;
+            var minimapShown = MapDisplay.DrawsMinimap(_menu.Preferences);
             var panel = new RectangleF(Width - 290, minimapShown ? VitalsHeight + MinimapHeight + 12 : VitalsHeight + 4, 280, 22 + lines * 18);
             _hudRects.Add(panel);
             DrawRivetedPanel(g, panel);

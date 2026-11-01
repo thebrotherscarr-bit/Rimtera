@@ -381,7 +381,7 @@ public sealed partial class GameSimulation
         }
         if (ArsenalItems.MobDrops.TryGetValue(enemy.Kind, out var drops))
             foreach (var (item, percent) in drops)
-                if (GearRandom.Next(100) < percent)
+                if (GearRandom.Next(100) < percent && (FractureActive || !ArsenalItems.MobDropWaitsForFracture(item)))
                     DropLoot(enemy, item, 1);
     }
 }

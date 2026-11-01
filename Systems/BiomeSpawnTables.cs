@@ -194,6 +194,12 @@ public static class BiomeSpawnTables
         ]
     };
 
+    /// <summary>
+    /// EN-7: ambient-family kinds the tables only field after the Fracture (the tunnel wyrm sits in hard rosters only), so
+    /// the family stream (EnemyAiFamilies.UpdateFamilySpawns) holds them back until then too.
+    /// </summary>
+    public static bool FamilyNeedsFracture(EnemyKind kind) => kind is EnemyKind.TunnelWyrm;
+
     /// <summary>Share of spawn rolls that use the hardmode roster once the world has fractured.</summary>
     public const double HardShare = 0.55;
 

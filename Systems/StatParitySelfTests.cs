@@ -98,7 +98,7 @@ public static class StatParitySelfTests
 
         var game = NewGame(9801);
         var sword = game.Items[ItemId.WoodenSword];
-        var skill = CombatStatsCalculator.SkillMultiplier(game.Player.ColonistStats, DamageClass.Melee);
+        var skill = CombatStatsCalculator.PlayerSkillMultiplier(game.Player.ColonistStats, DamageClass.Melee);
         var expected = CombatTuning.WeaponDamage(sword.Damage, CalibrationCatalog.Get(Calibration.Overclocked).DamageMultiplier, 0,
             game.CombatStats.MeleeMultiplier) * skill;
         check(Near(game.ComputeWeaponDamage(sword, Calibration.Overclocked), expected, 0.01f),
@@ -354,7 +354,7 @@ public static class StatParitySelfTests
     {
         var game = NewGame(9807);
         var sword = game.Items[ItemId.WoodenSword];
-        var skill = CombatStatsCalculator.SkillMultiplier(game.Player.ColonistStats, DamageClass.Melee);
+        var skill = CombatStatsCalculator.PlayerSkillMultiplier(game.Player.ColonistStats, DamageClass.Melee);
         var ok = true;
         foreach (var definition in CalibrationCatalog.All.Where(c => c.Group is CalibrationGroup.Universal or CalibrationGroup.Melee))
         {

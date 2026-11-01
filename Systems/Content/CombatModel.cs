@@ -203,7 +203,10 @@ public enum MinionKind : byte
     TurretTesla
 }
 
-/// <summary>Behaviour row for one drone or sentry.</summary>
+/// <summary>
+/// Behaviour row for one drone or sentry. <see cref="StandInSprite"/> is the summoning item's art, drawn until the minion has
+/// art of its own (IC-7, D-39). Minions last until replaced, unsummoned by death or trimmed to the slot count, as in Terraria.
+/// </summary>
 public sealed record MinionSpec(
     MinionKind Kind,
     string DisplayName,
@@ -214,7 +217,7 @@ public sealed record MinionSpec(
     float ProjectileSpeed,
     int Projectiles = 1,
     bool Heals = false,
-    float LifetimeSeconds = 0f);
+    string? StandInSprite = null);
 
 public static class MinionCatalog
 {
@@ -223,13 +226,13 @@ public static class MinionCatalog
         new(MinionKind.ScoutDrone, "Scout drone", "minion_scout_drone", false, 1.1f, 10f, 13f),
         new(MinionKind.HornetDrone, "Hornet drone", "minion_hornet_drone", false, 0.8f, 11f, 15f),
         new(MinionKind.RepairDrone, "Repair drone", "minion_repair_drone", false, 1.5f, 0f, 0f, Heals: true),
-        new(MinionKind.MechCompanion, "Mech companion", "minion_mech_companion", false, 1.2f, 9f, 12f, 2),
+        new(MinionKind.MechCompanion, "Mech companion", "minion_mech_companion", false, 1.2f, 9f, 12f, 2, StandInSprite: "cmd_mech_companion_key"),
         new(MinionKind.FrostDrone, "Frost drone", "minion_frost_drone", false, 1f, 12f, 14f),
         new(MinionKind.EmberDrone, "Ember drone", "minion_ember_drone", false, 0.9f, 10f, 12f),
         new(MinionKind.RadSwarm, "Rad swarm", "minion_rad_swarm", false, 0.6f, 9f, 11f),
-        new(MinionKind.CoralJelly, "Coral jelly", "minion_coral_jelly", false, 1.2f, 10f, 10f),
-        new(MinionKind.SporeFamiliar, "Spore familiar", "minion_spore_familiar", false, 1.1f, 10f, 10f, 2),
-        new(MinionKind.HiveFamiliar, "Hive familiar", "minion_hive_familiar", false, 0.7f, 11f, 14f),
+        new(MinionKind.CoralJelly, "Coral jelly", "minion_coral_jelly", false, 1.2f, 10f, 10f, StandInSprite: "cmd_coral_jelly_familiar"),
+        new(MinionKind.SporeFamiliar, "Spore familiar", "minion_spore_familiar", false, 1.1f, 10f, 10f, 2, StandInSprite: "cmd_spore_familiar"),
+        new(MinionKind.HiveFamiliar, "Hive familiar", "minion_hive_familiar", false, 0.7f, 11f, 14f, StandInSprite: "cmd_hive_familiar"),
         new(MinionKind.LumeniteSprite, "Lumenite sprite", "minion_lumenite_sprite", false, 0.8f, 13f, 18f),
         new(MinionKind.RadSwarmling, "Rad swarmling", "minion_rad_swarmling", false, 0.5f, 9f, 13f),
         new(MinionKind.VoidFamiliar, "Void familiar", "minion_void_familiar", false, 0.7f, 14f, 18f, 2),
@@ -244,16 +247,22 @@ public static class MinionCatalog
     public static IEnumerable<MinionSpec> All => Table.Values;
 }
 
-/// <summary>A live drone or sentry owned by the player.</summary>
+/// <summary>
+/// A live drone or sentry owned by the player. It remembers the item and calibration that summoned it; its damage is
+/// recomputed from the player's current combat stats before every shot (IC-7), so gear changed after summoning counts.
+/// Minions are not saved (as in Terraria): a loaded world starts with none.
+/// </summary>
 public sealed class MinionState
 {
-    internal MinionState(long id, MinionSpec spec, System.Numerics.Vector2 position, float damage, ItemId source)
+    internal MinionState(long id, MinionSpec spec, System.Numerics.Vector2 position, float damage, ItemId source,
+        Calibration calibration = Calibration.None)
     {
         Id = id;
         Spec = spec;
         Position = position;
         Damage = damage;
         SourceItem = source;
+        Calibration = calibration;
     }
 
     public long Id { get; }
@@ -263,8 +272,11 @@ public sealed class MinionState
     /// <summary>Sprite name for the renderer (minion_* / sentry_*).</summary>
     public string SpriteName => Spec.Sprite;
     public System.Numerics.Vector2 Position { get; internal set; }
-    public float Damage { get; }
+    /// <summary>Damage per shot as of the last refresh (the summon, then every shot).</summary>
+    public float Damage { get; internal set; }
     public ItemId SourceItem { get; }
+    /// <summary>The summoning item's calibration (its damage modifier applies to every shot).</summary>
+    public Calibration Calibration { get; }
     public float Cooldown { get; internal set; }
     public long? TargetId { get; internal set; }
     public float AgeSeconds { get; internal set; }
@@ -380,6 +392,13 @@ public static class CombatStatsCalculator
         return new CombatStats(melee, ranged, tech, command, crit, drones, sentries, chargeMax, chargeRegen,
             Math.Clamp(ammoSave, 0f, 0.9f), lifesteal, thorns, active);
     }
+
+    /// <summary>
+    /// The player's skill multiplier: D-36 drops the backstory's melee and shooting multipliers (1 for Melee and Ranged); Tech
+    /// and Command keep their skill scaling.
+    /// </summary>
+    public static float PlayerSkillMultiplier(ColonistStats stats, DamageClass damageClass) =>
+        damageClass is DamageClass.Melee or DamageClass.Ranged ? 1f : SkillMultiplier(stats, damageClass);
 
     /// <summary>Skill multiplier for a class: melee/shooting from the existing sheet, Tech from Intellectual, Command from Social.</summary>
     public static float SkillMultiplier(ColonistStats stats, DamageClass damageClass) => damageClass switch

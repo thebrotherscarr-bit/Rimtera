@@ -106,8 +106,8 @@ public static class BossBalance
     {
         ArgumentNullException.ThrowIfNull(audit);
         if (audit.BossReach.TryGetValue(kind, out var reach))
-            return reach;
-        var fracture = audit.BossReach.GetValueOrDefault(GameSimulation.CoreGateBoss) + 1; // the stage the Tyrant's fall opens
+            return Math.Max(reach, LifecycleFloor(kind, audit));
+        var fracture = audit.FractureStage; // the stage the Tyrant's fall opens (other pre-Fracture bosses may come between, PC-7)
         var row = CreatureCoverageData.Creatures.FirstOrDefault(entry => entry.Kind == kind);
         if (row is null)
             return audit.Stages.Count - 1;
@@ -119,6 +119,22 @@ public static class BossBalance
             audit.EventReach.TryGetValue(eventKind, out var eventStage))
             return Math.Max(floor, eventStage);
         return floor;
+    }
+
+    /// <summary>
+    /// 0.2.2 stream C: the game's own lifecycle gates that put a boss later than its first summon. PC-1: the Moon Eater (its
+    /// lure refuses and the Rust Moon brings no boss) only after the Fracture; PC-2: the Protocol Dragon only ends a Defense
+    /// Protocol once the Vault Colossus has fallen. A no-op once the crafting audit models the same gates.
+    /// </summary>
+    public static int LifecycleFloor(EnemyKind kind, CraftingAudit.Result audit)
+    {
+        ArgumentNullException.ThrowIfNull(audit);
+        return kind switch
+        {
+            EnemyKind.MoonEater => DefeatStage(GameSimulation.CoreGateBoss, audit),
+            EnemyKind.ProtocolDragon => DefeatStage(EnemyKind.VaultColossus, audit),
+            _ => 0
+        };
     }
 
     /// <summary>
@@ -374,8 +390,9 @@ public static class BossBalance
             EnemyKind.FalloutHivemind => 80f, EnemyKind.SporeMonarch => 85f, EnemyKind.HoarfrostBehemoth => 90f,
             EnemyKind.ScavengerWarlord => 65f, EnemyKind.VoidStalker => 68f, EnemyKind.CyberPirateCaptain => 70f,
             EnemyKind.SolarFlareEntity => 72f, EnemyKind.AsteroidMinerMech => 75f, EnemyKind.MoonEater => 78f,
-            EnemyKind.PirateDreadnought => 85f, EnemyKind.ProtocolDragon => 88f, EnemyKind.AbyssLeviathan => 90f,
-            EnemyKind.GelSovereign => 110f, EnemyKind.BloomMatriarch => 120f, EnemyKind.EclipseLord => 120f,
+            EnemyKind.PirateDreadnought => 85f, EnemyKind.ProtocolDragon => 88f,
+            // PC-3: the Leviathan waits for the Fracture now (Terraria: Duke Fishron, a post-mechanical-boss fight).
+            EnemyKind.GelSovereign => 110f, EnemyKind.AbyssLeviathan => 120f, EnemyKind.BloomMatriarch => 120f, EnemyKind.EclipseLord => 120f,
             EnemyKind.MothershipCore => 135f, EnemyKind.PrismEmpress => 140f, EnemyKind.HollowRegent => 140f,
             EnemyKind.RimeSeraph => 145f, EnemyKind.VaultColossus => 155f, EnemyKind.VoidCantor => 160f,
             EnemyKind.ScavengerHexer => 62f, EnemyKind.BlizzardColossus => 65f, EnemyKind.GritElemental => 65f,

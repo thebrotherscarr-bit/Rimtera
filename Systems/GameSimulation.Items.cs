@@ -76,9 +76,10 @@ public sealed partial class GameSimulation
             return true;
         if (item.SummonsBoss is { } boss)
         {
-            if (_enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive))
+            // D-11: only a living boss of the same kind refuses; a different boss may share the fight (BO-9).
+            if (SameKindBossRefusal(boss) is { } sameKind)
             {
-                PostMessage("A boss is already here.");
+                PostMessage(sameKind);
                 return true;
             }
             if (HardmodeSummonRefusal(boss) is { } refusal)
@@ -94,9 +95,13 @@ public sealed partial class GameSimulation
                 StartAstralCountdown();
                 return true;
             }
+            if (!TrySpawnBoss(boss, BossSpawnSource.SummonItem, out var spawned, out var refused))
+            {
+                PostMessage(refused!);
+                return true;
+            }
             Player.Inventory.TryConsume(item.Id);
-            var spawned = SpawnBoss(boss);
-            PostMessage($"The {item.Name} calls the {spawned.DisplayName}!");
+            PostMessage($"The {item.Name} calls the {spawned!.DisplayName}!");
             SetPlayerCooldown(20);
             return true;
         }
@@ -791,11 +796,8 @@ public sealed partial class GameSimulation
             Flags.Increment("hive.broken");
             if (BossAwaitsFracture(EnemyKind.BloomMatriarch))
                 PostMessage("The hive splits open, but its matriarch sleeps on. She will not wake before the Fracture.");
-            else if (!_enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive))
-            {
-                var boss = SpawnBoss(EnemyKind.BloomMatriarch);
-                PostMessage($"The hive splits open. The {boss.DisplayName} emerges, furious!");
-            }
+            else if (TrySpawnBoss(EnemyKind.BloomMatriarch, BossSpawnSource.WorldTrigger, out var boss, out _))
+                PostMessage($"The hive splits open. The {boss!.DisplayName} emerges, furious!");
             return true;
         }
         if (broken == TileId.CrystalAltar)
@@ -803,8 +805,8 @@ public sealed partial class GameSimulation
             BreakDrop(point, ItemId.PrismShard, 3);
             if (BossAwaitsFracture(EnemyKind.PrismEmpress))
                 PostMessage("The altar's light gutters out. Whatever it served will not answer before the Fracture.");
-            else if (!_enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive))
-                SpawnBoss(EnemyKind.PrismEmpress);
+            else
+                TrySpawnBoss(EnemyKind.PrismEmpress, BossSpawnSource.WorldTrigger, out _, out _);
             return true;
         }
         return false;

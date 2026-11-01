@@ -6,7 +6,15 @@ namespace Rimtera.UI;
 /// <summary>Development kits for <c>--quickstart --kit &lt;name&gt;</c>: fill the inventory to play-test content.</summary>
 internal static class DevKits
 {
-    public static Action<GameSimulation>? Get(string? name) => name?.ToLowerInvariant() switch
+    public static Action<GameSimulation>? Get(string? name) => Kit(name) is { } kit
+        ? game =>
+        {
+            game.DebugSummonKeyEnabled = true; // BO-18: the challenge key works in a --kit play-test
+            kit(game);
+        }
+        : null;
+
+    private static Action<GameSimulation>? Kit(string? name) => name?.ToLowerInvariant() switch
     {
         "arsenal" => game => Arsenal(game, restFirst: false),
         "travel" => Travel,

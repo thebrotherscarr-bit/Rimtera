@@ -98,6 +98,8 @@ public sealed class WorldTicker
     /// <summary>The world's blight; null disables spread (legacy worlds).</summary>
     public WorldBlight? Blight { get; set; }
     public bool Fractured { get; set; }
+    /// <summary>The Creative enemy-spread freeze (Journey's "infection spread" power): blight and crystal never spread.</summary>
+    public bool SpreadFrozen { get; set; }
     /// <summary>Day, rain and moon for the flora rules; the simulation keeps this current (defaults to a clear noon).</summary>
     public Func<FloraConditions>? Conditions { get; set; }
     /// <summary>Purifier beacon cells; maintained by the simulation.</summary>
@@ -216,7 +218,7 @@ public sealed class WorldTicker
     /// <summary>Converts one cell to blight if the rules allow it. Returns true when it converted.</summary>
     public bool TrySpreadInto(int x, int y)
     {
-        if (Blight is not { } blight || !_world.Contains(x, y))
+        if (SpreadFrozen || Blight is not { } blight || !_world.Contains(x, y))
             return false;
         var target = _world.TileAt(x, y);
         if (!BlightRules.CanBlightReplace(target, blight, Fractured) || IsNearBeacon(x, y))
@@ -229,7 +231,7 @@ public sealed class WorldTicker
     /// <summary>Converts one cell to Crystal Spires ground if it is natural ground or blight.</summary>
     public bool TrySpreadCrystal(int x, int y)
     {
-        if (!_world.Contains(x, y))
+        if (SpreadFrozen || !_world.Contains(x, y))
             return false;
         var target = _world.TileAt(x, y);
         var exposed = !_tiles[_world.TileAt(x, y - 1, TileId.Air)].IsSolid;

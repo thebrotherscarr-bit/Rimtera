@@ -144,10 +144,12 @@ public static class ProgressionChainSelfTests
         var dusk = NewGame(9808);
         var emptyEarly = dusk.EventBossPool().Length == 0 && !dusk.ProbeSpawnEventBoss() && !dusk.Enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive);
         Defeat(dusk, EnemyKind.ScoutMech);
+        // PC-4 (0.2.2): before the Fracture no incursion boss comes at all, even after the Scout Mech (was: all of them after it).
         var afterScout = dusk.EventBossPool();
-        check(emptyEarly && EnemyArchetypes.EventBosses.All(kind => EnemyArchetypes.Get(kind).HitPoints >= GameSimulation.PreFractureEventBossMaxHitPoints) &&
-              afterScout.Length == EnemyArchetypes.EventBosses.Count && dusk.ProbeSpawnEventBoss(),
-            "G2 pre-Fracture dusk incursions bring no 1000+ HP event boss until the Scout Mech has fallen");
+        var stillEmpty = afterScout.Length == 0 && !dusk.ProbeSpawnEventBoss();
+        dusk.TriggerFracture();
+        check(emptyEarly && stillEmpty && dusk.EventBossPool().Length == EnemyArchetypes.EventBosses.Count && dusk.ProbeSpawnEventBoss(),
+            "G2 pre-Fracture dusk incursions bring no event boss, even after the Scout Mech; after the Fracture they all may come");
 
         // ---- G4: altar-breaker capability, ore ladder, Alloy Anvil behind the Fracture ----
         var tools = NewGame(9809);

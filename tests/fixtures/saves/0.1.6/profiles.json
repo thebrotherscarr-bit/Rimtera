@@ -1,0 +1,132 @@
+{
+  "FormatVersion": 1,
+  "Worlds": [
+    {
+      "Id": "7a98f8a0-a8c6-48f2-bf8b-f6a8175195d4",
+      "Name": "Fixture World",
+      "Seed": 16016,
+      "CreatedAt": "2026-11-01T03:48:34.8697574+00:00",
+      "LastPlayed": "2026-11-01T03:48:34.8697574+00:00",
+      "Width": 400,
+      "Height": 200,
+      "Difficulty": "Classic",
+      "Hazard": "Random",
+      "Favorite": false,
+      "Blight": "Random"
+    }
+  ],
+  "Characters": [
+    {
+      "Id": "0ba40b17-c06c-418f-a1e8-dd898193c371",
+      "Name": "Fixture Pilot",
+      "CreatedAt": "2026-11-01T03:48:34.7131853+00:00",
+      "HitPoints": 100,
+      "MaximumHealth": 100,
+      "MaximumMana": 20,
+      "Gender": "NonBinary",
+      "Age": 21,
+      "Backstory": "DeepMiner",
+      "Traits": [
+        "Abrasive"
+      ],
+      "SkillLevels": [
+        3,
+        0,
+        4,
+        5,
+        3,
+        0,
+        2,
+        2,
+        1,
+        2,
+        0,
+        0
+      ],
+      "Passions": [
+        "None",
+        "None",
+        "None",
+        "Interested",
+        "Burning",
+        "None",
+        "None",
+        "None",
+        "None",
+        "None",
+        "None",
+        "None"
+      ],
+      "Appearance": {
+        "SkinTone": 4,
+        "HairStyle": 6,
+        "HairColor": 1,
+        "EyeColor": 5,
+        "OutfitColor": 5,
+        "Summary": "Bronze \u00B7 Curly \u00B7 Dark brown hair"
+      },
+      "Difficulty": "Classic",
+      "Favorite": false,
+      "Stats": {
+        "SkillLevels": [
+          3,
+          0,
+          4,
+          5,
+          3,
+          0,
+          2,
+          2,
+          1,
+          2,
+          0,
+          0
+        ],
+        "Passions": [
+          "None",
+          "None",
+          "None",
+          "Interested",
+          "Burning",
+          "None",
+          "None",
+          "None",
+          "None",
+          "None",
+          "None",
+          "None"
+        ],
+        "MaximumHealthBonus": 0,
+        "MoveSpeedMultiplier": 1.03,
+        "GlobalWorkSpeed": 0.88046396,
+        "MiningSpeed": 0.858,
+        "ConstructionSpeed": 0.8215999,
+        "PlantWorkSpeed": 0.624,
+        "CookingSpeed": 0.7488,
+        "CraftingSpeed": 0.7487999,
+        "ResearchSpeed": 0.5,
+        "MedicalTendQuality": 0.46,
+        "SocialImpact": 0.5,
+        "MeleeHitChance": 0.5,
+        "MeleeDodgeChance": 0.05,
+        "ShootingAccuracy": 0.61,
+        "MeleeDamageMultiplier": 1,
+        "ShootingDamageMultiplier": 1.075,
+        "MoodOffset": 0,
+        "FoodConsumptionMultiplier": 1,
+        "RestRateMultiplier": 1
+      },
+      "EffectiveMaximumHealth": 100,
+      "BackstoryName": "Deep miner",
+      "TraitSummary": "Abrasive",
+      "AppearanceValue": {
+        "SkinTone": 4,
+        "HairStyle": 6,
+        "HairColor": 1,
+        "EyeColor": 5,
+        "OutfitColor": 5,
+        "Summary": "Bronze \u00B7 Curly \u00B7 Dark brown hair"
+      }
+    }
+  ]
+}

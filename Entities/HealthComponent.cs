@@ -269,6 +269,11 @@ public sealed class HealthComponent
     public bool InPainShock => PainLevel >= PainShockThreshold;
     public bool IsDead { get; private set; }
     public string? DeathCause { get; private set; }
+    /// <summary>
+    /// D-36 (IC-4): the player's body. Conditions are still tracked, but nothing in the body kills (blood loss, heart failure,
+    /// a destroyed brain…) or downs it: only hit points reaching 0 end the player. Colonists keep the full model.
+    /// </summary>
+    public bool HitPointsOnly { get; init; }
     public bool IsDowned { get; private set; }
     public string? DownedReason { get; private set; }
     public float Moving => GetCapacity(BodyCapacity.Moving);
@@ -708,7 +713,7 @@ public sealed class HealthComponent
 
     private void Kill(string cause)
     {
-        if (IsDead)
+        if (IsDead || HitPointsOnly)
             return;
         IsDead = true;
         DeathCause = cause;
@@ -811,7 +816,7 @@ public sealed class HealthComponent
         if (!IsDead && BloodLoss >= 1f)
             Kill("blood loss");
 
-        if (IsDead)
+        if (IsDead || HitPointsOnly)
         {
             IsDowned = false;
             DownedReason = null;

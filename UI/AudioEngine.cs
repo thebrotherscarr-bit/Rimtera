@@ -13,8 +13,14 @@ namespace Rimtera.UI;
 internal sealed class AudioEngine : IDisposable
 {
     public const int SampleRate = 44100;
-    private const int BufferFrames = 2048;
-    private const int BufferCount = 4;
+    /// <summary>
+    /// PE-15: three buffers of 1,024 frames (about 70 ms queued, was 4 × 2,048 ≈ 186 ms). The pump wakes on waveOut's
+    /// buffer-done event rather than polling, so a 23 ms buffer is refilled as soon as it is free.
+    /// </summary>
+    internal const int BufferFrames = 1024;
+    internal const int BufferCount = 3;
+    /// <summary>Worst-case delay from <see cref="Play"/> to the sound starting: every queued buffer plays out first.</summary>
+    internal static double LatencyMilliseconds => BufferFrames * BufferCount * 1000.0 / SampleRate;
 
     private readonly object _gate = new();
     private readonly Dictionary<string, float[]> _effects = new();
@@ -27,6 +33,7 @@ internal sealed class AudioEngine : IDisposable
     private readonly short[] _scratch = new short[BufferFrames * 2];
     private volatile bool _running;
     private readonly Random _random = new(7);
+    private readonly AutoResetEvent _bufferDone = new(false);
 
     private MusicState _music = new();
     private float _rainLevel;
@@ -47,9 +54,14 @@ internal sealed class AudioEngine : IDisposable
     private sealed class Voice
     {
         public required float[] Samples;
-        public int Position;
+        /// <summary>Read position in source samples (fractional when the pitch is varied).</summary>
+        public double Position;
+        /// <summary>Source samples per output sample: 1 plays as recorded, 1.05 is 5% higher (and shorter).</summary>
+        public double Rate = 1.0;
         public float Volume;
         public float Pan;
+        public int Priority;
+        public double Remaining => (Samples.Length - Position) / Rate;
     }
 
     /// <summary>Selects the music: a mood (0 calm … 1 tense) and a key root in semitones.</summary>
@@ -134,12 +146,25 @@ internal sealed class AudioEngine : IDisposable
         }
         if (samples is null)
             return;
+        var priority = VoicePolicy.Priority(name);
         lock (_gate)
         {
-            if (_voices.Count > 24)
-                _voices.RemoveAt(0);
-            // Slight random pitch-by-skip variation would need resampling; vary volume instead.
-            _voices.Add(new Voice { Samples = samples, Volume = volume * (0.9f + (float)_random.NextDouble() * 0.2f), Pan = Math.Clamp(pan, -1f, 1f) });
+            // PE-15: when every voice is busy the least important one goes (the one nearest its end among equals),
+            // not simply the oldest; a sound less important than everything playing is dropped instead.
+            if (_voices.Count >= VoicePolicy.MaxVoices)
+            {
+                var steal = VoicePolicy.StealIndex(_voices.Select(voice => (voice.Priority, voice.Remaining)).ToArray(), priority);
+                if (steal < 0)
+                    return;
+                _voices.RemoveAt(steal);
+            }
+            // PE-15: repeated effects (hits, digs, swings, shots) vary ±5% in pitch, resampled, so a run of them is not a machine gun.
+            var rate = VoicePolicy.VariesPitch(name) ? VoicePolicy.PitchJitter(_random) : 1.0;
+            _voices.Add(new Voice
+            {
+                Samples = samples, Rate = rate, Priority = priority,
+                Volume = volume * (0.9f + (float)_random.NextDouble() * 0.2f), Pan = Math.Clamp(pan, -1f, 1f)
+            });
         }
     }
 
@@ -158,7 +183,7 @@ internal sealed class AudioEngine : IDisposable
                 FormatTag = 1, Channels = 2, SamplesPerSec = SampleRate, BitsPerSample = 16,
                 BlockAlign = 4, AvgBytesPerSec = SampleRate * 4, Size = 0
             };
-            if (waveOutOpen(out _device, WaveMapper, ref format, IntPtr.Zero, IntPtr.Zero, 0) != 0)
+            if (waveOutOpen(out _device, WaveMapper, ref format, _bufferDone.SafeWaitHandle.DangerousGetHandle(), IntPtr.Zero, CallbackEvent) != 0)
                 return;
             var headerSize = Marshal.SizeOf<WaveHeader>();
             for (var i = 0; i < BufferCount; i++)
@@ -203,7 +228,7 @@ internal sealed class AudioEngine : IDisposable
                 wrote = true;
             }
             if (!wrote)
-                Thread.Sleep(5);
+                _bufferDone.WaitOne(10); // waveOut signals as each buffer finishes; the timeout is only a safety net
         }
     }
 
@@ -222,14 +247,7 @@ internal sealed class AudioEngine : IDisposable
                 var voice = _voices[v];
                 var leftGain = voice.Volume * sfx * Math.Min(1f, 1f - voice.Pan);
                 var rightGain = voice.Volume * sfx * Math.Min(1f, 1f + voice.Pan);
-                var count = Math.Min(BufferFrames, voice.Samples.Length - voice.Position);
-                for (var i = 0; i < count; i++)
-                {
-                    var sample = voice.Samples[voice.Position + i];
-                    _left[i] += sample * leftGain;
-                    _right[i] += sample * rightGain;
-                }
-                voice.Position += count;
+                voice.Position = MixVoice(voice.Samples, voice.Position, voice.Rate, _left, _right, BufferFrames, leftGain, rightGain);
                 if (voice.Position >= voice.Samples.Length)
                     _voices.RemoveAt(v);
             }
@@ -265,6 +283,38 @@ internal sealed class AudioEngine : IDisposable
     }
 
     private static float SoftClip(float x) => x / (1f + MathF.Abs(x) * 0.6f);
+
+    /// <summary>
+    /// Adds up to <paramref name="frames"/> output samples of a voice into the mix from source position
+    /// <paramref name="position"/>, stepping <paramref name="rate"/> source samples per output sample (linear
+    /// interpolation when it is not 1). Returns the new source position (at or past the end when the voice is done).
+    /// </summary>
+    internal static double MixVoice(float[] samples, double position, double rate, float[] left, float[] right, int frames, float leftGain, float rightGain)
+    {
+        if (rate == 1.0 && position == Math.Floor(position))
+        {
+            var start = (int)position;
+            var count = Math.Min(frames, samples.Length - start);
+            for (var i = 0; i < count; i++)
+            {
+                var sample = samples[start + i];
+                left[i] += sample * leftGain;
+                right[i] += sample * rightGain;
+            }
+            return start + Math.Max(0, count);
+        }
+        var last = samples.Length - 1;
+        for (var i = 0; i < frames && position < samples.Length; i++)
+        {
+            var index = (int)position;
+            var fraction = (float)(position - index);
+            var sample = index < last ? samples[index] + (samples[index + 1] - samples[index]) * fraction : samples[index];
+            left[i] += sample * leftGain;
+            right[i] += sample * rightGain;
+            position += rate;
+        }
+        return position;
+    }
 
     // ---------------------------------------------------------------- synthesis
 
@@ -1456,6 +1506,8 @@ internal sealed class AudioEngine : IDisposable
 
     private const int WaveMapper = -1;
     private const int WhdrDone = 0x1;
+    /// <summary>waveOutOpen flag: the callback argument is an event handle, signalled as each buffer finishes.</summary>
+    private const int CallbackEvent = 0x50000;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct WaveFormat
@@ -1491,6 +1543,7 @@ internal sealed class AudioEngine : IDisposable
 
     public void Dispose()
     {
+        using var bufferDone = _bufferDone;
         if (!Available)
             return;
         _running = false;
@@ -1509,5 +1562,79 @@ internal sealed class AudioEngine : IDisposable
             Marshal.FreeHGlobal(_buffers[i]);
         }
         waveOutClose(_device);
+    }
+}
+
+/// <summary>
+/// PE-15: which effects vary in pitch and which voice gives way when all are busy. Importance comes from the cue's
+/// <see cref="SoundCatalog"/> category (the first cue along its fallback chain that has one), else from the synthesised
+/// effect it ends at: boss and event stings 4, menus and the player's own hurt and death 3, creatures and interactions 2,
+/// weapons, tools, tiles and impacts 1.
+/// </summary>
+internal static class VoicePolicy
+{
+    public const int MaxVoices = 24;
+    public const double PitchSpread = 0.05;
+
+    /// <summary>Repeated, rapid-fire effects: hits, digs, swings, shots, zaps, breaks and placing.</summary>
+    private static readonly string[] Varied = ["hit", "impact", "dig", "tool_", "swing", "use_", "shoot", "zap", "break", "place", "step", "bite"];
+
+    public static bool VariesPitch(string cue)
+    {
+        for (var name = cue; name is not null; name = SoundCatalog.Fallback(name))
+            if (Varied.Any(prefix => name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+                return true;
+        return false;
+    }
+
+    /// <summary>A playback rate within ±5% (resampled, so the pitch moves and the length with it).</summary>
+    public static double PitchJitter(Random random) => 1.0 + (random.NextDouble() * 2.0 - 1.0) * PitchSpread;
+
+    public static int Priority(string cue)
+    {
+        for (var name = cue; name is not null; name = SoundCatalog.Fallback(name))
+        {
+            switch (SoundCatalog.Get(name)?.Category)
+            {
+                case "bosses" or "events":
+                    return 4;
+                case "ui":
+                    return 3;
+                case "player":
+                    return name.Contains("hurt", StringComparison.OrdinalIgnoreCase) || name.Contains("death", StringComparison.OrdinalIgnoreCase) ? 3 : 1;
+                case "creatures" or "interactions":
+                    return 2;
+                case "weapons" or "tools" or "tiles" or "impacts":
+                    return 1;
+            }
+            switch (name)
+            {
+                case "boss" or "event" or "death_sting" or "thunder":
+                    return 4;
+                case "click" or "hover" or "hurt" or "death":
+                    return 3;
+                case "door" or "chest" or "eat" or "drink" or "coin" or "craft" or "splash" or "grab":
+                    return 2;
+            }
+        }
+        return 1;
+    }
+
+    /// <summary>
+    /// Which playing voice to stop for a new one of <paramref name="incoming"/> priority: the lowest priority, and among
+    /// those the one with the least left to play. -1 when every voice matters more than the new sound (drop the new one).
+    /// </summary>
+    public static int StealIndex(IReadOnlyList<(int Priority, double Remaining)> voices, int incoming)
+    {
+        var best = -1;
+        for (var i = 0; i < voices.Count; i++)
+        {
+            if (voices[i].Priority > incoming)
+                continue;
+            if (best < 0 || voices[i].Priority < voices[best].Priority ||
+                (voices[i].Priority == voices[best].Priority && voices[i].Remaining < voices[best].Remaining))
+                best = i;
+        }
+        return best;
     }
 }

@@ -90,6 +90,9 @@ public static partial class GraphicalSandbox
         {
             if (_weaponAxes.TryGetValue(art, out var cached))
                 return cached;
+            // PE-2: sprites can be evicted and decoded again as new bitmaps, so this per-bitmap cache is bounded.
+            if (_weaponAxes.Count > 256)
+                _weaponAxes.Clear();
             double sx = 0, sy = 0, n = 0;
             var points = new List<(int X, int Y)>();
             for (var y = 0; y < art.Height; y++)

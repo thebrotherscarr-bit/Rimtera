@@ -48,7 +48,25 @@ public static class CraftingAudit
         public required IReadOnlyList<LateRecipe> LateRecipes { get; init; }
         /// <summary>Tier 4+ gear (not materials) obtainable before the Fracture; must stay inside <see cref="EarlyGearWhitelist"/>.</summary>
         public required IReadOnlyList<ItemId> EarlyGear { get; init; }
+        /// <summary>Stage index of the Fracture (the gate boss's defeat).</summary>
+        public required int FractureStage { get; init; }
+        /// <summary>Bosses this run held back until the Fracture (empty for the live run, <see cref="Run"/>).</summary>
+        public required IReadOnlySet<EnemyKind> HeldForFracture { get; init; }
         public required IReadOnlyList<string> Notes { get; init; }
+
+        /// <summary>Bosses (other than the gate boss) fightable before the Fracture, in the order they became so (PC-7).</summary>
+        public IReadOnlyList<EnemyKind> PreFractureBosses => BossReach
+            .Where(entry => entry.Value < FractureStage && entry.Key != GameSimulation.CoreGateBoss)
+            .OrderBy(entry => entry.Value).ThenBy(entry => entry.Key).Select(entry => entry.Key).ToArray();
+
+        /// <summary>Tier 4+ gear before the Fracture (PC-7; printed, gated by the whitelist).</summary>
+        public IReadOnlyList<ItemId> PreFractureTier4Items => EarlyGear;
+
+        /// <summary>Tier 6+ gear before the Fracture.</summary>
+        public IReadOnlyList<ItemId> PreFractureTier6Items => EarlyGear.Where(id => Catalog[id].Tier >= 6).ToArray();
+
+        /// <summary>How many tier 6+ items are obtainable before the Fracture (0 is the goal: ROADMAP_0.2.0 §1.2).</summary>
+        public int PreFractureTier6Count => PreFractureTier6Items.Count;
         public required ItemCatalog Catalog { get; init; }
         public required CraftingSystem Crafting { get; init; }
 
@@ -91,8 +109,7 @@ public static class CraftingAudit
             ItemId.TechModule, ItemId.TelescopicArm, ItemId.VitalCore, ItemId.WardensUplink]),
         ("ammunition pressed from pre-Fracture materials (viridium bars, hab-pod void essence); until PC-6 re-tiers or re-gates it", [
             ItemId.CryoRocket, ItemId.CrystalDarts, ItemId.FlechetteRounds, ItemId.IncendiaryRocket, ItemId.OverchargedCell,
-            ItemId.PlasmaFuel, ItemId.PrismCell, ItemId.SeekerBolts, ItemId.ShardBolts, ItemId.ViridiumBolts, ItemId.ViridiumRounds,
-            ItemId.VoidDarts, ItemId.VoidFuel]),
+            ItemId.PlasmaFuel, ItemId.PrismCell, ItemId.SeekerBolts, ItemId.ShardBolts, ItemId.ViridiumBolts, ItemId.ViridiumRounds]),
         ("tonic or food brewed from pre-Fracture ingredients (a consumable buff); until PC-6 re-tiers or re-gates it", [
             ItemId.GreaterBallisticsTonic, ItemId.GreaterCloseQuartersTonic, ItemId.GreaterCommandTonic, ItemId.GreaterTechTonic,
             ItemId.HeavyFortifyStim, ItemId.HuntersFocus, ItemId.LifeforceSerum, ItemId.WrathDraught, ItemId.AstroBurger,
@@ -101,22 +118,51 @@ public static class CraftingAudit
             ItemId.BountyNotice, ItemId.ClaimMarker, ItemId.DreadnoughtFlag, ItemId.MoonEaterLure, ItemId.ProtocolKey,
             ItemId.SunspotLens, ItemId.VoidLure]),
         ("summon whose boss refuses before its gate (HardmodeSummonRefusal: the Fracture, the trio or the opened vault)", [
-            ItemId.MutagenBloom, ItemId.TaintedTissue, ItemId.VaultCore]),
+            ItemId.MutagenBloom, ItemId.TaintedTissue]),
         ("Defense Protocol starter and drop: a pre-Fracture event (Terraria: the Old One's Army, tier 1)", [
             ItemId.SummonSignalCore, ItemId.ProtocolShard]),
         ("the viridium refinery: a pre-Fracture station (Terraria: the Hellforge); its recipes keep their own tiers", [
             ItemId.OreRefineryMk2]),
         ("fishing find, crate or quest reward (Terraria: fishing gives some hardmode-tier gear before hardmode; crates hold " +
          "hardmode ores only after the Fracture)", [
-            ItemId.AstralCrate, ItemId.AstralFishingRod, ItemId.HiveFamiliar, ItemId.HiveStingerRapier, ItemId.MoltenCrate,
+            ItemId.HiveFamiliar, ItemId.HiveStingerRapier, ItemId.MoltenCrate,
             ItemId.LavaWaderBoots, ItemId.MagmaFishingRod, ItemId.LavaLure, ItemId.RoyalNectar]),
         ("rare creature or event drop (Terraria: rare pre-hardmode drops such as the dungeon's)", [
             ItemId.AuroraRing, ItemId.CanopyLongbow, ItemId.CodexTidalSurge, ItemId.HiveLash, ItemId.SpliceNeedle, ItemId.SkyrayWings,
-            ItemId.StormRepeater, ItemId.PhaseDirk, ItemId.WispStaff]),
+            ItemId.StormRepeater, ItemId.WispStaff]),
         ("rare drop of a Crystal Spires creature that also spawns before the Fracture; until PC-6 moves it to the post-Fracture roster", [
             ItemId.CodexShardStorm, ItemId.CrystalCrate, ItemId.HaloGyre, ItemId.PrismRibbon]),
         ("sold by a town NPC behind its own unlock (Demolitionist; the Mechanic after the hearts)", [
             ItemId.MiniRocket, ItemId.TurretMortar]));
+
+    /// <summary>
+    /// The intended pre-Fracture bosses (Terraria's pre-hardmode bosses; docs/roadmap/0.1.7.md release acceptance): the
+    /// progression bosses before the gate boss and the optional biome bosses. Any other boss the audit finds fightable before
+    /// the Fracture must be on <see cref="PreFractureBossReview"/> (CraftingAuditSelfTests).
+    /// </summary>
+    public static readonly IReadOnlySet<EnemyKind> IntendedPreFractureBosses = new HashSet<EnemyKind>
+    {
+        EnemyKind.StoneSentinel, EnemyKind.AlphaSkitter, EnemyKind.DamagedMiningDrone, EnemyKind.PlantOvergrowth, EnemyKind.ScoutMech,
+        EnemyKind.FalloutHivemind, EnemyKind.SporeMonarch, EnemyKind.HoarfrostBehemoth
+    };
+
+    /// <summary>
+    /// Bosses the live game still lets a Classic character fight before the Fracture although the plan gates them (or asks
+    /// the owner to decide), each with the reason and the step that closes it. Their loot is reported apart
+    /// (<see cref="RunGated"/> holds them back), not whitelisted. Remove an entry when its gate lands and is modelled in
+    /// <see cref="BossGateOpen"/>: CraftingAuditSelfTests fails on an entry that is no longer early.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<EnemyKind, string> PreFractureBossReview = new Dictionary<EnemyKind, string>
+    {
+        [EnemyKind.ScavengerWarlord] = "Scavenger Raid finale, dusk incursion (PC-4: stream C) and the Warlord banner; the 0.1.7 acceptance " +
+                                       "counts it as pre-hardmode, so once PC-4 gates its nanite stim it can move to the intended list",
+        [EnemyKind.VoidStalker] = "dusk incursion boss (D-3 option A, PC-4: stream C; its nanite marrow is tier 6) and the Void lure (owner's call)",
+        [EnemyKind.CyberPirateCaptain] = "dusk incursion boss (D-3 option A, PC-4: stream C) and the Bounty notice (owner's call)",
+        [EnemyKind.SolarFlareEntity] = "dusk incursion boss (D-3 option A, PC-4: stream C) and the Sunspot lens (owner's call)",
+        [EnemyKind.AsteroidMinerMech] = "dusk incursion boss (D-3 option A, PC-4: stream C) and the Claim marker (owner's call); " +
+                                        "it drops a drill-power-107 drill",
+        [EnemyKind.PirateDreadnought] = "the Dreadnought flag summons it at any time; its event (Pirate Boarding) already waits for the Fracture (owner's call)"
+    };
 
     private static Dictionary<ItemId, string> BuildWhitelist(params (string Reason, ItemId[] Items)[] groups)
     {
@@ -184,7 +230,7 @@ public static class CraftingAudit
                     if (item.UseKind == ItemUseKind.PlaceTile && tiles.Contains(item.PlacedTile) &&
                         tiles[item.PlacedTile].Station is var station and not CraftingStationId.None && stations.Add(station))
                     {
-                        stations.UnionWith(station.Implied());
+                        stations.UnionWith(station.ImpliedClosure());
                         changed = true;
                     }
                 }
@@ -221,6 +267,8 @@ public static class CraftingAudit
         public readonly WorldFlags Flags = new();
         public readonly List<string> Stages = ["Start"];
         public bool Fracture;
+        /// <summary>Bosses this run holds back until the Fracture (the gated run: <see cref="PreFractureBossReview"/>).</summary>
+        public IReadOnlySet<EnemyKind> HeldForFracture { get; init; } = new HashSet<EnemyKind>();
         public int MinePower;
         public bool Forced;
         public readonly HashSet<ItemId> ForcedItems = new();
@@ -266,27 +314,44 @@ public static class CraftingAudit
 
     private static int MeteoritePower => new TileCatalog()[TileId.Meteorite].MinimumToolPower;
 
-    private static Result? _cached;
+    private static Result? _cached, _gated;
+    private static (IReadOnlyList<TileYield> Yields, List<string> Notes)? _scan;
     private static readonly object CacheLock = new();
 
     /// <summary>The audit for the current content (cached: the world scan is the slow part).</summary>
     public static Result Run()
     {
         lock (CacheLock)
-            return _cached ??= Compute(worldWidth: 4200, worldHeight: 1200);
+            return _cached ??= Compute(worldWidth: 4200, worldHeight: 1200, heldForFracture: new HashSet<EnemyKind>());
+    }
+
+    /// <summary>
+    /// The same run with every boss on <see cref="PreFractureBossReview"/> held back until the Fracture: the progression as
+    /// it stands once those bosses are gated. The tier 4+ whitelist and the tier 6+ count are checked against this run,
+    /// so what only those bosses leak (their loot, and anything it unlocks) is reported apart instead of whitelisted.
+    /// </summary>
+    public static Result RunGated()
+    {
+        lock (CacheLock)
+            return _gated ??= Compute(worldWidth: 4200, worldHeight: 1200, heldForFracture: PreFractureBossReview.Keys.ToHashSet());
     }
 
     // ================================================================== the run
 
-    private static Result Compute(int worldWidth, int worldHeight)
+    private static Result Compute(int worldWidth, int worldHeight, IReadOnlySet<EnemyKind> heldForFracture)
     {
         var items = new ItemCatalog();
         var tiles = new TileCatalog();
         var crafting = new CraftingSystem(items);
-        var notes = new List<string>();
-        var state = new State { Items = items, Tiles = tiles, Crafting = crafting };
+        var state = new State { Items = items, Tiles = tiles, Crafting = crafting, HeldForFracture = heldForFracture };
 
-        var yields = ScanWorlds(worldWidth, worldHeight, notes);
+        if (_scan is null)
+        {
+            var scanNotes = new List<string>();
+            _scan = (ScanWorlds(worldWidth, worldHeight, scanNotes), scanNotes);
+        }
+        var yields = _scan.Value.Yields;
+        var notes = new List<string>(_scan.Value.Notes);
         var naturalBefore = yields.Where(yield => !yield.OnlyAfter).Select(yield => yield.Tile).ToHashSet();
         var naturalAfter = yields.Select(yield => yield.Tile).ToHashSet();
         state.Grounds.UnionWith(naturalBefore);
@@ -353,8 +418,11 @@ public static class CraftingAudit
         NoteReachableBosses();
         while (true)
         {
+            // PC-7: the Fracture is held back until every other ready milestone has been taken, so a boss (or anything
+            // else) that needs no Fracture is dated before it, however late its order.
             var next = milestones.Where(milestone => !done.Contains(milestone.Name) && milestone.Ready(state))
-                .OrderBy(milestone => milestone.Order).FirstOrDefault();
+                .OrderBy(milestone => milestone.Boss == GameSimulation.CoreGateBoss && !state.Fracture ? 1 : 0)
+                .ThenBy(milestone => milestone.Order).FirstOrDefault();
             if (next is null)
                 break;
             done.Add(next.Name);
@@ -390,8 +458,13 @@ public static class CraftingAudit
                                                       state.Stages[state.StationStage[station]].StartsWith("(blocked)", StringComparison.Ordinal))
             .ToArray();
 
+        var fractureStage = state.Stages.IndexOf("Defeated " + EnemyArchetypes.Get(GameSimulation.CoreGateBoss).DisplayName);
+        if (fractureStage < 0)
+            fractureStage = state.Stages.Count;
         return new Result
         {
+            FractureStage = fractureStage,
+            HeldForFracture = heldForFracture,
             Stages = state.Stages.ToArray(),
             Items = new Dictionary<ItemId, Reach>(state.Have),
             Stations = new Dictionary<CraftingStationId, int>(state.StationStage),
@@ -576,14 +649,16 @@ public static class CraftingAudit
                 AddConditionalDropRules(rules, items, $"defeat {archetype.DisplayName}", state => state.Defeated.Contains(kind), conditional);
                 continue;
             }
+            var afterFracture = new List<ItemId>();
             if (ArsenalItems.MobDrops.TryGetValue(kind, out var mob))
-                drops.AddRange(mob.Select(entry => entry.Item));
+                foreach (var (item, _) in mob)
+                    (ArsenalItems.MobDropWaitsForFracture(item) ? afterFracture : drops).Add(item);
             if (archetype.Catchable && Enum.TryParse<ItemId>(kind.ToString(), out var critter) && items.Contains(critter))
                 rules.Add(new Rule($"net a {archetype.DisplayName}", state => state.Any(item => item.UseKind == ItemUseKind.BugNet) &&
                                                                           (!hard.Contains(kind) || state.Fracture), [critter]));
             if (PlayerItems.EarnsBanner(kind) && items.Contains(PlayerItems.BannerFor(kind)))
                 drops.Add(PlayerItems.BannerFor(kind));
-            if (drops.Count == 0 && conditional.Length == 0)
+            if (drops.Count == 0 && conditional.Length == 0 && afterFracture.Count == 0)
                 continue;
             Func<State, bool> ready;
             string where;
@@ -624,6 +699,9 @@ public static class CraftingAudit
                 where = "in the wild";
             }
             rules.Add(new Rule($"kill {archetype.DisplayName} ({where})", ready, drops.Where(items.Contains).Distinct().ToArray()));
+            if (afterFracture.Count > 0)
+                rules.Add(new Rule($"kill {archetype.DisplayName} ({where}) after the Fracture", state => ready(state) && state.Fracture,
+                    afterFracture.Where(items.Contains).ToArray()));
             AddConditionalDropRules(rules, items, $"kill {archetype.DisplayName} ({where})", ready, conditional);
         }
         // Essences: any creature after the Fracture in the right place.
@@ -696,6 +774,7 @@ public static class CraftingAudit
         var water = new HashSet<ItemId>();
         var acid = new HashSet<ItemId>();
         var lava = new HashSet<ItemId>();
+        var afterFracture = new HashSet<ItemId>();
         var random = new Random(7);
         foreach (var liquid in new[] { LiquidKind.Water, LiquidKind.Acid, LiquidKind.Lava, LiquidKind.Nectar, LiquidKind.Fuel })
         foreach (var zone in Enum.GetValues<BiomeZone>())
@@ -703,12 +782,17 @@ public static class CraftingAudit
         foreach (var night in new[] { false, true })
         foreach (var rarity in Enum.GetValues<FishingRarity>())
         foreach (var power in new[] { 20f, 80f })
+        foreach (var fractured in new[] { false, true })
         {
-            var context = new FishingContext(liquid, zone, depth, FishingTables.FullPoolSize, power, night, 1f);
-            var set = liquid == LiquidKind.Acid ? acid : liquid == LiquidKind.Lava ? lava : water;
+            var context = new FishingContext(liquid, zone, depth, FishingTables.FullPoolSize, power, night, 1f, Fractured: fractured);
+            var set = fractured ? afterFracture : liquid == LiquidKind.Acid ? acid : liquid == LiquidKind.Lava ? lava : water;
             for (var i = 0; i < 6; i++)
                 set.Add(FishingTables.Pick(context, rarity, random));
         }
+        // Catches that only bite after the Fracture (the Astral crate) in any liquid with a fitting rod.
+        afterFracture.ExceptWith(water.Concat(acid).Concat(lava));
+        rules.Add(new Rule("fish after the Fracture", state => state.Fracture && state.Any(item => item.FishingPower > 0),
+            afterFracture.Where(items.Contains).ToArray()));
         rules.Add(new Rule("fish", state => state.Any(item => item.FishingPower > 0), water.Where(items.Contains).ToArray()));
         rules.Add(new Rule("fish in acid", state => state.Got(ItemId.AcidFishingRod) || state.Any(item => item.ImmunityTags.Contains("acid-fishing")),
             acid.Where(items.Contains).ToArray()));
@@ -717,8 +801,10 @@ public static class CraftingAudit
         foreach (var (fish, _, unlock) in FishingTables.QuestFish)
             rules.Add(new Rule("quest fish", state => state.Any(item => item.FishingPower > 0) && (unlock is null || state.Flags.IsSet(unlock)), [fish]));
         rules.Add(new Rule("Tide-Warden quests", state => state.Any(item => item.FishingPower > 0),
-            [ItemId.FerriteFishingRod, ItemId.FishingLine, ItemId.FishingLure, ItemId.AcidWader, ItemId.CatchScanner, ItemId.AstralFishingRod,
-             ItemId.AlloyCrate]));
+            [ItemId.FerriteFishingRod, ItemId.FishingLine, ItemId.FishingLure, ItemId.AcidWader, ItemId.CatchScanner, ItemId.AlloyCrate]));
+        // The 30th quest's Astral fishing rod is paid once the Fracture has happened (GameSimulation.TurnInQuestFish).
+        rules.Add(new Rule("Tide-Warden quests after the Fracture", state => state.Fracture && state.Any(item => item.FishingPower > 0),
+            [ItemId.AstralFishingRod]));
         // Crates (fished, dropped or rewarded) open into their loot.
         foreach (var crate in items.All.Where(item => item.IsCrate))
         {
@@ -849,7 +935,7 @@ public static class CraftingAudit
                 {
                     state.Stations.Add(station);
                     state.StationStage.TryAdd(station, state.Stage);
-                    foreach (var implied in station.Implied())
+                    foreach (var implied in station.ImpliedClosure())
                     {
                         state.Stations.Add(implied);
                         state.StationStage.TryAdd(implied, state.Stage);
@@ -897,12 +983,20 @@ public static class CraftingAudit
     /// <summary>HardmodeSummonRefusal and the coverage refusals, as world-state conditions.</summary>
     private static bool BossGateOpen(EnemyKind boss, State state)
     {
+        if (state.HeldForFracture.Contains(boss) && !state.Fracture)
+            return false;
         if (boss == GameSimulation.CoreGateBoss)
             return state.Defeated.Contains(GameSimulation.LastEasyBoss);
         if ((GameSimulation.HardTrio.Contains(boss) || GameSimulation.FractureGatedBosses.Contains(boss) ||
              boss is EnemyKind.GelSovereign or EnemyKind.HollowRegent or EnemyKind.RimeSeraph) && !state.Fracture)
             return false;
         if (boss == EnemyKind.AstroGod && !state.Flags.IsSet("obelisks.down"))
+            return false;
+        // 0.2.2 lifecycle gates (PC-1, PC-2): the Moon Eater (lure and Rust Moon finale) waits for the Fracture, and the
+        // Protocol Dragon (key and Defense Protocol finale) for the Vault Colossus.
+        if (boss == EnemyKind.MoonEater && !state.Fracture)
+            return false;
+        if (boss == EnemyKind.ProtocolDragon && !state.Defeated.Contains(EnemyKind.VaultColossus))
             return false;
         if (boss == GameSimulation.BulbBoss && !GameSimulation.HardTrio.All(state.Defeated.Contains))
             return false;
@@ -927,7 +1021,7 @@ public static class CraftingAudit
         if (GameSimulation.HardTrio.Contains(boss))
             return state.Fracture; // undefeated hard-tier bosses come on their own at dusk
         if (EnemyArchetypes.EventBosses.Contains(boss))
-            return state.Defeated.Contains(EnemyKind.ScoutMech);
+            return state.Fracture && state.Defeated.Contains(EnemyKind.ScoutMech); // the dusk incursion waits for the Fracture (PC-4)
         if (boss == EnemyKind.PrismEmpress)
             return state.Fracture && state.Any(GameSimulation.CanSmashAltars);
         if (boss == EnemyKind.BloomMatriarch)
@@ -938,8 +1032,8 @@ public static class CraftingAudit
             return true; // the cultists gather once the Vault Colossus has fallen
         if (GameSimulation.Obelisks.Any(entry => entry.Obelisk == boss))
             return true;
-        if (boss == EnemyKind.AbyssLeviathan)
-            return state.Got(ItemId.AbyssBait) && (state.Got(ItemId.AcidFishingRod) || state.Any(item => item.ImmunityTags.Contains("acid-fishing")));
+        if (boss == EnemyKind.AbyssLeviathan) // PC-3: the deep stays quiet until the Fracture (GameSimulation.RollCatch)
+            return state.Fracture && state.Got(ItemId.AbyssBait) && (state.Got(ItemId.AcidFishingRod) || state.Any(item => item.ImmunityTags.Contains("acid-fishing")));
         foreach (var spec in new WorldEventSystem(1).Specs)
             if (spec.FinalBoss == boss && state.Events.Contains(spec.Kind))
                 return true;
@@ -1099,20 +1193,18 @@ public static class CraftingAudit
     /// <summary>Progress level a stage stands for: 3 before the Fracture, 4 after it, 5 / 6 at the lumenite / voidsteel drill gates, 7 after the final boss.</summary>
     private static int StageLevel(IReadOnlyList<string> stages, int stage)
     {
-        var level = 3;
+        bool fractured = false, lumenite = false, voidsteel = false, final = false;
         for (var i = 0; i <= stage && i < stages.Count; i++)
         {
             var name = stages[i].Replace("(blocked) ", string.Empty, StringComparison.Ordinal);
-            if (name == "Defeated " + EnemyArchetypes.Get(GameSimulation.CoreGateBoss).DisplayName)
-                level = Math.Max(level, 4);
-            else if (name == "Drill power 85")
-                level = Math.Max(level, 5);
-            else if (name == "Drill power 100")
-                level = Math.Max(level, 6);
-            else if (name == "Defeated " + EnemyArchetypes.Get(EnemyKind.AstroGod).DisplayName)
-                level = Math.Max(level, 7);
+            fractured |= name == "Defeated " + EnemyArchetypes.Get(GameSimulation.CoreGateBoss).DisplayName;
+            lumenite |= fractured && name == "Drill power 85";
+            voidsteel |= fractured && name == "Drill power 100";
+            final |= name == "Defeated " + EnemyArchetypes.Get(EnemyKind.AstroGod).DisplayName;
         }
-        return level;
+        // The drill gates only count when passed after the Fracture: a drill a pre-Fracture boss drops neither makes its
+        // stage post-Fracture nor makes every recipe at the Fracture look late (PC-7).
+        return !fractured ? 3 : final ? 7 : voidsteel ? 6 : lumenite ? 5 : 4;
     }
 
     private static IReadOnlyList<LateRecipe> FindLateRecipes(CraftingSystem crafting, ItemCatalog items, State state,
@@ -1208,12 +1300,28 @@ public static class CraftingAudit
         Print("Circular chains among unreached items", result.Cycles);
         Print("Recipes later than their tier implies", result.LateRecipes.Select(late =>
             $"{late.RecipeId} -> {late.Output} (T{late.Tier}) at '{late.Stage}', held back by {late.Cause}"));
-        Print("Tier 4+ gear before the Fracture, outside the whitelist", result.EarlyGear.Where(id => !EarlyGearWhitelist.ContainsKey(id)).Select(id =>
+        // PC-7: the bosses a Classic character can fight before the Fracture, and what only the ones under review leak.
+        var gate = EnemyArchetypes.Get(GameSimulation.CoreGateBoss);
+        Print($"Bosses reachable before the Fracture (gate: {gate.DisplayName}, {gate.HitPoints:0} life)", result.PreFractureBosses.Select(kind =>
+        {
+            var boss = EnemyArchetypes.Get(kind);
+            var flags = string.Concat(boss.HitPoints > gate.HitPoints ? " ABOVE THE GATE BOSS" : "",
+                PreFractureBossReview.TryGetValue(kind, out var why) ? $" [under review: {why}]"
+                : IntendedPreFractureBosses.Contains(kind) ? "" : " [NOT INTENDED]");
+            return $"{boss.DisplayName}: {boss.HitPoints:0} life, {boss.Tier}, from '{result.Stages[result.BossReach[kind]]}'{flags}";
+        }));
+        var gated = RunGated();
+        Print("Pre-Fracture only through a boss under review", result.EarlyGear.Except(gated.EarlyGear).Select(id =>
             $"{id} (T{items[id].Tier}) at '{result.StageOf(id)}' via {result.Items[id].Via}"));
-        Print("Tier 4+ gear before the Fracture, whitelisted", result.EarlyGear.Where(EarlyGearWhitelist.ContainsKey).Select(id =>
-            $"{id} (T{items[id].Tier}) at '{result.StageOf(id)}' via {result.Items[id].Via}: {EarlyGearWhitelist[id]}"));
-        Print("Whitelist entries no longer early (remove them)", EarlyGearWhitelist.Keys.Where(id => !result.EarlyGear.Contains(id)).Select(id => id.ToString()));
-        Print("Tier 6+ gear before the Fracture", result.EarlyGear.Where(id => items[id].Tier >= 6).Select(id => $"{id} (T{items[id].Tier})"));
+        Print("Tier 6+ gear before the Fracture (live)", result.PreFractureTier6Items.Select(id => $"{id} (T{items[id].Tier}) via {result.Items[id].Via}"));
+        Console.WriteLine($"With the bosses under review held for the Fracture ({gated.HeldForFracture.Count}):");
+        Console.WriteLine();
+        Print("Tier 4+ gear before the Fracture, outside the whitelist", gated.EarlyGear.Where(id => !EarlyGearWhitelist.ContainsKey(id)).Select(id =>
+            $"{id} (T{items[id].Tier}) at '{gated.StageOf(id)}' via {gated.Items[id].Via}"));
+        Print("Tier 4+ gear before the Fracture, whitelisted", gated.EarlyGear.Where(EarlyGearWhitelist.ContainsKey).Select(id =>
+            $"{id} (T{items[id].Tier}) at '{gated.StageOf(id)}' via {gated.Items[id].Via}: {EarlyGearWhitelist[id]}"));
+        Print("Whitelist entries no longer early (remove them)", EarlyGearWhitelist.Keys.Where(id => !gated.EarlyGear.Contains(id)).Select(id => id.ToString()));
+        Print("Tier 6+ gear before the Fracture", gated.PreFractureTier6Items.Select(id => $"{id} (T{items[id].Tier})"));
         Print("Deliberate dead ends", DeliberateDeadEnds.Select(entry => $"{entry.Key}: {entry.Value}"));
         var excepted = items.All.Where(item => ExceptionFor(item.Id, items) is not null).ToArray();
         Console.WriteLine($"Deliberate exceptions: {excepted.Length} items " +
@@ -1228,7 +1336,10 @@ public static class CraftingAudit
         Console.WriteLine();
         Console.WriteLine($"Summary: {result.Unreachable.Count} unreachable, {result.OnlyAfterBlocked.Count} behind blocked milestones, " +
                           $"{result.DeadEnds.Count} dead-end materials, {result.UnbuildableStations.Count} unbuildable stations, " +
-                          $"{result.Cycles.Count} cycles, {result.LateRecipes.Count} late recipes.");
+                          $"{result.Cycles.Count} cycles, {result.LateRecipes.Count} late recipes; before the Fracture: " +
+                          $"{result.PreFractureBosses.Count} bosses ({result.PreFractureBosses.Count(PreFractureBossReview.ContainsKey)} under review), " +
+                          $"tier 6+ {gated.PreFractureTier6Count} ({result.PreFractureTier6Count} live), tier 4+ outside the whitelist " +
+                          $"{gated.EarlyGear.Count(id => !EarlyGearWhitelist.ContainsKey(id))}.");
         return result.Unreachable.Count == 0 && result.UnbuildableStations.Count == 0 ? 0 : 1;
     }
 

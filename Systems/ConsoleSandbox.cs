@@ -329,7 +329,7 @@ public static class ConsoleSandbox
 
         var selected = player.Inventory.SelectedItem;
         var count = player.Inventory.SelectedStack.Count;
-        var events = game.ActiveEvents.Count == 0 ? "clear" : string.Join(',', game.ActiveEvents.Select(item => item.Id));
+        var events = game.ActiveEvents.Count == 0 ? "clear" : string.Join(',', game.ActiveEvents.Select(item => item.Kind));
         var selectedRecipe = game.SelectedRecipe?.Id ?? "none";
         WriteHud($"Day {game.Day} {game.ClockHour:00.0}h | HP {player.HitPoints:000}/{player.MaximumHitPoints:000} | mood {player.Mood:P0} | food {player.Needs.FoodReserve:P0} rest {player.Needs.RestReserve:P0} joy {player.Needs.JoyReserve:P0} | colonists {game.Colonists.Count} | mobs {game.Enemies.Count} | {events}", viewWidth);
         WriteHud($"Slot {player.Inventory.SelectedSlot + 1}: {selected?.Name ?? "empty"} x{count} | {game.LastMessage}", viewWidth);

@@ -187,7 +187,7 @@ public sealed partial class GameSimulation
         var zone = BiomeScanner.Scan(World, ClampCell(cell)).Zone;
         var depth = FishingTables.DepthAt(BiomeLayout, cell.X, cell.Y, World.Height);
         return new FishingContext(liquid, zone, depth, poolSize, EffectivePower(rawPower, poolSize, ClockHour, Weather.Rain),
-            IsNight, Weather.Rain, Season);
+            IsNight, Weather.Rain, Season, FractureActive);
     }
 
     private CatchResult Catch(ItemDefinition rod, FishingBobber bobber)
@@ -197,7 +197,7 @@ public sealed partial class GameSimulation
         var result = RollCatch(context, FishingRandom);
         if (result.Creature is { } creature)
         {
-            var spawned = creature == EnemyKind.AbyssLeviathan ? SpawnBoss(creature) : SpawnCreature(creature, bobber.Position + new Vector2(0f, -2f));
+            var spawned = creature == EnemyKind.AbyssLeviathan && TrySpawnBoss(creature, BossSpawnSource.Fishing, out var leviathan, out _) ? leviathan! : SpawnCreature(creature, bobber.Position + new Vector2(0f, -2f));
             PostMessage(result.Message);
             Flags.Increment("fishing.creatures");
             return result with { Message = $"{result.Message} ({spawned.DisplayName})" };
@@ -211,14 +211,19 @@ public sealed partial class GameSimulation
         return result;
     }
 
+    /// <summary>Hint when abyss bait goes into acid before the Fracture (PC-3): the bait is kept.</summary>
+    public const string AbyssQuietMessage = "The deep stays quiet. Something larger waits for the Fracture.";
+
     /// <summary>
-    /// One catch roll in a context: special bait in acid hooks the Abyss Leviathan; Rust Moon water can hook a
-    /// Bloodfin Ambusher; today's quest fish bites where it lives; otherwise rarity → table.
+    /// One catch roll in a context: special bait in acid hooks the Abyss Leviathan (after the Fracture; PC-3, D-3); Rust
+    /// Moon water can hook a Bloodfin Ambusher; today's quest fish bites where it lives; otherwise rarity → table.
     /// </summary>
     public CatchResult RollCatch(FishingContext context, Random random)
     {
-        if (context.Liquid == LiquidKind.Acid && Player.Inventory.Count(ItemId.AbyssBait) > 0 &&
-            !_enemies.Any(enemy => enemy.Kind == EnemyKind.AbyssLeviathan && enemy.IsAlive))
+        var abyssBait = context.Liquid == LiquidKind.Acid && Player.Inventory.Count(ItemId.AbyssBait) > 0;
+        if (abyssBait && !FractureActive)
+            PostMessage(AbyssQuietMessage); // the bait stays in the bag and the catch rolls as usual
+        if (abyssBait && FractureActive && !_enemies.Any(enemy => enemy.Kind == EnemyKind.AbyssLeviathan && enemy.IsAlive))
         {
             Player.Inventory.TryConsume(ItemId.AbyssBait);
             return new CatchResult(FishingRarity.Legendary, null, EnemyKind.AbyssLeviathan, "The abyss bait vanishes. The sea heaves upward!");
@@ -321,14 +326,25 @@ public sealed partial class GameSimulation
             10 => ItemId.FishingLure,
             15 => ItemId.AcidWader,
             20 => ItemId.CatchScanner,
-            30 => ItemId.AstralFishingRod,
             _ => completed % 4 == 0 ? ItemId.AlloyCrate : null
         };
+        // The Astral fishing rod (tier 7) is the 30th-quest reward, held until the Fracture: the first quest turned in at or
+        // past 30 once the crust has fractured pays it (Terraria's golden rod is pre-hardmode, but tier 7 is not).
+        if (completed >= AstralRodQuests && FractureActive && !Flags.IsSet(AstralRodFlag))
+        {
+            Flags.Set(AstralRodFlag);
+            milestone = ItemId.AstralFishingRod;
+        }
         if (milestone is { } reward)
             Player.Inventory.Add(reward, 1);
         PostMessage($"{npc.Name} pays {credits} credits{(milestone is { } m ? $" and a {Items[m].Name}" : string.Empty)}. ({completed} quests)");
         return true;
     }
+
+    /// <summary>Quests before the Tide-Warden pays the Astral fishing rod (after the Fracture).</summary>
+    public const int AstralRodQuests = 30;
+    /// <summary>World flag set once the Astral fishing rod has been paid.</summary>
+    public const string AstralRodFlag = "quests.fishing.astral_rod";
 
     private FishingSaveState CaptureFishing() => new(_lastQuestTurnInDay);
 

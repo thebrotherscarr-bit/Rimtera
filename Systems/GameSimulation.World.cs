@@ -190,8 +190,18 @@ public sealed partial class GameSimulation : IWorldEventHost
 
     bool IWorldEventHost.SpawnEventBoss(WorldEventKind kind, EnemyKind boss)
     {
-        var enemy = SpawnBoss(boss);
-        enemy.EventTag = kind;
+        // BO-9 (D-11): the finale comes through the one spawn path. A different boss may share the fight; when one of the
+        // same kind already lives (summoned by its item), the event adopts it as its finale instead of doubling it.
+        if (!TrySpawnBoss(boss, BossSpawnSource.EventFinale, out var enemy, out _))
+        {
+            enemy = _enemies.FirstOrDefault(candidate => candidate.Kind == boss && candidate.IsAlive);
+            if (enemy is null)
+                return false;
+            enemy.EventTag ??= kind;
+            PostMessage($"The {enemy.DisplayName} turns to end the {_worldEvents.Spec(kind).Name}!");
+            return true;
+        }
+        enemy!.EventTag = kind;
         PostMessage($"The {enemy.DisplayName} arrives to end the {_worldEvents.Spec(kind).Name}!");
         return true;
     }
@@ -502,7 +512,7 @@ public sealed partial class GameSimulation : IWorldEventHost
     }
 
     /// <summary>Called by the clock: weather rolls at dawn/noon/dusk/midnight, event boundaries and pending triggers.</summary>
-    private void AdvanceContentClock(float previousHour, float elapsedHours, WorldEventBoundary? boundary)
+    private void AdvanceContentClock(float previousHour, float elapsedHours, WorldEventMoment? moment)
     {
         if (_sleeping && !IsNight)
         {
@@ -517,12 +527,6 @@ public sealed partial class GameSimulation : IWorldEventHost
         }
         _weather.Ease(elapsedHours);
 
-        WorldEventMoment? moment = boundary switch
-        {
-            WorldEventBoundary.Dawn => WorldEventMoment.Dawn,
-            WorldEventBoundary.Dusk => WorldEventMoment.Dusk,
-            _ => null
-        };
         if (moment == WorldEventMoment.Dusk && Flags.IsSet("meteor.pending"))
         {
             Flags.Clear("meteor.pending");
@@ -553,8 +557,8 @@ public sealed partial class GameSimulation : IWorldEventHost
                 PostMessage("The sky tears open... 10 seconds.");
             if (_astralCountdown <= 0f)
             {
-                var god = SpawnBoss(EnemyKind.AstroGod);
-                PostMessage($"The {god.DisplayName} descends!");
+                if (TrySpawnBoss(EnemyKind.AstroGod, BossSpawnSource.Countdown, out var god, out _))
+                    PostMessage($"The {god!.DisplayName} descends!");
             }
         }
         for (var i = _lightning.Count - 1; i >= 0; i--)
@@ -582,7 +586,7 @@ public sealed partial class GameSimulation : IWorldEventHost
             SettleSnow(weather.Snow);
         if (outdoors && weather.Rain > 0.2f)
         {
-            Player.Needs.Drain(NeedKind.Comfort, hours * 0.03f * weather.Rain);
+            // No comfort drain for the player in the rain: the player has no needs upkeep (D-48, NC-2).
             if (weather.AcidRain && !Player.Stats.ImmunityTags.Contains("acid"))
                 Player.TakeDamage(hours * 6f * weather.Rain, DamageKind.Burn);
         }

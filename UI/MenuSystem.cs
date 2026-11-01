@@ -74,6 +74,9 @@ public static class MenuRows
 /// <summary>A small button on a list card (favourite, rename, delete).</summary>
 public sealed record MenuRowAction(string Label, Action Activate);
 
+/// <summary>Icon for a generic list card; locked icons draw as a dark silhouette.</summary>
+internal sealed record CardIcon(string Sprite, bool Locked = false);
+
 public enum MenuLayout : byte
 {
     List,
@@ -321,6 +324,7 @@ public sealed class MenuFlow
     private readonly WorldSaveRepository _saves;
     private readonly PreferencesStore<GamePreferences> _preferencesStore;
     private readonly PreferencesStore<InputProfile> _inputStore;
+    private readonly Lazy<FeatStore> _feats;
     private CharacterProfile? _selectedCharacter;
     private Action? _pauseResume;
     private Action? _directUiClose;
@@ -356,6 +360,10 @@ public sealed class MenuFlow
         _profiles = profiles ?? new UserProfileStore(Path.Combine(root, "profiles.json"));
         _saves = new WorldSaveRepository(Path.Combine(root, "saves"));
         _preferencesStore = new PreferencesStore<GamePreferences>(Path.Combine(root, "config.json"));
+        // PU-24: feats are machine-wide, beside the preferences; opened (and migrated) on first use.
+        var featsPath = Path.Combine(root, "feats.json");
+        var charactersDirectory = _profiles.CharacterFiles.Directory;
+        _feats = new Lazy<FeatStore>(() => FeatStore.Open(featsPath, charactersDirectory));
         _inputStore = new PreferencesStore<InputProfile>(Path.Combine(root, "input profiles.json"));
         Preferences = _preferencesStore.Load();
         Preferences.Normalize();
@@ -371,6 +379,8 @@ public sealed class MenuFlow
     public GamePreferences Preferences { get; }
     public InputProfile InputProfile { get; private set; }
     public UserProfileStore Profiles => _profiles;
+    /// <summary>PU-24: the machine-global feats (feats.json beside config.json), built from every character's feats on first run.</summary>
+    public FeatStore Feats => _feats.Value;
     public WorldSaveRepository Saves => _saves;
     public MenuScreen CurrentScreen => Ui.CurrentState as MenuScreen ?? throw new InvalidOperationException("The current UI state is not a menu screen.");
     public CharacterProfile? SelectedCharacter => _selectedCharacter;
@@ -744,16 +754,84 @@ public sealed class MenuFlow
         Ui.SetState(state, saveCurrent: false);
     }
 
-    /// <summary>Terraria's title menu: Single Player (characters, then worlds), Settings, Exit.</summary>
+    /// <summary>Terraria's title menu: Single Player (characters, then worlds), Achievements, Settings, Credits, Exit.</summary>
     private MenuScreen CreateMainMenu()
     {
-        var hasSave = _profiles.Worlds.Any(world => _saves.Exists(world.Id));
         return new MenuScreen("main-menu", "RIMTERA", new[]
         {
             new MenuEntry("Single Player", () => Navigate(CreateCharacterSelectMenu())),
+            new MenuEntry("Achievements", () => Navigate(CreateFeatsMenu())),
             new MenuEntry("Settings", () => Navigate(CreateSettingsMenu())),
+            new MenuEntry("Credits", () => Navigate(CreateCreditsMenu())),
             new MenuEntry("Exit Game", () => ExitRequested?.Invoke())
         }, string.Empty);
+    }
+
+    /// <summary>
+    /// PU-24: the feats earned on this machine by any character (Terraria's title Achievements), unlocked first. The same
+    /// cards as the in-game Feats screen.
+    /// </summary>
+    private MenuScreen CreateFeatsMenu()
+    {
+        var unlocked = Feats.Unlocked;
+        var entries = FeatEntries(id => unlocked.ContainsKey(id), unlocked).ToList();
+        entries.Add(new MenuEntry("Back", GoBack));
+        return new MenuScreen("title-feats", "Achievements", entries, "↑ ↓  move      Esc  back", MenuLayout.Cards,
+            body: $"{unlocked.Count} of {AchievementCatalog.All.Count} unlocked on this computer");
+    }
+
+    /// <summary>One card per feat: name, description, category and when it was unlocked (or Locked); unlocked first.</summary>
+    internal static IEnumerable<MenuEntry> FeatEntries(Func<string, bool> isUnlocked, IReadOnlyDictionary<string, DateTimeOffset> times) =>
+        AchievementCatalog.All
+            .OrderBy(definition => isUnlocked(definition.Id) ? 0 : 1)
+            .Select(definition =>
+            {
+                var unlocked = isUnlocked(definition.Id);
+                var when = unlocked && times.TryGetValue(definition.Id, out var time) ? $"Unlocked {time.LocalDateTime:d MMM yyyy}" : "Locked";
+                return new MenuEntry($"{definition.Name}  •  {definition.Description}  •  {definition.Category}  •  {when}", () => { },
+                    Tag: new CardIcon(definition.IconName, Locked: !unlocked));
+            });
+
+    /// <summary>The credits file the build copies beside the game (docs/CREDITS.md → CREDITS.md).</summary>
+    public static string CreditsPath => Path.Combine(AppContext.BaseDirectory, "CREDITS.md");
+
+    /// <summary>
+    /// PU-24: reads a credits file written in plain Markdown: the first "# " heading is the title, every other non-blank
+    /// line is a row (heading marks and list bullets dropped). A missing file gives the title alone and a note.
+    /// </summary>
+    public static (string Title, IReadOnlyList<string> Lines) ReadCredits(string path)
+    {
+        string[] raw;
+        try
+        {
+            raw = File.ReadAllLines(path);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            return ("Credits", ["(CREDITS.md was not found beside the game.)"]);
+        }
+        string? title = null;
+        var lines = new List<string>();
+        foreach (var line in raw.Select(line => line.Trim()).Where(line => line.Length > 0))
+        {
+            if (title is null && line.StartsWith("# ", StringComparison.Ordinal))
+            {
+                title = line[2..].Trim();
+                continue;
+            }
+            lines.Add(line.TrimStart('#', '-', '*', ' '));
+        }
+        return (title ?? "Credits", lines);
+    }
+
+    private MenuScreen CreateCreditsMenu()
+    {
+        var (title, lines) = ReadCredits(CreditsPath);
+        var entries = lines.Select(line => new MenuEntry(line, Enabled: false)).ToList();
+        entries.Add(new MenuEntry("Back", GoBack));
+        var screen = new MenuScreen("title-credits", title, entries, "Enter  back      Esc  back");
+        screen.SelectIndex(entries.Count - 1);
+        return screen;
     }
 
     /// <summary>Favourite / rename / delete buttons for the world list.</summary>
@@ -1262,6 +1340,7 @@ public sealed class MenuFlow
                 entries.Add(Percent("Zoom", () => Preferences.Zoom, value => Preferences.Zoom = value, 0.1f, 0.6f, 2f, "How close the camera is to the world. In game, = and - zoom too."));
                 entries.Add(Percent("Camera smoothing", () => Preferences.CameraSmoothing, value => Preferences.CameraSmoothing = value, 0.1f, 0f, 1f,
                     "0% keeps the camera on you every frame, as in Terraria. Higher values let it ease after you."));
+                entries.Add(Toggle("Screen shake", () => Preferences.ScreenShake, value => Preferences.ScreenShake = value, "A brief shake for boss roars, explosions and heavy landings."));
                 entries.Add(Percent("UI scale", () => Preferences.UiScale, value => Preferences.UiScale = value, 0.05f, 0.75f, 1.5f, "Size of menus and panels."));
                 entries.Add(Choice("Health bars", () => Preferences.EnemyHealthBars, value => Preferences.EnemyHealthBars = value, "Above or below damaged creatures, or hidden."));
                 entries.Add(Toggle("Guide hints", () => Preferences.GuideHints, value => Preferences.GuideHints = value, "The station AI's next-step hint at the top of the screen. Click its × to hide one tip."));
@@ -1284,6 +1363,10 @@ public sealed class MenuFlow
                 }, Description: "Standard window sizes. Applies straight away."));
                 entries.Add(Choice("Frame skip", () => Preferences.FrameSkip, value => Preferences.FrameSkip = value, "On: the world keeps full speed on a slow PC. Subtle: only small hitches are caught up. Off: the world slows down instead."));
                 entries.Add(Choice("Lighting", () => Preferences.Lighting, value => Preferences.Lighting = value, "Low: blocky. Standard: smooth. High: smooth with coloured glow. Off: full bright."));
+                // PU-26: the effect rows. Background and parallax stay out: 0.1.3 removed those rows on purpose.
+                entries.Add(Choice("Particles", () => Preferences.Particles, value => Preferences.Particles = value, "Dust, debris and death bursts. Low halves them; Off removes them."));
+                entries.Add(Toggle("Weather effects", () => Preferences.WeatherEffects, value => Preferences.WeatherEffects = value, "Rain, snow, fog and lightning, biome sky tints, and the toxic fallout and solar flare overlays."));
+                entries.Add(Toggle("Flashing effects", () => Preferences.FlashyEffects, value => Preferences.FlashyEffects = value, "Hit flashes, muzzle flashes, swing trails and gear sparkles. Turn off if flashing light bothers you."));
                 break;
             case OptionsCategory.Volume:
                 entries.Add(Percent("Music", () => Preferences.MusicVolume, value => Preferences.MusicVolume = value, 0.05f, 0f, 1f, "The soundtrack."));
@@ -1352,30 +1435,36 @@ public sealed class MenuFlow
     }
 
     /// <summary>
-    /// Saved worlds remember which character made the save. Continue and Load use that
-    /// association; new worlds fall back to the character chosen in the menu.
+    /// PU-9 (D-43): any character may play any world, so a launch from the menu uses the character chosen in the menu, not
+    /// the one that last saved the world (only Continue, <c>--continue</c>, picks that one). The Creative split still applies
+    /// (<see cref="WorldProfile.Admits"/>, checked when the world list is built).
     /// </summary>
     private CharacterProfile ResolveCharacter(WorldProfile world)
     {
-        if (_saves.TryReadFile(world.Id, out var file) && file is not null)
-        {
-            var saved = file.CharacterId is Guid id
-                ? _profiles.Characters.FirstOrDefault(character => character.Id == id)
-                : null;
-            saved ??= _profiles.Characters.FirstOrDefault(character =>
-                !string.IsNullOrWhiteSpace(file.CharacterName) &&
-                string.Equals(character.Name, file.CharacterName, StringComparison.OrdinalIgnoreCase));
-            if (saved is not null)
-            {
-                _selectedCharacter = saved;
-                return saved;
-            }
-        }
+        var chosen = _selectedCharacter is { } selected
+            ? _profiles.Characters.FirstOrDefault(character => character.Id == selected.Id) ?? selected
+            : _profiles.Characters.FirstOrDefault();
+        chosen ??= _profiles.CreateCharacter("Adventurer");
+        _selectedCharacter = chosen;
+        return chosen;
+    }
 
-        var fallback = _selectedCharacter ?? _profiles.Characters.FirstOrDefault();
-        fallback ??= _profiles.CreateCharacter("Adventurer");
-        _selectedCharacter = fallback;
-        return fallback;
+    /// <summary>
+    /// PU-11: a world whose save could not be read. When a backup of the previous save exists the screen offers
+    /// "Load backup"; Back returns to the title.
+    /// </summary>
+    public void ShowLoadFailure(WorldProfile world, string reason, bool hasBackup, Action loadBackup)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(loadBackup);
+        var entries = new List<MenuEntry>();
+        if (hasBackup)
+            entries.Add(new MenuEntry("Load backup", loadBackup,
+                Description: "Loads the save before the last one (kept as a backup). The damaged save is kept until the next save."));
+        entries.Add(new MenuEntry("Back", Open));
+        var body = $"Could not load {world.Name}: {reason}." +
+                   (hasBackup ? " The previous save is kept as a backup." : " There is no backup of this world.");
+        ResetTo(new MenuScreen("load-failed", $"{world.Name} did not load", entries, "Enter  choose      Esc  back", body: body));
     }
 
     private void Navigate(UiState screen) => Ui.SetState(screen);
