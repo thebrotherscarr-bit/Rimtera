@@ -252,7 +252,7 @@ public sealed partial class GameSimulation
             made += job.Recipe.OutputCount;
         var calibration = output.Calibratable || CalibrationCatalog.IsAccessory(output) ? RollCalibration(output) : Calibration.None;
         agent.Carried = new ItemStack(job.Recipe.Output, made, calibration);
-        SpendCraftPower(job.Recipe); // 0.3.8
+        SpendCraftPower(job.Recipe, stationAt); // 0.3.8; 0.7.4: more at an outpost
         job.Bill.Done++;
         Flags.Increment("colony.crafted", made);
         SoundEvents.Emit(SoundEventKind.Craft, SoundEventQueue.CraftVariant(job.Recipe), stationAt, (int)job.Recipe.Output);

@@ -101,8 +101,11 @@ public sealed partial class GameSimulation
     public static int PowerCost(RecipeDefinition recipe) =>
         (recipe.RequiredStations ?? new HashSet<CraftingStationId>()).Select(PowerTierOf).DefaultIfEmpty(0).Max();
 
-    /// <summary>Why a recipe's stations are dark, or null when they have power (the crafting gate).</summary>
-    public string? PowerLock(RecipeDefinition recipe)
+    /// <summary>
+    /// Why a recipe's stations are dark at <paramref name="at"/> (where the craft happens; the player by default), or null when
+    /// they have power (the crafting gate).
+    /// </summary>
+    public string? PowerLock(RecipeDefinition recipe, Vector2? at = null)
     {
         var need = PowerCost(recipe);
         if (need == 0)
@@ -113,13 +116,50 @@ public sealed partial class GameSimulation
             return $"This station needs tier {need} power. Feed the station AI {Items[PowerFuels.First(fuel => fuel.Tier == need).Fuel].Name.ToLowerInvariant()}.";
         if (StationPower < need)
             return "The station AI is out of power. Feed it energy crystals or better fuel.";
+        // 0.7.4: the power reaches the base and the staffed outposts, and an outpost only while the reserve holds.
+        var reach = PowerReachAt(at ?? PlayerCenter);
+        if (reach == PowerReach.None)
+            return $"This machine is beyond the station AI's reach: it runs at the base or at a staffed outpost.";
+        if (reach == PowerReach.Outpost && StationPower < OutpostMinimumPower)
+            return $"The station AI's power is too low to reach the outposts (below {OutpostMinimumPower}). Feed it.";
         return null;
     }
 
-    /// <summary>Draws a finished craft's power from the reserve.</summary>
-    private void SpendCraftPower(RecipeDefinition recipe)
+    /// <summary>Where the station AI's power reaches (0.7.4).</summary>
+    public enum PowerReach { Base, Outpost, None }
+
+    /// <summary>The reserve below which the outposts go dark first (0.7.4).</summary>
+    public const int OutpostMinimumPower = MaxPower / 10;
+    /// <summary>The extra power a craft at an outpost draws (the long line out).</summary>
+    public const int OutpostLinePower = 1;
+
+    /// <summary>
+    /// Whether the station AI's power reaches <paramref name="at"/> (0.7.4): the base (within the outpost distance of the
+    /// station AI's home), a staffed outpost (within its spread), or nowhere. Until the AI has a home there is no grid yet,
+    /// and machines run wherever they stand.
+    /// </summary>
+    public PowerReach PowerReachAt(Vector2 at)
+    {
+        if (!_townNpcs.Any(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound && npc.HomeCell is not null))
+            return PowerReach.Base;
+        if (Vector2.Distance(at, BaseCenter) <= OutpostDistance)
+            return PowerReach.Base;
+        return Outposts.Any(outpost => outpost.People.Any(npc => !npc.IsPrisoner) && Vector2.Distance(outpost.Center, at) <= OutpostSpread)
+            ? PowerReach.Outpost
+            : PowerReach.None;
+    }
+
+    /// <summary>The power a craft of <paramref name="recipe"/> at <paramref name="at"/> draws.</summary>
+    public int PowerCostAt(RecipeDefinition recipe, Vector2 at)
     {
         var cost = PowerCost(recipe);
+        return cost > 0 && PowerReachAt(at) == PowerReach.Outpost ? cost + OutpostLinePower : cost;
+    }
+
+    /// <summary>Draws a finished craft's power from the reserve.</summary>
+    private void SpendCraftPower(RecipeDefinition recipe, Vector2 at)
+    {
+        var cost = PowerCostAt(recipe, at);
         if (cost <= 0)
             return;
         var before = StationPower;
