@@ -155,3 +155,105 @@ Each row below gives Rimtera's original equivalent and the plan that was impleme
   - placeholder art is kitbashed with `tools/sprites/kitbash.py`; the generated-art pass remains queued separately
 - **Checks:** `WorldGenSelfTests` confirms every new site and tally appears on a Small world, that no falling block rests on air, that exposed edges are shaped, that generation data survives a save, and that counts scale between Tiny and Medium. `--engine-bench` prints every feature count per size.
 - **Not modelled:** the two secret-seed pass variants (Skyblock, Dual Dungeons) are deliberate out-of-scope items.
+
+## 4. Terrain shape and caves: measured (2026-11-01)
+
+The owner's first play of 0.2.9 found the world "flat and weird", with few natural caves and caverns. The pass list above
+says *which* passes exist; this section measures *what they make*, side by side with a Terraria-style reference.
+
+**Method.** Both sides are on a Small world (4200×1200), columns 10–90% of the width.
+- **Rimtera:** its own `SketchHorizon` and `RaiseMountains` (the surface line before any later pass), and a fully
+  generated world for the caves.
+- **Terraria reference:** a reconstruction from memory of 1.4's `TerrainPass` walk and `TileRunner` cave passes. Only
+  Small Holes, Dirt Layer Caves and Rock Layer Caves are included, on a flat block with the surface at 28% of the height
+  and the rock layer at 40%. It is approximate and leaves out surface caves, wavy caves, mountain caves, lakes and biome
+  caves, so it *understates* Terraria's openness.
+
+The measuring tools were scratch harness code (`map`, `diff`) and are not shipped.
+
+### Surface
+
+| Measure | Terraria walk | Rimtera profile |
+|---|---|---|
+| Mean height change per column, inland | 0.36 tiles | 1.02 tiles |
+| Columns stepping 2+ tiles, inland | 7% | 26% |
+| Height range, inland | 154 tiles | 246 tiles |
+| Hills ≥ 6 tiles per 1000 columns, inland | 5.1 | 6.5 |
+| **Height range within ±300 columns of spawn** | **137 tiles** | **24 tiles** |
+| Hills per 1000 columns around spawn | 6.7 | 3.3 |
+
+**What makes it feel flat and weird**
+
+1. **The spawn plateau.** `RaiseMountains` flattens about 420 columns around the landing site, which is the first thing a
+   player sees. Terraria's spawn stays on its rolling surface: 137 tiles of relief there against Rimtera's 24.
+2. **Jitter instead of hills.** The surface is three smoothed noises:
+   - broad: a control point every width/9 columns, ±4.5% of the height;
+   - mid: every width/40 columns, ±2%;
+   - fine: every 5 columns, ±0.6% (±7 tiles on Small).
+
+   The fine layer makes a quarter of the columns step 2+ tiles, so the ground looks bumpy without hill shapes, while the
+   broad layer is so slow that each stretch reads as level.
+
+   Terraria walks the surface in runs of 5–40 columns: plateau, hill, dale, mountain, valley. Each run holds a steady
+   slope, so most steps are 0–1 tiles and the land forms readable hills and valleys.
+3. **Isolated mountains.** Mountains are separate Gaussian bumps lifted 5–11% of the height, about 2.4 per 1000 columns.
+   They read as lone peaks on flat land rather than mountain country.
+
+### Caves
+
+| Depth below the surface | Terraria-style, open | Rimtera, open |
+|---|---|---|
+| 0–25 | 25% | 6% |
+| 25–60 | 33% | 14% |
+| 60–120 | 30% | 18% |
+| 120–200 | 33% | 19% |
+| 200–300 | 36% | 21% |
+| 300–450 | 35% | 26% |
+| 450–600 | 34% | 25% |
+| 600–750 | 39% | 22% |
+
+| Underground connectivity (surface + 10 down to 85% of the height) | Terraria-style | Rimtera |
+|---|---|---|
+| Separate open regions | 2,757 | 4,887 |
+| Open space in regions of 2,000+ cells | 54% | 37% |
+| Open space in pockets under 200 cells | 13% | 25% |
+
+**What makes the caves thin**
+
+1. **Short carvers.** Rimtera's `Blob` walks 2–30 steps and shrinks to half its radius, so it makes round pockets.
+   Terraria's runner walks 30–200 steps for dirt-layer caves and 50–300 for rock-layer caves. Each one is a long, winding
+   cave that meets others, and that is where the connected cave systems come from.
+
+   | Pass | Terraria (per million cells) | Rimtera (per million cells) |
+   |---|---|---|
+   | Rock-layer caves / Caverns | 130 caves, width 6–20, 50–300 steps | 385 caverns, radius 3–7.5, 10–30 steps |
+   | Dirt-layer caves / Shallow caves | 30 caves, width 5–15, 30–200 steps | 312 caves, radius 2–4.5, 8–22 steps |
+   | Small holes / Pocking the ground | 1,500 × two runners, one 8–15 wide and 7–30 steps long | 1,111 pocks, radius 1–2.4, 2–6 steps |
+
+   The only long carvers in Rimtera are Tunnels (14 per million cells, radius 1.4–2.8), which are thin.
+2. **An empty top layer.** The first 25 rows under the surface are 6% open. Shallow caves start 6 tiles down and avoid
+   the spawn, and cave mouths number 6.5 per 1000 columns. Terraria pocks the surface band too and adds surface caves, so
+   holes and entrances show from the start.
+3. **Few water caves.** In the reference, a fifth of the small holes are left water-filled. Rimtera has only its
+   underground lakes (6 per million cells).
+
+### Plan (0.3.1, pending the owner's go-ahead)
+
+1. **Terrain:**
+   - Replace the fine noise with a run-based surface walk (plateaus, hills, dales, mountains, valleys).
+   - Fold mountains into that walk as runs.
+   - Shrink the spawn plateau to a small landing pad.
+   - Numbers and pass names stay Rimtera's own.
+2. **Caves:**
+   - Add a long runner carver (a shrinking width over 30–300 steps).
+   - Use it for the shallow-cave and cavern passes.
+   - Make the small holes larger.
+   - Pock the surface band and add surface cave entrances.
+   - Leave some caves water-filled.
+3. **Targets, checked by a world-shape test in `WorldGenSelfTests`:**
+   - 25–35% open at every depth;
+   - at least half of the open space in regions of 2,000+ cells;
+   - at least 60 tiles of relief around spawn;
+   - about 10% of columns stepping 2+ tiles;
+   - Small-world generation time within the bench budget;
+   - worlds still deterministic per seed.
