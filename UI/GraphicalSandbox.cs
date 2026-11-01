@@ -2591,7 +2591,7 @@ public static partial class GraphicalSandbox
                     MathF.Abs(npc.Motion.Velocity.X) > 0.3f ? (float)Math.Abs(Math.Sin(now * 9 + npc.Id)) * -2f : 0f, reference: npc.SpriteName);
                 DrawNameTag(g, npc.IsBound ? $"{npc.Name} (bound)" : npc.Name, npc.Motion.Position, npc.Motion.Size, startX, startY);
             }
-            foreach (var minion in game.Minions)
+            foreach (var minion in game.Minions.Concat(game.ColonySentries)) // 0.7.3: the colony's sentries too
             {
                 var size = minion.IsSentry ? 1.6f : 1.1f;
                 var bob = minion.IsSentry ? 0f : (float)Math.Sin(now * 4 + minion.Id) * 0.15f;

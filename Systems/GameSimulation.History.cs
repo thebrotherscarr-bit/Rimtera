@@ -1,3 +1,4 @@
+using System.Numerics;
 using Rimtera.Entities;
 
 namespace Rimtera.Systems;
@@ -55,7 +56,9 @@ public sealed partial class GameSimulation
             lines.Add(new(OutpostsFounded == 0 ? "None yet: move people to a house far from the base to found one." : "None standing now."));
         foreach (var outpost in outposts)
             lines.Add(new($"{outpost.Label} · {OutpostBearing(outpost)} · {outpost.People.Count} living there, " +
-                          (outpost.Guards == 0 ? "unguarded" : $"{outpost.Guards} armed")));
+                          (outpost.Guards == 0 ? "unguarded" : $"{outpost.Guards} armed") +
+                          (_colonySentries.Count(sentry => Vector2.Distance(sentry.Position, outpost.Center) <= OutpostSpread) is > 0 and var sentries
+                              ? $", {sentries} sentr{(sentries == 1 ? "y" : "ies")}" : "")));
         lines.Add(new("Chronicle, newest first", Heading: true));
         if (_chronicle.Count == 0)
             lines.Add(new("Nothing has happened yet."));

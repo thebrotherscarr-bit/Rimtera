@@ -63,7 +63,9 @@ public sealed record GameSnapshot(
     StationBillSnapshot[]? Bills = null,
     ChestFilterSnapshot[]? ChestFilters = null,
     GrowZoneSnapshot[]? GrowZones = null,
-    ResearchSnapshot? Research = null)
+    ResearchSnapshot? Research = null,
+    // 0.7.3: sentries the colony mans.
+    ColonySentrySnapshot[]? ColonySentries = null)
 {
     /// <summary>
     /// 3 (0.2.2): <see cref="Players"/> keeps every character's place in the world (PU-9). Older versions load through
