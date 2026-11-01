@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO.Compression;
+using Rimtera.Systems;
 using Rimtera.World;
 
 namespace Rimtera.UI;
@@ -161,78 +162,93 @@ internal sealed class WorldMapState
         }
     }
 
-    public void Save(string path)
+    private static readonly object WriteGate = new();
+
+    /// <summary>Writes the map now (atomic, keeping the previous file as <c>.rmap.bak</c>).</summary>
+    public void Save(string path) => CaptureForSave()(path);
+
+    /// <summary>
+    /// Freezes what a save writes (markers and the list of revealed chunks) so the file can be written on a worker while play
+    /// goes on (PU-12). Cells revealed later inside an already-listed chunk may or may not make it into that file.
+    /// </summary>
+    public Action<string> CaptureForSave()
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var temp = path + ".tmp";
-        using (var file = File.Create(temp))
-        using (var deflate = new DeflateStream(file, CompressionLevel.Fastest))
-        using (var writer = new BinaryWriter(deflate))
+        var death = DeathMarker;
+        var spawn = SpawnMarker;
+        var chunks = new List<(int Index, byte[] Light, ushort[] Keys)>();
+        for (var index = 0; index < _light.Length; index++)
+            if (_light[index] is { } lights && _keys[index] is { } keys)
+                chunks.Add((index, lights, keys));
+        var (width, height) = (Width, Height);
+        return path =>
         {
-            writer.Write(FormatVersion);
-            writer.Write(Width);
-            writer.Write(Height);
-            writer.Write(DeathMarker is not null);
-            writer.Write(DeathMarker?.X ?? 0f);
-            writer.Write(DeathMarker?.Y ?? 0f);
-            writer.Write(SpawnMarker is not null);
-            writer.Write(SpawnMarker?.X ?? 0f);
-            writer.Write(SpawnMarker?.Y ?? 0f);
-            writer.Write(RevealedChunkCount);
-            for (var index = 0; index < _light.Length; index++)
-            {
-                if (_light[index] is not { } lights)
-                    continue;
-                writer.Write(index);
-                writer.Write(lights);
-                foreach (var key in _keys[index]!)
-                    writer.Write(key);
-            }
-        }
-        File.Move(temp, path, overwrite: true);
+            lock (WriteGate)
+                SafeFile.Write(path, file =>
+                {
+                    using var deflate = new DeflateStream(file, CompressionLevel.Fastest);
+                    using var writer = new BinaryWriter(deflate);
+                    writer.Write(FormatVersion);
+                    writer.Write(width);
+                    writer.Write(height);
+                    writer.Write(death is not null);
+                    writer.Write(death?.X ?? 0f);
+                    writer.Write(death?.Y ?? 0f);
+                    writer.Write(spawn is not null);
+                    writer.Write(spawn?.X ?? 0f);
+                    writer.Write(spawn?.Y ?? 0f);
+                    writer.Write(chunks.Count);
+                    foreach (var (index, lights, keys) in chunks)
+                    {
+                        writer.Write(index);
+                        writer.Write(lights);
+                        foreach (var key in keys)
+                            writer.Write(key);
+                    }
+                });
+        };
     }
 
-    /// <summary>Loads a saved map, or returns a fresh one if the file is missing, damaged or for a different size.</summary>
-    public static WorldMapState Load(string path, int width, int height)
+    /// <summary>
+    /// Loads a saved map, or returns a fresh one if the file is missing, damaged or for a different size. A damaged file falls
+    /// back to its backup (PU-11).
+    /// </summary>
+    public static WorldMapState Load(string path, int width, int height) =>
+        SafeFile.ReadWithBackup(path, file => TryRead(file, width, height), out _) ?? new WorldMapState(width, height);
+
+    private static WorldMapState? TryRead(string path, int width, int height)
     {
         var map = new WorldMapState(width, height);
-        if (!File.Exists(path))
-            return map;
-        try
+        using var file = File.OpenRead(path);
+        using var deflate = new DeflateStream(file, CompressionMode.Decompress);
+        using var reader = new BinaryReader(deflate);
+        if (reader.ReadInt32() != FormatVersion || reader.ReadInt32() != width || reader.ReadInt32() != height)
+            return null;
+        var hasMarker = reader.ReadBoolean();
+        var markerX = reader.ReadSingle();
+        var markerY = reader.ReadSingle();
+        if (hasMarker)
+            map.DeathMarker = new GridPointF(markerX, markerY);
+        var hasSpawn = reader.ReadBoolean();
+        var spawnX = reader.ReadSingle();
+        var spawnY = reader.ReadSingle();
+        if (hasSpawn)
+            map.SpawnMarker = new GridPointF(spawnX, spawnY);
+        var count = reader.ReadInt32();
+        for (var i = 0; i < count; i++)
         {
-            using var file = File.OpenRead(path);
-            using var deflate = new DeflateStream(file, CompressionMode.Decompress);
-            using var reader = new BinaryReader(deflate);
-            if (reader.ReadInt32() != FormatVersion || reader.ReadInt32() != width || reader.ReadInt32() != height)
-                return map;
-            var hasMarker = reader.ReadBoolean();
-            var markerX = reader.ReadSingle();
-            var markerY = reader.ReadSingle();
-            if (hasMarker)
-                map.DeathMarker = new GridPointF(markerX, markerY);
-            var hasSpawn = reader.ReadBoolean();
-            var spawnX = reader.ReadSingle();
-            var spawnY = reader.ReadSingle();
-            if (hasSpawn)
-                map.SpawnMarker = new GridPointF(spawnX, spawnY);
-            var count = reader.ReadInt32();
-            for (var i = 0; i < count; i++)
-            {
-                var index = reader.ReadInt32();
-                if ((uint)index >= (uint)map._light.Length)
-                    return new WorldMapState(width, height);
-                map._light[index] = reader.ReadBytes(ChunkSize * ChunkSize);
-                var keys = new ushort[ChunkSize * ChunkSize];
-                for (var k = 0; k < keys.Length; k++)
-                    keys[k] = reader.ReadUInt16();
-                map._keys[index] = keys;
-            }
-            map.Revision++;
-            return map;
+            var index = reader.ReadInt32();
+            if ((uint)index >= (uint)map._light.Length)
+                return null;
+            var lights = reader.ReadBytes(ChunkSize * ChunkSize);
+            if (lights.Length != ChunkSize * ChunkSize)
+                return null;
+            map._light[index] = lights;
+            var keys = new ushort[ChunkSize * ChunkSize];
+            for (var k = 0; k < keys.Length; k++)
+                keys[k] = reader.ReadUInt16();
+            map._keys[index] = keys;
         }
-        catch (Exception error) when (error is IOException or InvalidDataException or EndOfStreamException)
-        {
-            return new WorldMapState(width, height);
-        }
+        map.Revision++;
+        return map;
     }
 }

@@ -120,7 +120,7 @@ public sealed partial class GameSimulation
         if (_enemies.Count(enemy => enemy.IsAlive && enemy.Kind == kind && Vector2.Distance(enemy.Motion.Position, origin) < 24f) >= 3)
             return 0;
         _statueReady[point] = _batchBTick + 90;
-        SpawnCreature(kind, origin + new Vector2(0f, -1f));
+        SpawnCreature(kind, origin + new Vector2(0f, -1f)).FromStatue = true; // EN-6: no loot, credits, kill count or banner
         Flags.Increment("statues.pulsed");
         return 1;
     }

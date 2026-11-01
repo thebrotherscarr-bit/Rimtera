@@ -1435,30 +1435,36 @@ public sealed class MenuFlow
     }
 
     /// <summary>
-    /// Saved worlds remember which character made the save. Continue and Load use that
-    /// association; new worlds fall back to the character chosen in the menu.
+    /// PU-9 (D-43): any character may play any world, so a launch from the menu uses the character chosen in the menu, not
+    /// the one that last saved the world (only Continue, <c>--continue</c>, picks that one). The Creative split still applies
+    /// (<see cref="WorldProfile.Admits"/>, checked when the world list is built).
     /// </summary>
     private CharacterProfile ResolveCharacter(WorldProfile world)
     {
-        if (_saves.TryReadFile(world.Id, out var file) && file is not null)
-        {
-            var saved = file.CharacterId is Guid id
-                ? _profiles.Characters.FirstOrDefault(character => character.Id == id)
-                : null;
-            saved ??= _profiles.Characters.FirstOrDefault(character =>
-                !string.IsNullOrWhiteSpace(file.CharacterName) &&
-                string.Equals(character.Name, file.CharacterName, StringComparison.OrdinalIgnoreCase));
-            if (saved is not null)
-            {
-                _selectedCharacter = saved;
-                return saved;
-            }
-        }
+        var chosen = _selectedCharacter is { } selected
+            ? _profiles.Characters.FirstOrDefault(character => character.Id == selected.Id) ?? selected
+            : _profiles.Characters.FirstOrDefault();
+        chosen ??= _profiles.CreateCharacter("Adventurer");
+        _selectedCharacter = chosen;
+        return chosen;
+    }
 
-        var fallback = _selectedCharacter ?? _profiles.Characters.FirstOrDefault();
-        fallback ??= _profiles.CreateCharacter("Adventurer");
-        _selectedCharacter = fallback;
-        return fallback;
+    /// <summary>
+    /// PU-11: a world whose save could not be read. When a backup of the previous save exists the screen offers
+    /// "Load backup"; Back returns to the title.
+    /// </summary>
+    public void ShowLoadFailure(WorldProfile world, string reason, bool hasBackup, Action loadBackup)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(loadBackup);
+        var entries = new List<MenuEntry>();
+        if (hasBackup)
+            entries.Add(new MenuEntry("Load backup", loadBackup,
+                Description: "Loads the save before the last one (kept as a backup). The damaged save is kept until the next save."));
+        entries.Add(new MenuEntry("Back", Open));
+        var body = $"Could not load {world.Name}: {reason}." +
+                   (hasBackup ? " The previous save is kept as a backup." : " There is no backup of this world.");
+        ResetTo(new MenuScreen("load-failed", $"{world.Name} did not load", entries, "Enter  choose      Esc  back", body: body));
     }
 
     private void Navigate(UiState screen) => Ui.SetState(screen);

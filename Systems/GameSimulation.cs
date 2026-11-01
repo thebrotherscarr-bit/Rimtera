@@ -367,12 +367,17 @@ public sealed partial class GameSimulation : IStoryHost
     /// Put the deflated cells in <see cref="GameSnapshot.CellData"/> (raw bytes for a sidecar file) instead of the
     /// base64 <see cref="GameSnapshot.CompressedCells"/> string. Disk saves use this so large worlds stay out of JSON.
     /// </param>
-    public GameSnapshot CaptureSnapshot(bool binaryCells = false)
+    /// <param name="deferCellCompression">
+    /// With <paramref name="binaryCells"/>: take only the quick run pass now (<see cref="GameSnapshot.CellRuns"/>) and leave the
+    /// compression to the save worker (PU-12 autosaves).
+    /// </param>
+    public GameSnapshot CaptureSnapshot(bool binaryCells = false, bool deferCellCompression = false)
     {
         // Cells are saved run-length encoded and deflated; the JSON cell array stays null.
         SyncWiringToFlags();
         var compressed = binaryCells ? null : CellCodec.Encode(World.Cells);
-        var cellData = binaryCells ? CellCodec.EncodeBytes(World.Cells) : null;
+        var cellRuns = binaryCells && deferCellCompression ? CellCodec.EncodeRuns(World.Cells) : null;
+        var cellData = binaryCells && !deferCellCompression ? CellCodec.EncodeBytes(World.Cells) : null;
 
         var motion = Player.Motion;
         var colonistSnapshots = _colonists.Select((agent, index) => new ColonistSnapshot(
@@ -417,7 +422,8 @@ public sealed partial class GameSimulation : IStoryHost
             WhipMarkedEnemy: _whipMarkedEnemy,
             WhipBuffSeconds: _whipBuffSeconds,
             Run: CaptureRun(),
-            MiscEquipment: CaptureMisc(), BedSpawnX: _bedSpawn?.X, BedSpawnY: _bedSpawn?.Y) { CellData = cellData };
+            MiscEquipment: CaptureMisc(), BedSpawnX: _bedSpawn?.X, BedSpawnY: _bedSpawn?.Y,
+            Players: CapturePlacements()) { CellData = cellData, CellRuns = cellRuns };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -452,6 +458,7 @@ public sealed partial class GameSimulation : IStoryHost
     public static GameSimulation Restore(GameSnapshot snapshot, CharacterProfile? colonist = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        snapshot = SaveMigrations.Upgrade(snapshot).WithCompressedCells(); // PU-11: older formats migrate, newer ones are refused
         if (snapshot.FormatVersion != GameSnapshot.CurrentFormatVersion ||
             snapshot.WorldWidth is < 16 or > MaximumWorldWidth || snapshot.WorldHeight is < 16 or > MaximumWorldHeight ||
             (snapshot.Cells is null && snapshot.CompressedCells is null && snapshot.CellData is null) ||
@@ -499,7 +506,13 @@ public sealed partial class GameSimulation : IStoryHost
             game.AfterBulkLoad();
             game._framing.ReframeAll(game.World, game.Tiles);
         }
-        game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
+        // PU-9 (D-43): any character may play any world. A character other than the one that saved arrives with its own
+        // carried state (its character file) at its own last place here, or at the landing site the first time.
+        var savedBy = snapshot.Character?.CharacterId;
+        var arriving = colonist is not null && savedBy is { } saver && saver != Guid.Empty && saver != game.PlayerProfile.Id;
+        game.RestorePlacements(snapshot);
+        if (!arriving)
+            game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
         game._heartsBroken = snapshot.HeartsBroken ?? 0;
         game._altarsSmashed = snapshot.AltarsSmashed ?? 0;
         if (snapshot.FractureActive == true)
@@ -513,34 +526,42 @@ public sealed partial class GameSimulation : IStoryHost
         var savedSlots = snapshot.Inventory.Length < PlayerTotalSlots
             ? snapshot.Inventory.Concat(Enumerable.Repeat(default(ItemStack), PlayerTotalSlots - snapshot.Inventory.Length)).ToArray()
             : snapshot.Inventory;
-        if (!game.Player.Inventory.RestoreState(savedSlots, snapshot.SelectedInventorySlot))
-            throw new InvalidDataException("The saved inventory layout is invalid.");
-
-        if (snapshot.Equipment is not null && !game.Player.Equipment.Restore(snapshot.Equipment, game.Items))
-            throw new InvalidDataException("The saved equipment layout is invalid.");
-        game.RestoreAccessoryCalibrations(snapshot.Equipment);
-        if (snapshot.Statuses is not null && !game.Player.Statuses.Restore(snapshot.Statuses))
-            throw new InvalidDataException("The saved status layout is invalid.");
+        if (!arriving)
+        {
+            if (!game.Player.Inventory.RestoreState(savedSlots, snapshot.SelectedInventorySlot))
+                throw new InvalidDataException("The saved inventory layout is invalid.");
+            if (snapshot.Equipment is not null && !game.Player.Equipment.Restore(snapshot.Equipment, game.Items))
+                throw new InvalidDataException("The saved equipment layout is invalid.");
+            game.RestoreAccessoryCalibrations(snapshot.Equipment);
+            if (snapshot.Statuses is not null && !game.Player.Statuses.Restore(snapshot.Statuses))
+                throw new InvalidDataException("The saved status layout is invalid.");
+        }
         game.RestoreContent(snapshot.Content);
         game.RestoreEntities(snapshot);
         game.RestoreRun(snapshot.Run);
-        game.RestoreMisc(snapshot.MiscEquipment);
-        if (snapshot is { BedSpawnX: { } bedX, BedSpawnY: { } bedY } && game.World.Contains(bedX, bedY))
-            game._bedSpawn = new GridPoint(bedX, bedY);
+        if (!arriving)
+        {
+            game.RestoreMisc(snapshot.MiscEquipment);
+            if (snapshot is { BedSpawnX: { } bedX, BedSpawnY: { } bedY } && game.World.Contains(bedX, bedY))
+                game._bedSpawn = new GridPoint(bedX, bedY);
+        }
         game.LoadWiringFromFlags();
 
         var motion = game.Player.Motion;
-        motion.Position = new Vector2(
-            Math.Clamp(snapshot.PlayerX, 0f, game.World.Width - motion.Size.X),
-            Math.Clamp(snapshot.PlayerY, 0f, game.World.Height - motion.Size.Y));
-        motion.Velocity = new Vector2(snapshot.VelocityX, snapshot.VelocityY);
-        motion.Facing = snapshot.Facing < 0 ? -1 : 1;
-        game.Player.RestorePersistentState(
-            snapshot.HitPoints,
-            snapshot.FoodReserve,
-            snapshot.RestReserve,
-            snapshot.JoyReserve ?? 0.70f,
-            snapshot.ComfortReserve ?? 0.70f);
+        if (!arriving)
+        {
+            motion.Position = new Vector2(
+                Math.Clamp(snapshot.PlayerX, 0f, game.World.Width - motion.Size.X),
+                Math.Clamp(snapshot.PlayerY, 0f, game.World.Height - motion.Size.Y));
+            motion.Velocity = new Vector2(snapshot.VelocityX, snapshot.VelocityY);
+            motion.Facing = snapshot.Facing < 0 ? -1 : 1;
+            game.Player.RestorePersistentState(
+                snapshot.HitPoints,
+                snapshot.FoodReserve,
+                snapshot.RestReserve,
+                snapshot.JoyReserve ?? 0.70f,
+                snapshot.ComfortReserve ?? 0.70f);
+        }
         // Saves from before crew arrived through housing carry the two crew members a world used to start with.
         var savedCrew = snapshot.Colonists?.Length ?? 0;
         var joined = snapshot.Storyteller?.WanderersJoined ?? 0;
@@ -584,7 +605,7 @@ public sealed partial class GameSimulation : IStoryHost
                     agent.Carried = colonistSnapshot.Carried;
             }
         }
-        if (snapshot.PlayerState is { } playerState)
+        if (!arriving && snapshot.PlayerState is { } playerState)
             RestorePawn(game.Player, playerState);
         if (snapshot.ColonistStates is not null)
         {
@@ -624,7 +645,9 @@ public sealed partial class GameSimulation : IStoryHost
         game._temperature.OutdoorOffset = game._storyteller.TemperatureOffset;
         game.PlayerAmbientTemperature = game.AmbientAt(game.PlayerCenter, game.CurrentBiome);
         game.PlayerComfort = TemperatureModel.Evaluate(game.PlayerAmbientTemperature, game.Player.Stats.ImmunityTags);
-        game.RestoreBatchB(snapshot);
+        game.RestoreBatchB(snapshot, arriving);
+        if (arriving)
+            game.PlaceArrivingCharacter();
         // People grew to Terraria's body size (HumanoidBody); an older save can leave feet in the ground, so lift them clear.
         foreach (var body in game.TownNpcs.Select(npc => npc.Motion).Concat(game._colonists.Select(agent => agent.Motion)).Prepend(game.Player.Motion))
             game.LiftClear(body);
@@ -1188,13 +1211,7 @@ public sealed partial class GameSimulation : IStoryHost
         }
         CutPlantsAround(target); // flora parity: swings cut grass plants, vines, herbs and pots
 
-        if (_random.NextDouble() > Player.ColonistStats.MeleeHitChance)
-        {
-            PostMessage($"The swing goes wide ({Player.ColonistStats.MeleeHitChance:P0} hit chance).");
-            SetPlayerCooldown(item.UseCooldownTicks);
-            return;
-        }
-
+        // D-36 (IC-4): the player's melee never misses; the colonist backstory's hit chance applies to colonists only.
         var targetPosition = new Vector2(target.X + 0.5f, target.Y + 0.5f);
         var enemy = _enemies
             .Where(candidate => candidate.IsAlive)
@@ -1252,9 +1269,9 @@ public sealed partial class GameSimulation : IStoryHost
             CritChanceFor(item, calibration), DamageClass.Ranged, item.PurifyRadius);
         if (item.Tier <= 0)
         {
-            // The colony-era energy guns keep their aim wobble: damaged eyes widen it on top of the shooter's accuracy.
+            // The colony-era energy guns wobble only with damaged eyes; D-36: the backstory's accuracy does not apply to the player.
             var sight = Player.Health.Sight;
-            var spread = (1f - Player.ColonistStats.ShootingAccuracy * sight) * 0.16f + (1f - sight) * 0.2f;
+            var spread = (1f - sight) * 0.16f + (1f - sight) * 0.2f;
             var angle = ((float)_random.NextDouble() * 2f - 1f) * spread;
             var (cos, sin) = (MathF.Cos(angle), MathF.Sin(angle));
             for (var i = before; i < _projectiles.Count; i++)
@@ -1738,6 +1755,8 @@ public sealed partial class GameSimulation : IStoryHost
         var defeated = _enemies.Where(enemy => !enemy.IsAlive).ToArray();
         foreach (var enemy in defeated)
         {
+            if (enemy.FromStatue && RemoveStatueCreature(enemy)) // EN-6: statue spawns give nothing
+                continue;
             foreach (var drop in BossDropsOrBag(enemy))
                 DropLoot(enemy, drop.Item, drop.Quantity);
             DropSustainLoot(enemy); // boss potions, hearts and charge orbs (0.1.9 C2/C3; GroundItems.cs)

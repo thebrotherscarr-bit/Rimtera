@@ -32,7 +32,8 @@ public sealed record CharacterFileData(
     PermanentUpgrade PermanentUpgrades = PermanentUpgrade.None,
     bool CreativeKitGranted = false,
     int StarterKitVersion = 0,
-    Dictionary<int, int>? Research = null)
+    Dictionary<int, int>? Research = null,
+    ItemId?[]? MiscEquipment = null)
 {
     public const int CurrentFormatVersion = 1;
 }
@@ -67,24 +68,31 @@ public sealed class CharacterFileStore
         if (data.CharacterId == Guid.Empty)
             throw new ArgumentException("A character id is required.", nameof(data));
         System.IO.Directory.CreateDirectory(Directory);
-        var path = PathFor(data.CharacterId);
-        var temporary = path + ".tmp";
-        File.WriteAllText(temporary, JsonSerializer.Serialize(data, Options));
-        File.Move(temporary, path, overwrite: true);
+        // PU-11: atomic write; the previous file is kept as <id>.rchar.bak.
+        lock (WriteGate)
+            SafeFile.WriteAllText(PathFor(data.CharacterId), JsonSerializer.Serialize(data, Options));
     }
 
-    /// <summary>The saved character, or null when missing, unreadable or of an unknown version.</summary>
-    public CharacterFileData? TryLoad(Guid characterId)
+    private static readonly object WriteGate = new();
+
+    /// <summary>
+    /// The saved character, or null when missing, unreadable or of a newer version. A damaged file falls back to its backup.
+    /// </summary>
+    public CharacterFileData? TryLoad(Guid characterId) => TryLoad(characterId, out _);
+
+    public CharacterFileData? TryLoad(Guid characterId, out bool fromBackup)
     {
+        fromBackup = false;
         try
         {
-            var path = PathFor(characterId);
-            if (!File.Exists(path))
-                return null;
-            var data = JsonSerializer.Deserialize<CharacterFileData>(File.ReadAllText(path), Options);
-            return data is { FormatVersion: CharacterFileData.CurrentFormatVersion, Inventory: not null } && data.CharacterId == characterId
-                ? data
-                : null;
+            return SafeFile.ReadWithBackup(PathFor(characterId), path =>
+            {
+                var data = JsonSerializer.Deserialize<CharacterFileData>(File.ReadAllText(path), Options);
+                return data is { FormatVersion: >= 1 and <= CharacterFileData.CurrentFormatVersion, Inventory: not null } &&
+                       data.CharacterId == characterId
+                    ? data
+                    : null;
+            }, out fromBackup);
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or NotSupportedException)
         {
@@ -100,7 +108,10 @@ public sealed class CharacterFileStore
             return false;
         var archive = Path.Combine(Directory, "deleted");
         System.IO.Directory.CreateDirectory(archive);
-        File.Move(path, Path.Combine(archive, $"{characterId:N}-{DateTime.UtcNow:yyyyMMddHHmmss}{Extension}"), overwrite: true);
+        var archived = Path.Combine(archive, $"{characterId:N}-{DateTime.UtcNow:yyyyMMddHHmmss}{Extension}");
+        File.Move(path, archived, overwrite: true);
+        if (File.Exists(SafeFile.BackupPath(path)))
+            File.Move(SafeFile.BackupPath(path), SafeFile.BackupPath(archived), overwrite: true);
         return true;
     }
 }
@@ -131,7 +142,7 @@ public sealed partial class GameSimulation
             _lightPet?.SourceItem,
             ActiveMount,
             Achievements.UnlockedIds.OrderBy(id => id).ToArray(),
-            LifebloomPodsUsed, AuxSocketUsed, PermanentUpgrades, CreativeKitGranted, StarterKits.Version, CaptureResearch());
+            LifebloomPodsUsed, AuxSocketUsed, PermanentUpgrades, CreativeKitGranted, StarterKits.Version, CaptureResearch(), CaptureMisc());
     }
 
     /// <summary>Writes the character file to <paramref name="store"/> (default: <see cref="CharacterFileStore.Active"/>). False when there is no store.</summary>
@@ -207,6 +218,9 @@ public sealed partial class GameSimulation
         }
         if (!inventoryAlreadyRestored && data.Equipment is { } equipment && Player.Equipment.Restore(equipment, Items))
             RestoreAccessoryCalibrations(equipment);
+        // Misc slots (pet, light, mount, hook, cart) travel with the character since 0.2.2; older files leave them as loaded.
+        if (data.MiscEquipment is { } misc)
+            RestoreMisc(misc);
         if (data.Loadouts is { } loadouts)
             for (var index = 0; index < LoadoutCount && index < loadouts.Length; index++)
                 _loadouts[index] = loadouts[index] is { } set && new EquipmentLoadout().Restore(set, Items) ? set : null;

@@ -1869,8 +1869,8 @@ public sealed class Inventory
 
     /// <summary>
     /// Puts the cursor stack back into the bag, merging into matching stacks first and then the first empty slot, as
-    /// Terraria's <c>GetOrDropItem(mouseItem, ReturnItemFromSlot)</c> does. Returns what did not fit (the caller drops it)
-    /// and leaves the cursor empty.
+    /// Terraria's <c>GetOrDropItem(mouseItem, ReturnItemFromSlot)</c> does. A favourite stack stays a favourite wherever it
+    /// lands (X-CP-6). Returns what did not fit (the caller drops it) and leaves the cursor empty.
     /// </summary>
     public ItemStack ReturnCursor()
     {
@@ -1905,7 +1905,8 @@ public sealed class Inventory
             if (current.IsEmpty || current.ItemId != stack.ItemId || current.Calibration != stack.Calibration || current.Count >= maxStack)
                 continue;
             var moved = Math.Min(remaining, maxStack - current.Count);
-            slots[i] = current with { Count = current.Count + moved };
+            // X-CP-6: a favourite stack returned from the cursor keeps the flag on the stack it merges into.
+            slots[i] = current with { Count = current.Count + moved, Favorite = current.Favorite || stack.Favorite };
             remaining -= moved;
         }
         foreach (var i in order)
