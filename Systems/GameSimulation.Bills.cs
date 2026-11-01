@@ -25,12 +25,15 @@ public sealed partial class GameSimulation
     private readonly Dictionary<GridPoint, List<StationBill>> _bills = new();
 
     /// <summary>
-    /// Who works a station's bills (0.2.5): chem labs brew (Brew crew, on Medical), every other station is Operate crew's
-    /// (on Crafting). Residents work any station.
+    /// Who works a station's bills (0.2.5): chem labs brew (Brew crew, on Medical), cooking stations cook (Cook crew, on
+    /// Cooking, 0.2.6), every other station is Operate crew's (on Crafting). Residents work any station.
     /// </summary>
-    public WorkType BillWork(GridPoint station) => StationAt(station) is CraftingStationId.ChemLab or CraftingStationId.BioLab
-        ? WorkType.Brew
-        : WorkType.Operate;
+    public WorkType BillWork(GridPoint station) => StationAt(station) switch
+    {
+        CraftingStationId.ChemLab or CraftingStationId.BioLab => WorkType.Brew,
+        CraftingStationId.CookingStation => WorkType.Cook, // 0.2.6
+        _ => WorkType.Operate
+    };
 
     /// <summary>Whether a tile is a crafting station (bills live on station tiles).</summary>
     public bool IsStation(GridPoint cell) =>

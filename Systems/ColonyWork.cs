@@ -37,8 +37,8 @@ public static class WorkCatalog
         new(WorkType.Operate, "Operate", ColonistSkill.Crafting, true, "Work station bills: fetch ingredients, craft, store the product."),
         new(WorkType.Farm, "Farm", ColonistSkill.Plants, true, "Plant and harvest grow zones; store the herbs, keep seeds to replant."),
         new(WorkType.Brew, "Brew", ColonistSkill.Medical, true, "Work bills at chem labs: brew potions from herbs."),
-        new(WorkType.Cook, "Cook", ColonistSkill.Cooking, false, "Cook meals from bills (coming)."),
-        new(WorkType.Fish, "Fish", ColonistSkill.Animals, false, "Fish at a fishing spot (coming)."),
+        new(WorkType.Cook, "Cook", ColonistSkill.Cooking, true, "Work bills at cooking stations: meals for the crew."),
+        new(WorkType.Fish, "Fish", ColonistSkill.Animals, true, "Fish open water near home; store the catch."),
         new(WorkType.Build, "Build", ColonistSkill.Construction, false, "Build from placed blueprints (coming)."),
         new(WorkType.Research, "Research", ColonistSkill.Intellectual, false, "Unlock recipes and ship parts (coming)."),
         new(WorkType.Trade, "Trade", ColonistSkill.Social, false, "Better prices with traders (coming).")

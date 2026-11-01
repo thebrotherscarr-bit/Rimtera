@@ -115,8 +115,8 @@ What each system needs, what exists, and what is missing. Sizes are rough: S (da
 | 2 | **Colony work** | Crew survival behaviour (eat, rest, mine, idle: `AI/SurvivalBehavior.cs`), skills and passions, work-speed stats | Work types and priorities, job givers per work type (the think-tree pattern in `docs/RESEARCH.md`), a work tab | L |
 | 3 | **Station bills** | Done in 0.2.3: a bill queue per station (make N, keep N, forever) in the hub's Bills tab, worked by Operate colonists who fetch from and store to chests near the station | Town NPCs working stations; bills that take ingredients from the player | M |
 | 4 | **Farming and brewing** | Done in 0.2.5: grow zones planted and harvested by Farm crew; brew bills at chem labs worked by Brew crew | Crops beyond herbs; planters as zone soil only | M |
-| 5 | **Cooking and food** | Food items and needs | Meals with skill-based quality, cook bills, crew eating from storage | M |
-| 6 | **Fishing by crew** | Player fishing, quest fish | A fishing spot job for crew | S |
+| 5 | **Cooking and food** | Done in 0.2.6: cook bills worked by Cook crew; crew eat from storage, most filling first | Meal quality from Cooking skill | M |
+| 6 | **Fishing by crew** | Done in 0.2.6: Fish crew fish open water near home and store the catch | Crew using rods and bait | S |
 | 7 | **Hauling and storage** | Done in 0.2.4: tagged chests (eight item categories); crew and residents haul drops and products to the chest that takes them | Storage zones on the floor; priorities between tagged chests | M |
 | 8 | **Outposts and pylons** | Pylons need two housed residents nearby; recall items | Every pylon needs a staffed outpost (decided); outposts as named bases with their own crew and storage; raids can hit an outpost while you are away; recall items and potions to get home | M |
 | 9 | **Permadeath** | Town NPCs respawn on a timer; crew can die | Turn off the respawn timer; graves; death mood thoughts; replacements only from arrivals | S |
