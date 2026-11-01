@@ -137,7 +137,7 @@ tools/comfy-app/standalone-env/python.exe tools/comfy/app_flows.py
 
 Each flow has a "How to use" note. The prompts are filled in with real examples from the overnight runs, and the flows open with sample inputs (copied by `app_flows.py`), so they run as soon as they open. In the redraw flows, the name in the prompt decides what the sprite shows; the old sprite only lends its design where it fits that name.
 
-The UI flows take their look from the original `sheet_00a_core` sheet (riveted gunmetal with cyan accents). The game still draws its menus, panels, slots and bars in code, so UI art made here is not used until the renderer is changed to draw it.
+The UI flows take their look from the original boss sheet, `sheet_00c_bosses` (riveted gunmetal panels with amber-gold headers and title). The game still draws its menus, panels, slots and bars in code, so UI art made here is not used until the renderer is changed to draw it.
 
 The overnight runs are not flows: on this card ComfyUI has to restart between jobs (the second job on one server slows from 12 s to over 180 s per step), and a flow cannot restart its own server. They stay one-click launchers.
 
