@@ -5,8 +5,11 @@ using Rimtera.World;
 namespace Rimtera.UI;
 
 /// <summary>
-/// Watches the simulation once per frame and turns changes into sound: hits, deaths, hurt, landing,
-/// tool and weapon use, pickups, crafting, lightning, bites, boss arrivals and events starting.
+/// Plays the simulation once per frame. It drains the simulation's sound events (PE-4: digs, breaks, walls, Tech and
+/// Command uses, crafts, coins, drinks, food, doors, containers, splashes, explosions, the death, double jumps, pickups),
+/// its death records (PE-5: only kills cry out, despawns are silent, catches are a soft grab) and its hit records (PE-14:
+/// crits ring, damage over time is silent), and still infers hits, hurt, weapon and tool swings, lightning, bites, boss
+/// arrivals and events from what changed. World sounds pan and fall off with distance, and each kind is rate limited.
 /// Also chooses the music theme and tension from biome, depth, bosses and events.
 /// </summary>
 internal sealed class AudioDirector
@@ -15,7 +18,6 @@ internal sealed class AudioDirector
     private GameSimulation? _game;
     private readonly Dictionary<long, float> _enemyHp = new();
     private float _playerHp;
-    private bool _grounded = true;
     private int _cooldown;
     private int _itemTotal;
     private int _lightningSeen;
@@ -25,6 +27,17 @@ internal sealed class AudioDirector
     private static readonly Dictionary<WorldEventKind, WorldEventSpec> EventSpecs = new WorldEventSystem(1).Specs.ToDictionary(spec => spec.Kind);
     private static readonly string[] SpotLoops = ["amb_waterfall", "amb_uranium_flow", "amb_machinery", "amb_fire"];
     private bool _biting;
+    private float _playerImmunity;
+    private long _soundCursor;
+    private long _deathCursor;
+    private long _hitCursor;
+    private readonly List<SoundEvent> _sounds = new();
+    private readonly List<DeathRecord> _deaths = new();
+    private readonly List<HitRecord> _hits = new();
+    private readonly HashSet<long> _struck = new();
+    private readonly HashSet<long> _critical = new();
+    private readonly SoundRateLimiter _limiter = new();
+    private readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
 
     public AudioDirector(AudioEngine audio) => _audio = audio;
 
@@ -40,14 +53,40 @@ internal sealed class AudioDirector
             _game = game;
             _enemyHp.Clear();
             _playerHp = game.Player.HitPoints;
+            _playerImmunity = game.Player.ImmunitySeconds;
             _itemTotal = TotalItems(game);
             _lightningSeen = game.LightningStrikes.Count;
+            // Start the readers at the end of the logs: a loaded or new world never replays its past.
+            _soundCursor = game.SoundEvents.Next;
+            _deathCursor = game.RecentDeaths.Next;
+            _hitCursor = game.HitRecords.Next;
+            _limiter.Reset();
         }
 
         var player = game.Player;
         var center = player.Motion.Position;
         float Pan(System.Numerics.Vector2 at) => Math.Clamp((at.X - center.X) / 30f, -1f, 1f);
         float Near(System.Numerics.Vector2 at) => Math.Clamp(1f - System.Numerics.Vector2.Distance(at, center) / 45f, 0f, 1f);
+        var now = _clock.Elapsed.TotalSeconds;
+        void PlayAt(string key, string cue, System.Numerics.Vector2 at, float volume = 1f)
+        {
+            if (_limiter.Allow(key, now))
+                _audio.Play(cue, volume * (0.25f + 0.75f * Near(at)), Pan(at));
+        }
+
+        // Direct hits this frame (with their crit flag), read before the hit points so damage over time stays quiet.
+        _hits.Clear();
+        game.HitRecords.Drain(ref _hitCursor, _hits);
+        _struck.Clear();
+        _critical.Clear();
+        foreach (var hit in _hits)
+        {
+            if (hit.Kind != HitKind.Direct || hit.TargetId < 0)
+                continue;
+            _struck.Add(hit.TargetId);
+            if (hit.Critical)
+                _critical.Add(hit.TargetId);
+        }
 
         var seen = new HashSet<long>();
         foreach (var enemy in game.Enemies)
@@ -55,44 +94,66 @@ internal sealed class AudioDirector
             seen.Add(enemy.Id);
             if (_enemyHp.TryGetValue(enemy.Id, out var hp) && enemy.HitPoints < hp - 0.01f)
             {
-                // The weapon lands on the creature's body (impact_metal, impact_slime …), then the creature answers.
-                var volume = 0.8f * Near(enemy.Motion.Position) + 0.2f;
-                var pan = Pan(enemy.Motion.Position);
-                _audio.Play("impact_" + SoundCatalog.CreatureMaterial(enemy.Archetype), volume * 0.8f, pan);
-                var voice = enemy.IsBoss ? SoundCatalog.BossCue(enemy.Kind, enemy.IsAlive ? "hurt" : "death")
-                    : SoundCatalog.CreatureVoice(enemy.Archetype) + (enemy.IsAlive ? "_hurt" : "_death");
-                _audio.Play(voice, volume, pan);
+                var (kind, critical) = CombatTextRules.ClassifyCreatureLoss(_struck.Contains(enemy.Id), _critical.Contains(enemy.Id),
+                    enemy.Afflictions.Count > 0);
+                // Damage over time (poison, burning) ticks silently, as in Terraria.
+                if (kind == HitKind.Direct && _limiter.Allow("impact", now))
+                {
+                    // The weapon lands on the creature's body (impact_metal, impact_slime …), then the creature answers.
+                    var volume = 0.8f * Near(enemy.Motion.Position) + 0.2f;
+                    var pan = Pan(enemy.Motion.Position);
+                    _audio.Play("impact_" + SoundCatalog.CreatureMaterial(enemy.Archetype), volume * 0.8f, pan);
+                    if (critical)
+                        _audio.Play("impact_crit", volume * 0.7f, pan);
+                    // The death cry comes from the death record (real kills only); a living creature answers the hit.
+                    if (enemy.IsAlive)
+                        _audio.Play(enemy.IsBoss ? SoundCatalog.BossCue(enemy.Kind, "hurt") : SoundCatalog.CreatureVoice(enemy.Archetype) + "_hurt",
+                            volume, pan);
+                }
             }
             _enemyHp[enemy.Id] = enemy.IsAlive ? enemy.HitPoints : 0f;
         }
         foreach (var id in _enemyHp.Keys.Where(id => !seen.Contains(id)).ToArray())
-        {
-            // A creature removed before its fatal hit was seen (one-shot kills) still gets the generic death.
-            if (_enemyHp[id] > 0f)
-                _audio.Play("death", 0.6f);
             _enemyHp.Remove(id);
+
+        // PE-5: only creatures that died cry out. Despawns are silent; a bug-net catch is a soft grab.
+        _deaths.Clear();
+        game.RecentDeaths.Drain(ref _deathCursor, _deaths);
+        foreach (var death in _deaths)
+        {
+            if (death.Reason == DeathReason.Caught)
+                PlayAt("catch", "catch_critter", death.Position, 0.7f);
+            else if (death.Reason == DeathReason.Died && EnemyArchetypes.Contains(death.Kind))
+            {
+                var archetype = EnemyArchetypes.Get(death.Kind);
+                PlayAt("death", archetype.IsBoss ? SoundCatalog.BossCue(death.Kind, "death") : SoundCatalog.CreatureVoice(archetype) + "_death",
+                    death.Position);
+            }
         }
 
-        if (player.HitPoints < _playerHp - 0.5f)
+        // The player's hurt grunt is for hits (they start hit immunity); poison and burning tick quietly.
+        if (player.HitPoints < _playerHp - 0.5f &&
+            CombatTextRules.ClassifyPlayerLoss(player.ImmunitySeconds > _playerImmunity + 0.001f, game.PlayerHasDamagingStatus,
+                game.PlayerInHarmfulLiquid) == HitKind.Direct)
             _audio.Play("hurt");
         _playerHp = player.HitPoints;
-
-        if (player.Motion.Grounded && !_grounded)
-            _audio.Play("land", 0.6f);
-        else if (!player.Motion.Grounded && _grounded && player.Motion.Velocity.Y < -1f)
-            _audio.Play("jump", 0.7f);
-        _grounded = player.Motion.Grounded;
+        _playerImmunity = player.ImmunitySeconds;
+        // D-59: a plain jump or landing makes no sound (a double jump is a simulation event, below).
 
         if (player.ActionCooldownTicks > _cooldown)
         {
             var item = player.Inventory.SelectedItem;
-            var sound = item is null ? "" : SoundCatalog.WeaponCue(item);
-            if (sound.Length == 0 && item is not null)
+            // Tech and Command uses are simulation events (they sound only when the charge is spent or the drone deploys);
+            // beams keep the per-use cue. Walls, food and potions sound from their events too.
+            var fromEvents = item is { UseKind: ItemUseKind.Tech or ItemUseKind.Command } && item.Style != WeaponStyle.Beam ||
+                             item?.UseKind is ItemUseKind.PlaceWall or ItemUseKind.Food ||
+                             item is { UseKind: ItemUseKind.Consumable } && (item.HealAmount > 0f || item.ChargeRestore > 0f || item.GrantsStatus is not null);
+            var sound = item is null || fromEvents ? "" : SoundCatalog.WeaponCue(item);
+            if (sound.Length == 0 && item is not null && !fromEvents)
                 sound = item.UseKind switch
                 {
                     ItemUseKind.Melee => "swing",
                     ItemUseKind.Ranged or ItemUseKind.Tech => item.EffectiveClass == DamageClass.Tech ? "zap" : "shoot",
-                    ItemUseKind.Command => "use_summon_staff",
                     _ => SoundCatalog.ToolCue(item.UseKind)
                 };
             if (sound.Length > 0)
@@ -100,8 +161,22 @@ internal sealed class AudioDirector
         }
         _cooldown = player.ActionCooldownTicks;
 
+        // PE-4: everything else the simulation heard, at its place in the world.
+        _sounds.Clear();
+        game.SoundEvents.Drain(ref _soundCursor, _sounds);
+        var gained = false;
+        foreach (var sound in _sounds)
+        {
+            gained |= sound.Kind is SoundEventKind.Pickup or SoundEventKind.Craft or SoundEventKind.Coin or SoundEventKind.Catch;
+            if (CueFor(game, sound) is { } cue)
+                PlayAt(cue.Key, cue.Cue, sound.Position, cue.Volume);
+            if (sound.Kind == SoundEventKind.PlayerDeath)
+                _audio.Play("death_sting", 0.9f);
+        }
+
+        // Items that arrive without a simulation event (chest loot, fishing catches) still pop; crafts never do.
         var total = TotalItems(game);
-        if (total > _itemTotal)
+        if (total > _itemTotal && !gained)
             _audio.Play("pickup", 0.6f);
         _itemTotal = total;
 
@@ -146,6 +221,72 @@ internal sealed class AudioDirector
             UpdateSpots(game);
         var tension = bossAlive ? 1f : events > 0 ? 0.7f : Math.Min(0.5f, game.Enemies.Count(enemy => enemy.IsAlive && !enemy.IsPassive) * 0.08f);
         _audio.SetMusicMood(bossAlive ? "boss" : SynthTheme(place), tension, night);
+    }
+
+    /// <summary>
+    /// The cue for a simulation sound event (PE-4), with its rate-limit key and volume: material break and dig cues,
+    /// wall placing, Tech and Command uses, station crafts, shop coins, drinks, food, doors, containers, splashes by
+    /// liquid, explosions, the death, the double jump and pickups. Null when the event has no cue of its own.
+    /// </summary>
+    internal static (string Key, string Cue, float Volume)? CueFor(GameSimulation game, SoundEvent sound)
+    {
+        // The simulation's materials as catalog tile classes (plant sounds organic); anything else plays the plain cue.
+        static string? Material(string variant) => variant switch
+        {
+            "plant" => "organic",
+            "stone" or "soil" or "glass" or "metal" => variant,
+            _ => null
+        };
+        switch (sound.Kind)
+        {
+            case SoundEventKind.Break:
+                return ("break", sound.Variant == "wall" || Material(sound.Variant) is not { } broke ? "break" : $"break_{broke}", 0.9f);
+            case SoundEventKind.Dig:
+                return ("dig", sound.Variant == "wall" ? "tool_hammer_wall" : Material(sound.Variant) is { } struck ? $"dig_{struck}" : "dig", 0.7f);
+            case SoundEventKind.Place:
+                return ("place", "place_wall", 0.6f);
+            case SoundEventKind.Use:
+            {
+                var item = game.Items.Contains((ItemId)sound.Detail) ? game.Items[(ItemId)sound.Detail] : null;
+                var styled = item is null ? "" : SoundCatalog.WeaponCue(item);
+                return ("use", styled.Length > 0 ? styled : sound.Variant == "command" ? "use_summon_staff" : "zap", 0.8f);
+            }
+            case SoundEventKind.Craft:
+                return ("craft", sound.Variant is "smelt" or "forge" or "brew" or "weave" ? $"craft_{sound.Variant}" : "craft", 0.8f);
+            case SoundEventKind.Coin:
+                return ("coin", sound.Variant == "sell" ? "shop_sell" : "shop_buy", 0.8f);
+            case SoundEventKind.Drink:
+                return ("drink", "potion", 0.8f);
+            case SoundEventKind.Eat:
+                return ("eat", "eat", 0.8f);
+            case SoundEventKind.DoorOpen:
+                return ("door", "door_open", 0.8f);
+            case SoundEventKind.DoorClose:
+                return ("door", "door_close", 0.8f);
+            case SoundEventKind.ChestOpen:
+                return ("chest", "chest_open", 0.8f);
+            case SoundEventKind.ChestClose:
+                return ("chest", "chest_close", 0.7f);
+            case SoundEventKind.Splash:
+                return ("splash", sound.Variant switch
+                {
+                    "water" => "splash_water",
+                    "lava" => "splash_uranium",
+                    "acid" => "splash_acid",
+                    "fuel" => "splash_fuel",
+                    _ => "splash"
+                }, sound.Detail == 1 ? 0.8f : 0.5f);
+            case SoundEventKind.Explosion:
+                return ("explosion", "explosion", 1f);
+            case SoundEventKind.PlayerDeath:
+                return ("player_death", "death", 1f);
+            case SoundEventKind.DoubleJump:
+                return ("double_jump", "jump_double", 0.7f);
+            case SoundEventKind.Pickup:
+                return ("pickup", sound.Variant == "coin" ? "pickup_coin" : "pickup", 0.6f);
+            default:
+                return null; // a catch sounds from its death record (DeathReason.Caught)
+        }
     }
 
     /// <summary>

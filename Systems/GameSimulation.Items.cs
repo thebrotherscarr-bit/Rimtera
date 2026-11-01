@@ -128,6 +128,7 @@ public sealed partial class GameSimulation
         {
             if (!Player.Inventory.TryConsume(item.Id))
                 return true;
+            SoundEvents.Emit(SoundEventKind.Drink, string.Empty, PlayerCenter, (int)item.Id);
             if (item.HealAmount > 0f)
                 Player.Heal(item.HealAmount);
             if (item.ChargeRestore > 0f)
@@ -156,6 +157,7 @@ public sealed partial class GameSimulation
             return;
         }
         Player.Inventory.TryConsume(item.Id);
+        SoundEvents.Emit(SoundEventKind.Place, "wall", CellCenter(point), item.PlacedWall);
         SetPlayerCooldown(CombatTuning.PlacementTicks(WallPlaceTicks, GearTagValue("build")));
     }
 
@@ -186,6 +188,7 @@ public sealed partial class GameSimulation
         }
         var hit = toolPower > 0 ? CombatTuning.WallHammerDamage(toolPower) : CombatTuning.TileBreakDamage;
         var total = _hitLedger.Add(point, HitLedger.Layer.Wall, wall, hit);
+        SoundEvents.Emit(total < CombatTuning.TileBreakDamage ? SoundEventKind.Dig : SoundEventKind.Break, "wall", CellCenter(point), wall);
         AgeHitLedger();
         if (total < CombatTuning.TileBreakDamage)
         {
@@ -251,10 +254,12 @@ public sealed partial class GameSimulation
         if (!_hitLedger.Contains(point, HitLedger.Layer.Tile) && TileHitDamage(point) is var earlier and > 0)
             _hitLedger.Add(point, HitLedger.Layer.Tile, (ushort)tile, earlier); // damage from other sources carries over
         var total = _hitLedger.Add(point, HitLedger.Layer.Tile, (ushort)tile, damage);
+        EmitDig(point, tile); // PE-4/PE-7: every damaging tool hit digs and kicks up dust (Systems/SoundEvents.cs)
         if (total >= CombatTuning.TileBreakDamage)
         {
             _hitLedger.Clear(point, HitLedger.Layer.Tile);
             var broke = World.TryDamageTile(point, byte.MaxValue, Tiles, out brokenTile);
+            if (broke) EmitBreak(point, brokenTile);
             AgeHitLedger();
             return broke;
         }
@@ -442,6 +447,8 @@ public sealed partial class GameSimulation
             return;
         }
         _enemies.Remove(critter);
+        RecordDeath(critter, DeathReason.Caught); // PE-5: a catch is not a kill
+        SoundEvents.Emit(SoundEventKind.Catch, string.Empty, critter.Motion.Position + critter.Motion.Size / 2f, (int)critter.Kind);
         PostMessage($"Caught a {critter.DisplayName}!");
     }
 
@@ -624,6 +631,7 @@ public sealed partial class GameSimulation
                     return Report(new InteractionResult(WorldInteractionKind.ContainerLocked, "The vault chest is locked."));
             }
             var container = GetContainer(target)!;
+            SoundEvents.Emit(SoundEventKind.ChestOpen, string.Empty, CellCenter(target), (int)tile);
             return Report(new InteractionResult(WorldInteractionKind.ContainerOpened, $"Opened the {Tiles[tile].Name.ToLowerInvariant()}.",
                 container, Cell: target));
         }
@@ -724,6 +732,7 @@ public sealed partial class GameSimulation
         }
         foreach (var door in cells)
             World.SetTile(door, toggled);
+        SoundEvents.Emit(Tiles[toggled].IsSolid ? SoundEventKind.DoorClose : SoundEventKind.DoorOpen, string.Empty, CellCenter(cell), (int)toggled);
         _framing.ReframeRegion(World, Tiles, TileFramingSystem.GetDirtyRegion(World, cells));
         return true;
 

@@ -1111,6 +1111,7 @@ public sealed partial class GameSimulation
     /// </summary>
     public int Explode(Vector2 center, float radius, int power, float damage)
     {
+        SoundEvents.Emit(SoundEventKind.Explosion, string.Empty, center, (int)MathF.Round(radius));
         var broken = 0;
         var r = (int)MathF.Ceiling(radius);
         var cx = (int)MathF.Floor(center.X);
@@ -1182,6 +1183,7 @@ public sealed partial class GameSimulation
         _guardianAbsence += elapsed;
         if (_guardianAbsence >= 3f || !guarded)
         {
+            RecordDeath(guardian, DeathReason.Despawned);
             _enemies.Remove(guardian);
             _guardianAbsence = 0f;
             PostMessage("The Dungeon Guardian withdraws into the dark.");

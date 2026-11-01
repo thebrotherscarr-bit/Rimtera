@@ -653,6 +653,7 @@ public sealed partial class GameSimulation : IStoryHost
         if (!float.IsFinite(deltaSeconds) || deltaSeconds <= 0f || deltaSeconds > 0.25f)
             throw new ArgumentOutOfRangeException(nameof(deltaSeconds), "Simulation steps must be in (0, 0.25] seconds.");
         Player.SyncHealthDeath();
+        ObserveFeedback(); // SoundEvents: death, double jump and splash transitions since the last tick (Systems/SoundEvents.cs)
         if (IsOver)
         {
             UpdateWhileDead(deltaSeconds);
@@ -810,6 +811,7 @@ public sealed partial class GameSimulation : IStoryHost
     public CraftingResult TryCraft(string recipeId)
     {
         var result = Crafting.TryCraft(recipeId, Player.Inventory, CreateCraftingEnvironment(), RollCalibration);
+        if (result.Success) SoundEvents.Emit(SoundEventKind.Craft, SoundEventQueue.CraftVariant(Crafting.FindById(recipeId)), PlayerCenter, (int)(result.Output ?? 0));
         PostMessage(result.Message);
         return result;
     }
@@ -1277,6 +1279,7 @@ public sealed partial class GameSimulation : IStoryHost
             return;
         }
         Player.Needs.Restore(NeedKind.Food, food.FoodRestore);
+        SoundEvents.Emit(SoundEventKind.Eat, string.Empty, PlayerCenter, (int)food.Id);
         GearOnAte(food);
         if (food.Id == ItemId.Berry)
             Player.Mind.Thoughts.AddMemory(ThoughtId.AteNanoBanana);
@@ -1325,6 +1328,7 @@ public sealed partial class GameSimulation : IStoryHost
             return;
         }
         Player.Statuses.Apply(status, item.StatusDurationHours, Player.Stats.ImmunityTags);
+        SoundEvents.Emit(SoundEventKind.Drink, string.Empty, PlayerCenter, (int)item.Id);
         SetPlayerCooldown(6);
         PostMessage($"Used {item.Name}.");
     }

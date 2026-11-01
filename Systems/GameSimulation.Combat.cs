@@ -60,6 +60,7 @@ public sealed partial class GameSimulation
     private void RestoreChargeFromItem(float amount)
     {
         Charge += amount;
+        RecordChargeGain(amount); // PE-14: a blue number (Systems/SoundEvents.cs)
         _chargeSicknessSeconds = CombatTuning.ChargeSicknessSeconds;
     }
 
@@ -208,6 +209,7 @@ public sealed partial class GameSimulation
         var dealt = CombatTuning.CreatureDamageTaken(rolledDamage * BannerDamageFactor(enemy.Kind), defense,
             PlayerArmorPenetration(damageClass), critical);
         LastHitCritical = critical;
+        RecordHit(enemy, ScaleOutgoing(dealt) * EnemyDamageTakenFactor(enemy), critical); // PE-14 hit record (Systems/SoundEvents.cs)
         enemy.TakeDamage(ScaleOutgoing(dealt) * EnemyDamageTakenFactor(enemy));
         return dealt;
     }
@@ -299,6 +301,7 @@ public sealed partial class GameSimulation
             return;
         }
         Charge -= cost;
+        SoundEvents.Emit(SoundEventKind.Use, "tech", PlayerCenter, (int)item.Id);
         var damage = ComputeWeaponDamage(item, calibration);
         FireProjectiles(item, target, damage, item.Knockback * CalibrationCatalog.Get(calibration).KnockbackMultiplier,
             item.ProjectileSpeed, item.ProjectileCount, item.ProjectileSpread, item.ProjectileLifetime, item.Pierce,
@@ -344,6 +347,7 @@ public sealed partial class GameSimulation
         }
         if (SummonMinion(item, kind, target) is { } minion)
         {
+            SoundEvents.Emit(SoundEventKind.Use, "command", minion.Position, (int)item.Id);
             SetPlayerCooldown(item.UseCooldownTicks);
             PostMessage(minion.IsSentry
                 ? $"Deployed a {minion.Spec.DisplayName} ({ActiveSentries}/{SentrySlots} sentries)."
@@ -549,6 +553,7 @@ public sealed partial class GameSimulation
     /// <summary>Credits and event bookkeeping when a creature dies.</summary>
     private void OnCreatureDefeated(EnemyAgent enemy)
     {
+        RecordDeath(enemy, DeathReason.Died); // PE-5: only real kills burst and sound (Systems/SoundEvents.cs)
         var credits = enemy.Archetype.CreditDrop;
         if (credits > 0)
             DropLoot(enemy, ItemId.Credits, credits);
