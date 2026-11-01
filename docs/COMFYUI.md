@@ -93,7 +93,24 @@ The renderer uses each piece once it exists and falls back to the procedural sky
 - For full speed: `start_comfy.ps1 -ReserveVramGB 0 -Priority Normal`, and no `--pause`.
 
 ## Overnight run
-`python tools/comfy/overnight.py` refreshes the lists, then runs textures, then environment art, then animations, all resumable. Rebuild or publish afterwards.
+**One click:** double-click `tools\comfy\run_overnight_art.cmd`.
+- It installs or refreshes the Rimtera flows in the ComfyUI app.
+- It refreshes the art lists from the game.
+- It then runs block textures, environment art and animations, starting and restarting ComfyUI as it goes.
+- It is resumable: close the window to pause, and double-click again to carry on.
+- Output is appended to `%TEMP%\rimtera-art-overnight.log`.
+- Options pass through, for example `run_overnight_art.cmd --pause 10`.
+- Rebuild or publish afterwards so the new art is copied in.
+
+### Every launcher is one click
+| Job | Double-click |
+|---|---|
+| Overnight art | `tools\comfy\run_overnight_art.cmd` |
+| Overnight audio | `tools\audio\run_overnight.cmd` (runs the one-time audio setup by itself on a new PC) |
+| Index the original art sheets | `tools\comfy\run_sheet_index.cmd` |
+
+The overnight launchers also install or refresh the app's flows, so the separate `app_flows.py` command below is only
+needed to refresh the flows without starting a run.
 
 ## Original art sheets index
 Double-click `tools\comfy\run_sheet_index.cmd` to index the original labelled art sheets in `art\sheets\`. It does this:
