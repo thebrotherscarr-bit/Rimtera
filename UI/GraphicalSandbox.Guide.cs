@@ -542,6 +542,10 @@ public static partial class GraphicalSandbox
             };
             if (npc is not null)
             {
+                // 0.3.8: the AI powers the machines; feeding it fuel refills the reserve and better fuel raises its tier.
+                entries.Add(new MenuEntry($"Feed power ({game.StationPower}/{GameSimulation.MaxPower}, tier {game.StationPowerTier})",
+                    () => OpenStationAiScreen(npc, index, game.FeedStationAi()),
+                    Description: "Energy crystals, power cells, uranium, void essence or astral ore. Better fuel powers better machines."));
                 entries.Add(new MenuEntry("Shop", () => OpenShopScreen(npc, string.Empty)));
                 entries.Add(new MenuEntry("Sell held item", () =>
                 {

@@ -51,7 +51,7 @@ Acts are the storyteller's chapters. Each one unlocks new incidents and raises t
 | **6. Collapse** | Collapse the four fuel cores back into the core. That calls the Astro-God. | Astro-God defeated | Astro-God, gated on `obelisks.down` | Collapse ritual at the core (replaces the summon) |
 | **7. Launch** | The Astro-God's core powers the ship. While it fuels up, the storyteller throws everything at the colony. Board whoever is still alive. | The ship lifts off | — | Ship, fuel-up siege, boarding, the escape screen |
 
-**A run is lost** when you can no longer launch: the colony has fallen and nobody is left to rebuild it (or, until the guide-rebuild rules exist, when the station AI is destroyed). See §3.4.
+**A run is lost** when you can no longer launch (since 0.3.8 the station AI's loss is not one of these: it goes dark until rebuilt; `docs/VISION.md` §3.2): the colony has fallen and nobody is left to rebuild it (or, until the guide-rebuild rules exist, when the station AI is destroyed). See §3.4.
 
 **Run length target:** 10–14 hours from landfall to launch on a medium world (8–15 is the outer range). The double ladder is the main risk to that. The hardmode ladder must be shorter than the first, not a repeat of it.
 

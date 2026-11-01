@@ -35,5 +35,7 @@ Added in 0.3.6 (`docs/VISION.md` §6).
 | `spawnrate <0-10>` | Scales natural spawning (0 stops it) |
 | `where` | Your tile, biome, the time and your health |
 | `research list`, `research done <tier>\|all`, `research reset <tier>\|all` | Lists the research tiers, finishes them or puts them back (0.3.7) |
+| `power`, `power set <0-1000>`, `power tier <1-5>`, `power feed` | Shows the station AI's power, sets it or its tier, or feeds it from your bag (0.3.8) |
+| `ai down`, `ai rebuild` | Takes the station AI down (machines go dark) or rebuilds it (0.3.8) |
 
-Every new mechanic adds its own commands in the step that adds it: the station AI's power in 0.3.8, NPC skills and work in 0.3.9, and so on.
+Every new mechanic adds its own commands in the step that adds it: NPC skills and work in 0.3.9, and so on.

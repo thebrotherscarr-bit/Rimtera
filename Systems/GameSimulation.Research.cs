@@ -50,6 +50,7 @@ public sealed partial class GameSimulation
 
     private readonly Dictionary<string, float> _researchProgress = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _researchDone = new(StringComparer.OrdinalIgnoreCase);
+    private float _studyPowerDebt;
 
     public static ResearchTier? FindTier(string id) =>
         ResearchTiers.FirstOrDefault(tier => string.Equals(tier.Id, id, StringComparison.OrdinalIgnoreCase));
@@ -93,8 +94,16 @@ public sealed partial class GameSimulation
     private void UpdateResearch(float deltaSeconds)
     {
         Flags.Set("research.tiers"); // this world keeps tiers (RestoreColonyResearch tells it from a pre-0.3.7 save)
-        if (CurrentResearch is not { } tier)
+        InitPower();
+        // 0.3.8: the station AI studies only while it is online and has power, and study draws a little power.
+        if (CurrentResearch is not { } tier || !StationAiOnline || StationPower <= 0)
             return;
+        _studyPowerDebt += deltaSeconds * StudyPowerPerSecond;
+        if (_studyPowerDebt >= 1f)
+        {
+            SetPower(StationPower - (int)_studyPowerDebt);
+            _studyPowerDebt -= (int)_studyPowerDebt;
+        }
         _researchProgress[tier.Id] = ResearchProgress(tier.Id) + deltaSeconds * StudyRate;
         if (ResearchProgress(tier.Id) >= tier.Cost)
             FinishResearch(tier);
