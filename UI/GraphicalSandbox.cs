@@ -265,6 +265,17 @@ public static partial class GraphicalSandbox
             }
             if (_transition.BlocksGameplay)
                 return;
+            if (_canvas.SpectateCenter is not null)
+            {
+                // Ironman spectate: WASD moves the ghost camera (read while held in Advance); Esc leaves for the title.
+                if (e.KeyCode == Keys.Escape)
+                    EndSpectate();
+                else
+                    _down.Add(e.KeyCode);
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                return;
+            }
             if (_canvas.FullscreenMapOpen)
             {
                 // The map takes over input (the player stands still, Player.Update zeroes the controls): WASD pans it and
@@ -911,6 +922,17 @@ public static partial class GraphicalSandbox
                 SyncCanvas();
                 return;
             }
+            if (_canvas.SpectateCenter is { } ghost && _game is not null)
+            {
+                // Ironman spectate: the world plays on without the fallen colonist; the camera drifts where WASD sends it.
+                const float speed = 30f / 60f;
+                var move = new Vector2((Held("MoveRight") ? speed : 0f) - (Held("MoveLeft") ? speed : 0f),
+                    (Held("MoveDown") ? speed : 0f) - (Held("MoveUp") ? speed : 0f));
+                _canvas.SpectateCenter = Vector2.Clamp(ghost + move, Vector2.Zero, new Vector2(_game.World.Width, _game.World.Height));
+                _game.Tick(new GameInput(new MovementInput(0f)));
+                SyncCanvas();
+                return;
+            }
             if (_game is not null)
             {
                 // Terraria's dropItemCheck: with the inventory gone, a stack still on the cursor goes back to the bag (or
@@ -1105,15 +1127,35 @@ public static partial class GraphicalSandbox
             _down.Clear();
             if (character?.Difficulty == CharacterDifficulty.Ironman)
             {
+                // Terraria's hardcore ghost: the character is gone (its file moves to deleted/), but a ghost camera stays on
+                // the world until Esc, then the title.
                 TrySaveGame(out _);
                 _menu.Profiles.DeleteCharacter(character.Id);
                 _activeCharacter = null;
-                QuitToTitle($"{name} died. Ironman colonists cannot return.");
+                _spectateFarewell = $"{name} died. Ironman colonists cannot return.";
+                if (_game is not null)
+                {
+                    _canvas.SpectateCenter = _game.Player.Motion.Position + _game.Player.Motion.Size / 2f;
+                    _canvas.Notify($"{name} has fallen for good. WASD moves the camera; Esc returns to the title.");
+                }
+                else
+                    EndSpectate();
                 return;
             }
             // Terraria's timer: 10 s, 15 s on Brutal and Annihilation worlds, 3 s for an Explorer.
             var seconds = _game?.GetRespawnDelay(character?.Difficulty ?? default) ?? GameSimulation.BaseRespawnSeconds;
             _transition.BeginCountdown($"{name} was killed", _game?.LastMessage ?? string.Empty, seconds);
+        }
+
+        private string? _spectateFarewell;
+
+        /// <summary>Leaves Ironman spectate for the title screen.</summary>
+        private void EndSpectate()
+        {
+            _canvas.SpectateCenter = null;
+            _down.Clear();
+            QuitToTitle(_spectateFarewell ?? "Ironman colonists cannot return.");
+            _spectateFarewell = null;
         }
 
         /// <summary>Builds a fresh world from its profile; runs on a worker thread.</summary>
@@ -1241,6 +1283,7 @@ public static partial class GraphicalSandbox
 
         private void QuitToTitle(string? status = null)
         {
+            _canvas.SpectateCenter = null;
             _game = null;
             _activeWorld = null;
             _activeCharacter = null;
@@ -1713,6 +1756,10 @@ public static partial class GraphicalSandbox
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool WorldRunsBehindMenu { get; set; }
+
+        /// <summary>Ironman spectate: the ghost camera's centre after the colonist's permanent death; null otherwise.</summary>
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+        public Vector2? SpectateCenter { get; set; }
 
         private int _frames;
         private long _fpsWindowStart = Environment.TickCount64;
@@ -2223,7 +2270,7 @@ public static partial class GraphicalSandbox
             // The camera centres on the player every frame, as in Terraria, unless Camera smoothing is set: then the
             // centre eases toward the player (frame-rate independent). Either way the view scrolls by whole pixels inside
             // a tile rather than jumping a tile at a time. Teleports snap.
-            var target = motion.Position + motion.Size / 2f;
+            var target = SpectateCenter ?? motion.Position + motion.Size / 2f;
             var smoothing = _menu.Preferences.CameraSmoothing;
             if (!_cameraReady || smoothing <= 0f || Vector2.Distance(_camera, target) > 24f)
                 _camera = target;
