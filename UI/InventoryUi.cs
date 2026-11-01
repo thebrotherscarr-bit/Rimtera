@@ -773,45 +773,36 @@ public sealed class InventoryUiState : UiState
     }
 
     /// <summary>
-    /// The Research tab (0.2.7): one row per project with its progress; "Study" chooses the project Research crew work on
-    /// at a research terminal or lab near home.
+    /// The Research tab (0.3.7): one row per research tier. A boss opens its tier; the station AI studies the open tiers in
+    /// order on its own (research crew and research residents make it faster), and a finished tier unlocks its recipes.
     /// </summary>
     private void AddResearch(GameSimulation game, float top)
     {
-        Add(new UiTextElement("Research (Research crew study it)", "research-title", new UiStyle
+        Add(new UiTextElement($"Research · {game.StudyRate:0.#} points a second", "research-title", new UiStyle
         {
             Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top), Width = UiLength.Px(240f), Height = UiLength.Px(22f)
         }) { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
         var y = top + 26f;
-        foreach (var project in GameSimulation.ResearchProjects)
+        var current = game.CurrentResearch;
+        foreach (var tier in GameSimulation.ResearchTiers)
         {
-            var done = game.ResearchDone(project.Id);
-            var current = string.Equals(game.CurrentResearch, project.Id, StringComparison.OrdinalIgnoreCase);
-            var percent = (int)(100f * game.ResearchProgress(project.Id) / project.Cost);
-            var state = done ? "done" : !game.CanResearch(project.Id) ? $"needs {GameSimulation.FindProject(project.Requires!)!.Name}" : $"{percent}%";
-            Add(new UiTextElement($"{project.Name} · {state}", $"research-name-{project.Id}", new UiStyle
+            var done = game.ResearchDone(tier.Id);
+            var open = game.ResearchOpen(tier);
+            var percent = (int)(100f * game.ResearchProgress(tier.Id) / tier.Cost);
+            var state = done ? "done"
+                : !open ? $"defeat the {Rimtera.Entities.EnemyArchetypes.Get(tier.Bosses[0]).DisplayName}"
+                : ReferenceEquals(tier, current) ? $"studying, {percent}%" : $"queued, {percent}%";
+            Add(new UiTextElement($"{tier.Name} · {state}", $"research-name-{tier.Id}", new UiStyle
             {
-                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y), Width = UiLength.Px(180f), Height = UiLength.Px(16f)
-            }) { Scale = 0.55f, Color = done ? new UiColor(150, 200, 150) : game.CanResearch(project.Id) ? new UiColor(226, 230, 238) : new UiColor(150, 160, 172) });
-            Add(new UiTextElement(project.Gives, $"research-gives-{project.Id}", new UiStyle
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y), Width = UiLength.Px(240f), Height = UiLength.Px(16f)
+            }) { Scale = 0.55f, Color = done ? new UiColor(150, 200, 150) : open ? new UiColor(226, 230, 238) : new UiColor(150, 160, 172) });
+            Add(new UiTextElement(tier.Gives, $"research-gives-{tier.Id}", new UiStyle
             {
-                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y + 15f), Width = UiLength.Px(180f), Height = UiLength.Px(14f)
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y + 15f), Width = UiLength.Px(240f), Height = UiLength.Px(14f)
             }) { Scale = 0.45f, Color = new UiColor(150, 160, 172) });
-            if (!done && game.CanResearch(project.Id))
-            {
-                var id = project.Id;
-                Add(new UiButtonElement(current ? "Studying" : "Study", () =>
-                {
-                    game.ChooseResearch(id);
-                    Rebuild();
-                }, $"research-{project.Id}", new UiStyle
-                {
-                    Left = UiLength.Mixed(-66f, 1f), Top = UiLength.Px(y + 2f), Width = UiLength.Px(56f), Height = UiLength.Px(22f)
-                }) { TextScale = 0.5f, Color = current ? UiColor.ButtonActive : UiColor.ButtonDefault });
-            }
             y += 34f;
         }
-        Add(new UiTextElement("Research crew study at a research terminal or lab within 24 tiles of home.", "research-help", new UiStyle
+        Add(new UiTextElement("The station AI studies on its own. Research crew at a terminal and research residents speed it up.", "research-help", new UiStyle
         {
             Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y + 4f), Width = UiLength.Px(240f), Height = UiLength.Px(28f)
         }) { Scale = 0.5f, Color = new UiColor(150, 160, 172) });

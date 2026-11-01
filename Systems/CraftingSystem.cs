@@ -547,6 +547,9 @@ public sealed class CraftingSystem
     }
 
     /// <summary>Everything a recipe needs except its ingredients: the guide unlock, stations, biome and liquids.</summary>
+    /// <summary>Why a recipe is locked by research, or null when it is free (0.3.7; set by the game, null in the audit).</summary>
+    public Func<RecipeDefinition, string?>? ResearchGate { get; set; }
+
     public CraftingResult CheckConditions(RecipeDefinition recipe, CraftingEnvironment environment) =>
         CheckConditions(recipe, environment, GetNearbyStations(environment));
 
@@ -554,6 +557,8 @@ public sealed class CraftingSystem
         IReadOnlySet<CraftingStationId> nearbyStations)
     {
         ValidateEnvironment(environment);
+        if (ResearchGate?.Invoke(recipe) is { } locked)
+            return new CraftingResult(false, locked);
         if (recipe.RequiresGuideUnlock && !_knownGuideRecipes.Contains(recipe.Id))
             return new CraftingResult(false, "Consult the station AI guide with a reveal material to learn this recipe.");
 

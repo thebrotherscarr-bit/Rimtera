@@ -157,7 +157,7 @@ public sealed partial class GameSimulation
         agent.Activity = CrewFishingGear(agent.HomePosition).Rod is { } withRod ? $"Fishing with a {Items[withRod].Name.ToLowerInvariant()}" : "Fishing";
         Move(center);
         agent.FarmProgress += deltaSeconds;
-        if (agent.FarmProgress < FishSeconds(agent.ColonistStats) / ResearchFishSpeed)
+        if (agent.FarmProgress < FishSeconds(agent.ColonistStats))
             return true;
         agent.FarmProgress = 0f;
         // 0.2.9: crew fish with the best rod and bait in the chests near home (the rod stays there; bait is used up as a

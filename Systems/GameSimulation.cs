@@ -161,6 +161,7 @@ public sealed partial class GameSimulation : IStoryHost
         Tiles = new TileCatalog();
         Items = new ItemCatalog();
         Crafting = new CraftingSystem(Items);
+        Crafting.ResearchGate = ResearchLock; // 0.3.7: recipes a boss's research tier still locks
         World = new TileGrid(width, height);
         _hazardChoice = hazard;
         var resolvedHazard = hazard is { } chosen ? WorldSettings.Resolve(chosen, seed) : (WorldHazard?)null;
@@ -493,7 +494,6 @@ public sealed partial class GameSimulation : IStoryHost
         game.RestoreBills(snapshot.Bills);
         game.RestoreChestFilters(snapshot.ChestFilters);
         game.RestoreGrowZones(snapshot.GrowZones);
-        game.RestoreColonyResearch(snapshot.Research);
         if (!arriving)
             game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
         game._heartsBroken = snapshot.HeartsBroken ?? 0;
@@ -640,6 +640,7 @@ public sealed partial class GameSimulation : IStoryHost
         // People grew to Terraria's body size (HumanoidBody); an older save can leave feet in the ground, so lift them clear.
         foreach (var body in game.TownNpcs.Select(npc => npc.Motion).Concat(game._colonists.Select(agent => agent.Motion)).Prepend(game.Player.Motion))
             game.LiftClear(body);
+        game.RestoreColonyResearch(snapshot.Research); // 0.3.7: after the flags and the defeated bosses it reads
         return game;
     }
 
@@ -731,6 +732,7 @@ public sealed partial class GameSimulation : IStoryHost
 
         UpdateColonists(deltaSeconds, vitalHours);
         UpdateTownNpcs(deltaSeconds);
+        UpdateResearch(deltaSeconds); // 0.3.7: the station AI studies the open research tier
         UpdateEnemies(deltaSeconds);
         UpdatePlayerSystems(deltaSeconds);
         UpdateContentPerTick(deltaSeconds);
