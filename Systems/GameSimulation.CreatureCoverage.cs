@@ -192,6 +192,10 @@ public sealed partial class GameSimulation
     /// <summary>Why a coverage boss summon refuses right now, or null (Terraria: biome and time rules of each summon item).</summary>
     private string? CoverageSummonRefusal(EnemyKind boss) => boss switch
     {
+        EnemyKind.MoonEater when !FractureActive => "The lure stays dark until the Fracture.", // PC-1 (D-3, D-24)
+        // PC-2: the Protocol Dragon is the Defense Protocol's top tier; its key waits for the same gate.
+        EnemyKind.ProtocolDragon when !Flags.IsSet($"boss.{WorldFlags.Key(EnemyKind.VaultColossus)}.down") =>
+            "The key turns, but the protocol's dragon stays dormant until the Vault Colossus has fallen.",
         EnemyKind.HoarfrostBehemoth when CurrentBiome.Zone != BiomeZone.FrozenWasteland =>
             "The lure needs the bite of the frozen wastes. Carry it into the snow.",
         EnemyKind.GelSovereign when !FractureActive => "The lattice hums, but nothing answers until the crust fractures.",

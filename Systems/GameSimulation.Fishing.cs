@@ -197,7 +197,7 @@ public sealed partial class GameSimulation
         var result = RollCatch(context, FishingRandom);
         if (result.Creature is { } creature)
         {
-            var spawned = creature == EnemyKind.AbyssLeviathan ? SpawnBoss(creature) : SpawnCreature(creature, bobber.Position + new Vector2(0f, -2f));
+            var spawned = creature == EnemyKind.AbyssLeviathan && TrySpawnBoss(creature, BossSpawnSource.Fishing, out var leviathan, out _) ? leviathan! : SpawnCreature(creature, bobber.Position + new Vector2(0f, -2f));
             PostMessage(result.Message);
             Flags.Increment("fishing.creatures");
             return result with { Message = $"{result.Message} ({spawned.DisplayName})" };

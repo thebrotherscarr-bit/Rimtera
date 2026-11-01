@@ -249,8 +249,8 @@ public sealed partial class GameSimulation
 
         if (_heartsBroken % HeartsPerBoss == 0)
         {
-            var boss = SpawnBoss(radiated ? RadiatedHeartAvenger : EnemyKind.PlantOvergrowth);
-            PostMessage($"The blight screams. The {boss.DisplayName} rises to avenge its hearts!");
+            if (TrySpawnBoss(radiated ? RadiatedHeartAvenger : EnemyKind.PlantOvergrowth, BossSpawnSource.WorldTrigger, out var boss, out _))
+                PostMessage($"The blight screams. The {boss!.DisplayName} rises to avenge its hearts!");
         }
         else
         {

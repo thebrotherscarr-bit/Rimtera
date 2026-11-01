@@ -98,7 +98,7 @@ Every boss now has an obtainable summon item. The one exception is the Abyss Lev
 | **Hoarfrost Behemoth** (new) | Easy | Deerclops | pre | **Frostbitten lure** (Chem Lab: 12 frost crystals, 10 glacial ore, 4 bio-gel) | Frozen Wasteland only |
 | Fission Tyrant | Gate | Wall of Flesh | pre → causes the Fracture | Core igniter (Power Forge Mk2) | In the Irradiated Core, after the Scout Mech |
 | Scavenger Warlord | Event | (goblin army leader) | pre | Warlord banner (Loom); Scavenger Raid finale | — |
-| Moon Eater | Event | (blood moon leader) | pre | Rusted lure (Chem Lab); Rust Moon finale | — |
+| Moon Eater | Event | (blood moon leader) | post | Rusted lure (Chem Lab; after the Fracture); Rust Moon finale after the Fracture | — |
 | Solar Flare Entity, Void Stalker, Asteroid Miner Mech, Cyber-Pirate Captain | Event | (dusk incursions; Rimtera's own) | pre (after the Scout Mech) | Sunspot lens (Kiln), Void lure (Chem Lab), Claim marker (Power Forge), Bounty notice (Nano-Fabricator); random dusk incursion | Incursions wait for the Scout Mech |
 | **Gel Sovereign** (new) | Hard | Queen Slime | post-Fracture | **Prism gel lattice** (Alloy Anvil: 10 prism shards, 20 bio-gel, 3 prism essence) | After the Fracture, in the Crystal Spires |
 | Cyber-Swarm Leader, Renegade Overseer, Warship Core | Hard | the mechanical trio | post | Swarm resonator, Renegade credentials, Warship transponder (Alloy Anvil); natural dusk arrival | After the Fracture |
@@ -110,7 +110,7 @@ Every boss now has an obtainable summon item. The one exception is the Abyss Lev
 | Void Cantor | Hard | Lunatic Cultist | post | Dungeon ritual; Void hymnal (Void Forge) | After the Vault Colossus |
 | Eclipse Lord | Event | Mothron | post | Eclipse orb (Nano-Fabricator Mk2); Dark Sun finale | — |
 | Pirate Dreadnought | Event | Flying Dutchman | post | Dreadnought flag (Loom); Pirate Boarding finale | — |
-| Protocol Dragon | Event | Betsy | post | Protocol key (Research Terminal); Defense Protocol finale | — |
+| Protocol Dragon | Event | Betsy | post | Protocol key (Research Terminal; after the Vault Colossus); Defense Protocol finale with the Colossus down | — |
 | Mothership Core | Event | Martian Saucer | post | Mothership beacon (Void Forge); Precursor Probes finale | — |
 | Abyss Leviathan | Event | Duke Fishron | post | Abyss bait fished in acid (bait from the Bio Lab) | — |
 | **Hollow Regent** (new) | Event | Pumpking | post | Hollow Moon wave 8; **Regent's wick** (Nano-Fabricator Mk2: 20 hollow embers, 6 lumenite bars) | After the Fracture, at night |
@@ -147,7 +147,9 @@ The numbers below come from `--boss-balance` (`Systems/BossBalance.cs`) and are 
 - On Brutal the times double (124-351 s) and unhealed survival is 7-14 s. That is Expert's squeeze: the player needs better than tier gear, buffs or arenas.
 - On Annihilation the times triple (187-526 s) and unhealed survival is 4-9 s.
 
-**Reached early.** The Pirate Dreadnought, Protocol Dragon and Abyss Leviathan can be summoned before the Fracture: their summons have no gate, and the Defense Protocol is always available. So the audit, and this table, give them the pre-Fracture kit. Gating them would move them to the tier-6 kit; re-run `suggest` if that changes.
+**Reached early.** The Pirate Dreadnought and Abyss Leviathan can be summoned before the Fracture: their summons have no gate. So the audit, and this table, give them the pre-Fracture kit. Gating them would move them to the tier-6 kit; re-run `suggest` if that changes.
+
+**Moved late (0.2.2, stream C).** The Moon Eater now comes only after the Fracture (PC-1: its lure refuses and the Rust Moon completes without it before then) and the Protocol Dragon only once the Vault Colossus has fallen (PC-2: the Defense Protocol's top tier, and its key waits for the same gate). `BossBalance.LifecycleFloor` places them there until the crafting audit models the gates, and `suggest` re-curved them: Moon Eater 10,900 → 34,000 HP (damage 15 → 36), Protocol Dragon 12,200 → 38,000 HP (14 → 35). Classic stays 42/42 in band.
 
 | Boss | Tier | # | Kit stage · reference weapon | Life · def · stim | HP | Def | Dmg | Hits | TTK s | Hit taken | Unhealed s | With stims s | Brutal TTK · unhealed | Annihilation TTK · unhealed |
 |---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
@@ -177,9 +179,9 @@ The numbers below come from `--boss-balance` (`Systems/BossBalance.cs`) and are 
 | Pirate Dreadnought | event |  | Cleared Lumen Tempest · Pyrocite launcher + Frag rocket | 200 · 23 · 50 | 9900 | 30 | 14 | 170 | 85 | 11 | 31 | 107 | 170 · 12 | 255 · 8 |
 | Solar Flare Entity | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 10000 | 16 | 15 | 216 | 72 | 13 | 27 | 89 | 144 · 11 | 216 · 7 |
 | Asteroid Miner Mech | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 10400 | 16 | 15 | 225 | 75 | 13 | 27 | 89 | 149 · 11 | 224 · 7 |
-| Moon Eater | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 10900 | 16 | 15 | 235 | 78 | 13 | 27 | 89 | 157 · 11 | 235 · 7 |
-| Protocol Dragon | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 12200 | 16 | 14 | 263 | 88 | 11 | 31 | 107 | 175 · 12 | 263 · 8 |
 | Abyss Leviathan | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 12500 | 16 | 14 | 270 | 90 | 11 | 31 | 107 | 180 · 12 | 269 · 8 |
+| Moon Eater | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 34000 | 16 | 36 | 426 | 78 | 28 | 18 | 103 | 156 · 7 | 234 · 5 |
+| Protocol Dragon | event |  | Defeated Vault Colossus · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 38000 | 16 | 35 | 476 | 87 | 27 | 19 | 114 | 174 · 8 | 262 · 5 |
 | Eclipse Lord | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 47000 | 30 | 32 | 650 | 119 | 22 | 24 | 167 | 238 · 9 | 357 · 5 |
 | Mothership Core | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 53000 | 30 | 31 | 733 | 134 | 20 | 26 | 198 | 269 · 9 | 403 · 6 |
 | Hollow Regent | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 55000 | 30 | 31 | 761 | 139 | 20 | 26 | 198 | 279 · 9 | 418 · 6 |

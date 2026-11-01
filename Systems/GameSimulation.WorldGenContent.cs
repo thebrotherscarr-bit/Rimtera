@@ -88,11 +88,8 @@ public sealed partial class GameSimulation
                     PostMessage("The brood pod bursts. Its matriarch stays asleep until the Fracture.");
                     SpawnCreature(EnemyKind.HiveGuard, at + new Vector2(0f, -1f));
                 }
-                else if (!_enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive))
-                {
-                    var boss = SpawnBoss(EnemyKind.BloomMatriarch);
-                    PostMessage($"The brood pod bursts. The {boss.DisplayName} answers its brood!");
-                }
+                else if (TrySpawnBoss(EnemyKind.BloomMatriarch, BossSpawnSource.WorldTrigger, out var boss, out _))
+                    PostMessage($"The brood pod bursts. The {boss!.DisplayName} answers its brood!");
                 else
                     SpawnCreature(EnemyKind.HiveGuard, at + new Vector2(0f, -1f));
                 return true;
@@ -136,15 +133,14 @@ public sealed partial class GameSimulation
             result = new InteractionResult(WorldInteractionKind.None, "The altar's socket is dark. An ancient power cell would fit it.", Cell: target);
             return true;
         }
-        if (_enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive))
+        if (!TrySpawnBoss(EnemyKind.VaultColossus, BossSpawnSource.WorldTrigger, out var boss, out _))
         {
-            result = new InteractionResult(WorldInteractionKind.None, "The altar will not wake while another titan stirs.", Cell: target);
+            result = new InteractionResult(WorldInteractionKind.None, "The altar will not wake while the Vault Colossus stirs.", Cell: target);
             return true;
         }
         Player.Inventory.TryConsume(ItemId.AncientPowerCell);
-        var boss = SpawnBoss(EnemyKind.VaultColossus);
         Flags.Increment("vault.altar.used");
-        result = new InteractionResult(WorldInteractionKind.None, $"The cell sinks into the altar. The {boss.DisplayName} wakes!", Cell: target);
+        result = new InteractionResult(WorldInteractionKind.None, $"The cell sinks into the altar. The {boss!.DisplayName} wakes!", Cell: target);
         return true;
     }
 

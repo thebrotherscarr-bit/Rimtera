@@ -293,22 +293,14 @@ public sealed partial class GameSimulation
 
     // ------------------------------------------------------------------ natural hard bosses and events
 
-    private void AdvanceHardmodeClock(WorldEventBoundary? boundary)
+    private void AdvanceHardmodeClock(WorldEventMoment? boundary)
     {
-        if (boundary == WorldEventBoundary.Dusk)
+        // Night arrivals leave at dawn through the per-boss leave rules (BO-6, GameSimulation.BossSpawn.cs).
+        if (boundary == WorldEventMoment.Dusk)
         {
             var roll = HardmodeNightRoll(Day);
             if (!TrySpawnHardBossAtDusk(roll))
                 TrySpawnOverseerPatrol(roll);
-        }
-        else if (boundary == WorldEventBoundary.Dawn)
-        {
-            foreach (var boss in _enemies.Where(enemy => enemy.IsAlive && _nightBossIds.Contains(enemy.Id)).ToArray())
-            {
-                _enemies.Remove(boss);
-                PostMessage($"The {boss.DisplayName} withdraws before the dawn.");
-            }
-            _nightBossIds.Clear();
         }
     }
 
@@ -346,8 +338,9 @@ public sealed partial class GameSimulation
             EnemyKind.RenegadeOverseer => "Heavy footfalls shake the ground. A rogue command code is broadcasting your position...",
             _ => "Engines drone overhead. A shadow blots out the stars..."
         });
-        var boss = SpawnBoss(kind);
-        _nightBossIds.Add(boss.Id);
+        if (!TrySpawnBoss(kind, BossSpawnSource.NightArrival, out var boss, out _))
+            return false;
+        _nightBossIds.Add(boss!.Id);
         Flags.Increment("hardmode.nightboss.day", Day - last);
         Flags.Increment("hardmode.nightboss.arrivals");
         return true;
@@ -379,8 +372,9 @@ public sealed partial class GameSimulation
         if (last > 0 && Day - last < OverseerPatrolCooldownDays)
             return false;
         PostMessage("A searchlight sweeps across the hills. Something mechanical has noticed your colony...");
-        var boss = SpawnBoss(EnemyKind.StoneSentinel);
-        _nightBossIds.Add(boss.Id);
+        if (!TrySpawnBoss(EnemyKind.StoneSentinel, BossSpawnSource.Patrol, out var boss, out _))
+            return false;
+        _nightBossIds.Add(boss!.Id);
         Flags.Increment("overseer.patrol.day", Day - last);
         Flags.Increment("overseer.patrol.arrivals");
         PostMessage($"The {boss.DisplayName} has arrived on patrol!");
@@ -461,13 +455,12 @@ public sealed partial class GameSimulation
     private void BreakCanopyBulb()
     {
         Flags.Increment("canopy.bulbs.broken");
-        if (_enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive))
+        if (!TrySpawnBoss(BulbBoss, BossSpawnSource.WorldTrigger, out var boss, out _))
         {
             PostMessage("The bulb bursts in a cloud of spores.");
             return;
         }
-        var boss = SpawnBoss(BulbBoss);
-        PostMessage($"The bulb tears open. The {boss.DisplayName} uncoils from the roots!");
+        PostMessage($"The bulb tears open. The {boss!.DisplayName} uncoils from the roots!");
     }
 
     /// <summary>After the vault boss, the ritual at the dungeon entrance turns on a player who comes close.</summary>
@@ -480,7 +473,8 @@ public sealed partial class GameSimulation
         if (Vector2.Distance(PlayerCenter, new Vector2(site.X + 0.5f, site.Y - 1f)) > RitualRadius)
             return;
         var size = EnemyArchetypes.Get(RitualBoss).Size;
-        SpawnCreature(RitualBoss, new Vector2(site.X - size.X / 2f, site.Y - size.Y - 3f));
+        if (!TrySpawnBoss(RitualBoss, BossSpawnSource.Ritual, out _, out _, new Vector2(site.X - size.X / 2f, site.Y - size.Y - 3f)))
+            return;
         Flags.Increment("ritual.cantor.summons");
         PostMessage("The chant breaks off. The Void Cantor turns from the dungeon gate!");
     }
@@ -512,7 +506,14 @@ public sealed partial class GameSimulation
                 continue;
             var kind = Obelisks.First(entry => entry.Obelisk == enemy.Kind).Event;
             var state = _worldEvents.Active.FirstOrDefault(candidate => candidate.Kind == kind);
-            var shielded = state is not null && state.Kills < state.KillsNeeded;
+            // EV-1: a missing siege state never drops the shield. Unless the siege was cleared, it is restarted so its kills
+            // count again (an old save whose siege timed out); only the obelisk's own quota of kills drops its shield.
+            if (state is null && !Flags.IsSet(_worldEvents.Spec(kind).FlagName))
+            {
+                _worldEvents.TryStart(kind, this, forced: true, out _);
+                state = _worldEvents.Active.FirstOrDefault(candidate => candidate.Kind == kind);
+            }
+            var shielded = state is null ? !Flags.IsSet(_worldEvents.Spec(kind).FlagName) : state.Kills < state.KillsNeeded;
             if (enemy.Shielded && !shielded)
                 PostMessage($"The {enemy.DisplayName}'s shield collapses!");
             enemy.Shielded = shielded;
