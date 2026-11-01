@@ -50,6 +50,7 @@ public sealed partial class GameSimulation
             };
             if (worked)
             {
+                Practise(agent, work, deltaSeconds); // 0.5.2: skills grow by doing
                 agent.CurrentWork = work;
                 if (work is not (WorkType.Operate or WorkType.Brew or WorkType.Cook))
                     agent.OperateStation = null; // free the station for another operator meanwhile
