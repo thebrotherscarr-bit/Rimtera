@@ -23,6 +23,7 @@ SAMPLES = {
     "rimtera_style_critters.jpg": ROOT / "art" / "sheets" / "sheet_23_critters.jpg",
     "rimtera_style_weapons.jpg": ROOT / "art" / "sheets" / "sheet_05_08_stations_weapons.jpg",
     "rimtera_sheet_bosses.jpg": ROOT / "art" / "sheets" / "sheet_00c_bosses.jpg",
+    "rimtera_style_ui.jpg": ROOT / "art" / "sheets" / "sheet_00a_core.jpg",
     "rimtera_sample_clip.wav": ROOT / "Assets" / "Sounds" / "bite.wav",
 }
 
