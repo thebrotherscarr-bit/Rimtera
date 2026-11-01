@@ -43,6 +43,7 @@ public sealed partial class GameSimulation
     {
         RefreshUnlockFlags();
         UpdateRecruiting(); // 0.5.6: the best talker works on the prisoners
+        UpdateOutposts(); // 0.7.1: outposts are founded and abandoned
         UpdateContentFillTown(); // content fill: travelling merchant and town gels (Systems/Content/ContentFillTown.cs)
         // The trade consul leaves at dusk (until D-53). Unhappy residents stay (NC-9): unhappiness only raises their prices.
         foreach (var npc in _townNpcs.ToArray())

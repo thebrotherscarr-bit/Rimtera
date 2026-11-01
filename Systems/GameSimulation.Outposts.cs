@@ -51,4 +51,51 @@ public sealed partial class GameSimulation
 
     /// <summary>The outpost a resident lives at, if any.</summary>
     public Outpost? OutpostOf(TownNpc npc) => Outposts.FirstOrDefault(outpost => outpost.People.Contains(npc));
+
+    private const string OutpostCountFlag = "outposts.count", OutpostsFoundedFlag = "history.outposts", OutpostSyncFlag = "outposts.synced";
+
+    /// <summary>Outposts founded over the run (0.7.1).</summary>
+    public int OutpostsFounded => (int)Flags.Get(OutpostsFoundedFlag);
+
+    /// <summary>Where an outpost lies from the base, in words ("120 tiles east").</summary>
+    public string OutpostBearing(Outpost outpost)
+    {
+        var dx = outpost.Center.X - BaseCenter.X;
+        return $"{MathF.Abs(dx):0} tiles {(dx < 0 ? "west" : "east")} of the base";
+    }
+
+    /// <summary>
+    /// Hourly (0.7.1): a new outpost is founded when people first make a home far from the base, and one is abandoned when
+    /// its last resident leaves or dies. Each writes a letter and goes in the chronicle.
+    /// </summary>
+    private void UpdateOutposts()
+    {
+        var outposts = Outposts;
+        var known = (int)Flags.Get(OutpostCountFlag);
+        // A world from before 0.7.1 starts counting from what stands, without letters for outposts it already had.
+        if (Flags.Set(OutpostSyncFlag))
+        {
+            SetFlagValue(OutpostCountFlag, outposts.Count);
+            if (outposts.Count > 0)
+                SetFlagValue(OutpostsFoundedFlag, Math.Max(OutpostsFounded, outposts.Count));
+            return;
+        }
+        if (outposts.Count == known)
+            return;
+        SetFlagValue(OutpostCountFlag, outposts.Count);
+        if (outposts.Count > known)
+        {
+            var newest = outposts.OrderByDescending(outpost => outpost.People.Max(npc => npc.Id)).First();
+            Flags.Increment(OutpostsFoundedFlag);
+            var guard = newest.Guards > 0 ? "" : " Nobody there is armed yet: give one of them a weapon and a post.";
+            SendLetter(LetterKind.Good, "Outpost founded",
+                $"{string.Join(" and ", newest.People.Select(npc => npc.Name))} made a home {OutpostBearing(newest)}: a new outpost.{guard}");
+            Record($"An outpost was founded {OutpostBearing(newest)}.");
+        }
+        else
+        {
+            SendLetter(LetterKind.BadNews, "Outpost abandoned", "An outpost stands empty: its last resident has gone.");
+            Record("An outpost was abandoned.");
+        }
+    }
 }

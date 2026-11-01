@@ -32,7 +32,7 @@ public static class HistorySelfTests
         var fresh = game.History().Select(line => line.Text).ToArray();
         check(game.History()[0].Heading && fresh.Any(line => line.StartsWith("Day 1 · Act 1: Landfall")) &&
               fresh.Contains("Act 1: Landfall · began on day 1") && fresh.Any(line => line.Contains("0 lost")) &&
-              fresh.Any(line => line.StartsWith("Storyteller: Steady")) && game.History().Count(line => line.Heading) == 3,
+              fresh.Any(line => line.StartsWith("Storyteller: Steady")) && game.History().Count(line => line.Heading) == 4,
             $"a fresh run's history: where it stands, Landfall from day 1, and its chronicle ({fresh.Length} lines)");
 
         // ---- deaths and acts are kept; the chronicle reads newest first ----
