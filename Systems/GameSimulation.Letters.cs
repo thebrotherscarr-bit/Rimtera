@@ -66,8 +66,8 @@ public sealed partial class GameSimulation
     void IStoryHost.Report(string incidentId, IncidentCategory category, string title, string summary)
     {
         PostMessage(summary);
-        // A raid writes its own warning, with a countdown (PlanRaid).
-        if (incidentId == "raid")
+        // A raid and an invasion write their own warning, with a countdown; an act's key event writes its own letter.
+        if (incidentId is "raid" or "invasion" or "purpose")
             return;
         var kind = category switch
         {

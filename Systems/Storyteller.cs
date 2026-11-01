@@ -34,7 +34,9 @@ public readonly record struct StoryContext(
     // 0.6.4: whether one of Terraria's invasions could be sent, the station AI is up with power to lose, and a trader could come.
     bool InvasionReady = false,
     bool PowerOnline = false,
-    bool TraderCanCome = false);
+    bool TraderCanCome = false,
+    // 0.6.5: the act has gone on a while without its key event.
+    bool PurposeDue = false);
 
 /// <summary>Parameters handed to one incident execution.</summary>
 public readonly record struct IncidentParms(float ThreatPoints, BiomeZone Biome, bool Forced);
@@ -91,6 +93,8 @@ public interface IStoryHost
     string? CutPower(float threatPoints) => null;
     /// <summary>A trader comes today; returns who, or null.</summary>
     string? CallTrader() => null;
+    /// <summary>0.6.5: the act's key event, which pushes toward the next step of progress; null when none.</summary>
+    string? SendPurpose() => null;
 }
 
 /// <summary>
@@ -146,6 +150,7 @@ public sealed class Storyteller
         Register(new SicknessIncident());
         Register(new PowerOutageIncident());
         Register(new TraderIncident());
+        Register(new PurposeIncident()); // 0.6.5
         // Arrivals (new crew, and town residents replacing the dead) come through their own stream, OnHour's TryArrival,
         // not this roll. WandererJoinsIncident stays defined; WanderersJoined counts every crew arrival.
     }
