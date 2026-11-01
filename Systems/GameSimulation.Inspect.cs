@@ -59,8 +59,6 @@ public sealed partial class GameSimulation
         var carrying = new List<string>();
         if (!agent.Carried.IsEmpty)
             carrying.Add($"{agent.Carried.Count} {Items[agent.Carried.ItemId].Name}");
-        if (!agent.BuildStock.IsEmpty)
-            carrying.Add($"{agent.BuildStock.Count} {Items[agent.BuildStock.ItemId].Name}");
         carrying.AddRange(agent.Held.Concat(agent.Pouch).Select(pair => $"{pair.Value} {Items[pair.Key].Name}"));
         if (carrying.Count > 0)
             lines.Add($"Carrying: {string.Join(", ", carrying.Take(3))}{(carrying.Count > 3 ? ", …" : "")}");

@@ -402,7 +402,6 @@ public sealed partial class GameSimulation : IStoryHost
             Bills: CaptureBills(),
             ChestFilters: CaptureChestFilters(),
             GrowZones: CaptureGrowZones(),
-            Blueprints: CaptureBlueprints(),
             Research: CaptureColonyResearch()) { CellData = cellData, CellRuns = cellRuns };
     }
 
@@ -494,7 +493,6 @@ public sealed partial class GameSimulation : IStoryHost
         game.RestoreBills(snapshot.Bills);
         game.RestoreChestFilters(snapshot.ChestFilters);
         game.RestoreGrowZones(snapshot.GrowZones);
-        game.RestoreBlueprints(snapshot.Blueprints);
         game.RestoreColonyResearch(snapshot.Research);
         if (!arriving)
             game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
@@ -1073,8 +1071,6 @@ public sealed partial class GameSimulation : IStoryHost
 
     private void Place(ItemDefinition item, GridPoint point)
     {
-        if (BlueprintMode && TryToggleBlueprint(item, point))
-            return; // 0.2.7: in blueprint mode a click marks (or unmarks) a block for Build crew instead of placing it
         if (TryPlacePhysicsTile(item, point))
             return;
         if (TryPlaceTravelTile(item, point)) return;
@@ -1616,7 +1612,6 @@ public sealed partial class GameSimulation : IStoryHost
         agent.Activity = "Dead";
         DropColonistLoad(agent);
         DropPouch(agent, agent.Motion.Position + agent.Motion.Size / 2f);
-        DropBuildStock(agent, agent.Motion.Position + agent.Motion.Size / 2f);
         PostMessage(agent.Health.DeathCause is { } cause
             ? $"{agent.Name} has died ({cause})."
             : $"{agent.Name} has died.");

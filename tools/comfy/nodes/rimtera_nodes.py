@@ -17,10 +17,6 @@ Sprite nodes for the beauty and size pass (tools/comfy/beauty_core.py does the w
   the vision model read off it.
 
 Rimtera Finish Audio: levels, trims or loops a clip for a cue, and optionally adds it to the game (finish_one.py).
-
-UI nodes: Rimtera Button States (a finished button and its hover, pressed and disabled versions) and Rimtera Pixel
-Backdrop (a wide scene brought down to a pixel-art backdrop). Panels, slots, bars, icons, the logo and the cursor use
-Rimtera Finish Sprites.
 """
 import json
 import os
@@ -272,79 +268,7 @@ class RimteraFinishAudio:
             return {"ui": {"text": [result.stdout.strip() or "finished"]}, "result": (read_wav(out),)}
 
 
-class RimteraButtonStates:
-    """One generated button finished at its size, then its four states: normal, hover (brighter), pressed (darker,
-    one pixel lower) and disabled (greyed), saved as <prefix>_normal .. _disabled."""
-    CATEGORY = "Rimtera/ui"
-    RETURN_TYPES = ()
-    OUTPUT_NODE = True
-    FUNCTION = "states"
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {"required": {
-            "image": ("IMAGE",),
-            "width": ("INT", {"default": 160, "min": 8, "max": 1024}),
-            "height": ("INT", {"default": 32, "min": 8, "max": 1024}),
-            "colours": ("INT", {"default": 32, "min": 4, "max": 256}),
-            "filename_prefix": ("STRING", {"default": "rimtera/ui/ui_button"}),
-        }}
-
-    def states(self, image, width, height, colours, filename_prefix):
-        from PIL import ImageEnhance
-        folder, _, stem = filename_prefix.replace("\\", "/").rpartition("/")
-        cells = [cell for cell in beauty_core.cut_sheet(to_pil(image).convert("RGB"), 1, 1) if cell is not None]
-        if not cells:
-            raise RuntimeError("no button found on the magenta background")
-        normal = beauty_core.finish(cells[0], width, height, colours, outline=False)
-        alpha = normal.getchannel("A")
-
-        def keep_alpha(picture):
-            picture = picture.convert("RGBA")
-            picture.putalpha(alpha)
-            return picture
-
-        hover = keep_alpha(ImageEnhance.Brightness(normal.convert("RGB")).enhance(1.25))
-        pressed = Image.new("RGBA", normal.size, (0, 0, 0, 0))
-        pressed.alpha_composite(keep_alpha(ImageEnhance.Brightness(normal.convert("RGB")).enhance(0.8)).crop((0, 0, normal.width, normal.height - 1)), (0, 1))
-        disabled = keep_alpha(ImageEnhance.Brightness(ImageEnhance.Color(normal.convert("RGB")).enhance(0.15)).enhance(0.7))
-        named = [(f"{stem}_normal", normal), (f"{stem}_hover", hover), (f"{stem}_pressed", pressed), (f"{stem}_disabled", disabled)]
-        return {"ui": {"images": save_sprites(named, folder or "rimtera")}}
-
-
-class RimteraPixelBackdrop:
-    """A wide generated scene as a pixel-art backdrop: box-downscaled to width x height (the game scales it up with
-    square pixels) and reduced to `colours` colours. Saves <prefix>.png and a 4x preview."""
-    CATEGORY = "Rimtera/ui"
-    RETURN_TYPES = ()
-    OUTPUT_NODE = True
-    FUNCTION = "backdrop"
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {"required": {
-            "image": ("IMAGE",),
-            "width": ("INT", {"default": 480, "min": 64, "max": 1920}),
-            "height": ("INT", {"default": 270, "min": 64, "max": 1080}),
-            "colours": ("INT", {"default": 64, "min": 8, "max": 256}),
-            "filename_prefix": ("STRING", {"default": "rimtera/ui/ui_title_backdrop"}),
-        }}
-
-    def backdrop(self, image, width, height, colours, filename_prefix):
-        folder, _, stem = filename_prefix.replace("\\", "/").rpartition("/")
-        scene = to_pil(image).convert("RGB")
-        scale = max(width / scene.width, height / scene.height)  # cover, then centre-crop to the exact size
-        big = scene.resize((max(width, round(scene.width * scale)), max(height, round(scene.height * scale))), Image.BOX)
-        left, top = (big.width - width) // 2, (big.height - height) // 2
-        small = big.crop((left, top, left + width, top + height))
-        small = small.quantize(colors=colours, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert("RGBA")
-        preview = small.resize((width * 4, height * 4), Image.NEAREST)
-        return {"ui": {"images": save_sprites([(stem, small), (f"{stem}_preview_4x", preview)], folder or "rimtera")}}
-
-
 NODE_CLASS_MAPPINGS = {
-    "RimteraButtonStates": RimteraButtonStates,
-    "RimteraPixelBackdrop": RimteraPixelBackdrop,
     "RimteraCutLabelled": RimteraCutLabelled,
     "RimteraFinishAudio": RimteraFinishAudio,
     "RimteraMossSoundEffect": RimteraMossSoundEffect,
@@ -354,8 +278,6 @@ NODE_CLASS_MAPPINGS = {
     "RimteraFinishAnimation": RimteraFinishAnimation,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "RimteraButtonStates": "Rimtera Button States",
-    "RimteraPixelBackdrop": "Rimtera Pixel Backdrop",
     "RimteraCutLabelled": "Rimtera Cut Labelled Pictures",
     "RimteraFinishAudio": "Rimtera Finish Audio",
     "RimteraMossSoundEffect": "Rimtera MOSS Sound Effect",

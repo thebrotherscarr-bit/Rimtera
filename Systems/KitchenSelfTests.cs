@@ -136,5 +136,23 @@ public static class KitchenSelfTests
         Button($"work-{id}-{WorkType.Fish}")?.Command?.Invoke();
         check(Button($"work-{id}-{WorkType.Cook}") is not null && ui.Colonists[0].Work.Priority(WorkType.Fish) == WorkCatalog.Highest,
             "the Work tab has Cook and Fish columns, and clicking sets them");
+
+        // ---- 0.2.9 meal quality: a better cook's food comes out with extra servings more often ----
+        check(GameSimulation.CookServingChance(0) == 0f && Math.Abs(GameSimulation.CookServingChance(10) - 0.4f) < 1e-4f &&
+              Math.Abs(GameSimulation.CookServingChance(20) - 0.8f) < 1e-4f,
+            "meal quality: a cook's food gets an extra serving 4% a Cooking level (40% at 10, 80% at 20)");
+
+        // ---- 0.2.9 crew fishing gear: the best rod and bait in storage; the bait is used up ----
+        var geared = Camp(9958, pond: true);
+        var gearChest = geared.GetContainer(Chest)!;
+        gearChest.Add(ItemId.FishingRod, 1);
+        gearChest.Add(ItemId.CobaltFishingRod, 1);
+        gearChest.Add(ItemId.Worm, 40);
+        var gear = geared.CrewFishingGear(geared.Colonists[0].HomePosition);
+        geared.Colonists[0].Work.Set(WorkType.Fish, 1);
+        TickUntil(geared, () => geared.Flags.Get("colony.fish") >= 4, 9000);
+        check(gear.Rod == ItemId.CobaltFishingRod && gear.Bait == ItemId.Worm && gearChest.Count(ItemId.Worm) < 40 &&
+              gearChest.Count(ItemId.CobaltFishingRod) == 1 && geared.Flags.Get("colony.fish") >= 4,
+            $"crew fish with the best rod and bait in the chests near home; the rod stays, the bait is used up (worms left {gearChest.Count(ItemId.Worm)})");
     }
 }

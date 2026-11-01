@@ -126,18 +126,8 @@ tools/comfy-app/standalone-env/python.exe tools/comfy/app_flows.py
 | Rimtera Art - Index one sheet | every labelled picture on one original art sheet, cut out | `rimtera/sheet_index` |
 | Rimtera Check - Sprite matches name | the model's blind description of a sprite, then YES or NO against its name | shown in the flow |
 | Rimtera Audio - Finish clip | any clip levelled, trimmed or looped for its cue, optionally added to the game | shown in the flow; `Assets/` with install on |
-| Rimtera UI - Panel frame | an empty riveted menu or window panel, 96×96, for 9-slice stretching | `rimtera/ui` |
-| Rimtera UI - Button states | a menu button with hover, pressed and disabled versions, 160×32 | `rimtera/ui` |
-| Rimtera UI - Slots | inventory, selected and equipment slots, 40×40 | `rimtera/ui` |
-| Rimtera UI - Bar frame | an empty health, energy or boss bar frame, 200×20 | `rimtera/ui` |
-| Rimtera UI - Icon sheet | 16 menu and HUD icons, 32×32 each | `rimtera/ui` |
-| Rimtera UI - Title logo | the RIMTERA logo, up to 480×200 | `rimtera/ui` |
-| Rimtera UI - Title backdrop | the title screen scene as a 480×270 pixel-art backdrop | `rimtera/ui` |
-| Rimtera UI - Cursor | the mouse cursor, 24×24 | `rimtera/ui` |
 
 Each flow has a "How to use" note. The prompts are filled in with real examples from the overnight runs, and the flows open with sample inputs (copied by `app_flows.py`), so they run as soon as they open. In the redraw flows, the name in the prompt decides what the sprite shows; the old sprite only lends its design where it fits that name.
-
-The UI flows take their look from the original boss sheet, `sheet_00c_bosses` (riveted gunmetal panels with amber-gold headers and title). The game still draws its menus, panels, slots and bars in code, so UI art made here is not used until the renderer is changed to draw it.
 
 The overnight runs are not flows: on this card ComfyUI has to restart between jobs (the second job on one server slows from 12 s to over 180 s per step), and a flow cannot restart its own server. They stay one-click launchers.
 

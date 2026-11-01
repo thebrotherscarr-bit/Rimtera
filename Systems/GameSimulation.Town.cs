@@ -411,7 +411,7 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>Shop price multiplier from happiness: happy NPCs discount (to 0.75), miserable ones gouge (to 1.5).</summary>
-    public float GetPriceMultiplier(TownNpc npc) => Math.Clamp(1f - 0.06f * GetHappiness(npc), 0.75f, 1.5f);
+    public float GetPriceMultiplier(TownNpc npc) => Math.Clamp(1f - 0.06f * GetHappiness(npc), 0.75f, 1.5f) * (1f - TradeDiscount); // 0.2.9: Trade
 
     /// <summary>What an NPC sells right now (flag-gated stock) at happiness-adjusted prices.</summary>
     public IReadOnlyList<ShopOffer> GetShop(TownNpc npc)

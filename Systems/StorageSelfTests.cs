@@ -4,7 +4,7 @@ using Rimtera.World;
 
 namespace Rimtera.Systems;
 
-/// <summary>Storage tags and residents at stations (0.2.4): chest filters, delivery by tag, town NPCs working bills, saves, the UI.</summary>
+/// <summary>Storage tags and residents at stations (0.2.4): chest filters, delivery by tag, town NPCs working bills, saves, the UI; chest priority (0.2.9).</summary>
 public static class StorageSelfTests
 {
     private const int Floor = 40;
@@ -83,29 +83,56 @@ public static class StorageSelfTests
               tags.ChestFilter(Near) == StorageCategory.All && tags.ChestTakes(Near, ItemId.RockBlock),
             "a chest takes everything until tagged; the toggles turn categories on and off");
 
-        // ---- haulers deliver by tag: food to the food chest (though it is farther), the rest to the general chest ----
-        var haul = Yard(9803);
-        haul.SetChestFilter(Far, StorageCategory.Food);
-        haul.Colonists[0].Work.Set(WorkType.Haul, 1);
-        haul.SpawnGroundItem(ItemId.Berry, 4, new Vector2(64.5f, Floor - 1.5f));
-        haul.SpawnGroundItem(ItemId.RockBlock, 6, new Vector2(65.5f, Floor - 1.5f));
-        var near = haul.GetContainer(Near)!;
-        var far = haul.GetContainer(Far)!;
-        var sorted = TickUntil(haul, () => far.Count(ItemId.Berry) == 4 && near.Count(ItemId.RockBlock) == 6, 3600);
-        check(sorted && near.Count(ItemId.Berry) == 0 && far.Count(ItemId.RockBlock) == 0,
-            $"haulers carry food to the chest tagged for food and blocks to the general chest (food chest: {far.Count(ItemId.Berry)} berries, " +
-            $"{far.Count(ItemId.RockBlock)} rock; general: {near.Count(ItemId.Berry)} berries, {near.Count(ItemId.RockBlock)} rock)");
+        // ---- workers deliver by tag: a product goes to the chest tagged for it, though a general chest is nearer ----
+        int[] Furnaces(StorageCategory nearTakes, StorageCategory farTakes)
+        {
+            var game = Yard(9803);
+            game.World.SetTile(Bench, TileId.Workbench);
+            game.GetContainer(Near)!.Add(ItemId.RockBlock, 20);
+            game.GetContainer(Near)!.Add(ItemId.WoodBlock, 5);
+            game.SetChestFilter(Near, nearTakes);
+            game.SetChestFilter(Far, farTakes);
+            game.Colonists[0].Work.Set(WorkType.Operate, 1);
+            var bill = game.AddBill(Bench, "furnace", BillMode.DoCount, 1)!;
+            TickUntil(game, () => bill.Done >= 1 && game.Colonists[0].Carried.IsEmpty, 3600);
+            return [game.GetContainer(Near)!.Count(ItemId.FurnaceBlock), game.GetContainer(Far)!.Count(ItemId.FurnaceBlock),
+                game.GroundItems.Where(item => item.ItemId == ItemId.FurnaceBlock).Sum(item => item.Count)];
+        }
+        var tagged = Furnaces(StorageCategory.All, StorageCategory.Blocks);
+        check(tagged[0] == 0 && tagged[1] >= 1,
+            $"a worker stores a product in the chest tagged for it before a nearer general chest (general {tagged[0]}, blocks chest {tagged[1]})");
 
-        // ---- an item no chest takes stays where it is ----
-        var refuse = Yard(9804);
-        refuse.SetChestFilter(Near, StorageCategory.Food);
-        refuse.SetChestFilter(Far, StorageCategory.Food);
-        refuse.Colonists[0].Work.Set(WorkType.Haul, 1);
-        refuse.SpawnGroundItem(ItemId.RockBlock, 3, new Vector2(64.5f, Floor - 1.5f));
-        Tick(refuse, 900);
-        check(refuse.GetContainer(Near)!.Count(ItemId.RockBlock) == 0 && refuse.GetContainer(Far)!.Count(ItemId.RockBlock) == 0 &&
-              refuse.GroundItems.Any(item => item.ItemId == ItemId.RockBlock) && refuse.Colonists[0].Carried.IsEmpty,
-            "an item no chest takes is left on the ground");
+        // ---- 0.2.9 chest priority: a First chest fills before a tagged Normal one; a Low chest only when nothing else takes it ----
+        int[] Prioritised(StoragePriority nearPriority, StorageCategory farTakes)
+        {
+            var game = Yard(9810);
+            game.World.SetTile(Bench, TileId.Workbench);
+            game.GetContainer(Near)!.Add(ItemId.RockBlock, 20);
+            game.GetContainer(Near)!.Add(ItemId.WoodBlock, 5);
+            game.SetChestPriority(Near, nearPriority);
+            game.SetChestFilter(Far, farTakes);
+            game.Colonists[0].Work.Set(WorkType.Operate, 1);
+            var bill = game.AddBill(Bench, "furnace", BillMode.DoCount, 1)!;
+            TickUntil(game, () => bill.Done >= 1 && game.Colonists[0].Carried.IsEmpty, 3600);
+            return [game.GetContainer(Near)!.Count(ItemId.FurnaceBlock), game.GetContainer(Far)!.Count(ItemId.FurnaceBlock)];
+        }
+        var first = Prioritised(StoragePriority.First, StorageCategory.Blocks);
+        var low = Prioritised(StoragePriority.Low, StorageCategory.All);
+        var cycle = Yard(9811);
+        var order = new List<StoragePriority>();
+        for (var i = 0; i < 3; i++)
+        {
+            cycle.CycleChestPriority(Near);
+            order.Add(cycle.ChestPriority(Near));
+        }
+        check(first[0] >= 1 && first[1] == 0 && low[0] == 0 && low[1] >= 1 &&
+              order.SequenceEqual([StoragePriority.First, StoragePriority.Low, StoragePriority.Normal]),
+            $"chest priority: a First chest fills before a tagged Normal chest, and a Low chest only after the others (first {first[0]}/{first[1]}, low {low[0]}/{low[1]}); the button cycles Normal → First → Low");
+
+        // ---- a product no chest takes is set down where it was made ----
+        var refused = Furnaces(StorageCategory.Food, StorageCategory.Food);
+        check(refused[0] == 0 && refused[1] == 0 && refused[2] >= 1,
+            "a product no chest takes is set down on the ground");
 
         // ---- a resident works a bill near home by day, and stops when told ----
         int ResidentCrafts(bool works, float hour)
@@ -131,6 +158,7 @@ public static class StorageSelfTests
         // ---- saves keep chest tags and residents' work toggles and loads ----
         var kept = Yard(9806);
         kept.SetChestFilter(Far, StorageCategory.Food | StorageCategory.Potions);
+        kept.SetChestPriority(Near, StoragePriority.First);
         var keeper = kept.AddTownNpc(TownNpcKind.Mechanic, new Vector2(68f, Floor - 3f), bound: false);
         keeper.HomeCell = new GridPoint(68, Floor - 2);
         keeper.WorksStations = false;
@@ -139,6 +167,7 @@ public static class StorageSelfTests
         var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
         var back = reloaded.TownNpcs.FirstOrDefault(npc => npc.Kind == TownNpcKind.Mechanic);
         check(reloaded.ChestFilter(Far) == (StorageCategory.Food | StorageCategory.Potions) && reloaded.ChestFilter(Near) == StorageCategory.All &&
+              reloaded.ChestPriority(Near) == StoragePriority.First &&
               back is { WorksStations: false } && back.Held.GetValueOrDefault(ItemId.RockBlock) == 5 && back.Carried == new ItemStack(ItemId.FurnaceBlock, 1),
             "chest tags and residents' bill toggles, fetched ingredients and carried products are saved with the world");
 
@@ -149,7 +178,8 @@ public static class StorageSelfTests
         var chestHub = new Rimtera.UI.InventoryUiState(ui.Player.Inventory, chest: ui.GetContainer(Near), game: ui, chestCell: Near);
         Rimtera.UI.UiButtonElement? Button(Rimtera.UI.InventoryUiState hub, string id) =>
             hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
-        var buttons = StorageCategories.Listed.All(entry => Button(chestHub, $"chest-filter-{entry.Category}") is not null);
+        var buttons = StorageCategories.Listed.All(entry => Button(chestHub, $"chest-filter-{entry.Category}") is not null) &&
+                      Button(chestHub, "chest-priority") is not null;
         Button(chestHub, $"chest-filter-{StorageCategory.Blocks}")?.Command?.Invoke();
         var hub = new Rimtera.UI.InventoryUiState(ui.Player.Inventory, game: ui);
         Button(hub, "tab-work")?.Command?.Invoke();

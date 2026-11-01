@@ -10,13 +10,11 @@ public enum WorkType : byte
 {
     Guard,
     Tend,
-    Haul,
     Operate,
     Farm,
     Brew,
     Cook,
     Fish,
-    Build,
     Research,
     Trade
 }
@@ -33,15 +31,13 @@ public static class WorkCatalog
     [
         new(WorkType.Guard, "Guard", ColonistSkill.Melee, true, "Fight creatures that come near home."),
         new(WorkType.Tend, "Tend", ColonistSkill.Medical, true, "Treat hurt and downed crew and residents."),
-        new(WorkType.Haul, "Haul", ColonistSkill.Mining, true, "Carry loose items near home into chests."),
         new(WorkType.Operate, "Operate", ColonistSkill.Crafting, true, "Work station bills: fetch ingredients, craft, store the product."),
         new(WorkType.Farm, "Farm", ColonistSkill.Plants, true, "Plant and harvest grow zones; store the herbs, keep seeds to replant."),
         new(WorkType.Brew, "Brew", ColonistSkill.Medical, true, "Work bills at chem labs: brew potions from herbs."),
         new(WorkType.Cook, "Cook", ColonistSkill.Cooking, true, "Work bills at cooking stations: meals for the crew."),
         new(WorkType.Fish, "Fish", ColonistSkill.Animals, true, "Fish open water near home; store the catch."),
-        new(WorkType.Build, "Build", ColonistSkill.Construction, true, "Build the blueprints the player places, with blocks from storage."),
         new(WorkType.Research, "Research", ColonistSkill.Intellectual, true, "Study the chosen project at a research terminal or lab."),
-        new(WorkType.Trade, "Trade", ColonistSkill.Social, false, "Better prices with traders (coming).")
+        new(WorkType.Trade, "Trade", ColonistSkill.Social, true, "Better shop prices: the best Social on Trade bargains for you.")
     ];
 
     public static WorkTypeInfo Get(WorkType type) => All[(int)type];
@@ -92,10 +88,15 @@ public sealed class ColonyWorkSettings
 
     public int[] Capture() => _priorities.ToArray();
 
+    /// <summary>Work types saves made before 0.2.9 held (Haul at 2 and Build at 8 were removed then).</summary>
+    private const int LegacyWorkTypes = 11;
+
     public void Restore(int[]? saved)
     {
         if (saved is null)
             return;
+        if (saved.Length == LegacyWorkTypes)
+            saved = saved.Where((_, index) => index is not (2 or 8)).ToArray();
         for (var i = 0; i < Math.Min(saved.Length, _priorities.Length); i++)
             _priorities[i] = Math.Clamp(saved[i], WorkCatalog.Off, WorkCatalog.Lowest);
     }

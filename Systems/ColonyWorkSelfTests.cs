@@ -5,7 +5,7 @@ using Rimtera.World;
 
 namespace Rimtera.Systems;
 
-/// <summary>Colony work (0.2.1): work priorities, the Guard, Tend and Haul job givers, staying home, saves and the Work tab.</summary>
+/// <summary>Colony work (0.2.1): work priorities, the Guard and Tend job givers, staying home, saves and the Work tab (Haul removed in 0.2.9).</summary>
 public static class ColonyWorkSelfTests
 {
     private const int Floor = 40;
@@ -65,39 +65,28 @@ public static class ColonyWorkSelfTests
         var defaultsRight = WorkCatalog.All.All(info =>
             crewmate.Work.Priority(info.Type) == (crewmate.ColonistStats.Passion(info.Skill) == PassionLevel.None ? WorkCatalog.Default : WorkCatalog.Passionate));
         var settings = ColonyWorkSettings.For(crewmate.ColonistStats);
-        settings.Set(WorkType.Haul, 3);
+        settings.Set(WorkType.Fish, 3);
         var cycle = new List<int>();
         for (var i = 0; i < 5; i++)
         {
-            settings.Cycle(WorkType.Haul);
-            cycle.Add(settings.Priority(WorkType.Haul));
+            settings.Cycle(WorkType.Fish);
+            cycle.Add(settings.Priority(WorkType.Fish));
         }
         foreach (var type in Enum.GetValues<WorkType>())
             settings.Set(type, WorkCatalog.Off);
-        settings.Set(WorkType.Haul, 1);
+        settings.Set(WorkType.Fish, 1);
         settings.Set(WorkType.Guard, 2);
         settings.Set(WorkType.Tend, 2);
         check(defaultsRight && cycle.SequenceEqual([4, 0, 1, 2, 3]) &&
-              settings.Order().SequenceEqual([WorkType.Haul, WorkType.Guard, WorkType.Tend]) && !crewmate.FollowsPlayer,
+              settings.Order().SequenceEqual([WorkType.Fish, WorkType.Guard, WorkType.Tend]) && !crewmate.FollowsPlayer,
             "work priorities: 3 by default, 2 for a passion; clicking cycles 1-2-3-4-off; 1 is done first, ties by work type; crew stay home");
 
-        // ---- Haul: loose items near home go into a chest; items by the player are left for the player ----
-        var haul = Arena(9602);
-        var chestCell = new GridPoint(70, Floor - 1);
-        haul.World.SetTile(chestCell, TileId.StorageCrate);
-        haul.Colonists[0].Work.Set(WorkType.Haul, 1);
-        var loose = haul.SpawnGroundItem(ItemId.RockBlock, 5, new Vector2(66.5f, Floor - 1.5f));
-        haul.SpawnGroundItem(ItemId.Berry, 3, new Vector2(10.5f, Floor - 1.5f)); // beside the player: left alone
-        var hauled = false;
-        for (var i = 0; i < 1800 && !hauled; i += 30)
-        {
-            Tick(haul, 30);
-            hauled = haul.GetContainer(chestCell)!.Count(ItemId.RockBlock) == 5;
-        }
-        check(hauled && loose is not null && !haul.GroundItems.Contains(loose) &&
-              haul.GetContainer(chestCell)!.Count(ItemId.Berry) == 0 && haul.Colonists[0].Carried.IsEmpty,
-            $"a hauler carries loose items near home into a chest, and leaves what lies by the player (chest {haul.GetContainer(chestCell)!.Count(ItemId.RockBlock)}, " +
-            $"left on the ground {haul.GroundItems.Count(item => item.ItemId == ItemId.RockBlock)}, carrying {haul.Colonists[0].Carried.Count}, {haul.Colonists[0].Activity})");
+        // ---- old saves: 0.2.1-0.2.8 priorities held Haul (at 2) and Build (at 8); 0.2.9 drops those two ----
+        var migrated = new ColonyWorkSettings();
+        migrated.Restore([1, 2, 4, 3, 3, 3, 3, 3, 4, 2, 3]);
+        check(migrated.Priority(WorkType.Guard) == 1 && migrated.Priority(WorkType.Tend) == 2 && migrated.Priority(WorkType.Operate) == 3 &&
+              migrated.Priority(WorkType.Research) == 2 && migrated.Priority(WorkType.Trade) == 3,
+            "work priorities from saves before 0.2.9 load without the removed Haul and Build columns");
 
         // ---- Tend: a hurt crewmate heals faster with a tender than resting alone ----
         float Tended(bool tender)
@@ -134,14 +123,14 @@ public static class ColonyWorkSelfTests
 
         // ---- saves keep priorities, following and a carried stack ----
         var kept = Arena(9605);
-        kept.Colonists[0].Work.Set(WorkType.Haul, 1);
+        kept.Colonists[0].Work.Set(WorkType.Fish, 1);
         kept.Colonists[0].Work.Set(WorkType.Guard, 4);
         kept.Colonists[1].FollowsPlayer = true;
         kept.Colonists[0].Carried = new ItemStack(ItemId.RockBlock, 7);
         var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
         check(reloaded.Colonists[0].Work.Capture().SequenceEqual(kept.Colonists[0].Work.Capture()) && reloaded.Colonists[1].FollowsPlayer &&
               !reloaded.Colonists[0].FollowsPlayer && reloaded.Colonists[0].Carried == new ItemStack(ItemId.RockBlock, 7),
-            "work priorities, following and a hauled stack are saved with the world");
+            "work priorities, following and a carried stack are saved with the world");
 
         // ---- the Work tab in the inventory hub ----
         var tabbed = Arena(9606);
@@ -150,10 +139,10 @@ public static class ColonyWorkSelfTests
             hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
         Button("tab-work")?.Command?.Invoke();
         var first = tabbed.Colonists[0];
-        Button($"work-{first.Id}-{WorkType.Haul}")?.Command?.Invoke();
+        Button($"work-{first.Id}-{WorkType.Fish}")?.Command?.Invoke();
         Button($"work-{first.Id}-follow")?.Command?.Invoke();
-        check(first.Work.Priority(WorkType.Haul) == WorkCatalog.Highest && first.FollowsPlayer &&
+        check(first.Work.Priority(WorkType.Fish) == WorkCatalog.Highest && first.FollowsPlayer &&
               Button($"work-{first.Id}-{WorkType.Guard}") is not null && Button($"work-{first.Id}-{WorkType.Tend}") is not null,
-            "the hub's Work tab lists each crew member's Guard, Tend and Haul priorities and their stay-home toggle, and clicking changes them");
+            "the hub's Work tab lists each crew member's work priorities and their stay-home toggle, and clicking changes them");
     }
 }
