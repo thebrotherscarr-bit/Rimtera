@@ -81,7 +81,7 @@ public static class TownPeople
     /// The work a resident turns to, by skill (0.3.9). The station AI only runs machines and studies; traders and town gels
     /// work nothing (the Trade Consul still bargains).
     /// </summary>
-    public static ColonyWorkSettings WorkFor(TownNpcKind kind, ColonistStats stats)
+    public static ColonyWorkSettings WorkFor(TownNpcKind kind, ColonistStats stats, bool armed = false)
     {
         var work = ColonyWorkSettings.For(stats);
         if (kind == TownNpcKind.StationAi)
@@ -96,6 +96,9 @@ public static class TownPeople
         // and go indoors (0.4.0 brings guards and their gear properly).
         if (work.Priority(WorkType.Guard) > WorkCatalog.Passionate)
             work.Set(WorkType.Guard, WorkCatalog.Off);
+        // 0.4.0: handing someone a weapon makes them a guard of their area, whatever their skills.
+        if (armed && kind != TownNpcKind.StationAi && !TownTrades.Idle(kind))
+            work.Set(WorkType.Guard, WorkCatalog.Highest);
         // Bargaining at shops is the Trade Consul's calling, and a settler's whose Social is a best skill; a shopkeeper
         // does not haggle down another's prices.
         if (kind != TownNpcKind.TradeConsul && !(kind == TownNpcKind.Settler && work.Priority(WorkType.Trade) == WorkCatalog.Highest))

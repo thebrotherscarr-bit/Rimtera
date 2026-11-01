@@ -77,17 +77,35 @@ public sealed partial class GameSimulation
             return false;
         agent.Activity = $"Guarding against the {threat.DisplayName}";
         var target = threat.Motion.Position + threat.Motion.Size / 2f;
-        if (DistanceToRect(center, threat.Motion.Position, threat.Motion.Size) < 1.2f)
+        // 0.4.0: they fight with what they wield: a blow in reach of a melee weapon (or fists), a shot from a ranged one.
+        var (damage, reach, seconds) = ResidentAttack(agent);
+        var ranged = reach > UnarmedReach + 2f;
+        if (DistanceToRect(center, threat.Motion.Position, threat.Motion.Size) < reach && (!ranged || ClearShot(center, target)))
         {
             if (agent.StrikeTimer <= 0f)
             {
-                threat.TakeDamage(GuardStrikeDamage(agent.Stats));
-                agent.StrikeTimer = 1f;
+                threat.TakeDamage(damage);
+                agent.StrikeTimer = seconds;
             }
             StepColonistToward(agent, center, center, deltaSeconds, 1f);
         }
         else
             StepColonistToward(agent, center, target, deltaSeconds, 1.1f);
+        return true;
+    }
+
+    /// <summary>No solid tile on the straight line between two points (a guard's shot needs a clear line).</summary>
+    private bool ClearShot(Vector2 from, Vector2 to)
+    {
+        var steps = (int)MathF.Ceiling(Vector2.Distance(from, to) * 2f);
+        for (var i = 1; i < steps; i++)
+        {
+            var point = Vector2.Lerp(from, to, i / (float)steps);
+            var x = (int)MathF.Floor(point.X);
+            var y = (int)MathF.Floor(point.Y);
+            if (World.Contains(x, y) && Tiles[World.TileAt(x, y)].IsSolid)
+                return false;
+        }
         return true;
     }
 

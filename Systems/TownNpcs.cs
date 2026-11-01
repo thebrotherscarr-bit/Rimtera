@@ -111,8 +111,14 @@ public sealed class TownNpc : IStationWorker
     internal Vector2 WanderTarget { get; set; }
     internal float WanderTimer { get; set; }
     /// <summary>Residents can be hurt by hostiles; at zero they die and return later (see GameSimulation.Town).</summary>
-    public float MaximumHitPoints { get; } = 160f;
-    public float HitPoints { get; internal set; } = 160f;
+    public const float BaseHitPoints = 160f;
+    /// <summary>Base hit points plus the life their armour and accessories give (0.4.0).</summary>
+    public float MaximumHitPoints { get; internal set; } = BaseHitPoints;
+    public float HitPoints { get; internal set; } = BaseHitPoints;
+    /// <summary>What they wear and wield (0.4.0): Terraria's gear, handed over by the player.</summary>
+    public Dictionary<ResidentGearSlot, ItemId> Gear { get; } = new();
+    /// <summary>Holding a weapon (it makes them a guard of their area).</summary>
+    public bool IsArmed => Gear.ContainsKey(ResidentGearSlot.Weapon);
     public bool IsAlive => HitPoints > 0f;
     internal float HurtCooldown { get; set; }
 
@@ -136,8 +142,11 @@ public sealed class TownNpc : IStationWorker
     {
         Profile = profile;
         Stats = profile.Stats;
-        Work = TownPeople.WorkFor(Kind, Stats);
+        Work = TownPeople.WorkFor(Kind, Stats, IsArmed);
     }
+
+    /// <summary>Re-derives their work after gear changes (a weapon makes guarding their first call).</summary>
+    internal void RefreshWork() => Work = TownPeople.WorkFor(Kind, Stats, IsArmed);
 
     /// <summary>The stations of this person's trade (none for a settler, who works any station by skill).</summary>
     public IReadOnlyList<CraftingStationId> Trade => TownTrades.TradeOf(Kind);
@@ -222,7 +231,9 @@ public static class TownTrades
 public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, float Y, int? HomeX, int? HomeY, bool Bound, float? Hp = null,
     bool? WorksStations = null, ItemStack[]? Held = null, ItemStack? Carried = null,
     // 0.3.10: the person (skills, passions, background), a settler's look, and what Farm and Fish work carry.
-    Rimtera.Characters.CharacterProfile? Person = null, int? Look = null, ItemStack[]? Pouch = null);
+    Rimtera.Characters.CharacterProfile? Person = null, int? Look = null, ItemStack[]? Pouch = null,
+    // 0.4.0: their gear, by ResidentGearSlot.
+    ItemId?[]? Gear = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 

@@ -244,7 +244,7 @@ public sealed partial class GameSimulation
         ArgumentNullException.ThrowIfNull(npc);
         if (amount <= 0f || npc.IsBound || !npc.IsAlive || !_townNpcs.Contains(npc))
             return false;
-        npc.HitPoints = Math.Max(0f, npc.HitPoints - amount);
+        npc.HitPoints = Math.Max(0f, npc.HitPoints - ResidentDamageTaken(npc, amount)); // 0.4.0: their armour's defense
         npc.HurtCooldown = 0.6f;
         if (npc.IsAlive)
         {
@@ -253,6 +253,7 @@ public sealed partial class GameSimulation
         }
         DropColonistLoad(npc);
         DropPouch(npc, npc.Motion.Position + npc.Motion.Size / 2f);
+        DropResidentGear(npc);
         _townNpcs.Remove(npc);
         Record($"{npc.Name} the {npc.Definition.Role} was slain.");
         if (StationAiDefeat(npc))
@@ -598,7 +599,8 @@ public sealed partial class GameSimulation
         npc.Held.Count == 0 ? null : npc.Held.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
         npc.Carried.IsEmpty ? null : npc.Carried,
         npc.Profile, npc.Kind == TownNpcKind.Settler ? npc.Look : null,
-        npc.Pouch.Count == 0 ? null : npc.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray())).ToArray();
+        npc.Pouch.Count == 0 ? null : npc.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
+        CaptureResidentGear(npc))).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -621,6 +623,7 @@ public sealed partial class GameSimulation
             };
             // NC-20: a hurt resident loads as hurt. Saves from before the field (or a bad value) load at full health; a
             // living resident never loads dead.
+            RestoreResidentGear(npc, saved.Gear); // before the hit points: gear sets the maximum they are clamped to
             if (saved.Hp is { } hp && float.IsFinite(hp))
                 npc.HitPoints = Math.Clamp(hp, 1f, npc.MaximumHitPoints);
             npc.WorksStations = saved.WorksStations ?? true;
@@ -632,6 +635,7 @@ public sealed partial class GameSimulation
             foreach (var pouched in saved.Pouch ?? [])
                 if (!pouched.IsEmpty && Items.Contains(pouched.ItemId))
                     npc.Pouch[pouched.ItemId] = npc.Pouch.GetValueOrDefault(pouched.ItemId) + pouched.Count;
+
             _townNpcs.Add(npc);
         }
     }

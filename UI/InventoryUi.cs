@@ -753,23 +753,35 @@ public sealed class InventoryUiState : UiState
         }
         if (_housingReport is not null)
             Line(_housingReport, "housing-report", new UiColor(242, 176, 64));
-        var residents = game.TownNpcs.Where(npc => !npc.IsBound).Take(8).ToList();
+        var residents = game.TownNpcs.Where(npc => !npc.IsBound).Take(6).ToList();
         Line(residents.Count == 0 ? "No residents yet." : "Residents", "housing-residents", new UiColor(242, 176, 64));
         foreach (var npc in residents)
         {
             var resident = npc;
             var home = npc.HomeCell is null ? "homeless" : $"happiness {game.GetHappiness(npc):+0.0;-0.0;0}";
-            Add(new UiButtonElement("Move here", () =>
+            Line($"{npc.Name} · {npc.Definition.Role} · {home}", $"housing-npc-{npc.Id}", new UiColor(226, 230, 238));
+            if (npc.Gear.Count > 0)
+                Line($"   {string.Join(", ", npc.Gear.OrderBy(pair => pair.Key).Select(pair => game.Items[pair.Value].Name))} · DEF {game.ResidentDefense(npc)}",
+                    $"housing-gear-{npc.Id}", new UiColor(170, 200, 230));
+            void RowButton(string text, string id, float left, Action command) =>
+                Add(new UiButtonElement(text, () => { command(); Status(_housingReport ?? ""); Rebuild(); }, id, new UiStyle
+                {
+                    Left = UiLength.Mixed(left, 1f), Top = UiLength.Px(y - 1f), Width = UiLength.Px(72f), Height = UiLength.Px(20f)
+                }) { TextScale = 0.6f });
+            RowButton("Move here", $"housing-move-{npc.Id}", -250f, () =>
             {
                 var center = game.Player.Motion.Position + game.Player.Motion.Size / 2f;
                 _housingReport = game.AssignHome(resident, new GridPoint((int)center.X, (int)center.Y));
-                Status(_housingReport);
-                Rebuild();
-            }, $"housing-move-{npc.Id}", new UiStyle
-            {
-                Left = UiLength.Mixed(-82f, 1f), Top = UiLength.Px(y - 1f), Width = UiLength.Px(72f), Height = UiLength.Px(20f)
-            }) { TextScale = 0.6f });
-            Line($"{npc.Name} · {npc.Definition.Role} · {home}", $"housing-npc-{npc.Id}", new UiColor(226, 230, 238));
+            });
+            // 0.4.0: hand a resident the item in your hand (a weapon, armour or an accessory), or take their gear back.
+            RowButton("Give held", $"housing-equip-{npc.Id}", -174f, () => _housingReport = game.EquipResident(resident));
+            if (npc.Gear.Count > 0)
+                RowButton("Take gear", $"housing-unequip-{npc.Id}", -98f, () =>
+                {
+                    var taken = game.UnequipResident(resident);
+                    _housingReport = $"{resident.Name} hands back {taken} piece{(taken == 1 ? "" : "s")} of gear.";
+                });
+            y += 24f;
         }
         foreach (var lost in game.LostResidentKinds().Take(4))
             Line($"Vacant: {TownNpcCatalog.Get(lost).Role} (lost)", $"housing-lost-{lost}", new UiColor(150, 160, 172));
