@@ -183,7 +183,7 @@ public static class WorldGenSelfTests
         var census = WorldCensus.Take(small);
         var off = WorldCensusReference.Compare(census, 4200, 1200).Where(entry => !entry.InRange).Select(entry => entry.Line).ToArray();
         check(off.Length == 0 && census.ChestsByLayer.GetValueOrDefault("caverns") > census.ChestsByLayer.GetValueOrDefault("surface"),
-            $"chests, pots, life cores, altars and ore per layer are within the reference ranges, with most chests in the caves " +
+            $"chests, pots, life cores, altars, ore per layer and the ore tier mix (0.3.3) are within the reference ranges, with most chests in the caves " +
             $"({census.Chests} chests; {(off.Length == 0 ? "all in range" : string.Join("; ", off))})");
         var families = new HashSet<GameSimulation.ChestFamily>();
         var missing = new List<string>();

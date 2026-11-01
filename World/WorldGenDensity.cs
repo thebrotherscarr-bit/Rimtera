@@ -85,9 +85,11 @@ public static class WorldGenDensity
     public static readonly Density TideGrottosPerCoast = W(0.5, 1);
 
     // ---- Resources ----
-    public static readonly Density CopperVeins = A(1290, 6);
-    public static readonly Density CobaltVeins = A(667, 3);
-    public static readonly Density ViridiumVeins = A(385, 2);
+    public static readonly Density CopperVeins = A(560, 6);
+    /// <summary>Cobalt from the surface to the caverns (0.3.3), as Terraria's tier-2 ores are found near the surface.</summary>
+    public static readonly Density ShallowCobaltVeins = A(700, 4);
+    public static readonly Density CobaltVeins = A(450, 3);
+    public static readonly Density ViridiumVeins = A(600, 2);
     public static readonly Density FrozenOreBlobs = A(625, 3);
     public static readonly Density JunkOreBlobs = A(625, 3);
     public static readonly Density PyrociteBlobs = W(48, 2);
