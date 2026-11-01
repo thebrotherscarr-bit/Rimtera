@@ -127,7 +127,7 @@ launch you may continue the world, and the story from there is yours.
 | 0.3.9 | **The colony by default.** The Work tab and bills are removed. People orient toward their preferred work from their background, and work it by skill: a chemist keeps healing in stock, a cook keeps food. |
 | 0.3.10 | **One kind of character.** The crew merge into the town NPCs. *(Done: every resident is a person with skills who works by skill; the crew became settlers.)* |
 | 0.3.11 | **Multiplayer groundwork.** Per-player input, camera, inventory and saves; game state separated from player commands. *(Done: `docs/MULTIPLAYER.md`.)* |
-| 0.4.0 | **The colony defends.** Guards and outposts, equipping people (with Terraria's gear), purposeful storyteller raids with warnings, a balance pass. Split into 0.4.x steps when we get there. |
+| 0.4.0 | **The colony defends.** Guards and outposts, equipping people (with Terraria's gear), purposeful storyteller raids with warnings, a balance pass. Steps: 0.4.0 equipping people *(done)*, 0.4.1 guards and guard posts, 0.4.2 outposts, 0.4.3 raids with warning, 0.4.4 balance pass. |
 
 ### 4.2 0.5.0: People with stories
 

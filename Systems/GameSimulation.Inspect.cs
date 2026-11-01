@@ -56,6 +56,12 @@ public sealed partial class GameSimulation
         };
         if (npc.Work.Order().FirstOrDefault() is var first && npc.Work.Order().Any())
             lines.Add($"Drawn to: {string.Join(", ", npc.Work.Order().Where(type => npc.Work.Priority(type) == WorkCatalog.Highest).Select(type => WorkCatalog.Get(type).Label))}");
+        if (npc.Gear.Count > 0)
+        {
+            var (damage, reach, _) = ResidentAttack(npc);
+            lines.Add($"Gear: {string.Join(", ", npc.Gear.OrderBy(pair => pair.Key).Select(pair => Items[pair.Value].Name))} · DEF {ResidentDefense(npc)}" +
+                      (npc.IsArmed ? $" · hits {damage:0} at {reach:0.#} tiles" : ""));
+        }
         var carrying = new List<string>();
         if (!npc.Carried.IsEmpty)
             carrying.Add($"{npc.Carried.Count} {Items[npc.Carried.ItemId].Name}");
