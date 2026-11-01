@@ -71,19 +71,22 @@ public static class ItemCensus
         Console.WriteLine("Accessory defense values: " + string.Join(", ", catalog.All
             .Where(item => item.EquipmentSlot is >= EquipmentSlot.Accessory && item.UseKind == ItemUseKind.Equipment && item.Defense > 0)
             .GroupBy(item => item.Defense).OrderBy(group => group.Key).Select(group => $"{group.Key}x{group.Count()}")));
-        Console.WriteLine("Enemies by hit points: count, contact damage min / median / max");
+        Console.WriteLine("Enemies by hit points: count, contact damage min / median / max, defense min / median / max");
         var enemies = Rimtera.Entities.EnemyArchetypes.All.Where(archetype => !archetype.Passive).ToArray();
         foreach (var bucket in new[] { (0f, 60f), (60f, 150f), (150f, 400f), (400f, 1000f), (1000f, 5000f), (5000f, float.MaxValue) })
         {
-            var inBucket = enemies.Where(archetype => archetype.HitPoints >= bucket.Item1 && archetype.HitPoints < bucket.Item2)
-                .Select(archetype => archetype.AttackDamage).OrderBy(damage => damage).ToArray();
+            var members = enemies.Where(archetype => archetype.HitPoints >= bucket.Item1 && archetype.HitPoints < bucket.Item2).ToArray();
+            var inBucket = members.Select(archetype => archetype.AttackDamage).OrderBy(damage => damage).ToArray();
+            var defenses = members.Select(archetype => archetype.Defense).OrderBy(defense => defense).ToArray();
             if (inBucket.Length > 0)
-                Console.WriteLine($"  HP {bucket.Item1,5:0}-{(bucket.Item2 > 1e9 ? "max" : bucket.Item2.ToString("0")),-5}: {inBucket.Length,3}  {inBucket[0],5:0.#} / {inBucket[inBucket.Length / 2],5:0.#} / {inBucket[^1],5:0.#}");
+                Console.WriteLine($"  HP {bucket.Item1,5:0}-{(bucket.Item2 > 1e9 ? "max" : bucket.Item2.ToString("0")),-5}: {inBucket.Length,3}  {inBucket[0],5:0.#} / {inBucket[inBucket.Length / 2],5:0.#} / {inBucket[^1],5:0.#}" +
+                                  $"   def {defenses[0],2} / {defenses[defenses.Length / 2],2} / {defenses[^1],2}");
         }
 
-        Console.WriteLine("Bosses and 400+ HP creatures: tier, hit points, authored hit, scaled hit");
+        Console.WriteLine("Bosses and 400+ HP creatures: tier, hit points, authored hit, scaled hit, defense");
         foreach (var archetype in enemies.Where(archetype => archetype.IsBoss || archetype.HitPoints >= 400f).OrderBy(archetype => archetype.Tier).ThenBy(archetype => archetype.HitPoints))
-                Console.WriteLine($"    {archetype.Kind,-24}{archetype.Tier,-7}{archetype.HitPoints,7:0}{archetype.AttackDamage,6:0}{archetype.AttackDamage * DefenseBalance.EnemyHitScale(archetype),7:0}");
+                Console.WriteLine($"    {archetype.Kind,-24}{archetype.Tier,-7}{archetype.HitPoints,7:0}{archetype.AttackDamage,6:0}{archetype.AttackDamage * DefenseBalance.EnemyHitScale(archetype),7:0}{archetype.Defense,5}");
+        PrintTimeToKill(catalog, enemies);
         // Each armor tier against the median non-boss creature of its band, after toughness scaling and defense (Classic).
         float Median(float low, float high, BossTier boss = BossTier.None)
         {
@@ -117,6 +120,54 @@ public static class ItemCensus
         var finalAfter = DefenseBalance.ApplyDefense(finalHit, endgame, WorldDifficulty.Classic);
         Console.WriteLine($"  Endgame armor + best accessories def {endgame} vs final boss hit {finalHit:0.#} -> {finalAfter:0.#}  ({1f - finalAfter / finalHit:P0} cut)");
         return 0;
+    }
+
+    /// <summary>
+    /// Time to kill per weapon tier (Classic, no crits, no armor penetration): the tier's median weapon damage against
+    /// its creature band, after half the creature's defense, with the Fracture's rescale on the post-Fracture bands.
+    /// </summary>
+    private static void PrintTimeToKill(ItemCatalog catalog, Rimtera.Entities.EnemyArchetype[] enemies)
+    {
+        var weaponDamage = catalog.All.Where(item => item.Damage > 0 && item.UseKind is ItemUseKind.Melee or ItemUseKind.Ranged or ItemUseKind.Tech)
+            .GroupBy(item => item.Tier).ToDictionary(group => group.Key, group =>
+            {
+                var sorted = group.Select(item => item.Damage).OrderBy(damage => damage).ToArray();
+                return sorted[sorted.Length / 2];
+            });
+        var (rescaleHealth, _) = GameSimulation.HardmodeScale(WorldDifficulty.Classic);
+        var regular = enemies.Where(archetype => !archetype.IsBoss && archetype.Kind != Rimtera.Entities.EnemyKind.DungeonGuardian).ToArray();
+        bool Late(Rimtera.Entities.EnemyArchetype archetype) => Rimtera.Entities.CreatureStatTable.IsLate(archetype.Kind);
+        bool Post(Rimtera.Entities.EnemyArchetype archetype) => !Late(archetype) && Rimtera.Entities.CreatureStatTable.IsPostFracture(archetype.Kind);
+        bool Pre(Rimtera.Entities.EnemyArchetype archetype) => !Late(archetype) && !Post(archetype);
+        var bands = new (int Tier, string Label, Rimtera.Entities.EnemyArchetype[] Members, bool Fractured)[]
+        {
+            (1, "pre-Fracture HP 0-60", regular.Where(a => Pre(a) && a.HitPoints < 60f).ToArray(), false),
+            (2, "pre-Fracture HP 60-150", regular.Where(a => Pre(a) && a.HitPoints is >= 60f and < 150f).ToArray(), false),
+            (3, "pre-Fracture HP 150+", regular.Where(a => Pre(a) && a.HitPoints >= 150f).ToArray(), false),
+            (4, "post-Fracture HP <300", regular.Where(a => Post(a) && a.HitPoints < 300f).ToArray(), true),
+            (5, "post-Fracture HP 300+", regular.Where(a => Post(a) && a.HitPoints >= 300f).ToArray(), true),
+            (6, "late tier", regular.Where(Late).ToArray(), true),
+            (7, "late tier", regular.Where(Late).ToArray(), true),
+            (1, "gate bosses", enemies.Where(a => a.Tier == Rimtera.Entities.BossTier.Gate).ToArray(), false),
+            (3, "easy bosses", enemies.Where(a => a.Tier == Rimtera.Entities.BossTier.Easy).ToArray(), false),
+            (5, "hard bosses", enemies.Where(a => a.Tier == Rimtera.Entities.BossTier.Hard).ToArray(), true),
+            (6, "final boss", enemies.Where(a => a.Tier == Rimtera.Entities.BossTier.Final).ToArray(), true)
+        };
+        Console.WriteLine("Time to kill per tier (Classic): weapon median damage vs band median HP (after rescale) and defense -> hits min / median / max");
+        foreach (var band in bands)
+        {
+            if (band.Members.Length == 0 || !weaponDamage.TryGetValue(band.Tier, out var damage))
+                continue;
+            float Health(Rimtera.Entities.EnemyArchetype archetype) =>
+                archetype.HitPoints * (band.Fractured && GameSimulation.HardmodeRescales(archetype) ? rescaleHealth : 1f);
+            var hits = band.Members.Select(archetype =>
+                    (int)MathF.Ceiling(Health(archetype) / CombatTuning.CreatureDamageTaken(damage, archetype.Defense, 0, false)))
+                .OrderBy(count => count).ToArray();
+            var health = band.Members.Select(Health).OrderBy(value => value).ToArray();
+            var defenses = band.Members.Select(archetype => archetype.Defense).OrderBy(value => value).ToArray();
+            Console.WriteLine($"  T{band.Tier} dmg {damage,3} vs {band.Label,-24} ({band.Members.Length,3}) HP {health[health.Length / 2],6:0} def {defenses[defenses.Length / 2],2}" +
+                              $" -> hits {hits[0],3} / {hits[hits.Length / 2],3} / {hits[^1],4}");
+        }
     }
 
     public static int Run()

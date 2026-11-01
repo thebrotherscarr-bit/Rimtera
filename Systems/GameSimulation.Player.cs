@@ -130,9 +130,21 @@ public sealed partial class GameSimulation
     public const float BankStationReach = 6f;
     public const float QuickStackRadius = 10f;
     public const int KillsPerBanner = 50;
-    public const float BannerRadius = 30f;
-    public const float BannerDamageBonus = 1.25f;
-    public const float BannerDamageTakenFactor = 0.8f;
+    // Kill banners (D-21, EN-18). Numbers are Terraria 1.4.4's Player.GetBannerBuffEffect / NPCBannerBuff (the
+    // ItemID.BannerEffect struct at strength 1: dealt 1 + 0.5s, expert dealt 1 + s, expert received 1 / (1 + s), normal
+    // received 1 - (1 - expert received) / 2), from memory; not re-measured from the IL. The range is Terraria's
+    // SceneMetrics banner scan box, Main.buffScanAreaWidth/Height = (maxScreenW 1920 / maxScreenH 1200 + 800) / 16 - 1
+    // = 169 × 124 tiles centred on the player (also from memory, not re-measured).
+    /// <summary>Half-width (tiles) of the box around the player in which a hung banner is active.</summary>
+    public const float BannerRangeX = 84f;
+    /// <summary>Half-height (tiles) of the box around the player in which a hung banner is active.</summary>
+    public const float BannerRangeY = 62f;
+    /// <summary>Classic and Explorer: the player deals ×1.5 damage to a bannered kind…</summary>
+    public const float BannerDamageBonus = 1.5f;
+    /// <summary>…and takes ×0.75 damage from it.</summary>
+    public const float BannerDamageTakenFactor = 0.75f;
+    /// <summary>Brutal and Annihilation (Terraria's Expert and Master): ×2 damage dealt and ×0.5 damage taken.</summary>
+    public const float BannerHarshDamageBonus = 2f, BannerHarshDamageTakenFactor = 0.5f;
     /// <summary>Terraria's respawn timer: 10 seconds, half as long again on Brutal and Annihilation; 3 on Explorer.</summary>
     public const float BaseRespawnSeconds = 10f;
     public const float HarshRespawnFactor = 1.5f;
@@ -1182,10 +1194,19 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>Damage multiplier the player deals to a kind (banner nearby → bonus).</summary>
-    private float BannerDamageFactor(EnemyKind kind) => _activeBanners.Contains(kind) ? BannerDamageBonus : 1f;
+    private float BannerDamageFactor(EnemyKind kind) => !_activeBanners.Contains(kind) ? 1f
+        : Difficulty is WorldDifficulty.Brutal or WorldDifficulty.Annihilation ? BannerHarshDamageBonus : BannerDamageBonus;
 
     /// <summary>Damage multiplier the player takes from a kind (banner nearby → less).</summary>
-    private float BannerDefenseFactor(EnemyKind kind) => _activeBanners.Contains(kind) ? BannerDamageTakenFactor : 1f;
+    private float BannerDefenseFactor(EnemyKind kind) => !_activeBanners.Contains(kind) ? 1f
+        : Difficulty is WorldDifficulty.Brutal or WorldDifficulty.Annihilation ? BannerHarshDamageTakenFactor : BannerDamageTakenFactor;
+
+    /// <summary>Test probe: the banner multipliers on damage dealt to and taken from a kind.</summary>
+    internal (float Dealt, float Taken) ProbeBannerFactors(EnemyKind kind) => (BannerDamageFactor(kind), BannerDefenseFactor(kind));
+
+    /// <summary>True when a banner hung at <paramref name="cell"/> is inside the scan box around the player.</summary>
+    private bool BannerInRange(GridPoint cell) =>
+        MathF.Abs(cell.X + 0.5f - PlayerCenter.X) <= BannerRangeX && MathF.Abs(cell.Y + 0.5f - PlayerCenter.Y) <= BannerRangeY;
 
     private void RefreshBanners()
     {
@@ -1199,7 +1220,7 @@ public sealed partial class GameSimulation
                 SpawnGroundItem(PlayerItems.BannerFor(kind), 1, new Vector2(cell.X + 0.5f, cell.Y + 0.5f));
                 continue;
             }
-            if (Vector2.Distance(new Vector2(cell.X + 0.5f, cell.Y + 0.5f), PlayerCenter) <= BannerRadius)
+            if (BannerInRange(cell))
                 _activeBanners.Add(kind);
         }
         foreach (var cell in _signs.Keys.ToArray())

@@ -561,7 +561,7 @@ internal static partial class ArsenalItems
         new(ItemId.WarlordsMedal, "Warlord's medal", 3, "melee:6;def:3", "", "boss:ScavengerWarlord"),
         new(ItemId.PiratesSpyglass, "Pirate's spyglass", 5, "ranged:8;tags:reach:2", "", "boss:CyberPirateCaptain"),
         new(ItemId.OverseersMonocle, "Overseer's monocle", 4, "crit:6;tags:ore-detector", "", "boss:RenegadeOverseer"),
-        new(ItemId.MooneaterFang, "Moon-eater fang", 4, "tags:lifesteal:3", "", "boss:MoonEater"),
+        new(ItemId.MooneaterFang, "Moon-eater fang", 4, "tags:lifesteal:3,ap:5", "", "boss:MoonEater"),
         new(ItemId.EclipseSigil, "Eclipse sigil", 5, "melee:5;ranged:5;tech:5;command:5", "", "boss:EclipseLord"),
         new(ItemId.LeviathanScale, "Leviathan scale", 6, "tags:endurance:8,gills", "", "boss:AbyssLeviathan"),
         new(ItemId.ProtocolShard, "Protocol shard", 5, "tech:8;tags:chargehit:3", "", "boss:ProtocolDragon"),

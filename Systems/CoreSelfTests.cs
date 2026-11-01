@@ -1661,6 +1661,7 @@ public static class CoreSelfTests
         BatchASelfTests.Run(Check);
         ArsenalSelfTests.Run(Check);
         DefenseSelfTests.Run(Check);
+        CreatureDefenseSelfTests.Run(Check); // creature defense tiers, armor penetration, no double hardmode rescale, immunities, lava, banners (0.1.9 A)
         WeaponStyleSelfTests.Run(Check);
         WorldGenSelfTests.Run(Check);
         ThemeSelfTests.Run(Check);

@@ -435,10 +435,25 @@ public sealed record EnemyArchetype(
     /// <summary>Spawns only below the surface (worms, casters).</summary>
     public bool Underground { get; init; }
     /// <summary>
-    /// Armor: each player hit loses half this many points (never below 1), less what armor penetration gives back.
-    /// 0 for every creature until the roster is tuned (CombatTuning.CreatureDamageTaken).
+    /// Armor: each player hit loses half this many points (never below 1), less what armor penetration gives back
+    /// (CombatTuning.CreatureDamageTaken). A value set in a roster wins; otherwise the defense tier table
+    /// (<see cref="CreatureStatTable"/>) fills it in when the roster is built.
     /// </summary>
     public int Defense { get; init; }
+    /// <summary>
+    /// Share of incoming knockback this creature ignores (0-1). Null falls back to CombatTuning.KnockbackResistance's
+    /// size-and-bulk formula.
+    /// </summary>
+    public float? KnockbackResist { get; init; }
+    /// <summary>
+    /// Afflictions this creature shrugs off. Roster values are merged with the defaults from
+    /// <see cref="CreatureStatTable"/> (machines resist poison, fire-born burning, frost-born frostbite, bosses confusion).
+    /// </summary>
+    public IReadOnlySet<StatusId> Immune { get; init; } = CreatureStatTable.NoImmunities;
+    /// <summary>True when lava (the Irradiated Core's liquid uranium) neither hurts nor ignites this creature.</summary>
+    public bool LavaImmune { get; init; }
+    /// <summary>Debuffs this creature's hits put on the player: (status, chance 0-1, seconds). Empty for most creatures.</summary>
+    public IReadOnlyList<(StatusId Status, float Chance, float Seconds)> Inflicts { get; init; } = [];
 }
 
 /// <summary>Original Neo-Terra creature roster. Pre-existing kinds keep their legacy tuning.</summary>
@@ -501,7 +516,7 @@ public static class EnemyArchetypes
         new EnemyArchetype(EnemyKind.SnowWolf, "Snow-wolf", new(1.3f, 0.9f), 46f, 11f, false) { MoveSpeedMultiplier = 1.35f, ContactCooldown = 1.3f },
         new EnemyArchetype(EnemyKind.Cryopterous, "Cryopterous", new(0.9f, 0.6f), 28f, 7f, false) { Hops = true, ContactCooldown = 1.2f },
         new EnemyArchetype(EnemyKind.SnowMite, "Snow-mite", new(0.7f, 0.5f), 26f, 8f, false) { Hops = true, ContactCooldown = 1.1f },
-        new EnemyArchetype(EnemyKind.GlacialGolem, "Glacial golem", new(1.5f, 1.9f), 160f, 19f, false) { MoveSpeedMultiplier = 0.7f, ContactCooldown = 1.9f },
+        new EnemyArchetype(EnemyKind.GlacialGolem, "Glacial golem", new(1.5f, 1.9f), 160f, 19f, false) { MoveSpeedMultiplier = 0.7f, ContactCooldown = 1.9f, KnockbackResist = 0.6f },
 
         // Radiated Deeps.
         new EnemyArchetype(EnemyKind.RadSkitter, "Rad-skitter", new(1f, 0.6f), 34f, 9f, false) { MoveSpeedMultiplier = 1.25f },
@@ -512,10 +527,10 @@ public static class EnemyArchetypes
 
         // Molten Chasm.
         new EnemyArchetype(EnemyKind.PyroSkitter, "Pyro-skitter", new(1f, 0.6f), 38f, 10f, false) { MoveSpeedMultiplier = 1.3f },
-        new EnemyArchetype(EnemyKind.MagmaTurtle, "Magma turtle", new(1.3f, 0.9f), 90f, 12f, false) { MoveSpeedMultiplier = 0.55f, ContactCooldown = 1.7f },
+        new EnemyArchetype(EnemyKind.MagmaTurtle, "Magma turtle", new(1.3f, 0.9f), 90f, 12f, false) { MoveSpeedMultiplier = 0.55f, ContactCooldown = 1.7f, KnockbackResist = 0.7f },
         new EnemyArchetype(EnemyKind.LavaLeech, "Lava-leech", new(1.1f, 0.6f), 44f, 11f, false),
         new EnemyArchetype(EnemyKind.EmberRat, "Ember rat", new(0.8f, 0.55f), 30f, 9f, false) { ContactCooldown = 1.2f },
-        new EnemyArchetype(EnemyKind.BasaltGolem, "Basalt golem", new(1.6f, 2f), 190f, 22f, false) { MoveSpeedMultiplier = 0.65f, ContactCooldown = 2f },
+        new EnemyArchetype(EnemyKind.BasaltGolem, "Basalt golem", new(1.6f, 2f), 190f, 22f, false) { MoveSpeedMultiplier = 0.65f, ContactCooldown = 2f, KnockbackResist = 0.6f },
 
         // Junk Wasteland.
         new EnemyArchetype(EnemyKind.JunkSkitter, "Junk-skitter", new(1f, 0.6f), 32f, 8f, false) { MoveSpeedMultiplier = 1.25f },
@@ -531,7 +546,9 @@ public static class EnemyArchetypes
         // End-world boss.
         new EnemyArchetype(EnemyKind.AstroGod, "Astro-God", new(5f, 5f), 6000f, 45f, true,
             BossTier.Final, ProjectileSpeed: 15f, VolleyCount: 8, PhaseThreshold: 0.5f) { AttackRange = 18f, AttackCooldown = 2.6f }
-    }.Concat(ContentCreatures.Archetypes()).Append(Rimtera.Systems.PhysicsContent.DungeonGuardian).ToDictionary(archetype => archetype.Kind);
+    }.Concat(ContentCreatures.Archetypes()).Append(Rimtera.Systems.PhysicsContent.DungeonGuardian)
+        .Select(CreatureStatTable.Apply) // defense tiers, immunities and lava (values set in a roster win)
+        .ToDictionary(archetype => archetype.Kind);
 
     /// <summary>Summon order for the challenge key: gate boss, easy tier, the core gate boss, hard tier, then the Astro-God.</summary>
     public static IReadOnlyList<EnemyKind> BossProgression { get; } = new[]
@@ -679,6 +696,8 @@ public sealed class EnemyAgent
     public bool HasAffliction(StatusId id) => _afflictions?.ContainsKey(id) == true;
     /// <summary>Seconds until the next damage-over-time pulse.</summary>
     internal float AfflictionPulse { get; set; }
+    /// <summary>Seconds until lava burns this creature again (0 = the next tick in lava burns).</summary>
+    internal float LavaTimer { get; set; }
 
     /// <summary>Starts or refreshes an affliction (the longer of the two durations wins).</summary>
     internal void Afflict(StatusId id, float seconds)

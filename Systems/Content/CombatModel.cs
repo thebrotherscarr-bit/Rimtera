@@ -604,11 +604,15 @@ public static class CombatTuning
     }
 
     /// <summary>
-    /// Fraction of incoming knockback a creature ignores: wildlife none, heavier and bigger creatures more,
-    /// rooted ones and late bosses all of it, early bosses nearly all.
+    /// Fraction of incoming knockback a creature ignores: the archetype's own <c>KnockbackResist</c> when set,
+    /// otherwise wildlife none, heavier and bigger creatures more, rooted ones and late bosses all of it, early bosses
+    /// nearly all.
     /// </summary>
     public static float KnockbackResistance(Rimtera.Entities.EnemyArchetype archetype)
     {
+        ArgumentNullException.ThrowIfNull(archetype);
+        if (archetype.KnockbackResist is { } resist)
+            return Math.Clamp(resist, 0f, 1f);
         if (archetype.Stationary)
             return 1f;
         if (archetype.IsBoss)
@@ -715,6 +719,16 @@ public static class CombatTuning
     // ---- spawning ----
     /// <summary>Town NPCs within this many tiles make the player's area calmer.</summary>
     public const float TownCalmRadius = 45f;
+    // Despawn numbers for EN-9 (0.1.10), D-21 / EN-18. Terraria 1.4.4, NPC..cctor and NPC.CheckActive (from memory;
+    // not re-measured from the IL):
+    //   NPC.sWidth = 1920, NPC.sHeight = 1080 (pixels; 16 per tile)
+    //   NPC.activeTime = 750 ticks (12.5 s): timeLeft is reset to it while any player is within the active range, and
+    //     counts down one per tick outside it; at 0 the NPC despawns silently.
+    //   NPC.activeRangeX = (int)(sWidth * 2.1) = 4032 px = 252 tiles, activeRangeY = (int)(sHeight * 2.1) = 2268 px
+    //     = 141.75 tiles (a box around the player, half-extents).
+    //   NPC.spawnRangeX = (int)(sWidth / 16 * 0.7) = 84 tiles, spawnRangeY = (int)(sHeight / 16 * 0.7) = 47 tiles.
+    //   NPC.safeRangeX = (int)(sWidth / 16 * 0.52) = 62 tiles, safeRangeY = (int)(sHeight / 16 * 0.52) = 35 tiles.
+    // Rimtera's own rule below is unchanged until EN-9 adopts these.
     /// <summary>Creatures this far (tiles) from the player for <see cref="DespawnSeconds"/> wander off.</summary>
     public const float DespawnDistance = 48f;
     public const float DespawnSeconds = 3f;
