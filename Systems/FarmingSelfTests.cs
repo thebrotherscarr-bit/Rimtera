@@ -5,7 +5,7 @@ using Rimtera.World;
 
 namespace Rimtera.Systems;
 
-/// <summary>Farming and brewing (0.2.5): grow zones, the Farm job giver, Brew bills at chem labs, saves and the Farm tab.</summary>
+/// <summary>Farming and brewing (0.2.5; 0.3.11: no grow zones or Farm tab, farmers tend the planters near home): the Farm job giver, Brew bills, saves.</summary>
 public static class FarmingSelfTests
 {
     private const int Floor = 40;
@@ -61,62 +61,52 @@ public static class FarmingSelfTests
         return done();
     }
 
-    private static int Growing(GameSimulation game, GrowZone zone) => zone.Cells.Count(cell => game.World.TileAt(cell.X, cell.Y) == zone.Herb);
+    /// <summary>Planter boxes on the ground from <paramref name="left"/>, <paramref name="width"/> wide; returns the cells above them.</summary>
+    private static GridPoint[] Planters(GameSimulation game, int left, int width)
+    {
+        for (var x = left; x < left + width; x++)
+            game.World.SetTile(new GridPoint(x, Floor), TileId.HerbPlanter);
+        return Enumerable.Range(left, width).Select(x => new GridPoint(x, Floor - 1)).ToArray();
+    }
+
+    private static int Growing(GameSimulation game, IEnumerable<GridPoint> cells, TileId herb) => cells.Count(cell => game.World.TileAt(cell.X, cell.Y) == herb);
 
     public static void Run(Action<bool, string> check)
     {
-        // ---- zones: the soil picks the herb; no overlaps; a cap; resize and herb cycling ----
-        var zones = Field(9901);
-        zones.Player.Motion.Position = new Vector2(30f, Floor - zones.Player.Motion.Size.Y - 0.01f);
-        var marked = zones.AddGrowZoneAtPlayer(8);
-        var overlap = zones.AddGrowZoneAtPlayer(4);
-        var cycled = marked is not null && Herb(marked) == TileId.HerbSunpetal && CycleTo(marked) == TileId.HerbMoonglow;
-        static TileId Herb(GrowZone zone) => zone.Herb;
-        static TileId CycleTo(GrowZone zone)
-        {
-            zone.CycleHerb();
-            return zone.Herb;
-        }
-        var resized = marked is not null && zones.ResizeGrowZone(marked, 12) && marked.Width == 12;
-        for (var i = 0; zones.GrowZones.Count < GameSimulation.MaxGrowZones; i++)
-            zones.AddGrowZone(new GridPoint(2 + i * 2, 20), 1, TileId.HerbSunpetal);
-        check(marked is { Y: Floor - 1, Width: 12 } && overlap is null && cycled && resized &&
-              zones.AddGrowZone(new GridPoint(100, 20), 2, TileId.HerbSunpetal) is null && zones.RemoveGrowZone(marked) && zones.GrowZoneAt(new GridPoint(30, Floor - 1)) is null,
-            "a grow zone is marked at the player's feet for the herb the soil suits, never overlaps another, is capped at 12, resizes, cycles its herb and can be removed");
-
-        // ---- planting: a farmer fetches seeds from a chest and plants every cell that takes the herb ----
+        // ---- planting: a farmer fetches seeds from a chest and plants the empty planters near home, not bare ground ----
         var plant = Field(9902);
         var farmer = plant.Settlers[0];
         farmer.Work.Set(WorkType.Farm, 1);
         plant.GetContainer(Chest)!.Add(ItemId.SunpetalSeeds, 10);
-        var field = plant.AddGrowZone(new GridPoint(63, Floor - 1), 6, TileId.HerbSunpetal)!;
-        plant.World.SetTile(new GridPoint(66, Floor), TileId.Rock); // bare rock: no sunpetal grows there
-        var planted = TickUntil(plant, () => Growing(plant, field) == 5, 3600);
-        check(planted && plant.World.TileAt(66, Floor - 1) == TileId.Air && plant.GetContainer(Chest)!.Count(ItemId.SunpetalSeeds) == 0 &&
-              farmer.Pouch.GetValueOrDefault(ItemId.SunpetalSeeds) == 5,
-            $"a farmer fetches seeds from a chest and plants each zone cell on the herb's soil, skipping bare rock ({Growing(plant, field)} planted, pouch {farmer.Pouch.GetValueOrDefault(ItemId.SunpetalSeeds)}, {farmer.Activity})");
+        var field = Planters(plant, 63, 5);
+        var planted = TickUntil(plant, () => Growing(plant, field, TileId.HerbSunpetal) == 5, 3600);
+        check(planted && plant.World.TileAt(62, Floor - 1) == TileId.Air && plant.World.TileAt(69, Floor - 1) == TileId.Air &&
+              plant.GetContainer(Chest)!.Count(ItemId.SunpetalSeeds) == 0 && farmer.Pouch.GetValueOrDefault(ItemId.SunpetalSeeds) == 5,
+            $"with no zones to mark, a farmer fetches seeds from a chest and plants every empty planter near home, leaving bare grass alone " +
+            $"({Growing(plant, field, TileId.HerbSunpetal)} planted, pouch {farmer.Pouch.GetValueOrDefault(ItemId.SunpetalSeeds)}, {farmer.Activity})");
 
-        // ---- harvesting: blooming herbs are harvested, the herbs stored and the cells replanted from the seeds ----
+        // ---- harvesting: blooming herbs near home are harvested, the herbs stored and the planters replanted ----
         var crop = Field(9903);
         var grower = crop.Settlers[0];
         grower.Work.Set(WorkType.Farm, 1);
-        var bed = crop.AddGrowZone(new GridPoint(63, Floor - 1), 5, TileId.HerbSunpetal)!;
-        foreach (var cell in bed.Cells)
+        var bed = Planters(crop, 63, 5);
+        foreach (var cell in bed)
         {
             crop.World.SetTile(cell, TileId.HerbSunpetal);
             var data = crop.World.GetCell(cell);
             data.State = TilePhysics.HerbMatureBit;
             crop.World.SetCell(cell, data);
         }
-        var stored = TickUntil(crop, () => crop.GetContainer(Chest)!.Count(ItemId.SunpetalHerb) >= 5 && Growing(crop, bed) == 5, 5400);
-        check(stored && bed.Cells.All(cell => (crop.World.GetCell(cell).State & TilePhysics.HerbMatureBit) == 0),
-            $"a farmer harvests blooming herbs, stores them and replants with the seeds they drop (stored {crop.GetContainer(Chest)!.Count(ItemId.SunpetalHerb)}, growing {Growing(crop, bed)}, {grower.Activity})");
+        var stored = TickUntil(crop, () => crop.GetContainer(Chest)!.Count(ItemId.SunpetalHerb) >= 5 && Growing(crop, bed, TileId.HerbSunpetal) == 5, 5400);
+        check(stored && bed.All(cell => (crop.World.GetCell(cell).State & TilePhysics.HerbMatureBit) == 0),
+            $"a farmer harvests blooming herbs near home, stores them and replants the planters with the seeds they drop " +
+            $"(stored {crop.GetContainer(Chest)!.Count(ItemId.SunpetalHerb)}, growing {Growing(crop, bed, TileId.HerbSunpetal)}, {grower.Activity})");
 
         // ---- a herb out of bloom waits; taken off Farm, a farmer sets down what they carry ----
         var dusk = Field(9904);
         dusk.Settlers[0].Work.Set(WorkType.Farm, 1);
-        var moon = dusk.AddGrowZone(new GridPoint(63, Floor - 1), 2, TileId.HerbMoonglow)!;
-        foreach (var cell in moon.Cells)
+        var moon = new[] { new GridPoint(63, Floor - 1), new GridPoint(64, Floor - 1) };
+        foreach (var cell in moon)
         {
             dusk.World.SetTile(new GridPoint(cell.X, Floor), TileId.Mud);
             dusk.World.SetTile(cell, TileId.HerbMoonglow);
@@ -126,7 +116,7 @@ public static class FarmingSelfTests
         }
         dusk.Settlers[0].Pouch[ItemId.SunpetalSeeds] = 3;
         TickUntil(dusk, () => false, 300);
-        var waited = Growing(dusk, moon) == 2;
+        var waited = Growing(dusk, moon, TileId.HerbMoonglow) == 2;
         dusk.Settlers[0].Work.Set(WorkType.Farm, WorkCatalog.Off);
         TickUntil(dusk, () => false, 30);
         check(waited && dusk.Settlers[0].Pouch.Count == 0 && dusk.GroundItems.Any(item => item.ItemId == ItemId.SunpetalSeeds),
@@ -166,31 +156,21 @@ public static class FarmingSelfTests
               WorkCatalog.Get(WorkType.Brew).HasJobs && WorkCatalog.Get(WorkType.Farm).HasJobs,
             $"bills at a chem lab are worked by Brew crew (on Medical), not Operate crew (stims: brewer {byBrewer}, operator {byOperator})");
 
-        // ---- saves keep zones and a farmer's pouch ----
+        // ---- saves keep a farmer's pouch; a save's grow zones (from before 0.3.11) load and are dropped ----
         var kept = Field(9908);
-        kept.AddGrowZone(new GridPoint(63, Floor - 1), 5, TileId.HerbFrostbell);
         kept.Settlers[0].Pouch[ItemId.FrostbellSeeds] = 4;
-        var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
-        check(reloaded.GrowZones.Count == 1 && reloaded.GrowZones[0] is { X: 63, Y: Floor - 1, Width: 5, Herb: TileId.HerbFrostbell } &&
-              reloaded.Settlers[0].Pouch.GetValueOrDefault(ItemId.FrostbellSeeds) == 4,
-            "grow zones and a farmer's seeds are saved with the world");
+        var oldSave = kept.CaptureSnapshot() with { GrowZones = [new GrowZoneSnapshot(63, Floor - 1, 5, TileId.HerbFrostbell)] };
+        var reloaded = GameSimulation.Restore(oldSave);
+        check(reloaded.Settlers[0].Pouch.GetValueOrDefault(ItemId.FrostbellSeeds) == 4 && reloaded.CaptureSnapshot().GrowZones is null,
+            "a farmer's seeds are saved with the world; grow zones in an older save load and are dropped");
 
-        // ---- the Farm tab, and Farm and Brew in the Work tab ----
+        // ---- no Farm tab (0.3.11) or Work tab (0.3.9) ----
         var ui = Field(9909);
-        ui.Player.Motion.Position = new Vector2(30f, Floor - ui.Player.Motion.Size.Y - 0.01f);
         var hub = new Rimtera.UI.InventoryUiState(ui.Player.Inventory, game: ui);
         Rimtera.UI.UiButtonElement? Button(string id) =>
             hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
-        Button("tab-farm")?.Command?.Invoke();
-        Button("farm-add")?.Command?.Invoke();
-        var added = ui.GrowZones.Count == 1;
-        Button("farm-zone-0-herb")?.Command?.Invoke();
-        var herbChanged = added && ui.GrowZones[0].Herb == TileId.HerbMoonglow;
-        Button("farm-zone-0-more")?.Command?.Invoke();
-        var wider = added && ui.GrowZones[0].Width == 9;
-        Button("farm-zone-0-delete")?.Command?.Invoke();
-        check(added && herbChanged && wider && ui.GrowZones.Count == 0 && Button("tab-work") is null &&
+        check(Button("tab-farm") is null && Button("tab-work") is null && Button("tab-research") is not null &&
               WorkCatalog.Get(WorkType.Farm).HasJobs && WorkCatalog.Get(WorkType.Brew).HasJobs,
-            "the hub's Farm tab marks a zone, cycles its herb, widens and removes it; Farm and Brew are work people choose by skill (no Work tab since 0.3.9)");
+            "there is no Farm tab: farmers tend the planters near home by themselves; Farm and Brew are work people choose by skill");
     }
 }

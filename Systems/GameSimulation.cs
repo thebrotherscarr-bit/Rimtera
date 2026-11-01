@@ -386,7 +386,6 @@ public sealed partial class GameSimulation : IStoryHost
             Players: CapturePlacements(),
             Bills: CaptureBills(),
             ChestFilters: CaptureChestFilters(),
-            GrowZones: CaptureGrowZones(),
             Research: CaptureColonyResearch()) { CellData = cellData, CellRuns = cellRuns };
     }
 
@@ -477,7 +476,6 @@ public sealed partial class GameSimulation : IStoryHost
         game.RestorePlacements(snapshot);
         game.RestoreBills(snapshot.Bills);
         game.RestoreChestFilters(snapshot.ChestFilters);
-        game.RestoreGrowZones(snapshot.GrowZones);
         if (!arriving)
             game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
         game._heartsBroken = snapshot.HeartsBroken ?? 0;
@@ -590,7 +588,18 @@ public sealed partial class GameSimulation : IStoryHost
         }
     }
 
+    /// <summary>
+    /// One fixed step for the local player: submits <paramref name="input"/> as player 1's command and advances the world
+    /// (GameSimulation.Commands.cs). Kept as the single-player shorthand for <see cref="Submit"/> plus <see cref="Advance"/>.
+    /// </summary>
     public GameTickResult Tick(in GameInput input, float deltaSeconds = 1f / 60f)
+    {
+        Submit(0, input);
+        return Advance(deltaSeconds);
+    }
+
+    /// <summary>Runs one step with the given command for the player (only <see cref="Advance"/> calls this).</summary>
+    private GameTickResult Step(in GameInput input, float deltaSeconds)
     {
         if (!float.IsFinite(deltaSeconds) || deltaSeconds <= 0f || deltaSeconds > 0.25f)
             throw new ArgumentOutOfRangeException(nameof(deltaSeconds), "Simulation steps must be in (0, 0.25] seconds.");

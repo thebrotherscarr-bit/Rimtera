@@ -173,7 +173,7 @@ public sealed class InventoryUiState : UiState
     private string? _housingReport;
     private UiTextElement? _guideCaption;
 
-    private enum Tab { Gear, Housing, Emotes, Farm, Research }
+    private enum Tab { Gear, Housing, Emotes, Research }
 
     public InventoryUiState(Inventory playerInventory, InventoryUiController? controller = null, Inventory? chest = null,
         GameSimulation? game = null, GridPoint? chestCell = null, string chestTitle = "Chest", GuideLookupState? guide = null,
@@ -523,8 +523,8 @@ public sealed class InventoryUiState : UiState
         Tab("tab-feats", "Feats", 4, () => FeatsRequested?.Invoke());
         Tab("tab-emotes", "Emotes", 5, () => SwitchTab(InventoryUiState.Tab.Emotes), _tab == InventoryUiState.Tab.Emotes);
         // 0.3.9: no Work or Bills tab; people choose their work from their skills and stations keep stock by themselves.
-        Tab("tab-farm", "Farm", 6, () => SwitchTab(InventoryUiState.Tab.Farm), _tab == InventoryUiState.Tab.Farm);
-        Tab("tab-research", "Research", 7, () => SwitchTab(InventoryUiState.Tab.Research), _tab == InventoryUiState.Tab.Research);
+        // 0.3.11: no Farm tab; farmers tend the planters near home by themselves.
+        Tab("tab-research", "Research", 6, () => SwitchTab(InventoryUiState.Tab.Research), _tab == InventoryUiState.Tab.Research);
         for (var i = 0; i < GameSimulation.LoadoutCount; i++)
         {
             var index = i;
@@ -534,7 +534,7 @@ public sealed class InventoryUiState : UiState
                 Rebuild();
             }, $"loadout-{i + 1}", new UiStyle
             {
-                Left = FromRight(258f), Top = UiLength.Px(gearTop + (8 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
+                Left = FromRight(258f), Top = UiLength.Px(gearTop + (7 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
             }) { TextScale = 0.75f, Color = game.ActiveLoadout == i ? UiColor.ButtonActive : UiColor.ButtonDefault });
         }
 
@@ -542,8 +542,6 @@ public sealed class InventoryUiState : UiState
             AddHousing(game, gearTop);
         else if (_tab == InventoryUiState.Tab.Emotes)
             AddEmotes(game, gearTop);
-        else if (_tab == InventoryUiState.Tab.Farm)
-            AddFarm(game, gearTop);
         else if (_tab == InventoryUiState.Tab.Research)
             AddResearch(game, gearTop);
         else
@@ -708,47 +706,6 @@ public sealed class InventoryUiState : UiState
         {
             Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y + 4f), Width = UiLength.Px(240f), Height = UiLength.Px(28f)
         }) { Scale = 0.5f, Color = new UiColor(150, 160, 172) });
-    }
-
-    /// <summary>
-    /// The Farm tab (RimWorld's grow zones, 0.2.5): mark a strip of ground at your feet for a herb (the one the soil suits
-    /// at first); Farm crew plant it from seeds in chests, harvest it in bloom and store the herbs. Each zone can change its
-    /// herb and width, or be removed. Zones show as green outlines in the world.
-    /// </summary>
-    private void AddFarm(GameSimulation game, float top)
-    {
-        UiStyle At(float left, float y, float width, float height = 22f) => new()
-        {
-            Left = UiLength.Mixed(-250f + left, 1f), Top = UiLength.Px(y), Width = UiLength.Px(width), Height = UiLength.Px(height)
-        };
-        void Text(string text, string id, float left, float y, float width, float scale = 0.6f, UiColor? color = null) =>
-            Add(new UiTextElement(text, id, At(left, y, width, 18f)) { Scale = scale, Color = color ?? new UiColor(226, 230, 238) });
-        void Button(string text, string id, float left, float y, float width, Action command) =>
-            Add(new UiButtonElement(text, () => { command(); Rebuild(); }, id, At(left, y, width)) { TextScale = 0.5f });
-
-        Text("Grow zones (farmers work them)", "farm-title", 0f, top, 240f, 0.8f, new UiColor(242, 176, 64));
-        Button("Mark a zone here (8 wide)", "farm-add", 0f, top + 26f, 160f, () =>
-            Status(game.AddGrowZoneAtPlayer() is { } zone
-                ? $"Grow zone marked for {game.Items[TilePhysics.HerbFor(zone.Herb)!.Herb].Name}."
-                : game.GrowZones.Count >= GameSimulation.MaxGrowZones ? "No more zones (12 at most)." : "A zone is already there."));
-        var y = top + 54f;
-        var zones = game.GrowZones.ToArray();
-        if (zones.Length == 0)
-            Text("Stand on soil (or by planters) and mark a zone. Herbs need their own soil; planters take any.", "farm-empty", 0f, y, 240f, 0.55f, new UiColor(170, 178, 192));
-        for (var i = 0; i < Math.Min(zones.Length, 8); i++)
-        {
-            var zone = zones[i];
-            var herb = TilePhysics.HerbFor(zone.Herb)!;
-            var growing = zone.Cells.Count(cell => game.World.TileAt(cell.X, cell.Y) == zone.Herb);
-            var plantable = zone.Cells.Count(cell => game.CanPlant(zone, cell) || game.World.TileAt(cell.X, cell.Y) == zone.Herb);
-            Text($"{i + 1}. {game.Items[herb.Herb].Name} at {zone.X},{zone.Y} · {growing} growing, {plantable}/{zone.Width} fit",
-                $"farm-zone-{i}", 0f, y, 240f, 0.55f, plantable == 0 ? new UiColor(150, 160, 172) : null);
-            Button("Herb", $"farm-zone-{i}-herb", 0f, y + 18f, 48f, zone.CycleHerb);
-            Button("-", $"farm-zone-{i}-less", 52f, y + 18f, 22f, () => game.ResizeGrowZone(zone, zone.Width - 1));
-            Button("+", $"farm-zone-{i}-more", 78f, y + 18f, 22f, () => game.ResizeGrowZone(zone, zone.Width + 1));
-            Button("Remove", $"farm-zone-{i}-delete", 104f, y + 18f, 56f, () => game.RemoveGrowZone(zone));
-            y += 44f;
-        }
     }
 
     /// <summary>The emote palette (Terraria's emote menu): one button per emote; the backtick + 1-8 shortcut stays.</summary>
