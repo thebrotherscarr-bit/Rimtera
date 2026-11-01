@@ -42,7 +42,8 @@ public sealed partial class GameSimulation
             new($"Day {Day} · Act {(int)act}: {ActName(act)}. {ActGoal(act)}"),
             new($"People: {people} living here{(prisoners > 0 ? $", {prisoners} held prisoner" : "")} · {Deaths} lost"),
             new(bosses.Length == 0 ? "Bosses defeated: none yet" : $"Bosses defeated ({bosses.Length}): {string.Join(", ", bosses)}"),
-            new($"Raids weathered: {RaidsWeathered} · invasions beaten: {invasions} · outposts founded: {OutpostsFounded}"),
+            new($"Raids weathered: {RaidsWeathered} · invasions beaten: {invasions} · outposts founded: {OutpostsFounded}" +
+                (Flags.Get("history.relays_lost") is > 0 and var lostRelays ? $" · relays lost: {lostRelays}" : "")),
             new($"Storyteller: {Storyteller.Name(_storyteller.Kind)}, threat ×{_storyteller.ThreatScale:0.##} · next threat about {threat * _storyteller.ThreatScale * (1f - _storyteller.Adaptation):0} points" +
                 (_storyteller.Adaptation > 0f ? $" (eased {_storyteller.Adaptation:P0} after losses)" : "")),
             new("Acts", Heading: true)

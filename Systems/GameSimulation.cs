@@ -142,6 +142,9 @@ public sealed partial class GameSimulation : IStoryHost
         WorldHazard? hazard = null, IProgress<GenerationProgress>? progress = null, WorldBlight? blight = null)
         : this(seed, width, height, colonist, hazard, progress, blight, loaded: null)
     {
+        // 0.7.8 (bench): a generated world has no travel pylons, so the relay list never needs a world scan mid-game;
+        // pylons placed later are tracked as they are placed.
+        _pylonsScanned = true;
     }
 
     /// <summary>A world restored from saved cells and metadata (no generation).</summary>
@@ -564,6 +567,7 @@ public sealed partial class GameSimulation : IStoryHost
         game.RestoreColonyResearch(snapshot.Research); // 0.3.7: after the flags and the defeated bosses it reads
         game.RestoreColonySentries(snapshot.ColonySentries); // 0.7.3
         game.SettleLegacyCrew(snapshot); // 0.3.10: crew saved before the merge come back as settlers
+        _ = game.Pylons; // 0.7.8 (bench): find a loaded world's relays now, not in the middle of a tick
         return game;
     }
 
