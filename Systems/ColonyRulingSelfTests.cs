@@ -145,7 +145,7 @@ public static class ColonyRulingSelfTests
         ThoughtId[] needThoughts = [ThoughtId.Hungry, ThoughtId.Starving, ThoughtId.Tired, ThoughtId.Exhausted];
         var noNeedThoughts = !game.Player.Mind.CurrentThoughts.Any(view => needThoughts.Contains(view.Id));
         var baselineFull = MathF.Abs(game.Player.Mind.Mood.Baseline -
-                                     ColonistMoodCalculator.Calculate(new SurvivalNeeds(1f, 1f, 1f, 1f), game.Player.ColonistStats)) < 0.001f;
+                                     ColonistMoodCalculator.Calculate(GameSimulation.PlayerNeedsBaseline(), game.Player.ColonistStats)) < 0.001f;
         var noEdge = !messages.Any(message => message.Contains("on the edge", StringComparison.OrdinalIgnoreCase));
         check(before == after && noNeedThoughts && baselineFull && game.Player.Mind.Breaker.Risk == MentalBreakSeverity.None &&
               game.Player.ActionCooldownScale == 1f && noEdge,

@@ -1485,8 +1485,9 @@ public sealed partial class GameSimulation : IStoryHost
             Tiles);
     }
 
-    /// <summary>The needs the player's mood reads (D-48): always full, so needs never move the player's mood.</summary>
-    private readonly SurvivalNeeds PlayerNeutralNeeds = new(1f, 1f, 1f, 1f);
+    /// <summary>The needs the player's mood reads (D-48): fixed at the starting reserves, so needs never move the player's mood.</summary>
+    internal static SurvivalNeeds PlayerNeedsBaseline() => new(0.82f, 0.9f, 0.72f, 0.70f);
+    private readonly SurvivalNeeds PlayerNeutralNeeds = PlayerNeedsBaseline();
     /// <summary>Food a binging colonist forages per bite (NC-7: from the land, never from the player's pack).</summary>
     public const float BingeForageFood = 0.08f;
     /// <summary>A binge forages, so there is always food to binge on (NC-7); the player's pack is never read.</summary>
