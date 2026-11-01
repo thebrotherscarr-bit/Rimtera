@@ -237,23 +237,57 @@ The measuring tools were scratch harness code (`map`, `diff`) and are not shippe
 3. **Few water caves.** In the reference, a fifth of the small holes are left water-filled. Rimtera has only its
    underground lakes (6 per million cells).
 
-### Plan (0.3.1, pending the owner's go-ahead)
+### Done in 0.3.0: Rimtera matched to the reference
 
-1. **Terrain:**
-   - Replace the fine noise with a run-based surface walk (plateaus, hills, dales, mountains, valleys).
-   - Fold mountains into that walk as runs.
-   - Shrink the spawn plateau to a small landing pad.
-   - Numbers and pass names stay Rimtera's own.
-2. **Caves:**
-   - Add a long runner carver (a shrinking width over 30–300 steps).
-   - Use it for the shallow-cave and cavern passes.
-   - Make the small holes larger.
-   - Pock the surface band and add surface cave entrances.
-   - Leave some caves water-filled.
-3. **Targets, checked by a world-shape test in `WorldGenSelfTests`:**
-   - 25–35% open at every depth;
-   - at least half of the open space in regions of 2,000+ cells;
-   - at least 60 tiles of relief around spawn;
-   - about 10% of columns stepping 2+ tiles;
-   - Small-world generation time within the bench budget;
-   - worlds still deterministic per seed.
+The owner asked for every number to match the reference, with a few more natural openings on the surface. Both models
+now ship in the game:
+- `Systems/WorldShape.cs` measures a world;
+- `Systems/WorldShapeReference.cs` builds the reference;
+- `dotnet run -- --worldgen-diff [--size Small|Medium|Large] [--seed N]` prints the two side by side;
+- `WorldGenSelfTests` holds the match.
+
+Unlike the first measurement above, both sides now measure from the ground actually present (lake surfaces count as
+ground, and a 21-column median smooths over shafts). Blight chasms are left out of the surface figures, because the
+reference has nothing like them.
+
+**Generator changes (`World/LargeWorldGenerator.cs`, `World/WorldGenDensity.cs`)**
+- **Surface:** a run-based walk (plateaus, rises, dips, climbs, drops; runs of 5–40 columns) replaces the three
+  stacked noises.
+- **Mountains and valleys:** fewer (0.9 and 0.8 per 1000 columns), wider and lower, with no sharp crest.
+- **Landing site:** a 16-column pad instead of a 420-column plateau.
+- **Long cave carver (`Runner`):** a tapering diamond walked 30–300 steps.
+  - Shallow caves: 14 per million cells, 5–15 wide, 30–200 steps.
+  - Caverns: 80 per million cells, 6–20 wide, 50–300 steps.
+  - Small holes: 1000 pairs per million cells, a small cut in the surface band and an 8–15-wide one below.
+  - Tunnels: cut to 4 per million cells.
+- **Surface caves:** chutes, wide mouths, long descents and level galleries (6.45 per 1000 columns in all, about twice
+  the reference's carver count). Only the landing pad is spared.
+- **Flooding cave pockets:** a third of enclosed pockets under 2,500 cells fill with water. Skipped: anything built, a
+  survivor's spot, or sand overhead.
+- **Transit walkways:** no longer laid under sand.
+
+**Small world (4200×1200), Rimtera against the reference, three seeds (31337, 7, 99)**
+
+| Measure | Reference | Rimtera |
+|---|---|---|
+| Mean step (tiles) | 0.35–0.57 | 0.54–0.64 |
+| Columns stepping 2+ tiles | 6–8% | 8–10% |
+| Inland relief | 143–190 | 149–238 |
+| Hills per 1000 columns | 9.2–9.5 | 8.6–11.0 |
+| Relief around spawn | 67–139 | 54–77 (24 before) |
+| Open, 0–25 tiles down | 7–14% | 11–13% |
+| Open, 25–60 | 11–29% | 13–20% |
+| Open, 60–120 | 18–34% | 17–26% |
+| Open, 120 tiles down and deeper | 31–37% | 28–36% |
+| Open space in caves of 2,000+ cells | 55% | 50–54% |
+| Open space in pockets under 200 cells | 14–15% | 17–18% |
+| Surface openings reaching 20+ tiles down, per 1000 columns | 1.2–4.8 | 3.3–6.3 (by request, more) |
+| Underground water | 11–12% | 10–12% |
+
+The surface steps a little more than the reference because the extra cave mouths notch the ground where they open.
+Medium (6400×1800) lands the same way. Generation stays inside the bench budget: Small takes 4.8 s against a soft
+budget of 8 s.
+
+**What is still not compared.** Ores, chests, structures and biome widths have no reference numbers, because the
+Terraria side here is a measuring model, not Terraria's code. Section 2 maps every Terraria pass to its Rimtera
+counterpart instead.
