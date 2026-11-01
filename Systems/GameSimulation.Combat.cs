@@ -148,7 +148,7 @@ public sealed partial class GameSimulation
     {
         ArgumentNullException.ThrowIfNull(item);
         var damageClass = item.EffectiveClass;
-        var skill = CombatStatsCalculator.SkillMultiplier(Player.ColonistStats, damageClass);
+        var skill = CombatStatsCalculator.PlayerSkillMultiplier(Player.ColonistStats, damageClass);
         var sickness = damageClass == DamageClass.Tech && _chargeSicknessSeconds > 0f
             ? 1f - CombatTuning.ChargeSicknessPenalty * (_chargeSicknessSeconds / CombatTuning.ChargeSicknessSeconds)
             : 1f;
@@ -377,10 +377,28 @@ public sealed partial class GameSimulation
         var limit = spec.IsSentry ? SentrySlots : DroneSlots;
         while (_minions.Count(minion => minion.IsSentry == spec.IsSentry) >= Math.Max(1, limit))
             _minions.Remove(_minions.First(minion => minion.IsSentry == spec.IsSentry));
-        var damage = ComputeWeaponDamage(item, Player.Inventory.SelectedStack.ItemId == item.Id ? SelectedCalibration : Calibration.None);
-        var minion = new MinionState(_nextEntityId++, spec, position, damage, item.Id);
+        var calibration = Player.Inventory.SelectedStack.ItemId == item.Id ? SelectedCalibration : Calibration.None;
+        var minion = new MinionState(_nextEntityId++, spec, position, ComputeWeaponDamage(item, calibration), item.Id, calibration);
         _minions.Add(minion);
         return minion;
+    }
+
+    /// <summary>A minion's damage now: its item and calibration through the player's current class bonuses (IC-7).</summary>
+    private float LiveMinionDamage(MinionState minion) =>
+        Items.Contains(minion.SourceItem) ? ComputeWeaponDamage(Items[minion.SourceItem], minion.Calibration) : minion.Damage;
+
+    /// <summary>Unsummons every drone and sentry (the player died), as in Terraria.</summary>
+    private void DespawnMinions() => _minions.Clear();
+
+    /// <summary>When drone or sentry slots drop (gear removed), the oldest minions beyond the new count leave.</summary>
+    private void TrimMinionsToSlots()
+    {
+        foreach (var sentry in new[] { false, true })
+        {
+            var limit = Math.Max(1, sentry ? SentrySlots : DroneSlots);
+            while (_minions.Count(minion => minion.IsSentry == sentry) > limit)
+                _minions.Remove(_minions.First(minion => minion.IsSentry == sentry));
+        }
     }
 
     /// <summary>Drones orbit and shoot, repair drones heal, sentries hold position and fire at the nearest hostile.</summary>
@@ -389,6 +407,7 @@ public sealed partial class GameSimulation
         _whipBuffSeconds = Math.Max(0f, _whipBuffSeconds - deltaSeconds);
         if (_minions.Count == 0)
             return;
+        TrimMinionsToSlots();
         var droneIndex = 0;
         var drones = Math.Max(1, ActiveDrones);
         foreach (var minion in _minions.ToArray())
@@ -404,6 +423,7 @@ public sealed partial class GameSimulation
             }
             if (minion.Cooldown > 0f)
                 continue;
+            minion.Damage = LiveMinionDamage(minion);
             if (minion.Spec.Heals)
             {
                 if (Player.HitPoints < Player.MaximumHitPoints)
@@ -548,6 +568,17 @@ public sealed partial class GameSimulation
     {
         var data = World.GetCell(cell);
         return data.LiquidKind == LiquidKind.Acid ? data.LiquidDepth : 0f;
+    }
+
+    /// <summary>
+    /// EN-6: a statue's creature dies without drops, credits, kill counts, banners, bestiary kills or event progress, as
+    /// Terraria's statue spawns do. It still bursts and sounds like a kill. Returns true (the creature is removed).
+    /// </summary>
+    private bool RemoveStatueCreature(EnemyAgent enemy)
+    {
+        RecordDeath(enemy, DeathReason.Died);
+        _enemies.Remove(enemy);
+        return true;
     }
 
     /// <summary>Credits and event bookkeeping when a creature dies.</summary>

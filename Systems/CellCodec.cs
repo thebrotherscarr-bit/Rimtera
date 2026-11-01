@@ -32,10 +32,37 @@ public static class CellCodec
         return raw.ToArray();
     }
 
+    /// <summary>
+    /// The run stream before compression (PU-12): a quick pass a save can take on the game thread, leaving
+    /// <see cref="DeflateRuns"/> (the slow part) to a worker. <c>DeflateRuns(EncodeRuns(cells))</c> decodes as <see cref="EncodeBytes"/>.
+    /// </summary>
+    public static byte[] EncodeRuns(ReadOnlySpan<WorldCell> cells)
+    {
+        using var runs = new MemoryStream();
+        WriteRuns(runs, cells);
+        return runs.ToArray();
+    }
+
+    /// <summary>Compresses a run stream from <see cref="EncodeRuns"/> into the sidecar format.</summary>
+    public static byte[] DeflateRuns(byte[] runs)
+    {
+        ArgumentNullException.ThrowIfNull(runs);
+        using var raw = new MemoryStream();
+        using (var deflate = new DeflateStream(raw, CompressionLevel.Fastest, leaveOpen: true))
+            deflate.Write(runs, 0, runs.Length);
+        return raw.ToArray();
+    }
+
     private static MemoryStream EncodeToStream(ReadOnlySpan<WorldCell> cells)
     {
         var raw = new MemoryStream();
         using (var deflate = new DeflateStream(raw, CompressionLevel.Fastest, leaveOpen: true))
+            WriteRuns(deflate, cells);
+        return raw;
+    }
+
+    private static void WriteRuns(Stream deflate, ReadOnlySpan<WorldCell> cells)
+    {
         {
             deflate.WriteByte(Version);
             // Runs are buffered and written in blocks: far fewer stream calls than one per run.
@@ -61,7 +88,6 @@ public static class CellCodec
             }
             deflate.Write(block, 0, used);
         }
-        return raw;
     }
 
     public static WorldCell[] Decode(string encoded, int expectedCount)

@@ -413,7 +413,6 @@ public sealed partial class GameSimulation
         }
 
         GearWaterWalk(ref velocity, movement, ref jumpUsed);
-        GearWaterWalk(ref velocity, movement, ref jumpUsed);
         PrepareMountMovement(ref velocity, movement, deltaSeconds);
         var airborne = !motion.Grounded && motion.AirborneSeconds > 0.1f;
         var dir = Math.Sign(movement.Horizontal);
@@ -1165,6 +1164,7 @@ public sealed partial class GameSimulation
             _deathHandled = true;
             _grapple = null;
             ActiveMount = MountKind.None;
+            DespawnMinions(); // IC-7: death unsummons every drone and sentry
             _respawnSeconds = GetRespawnDelay(PlayerProfile.Difficulty);
             PlaceTombstone();
             Flags.Increment("player.deaths");
@@ -1415,15 +1415,69 @@ public sealed partial class GameSimulation
         RefreshBanners();
     }
 
-    /// <summary>Restores Batch B state after a snapshot load: world-local state, then the character (file wins over the snapshot copy).</summary>
-    private void RestoreBatchB(GameSnapshot snapshot)
+    /// <summary>
+    /// Restores Batch B state after a snapshot load: world-local state, then the character (file wins over the snapshot copy).
+    /// An arriving character (not the one that saved) never takes the saver's embedded copy: without a character file of its
+    /// own it keeps its fresh starting kit.
+    /// </summary>
+    private void RestoreBatchB(GameSnapshot snapshot, bool arriving = false)
     {
         RestorePlayerWorld(snapshot.PlayerWorld);
+        if (arriving)
+            _respawnSeconds = 0f;
         if (CharacterFileStore.Active?.TryLoad(PlayerProfile.Id) is { } file)
             ApplyCharacter(file);
-        else if (snapshot.Character is { } embedded)
+        else if (!arriving && snapshot.Character is { } embedded)
             ApplyCharacter(embedded, inventoryAlreadyRestored: true);
         GrantCreativeKitOnce();
+    }
+
+    // ------------------------------------------------------------------ PU-9: every character keeps its own place in a world
+
+    /// <summary>Saved places of the characters who have played this world, by character id (the current player's is refreshed on capture).</summary>
+    private readonly Dictionary<Guid, PlayerPlacement> _placements = new();
+
+    /// <summary>The saved place of a character in this world, if it has played here.</summary>
+    public PlayerPlacement? PlacementOf(Guid characterId) => _placements.GetValueOrDefault(characterId);
+
+    private PlayerPlacement[] CapturePlacements()
+    {
+        var motion = Player.Motion;
+        _placements[PlayerProfile.Id] = new PlayerPlacement(PlayerProfile.Id, motion.Position.X, motion.Position.Y,
+            motion.Facing, Player.HitPoints, _bedSpawn?.X, _bedSpawn?.Y);
+        return _placements.Values.OrderBy(placement => placement.CharacterId).ToArray();
+    }
+
+    private void RestorePlacements(GameSnapshot snapshot)
+    {
+        _placements.Clear();
+        foreach (var placement in snapshot.Players ?? [])
+            if (placement is not null && placement.CharacterId != Guid.Empty && float.IsFinite(placement.X) && float.IsFinite(placement.Y) &&
+                float.IsFinite(placement.HitPoints))
+                _placements[placement.CharacterId] = placement;
+    }
+
+    /// <summary>
+    /// A character other than the saver: back at its own last place and hit points here (and its own bed), or at the landing
+    /// site with full health on its first visit.
+    /// </summary>
+    private void PlaceArrivingCharacter()
+    {
+        _bedSpawn = null;
+        if (!_placements.TryGetValue(PlayerProfile.Id, out var placement))
+            return;
+        var motion = Player.Motion;
+        motion.Position = new Vector2(
+            Math.Clamp(placement.X, 0f, World.Width - motion.Size.X),
+            Math.Clamp(placement.Y, 0f, World.Height - motion.Size.Y));
+        motion.Velocity = Vector2.Zero;
+        motion.Facing = placement.Facing < 0 ? -1 : 1;
+        if (placement.HitPoints > 0f)
+            Player.RestorePersistentState(placement.HitPoints, Player.Needs.FoodReserve, Player.Needs.RestReserve,
+                Player.Needs.JoyReserve, Player.Needs.ComfortReserve);
+        if (placement is { BedSpawnX: { } bedX, BedSpawnY: { } bedY } && World.Contains(bedX, bedY))
+            _bedSpawn = new GridPoint(bedX, bedY);
+        CurrentBiome = BiomeScanner.Scan(World, PlayerCell());
     }
 
     /// <summary>A new world picks up the character's carried state from its character file, when one exists.</summary>

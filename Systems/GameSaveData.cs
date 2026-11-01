@@ -58,9 +58,14 @@ public sealed record GameSnapshot(
     RunStateSnapshot? Run = null,
     ItemId?[]? MiscEquipment = null,
     int? BedSpawnX = null,
-    int? BedSpawnY = null)
+    int? BedSpawnY = null,
+    PlayerPlacement[]? Players = null)
 {
-    public const int CurrentFormatVersion = 2;
+    /// <summary>
+    /// 3 (0.2.2): <see cref="Players"/> keeps every character's place in the world (PU-9). Older versions load through
+    /// <see cref="SaveMigrations"/>; newer ones are refused.
+    /// </summary>
+    public const int CurrentFormatVersion = 3;
 
     /// <summary>
     /// Deflated cells as raw bytes (same stream as <see cref="CompressedCells"/>, without base64). Not part of
@@ -68,6 +73,90 @@ public sealed record GameSnapshot(
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public byte[]? CellData { get; init; }
+
+    /// <summary>
+    /// The cells' run stream before compression (<see cref="CellCodec.EncodeRuns"/>), set by an autosave capture so the slow
+    /// compression runs on the save worker (PU-12). <see cref="WithCompressedCells"/> turns it into <see cref="CellData"/>.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public byte[]? CellRuns { get; init; }
+
+    /// <summary>This snapshot with deferred cell runs compressed into <see cref="CellData"/> (itself when there are none).</summary>
+    public GameSnapshot WithCompressedCells() =>
+        CellData is null && CellRuns is { } runs ? this with { CellData = CellCodec.DeflateRuns(runs), CellRuns = null } : this;
+}
+
+/// <summary>
+/// One character's place in a world (PU-9, D-43: any character may play any world): where they stood, facing, hit points
+/// and their bed spawn. The character file stays the authority for what they carry. A character with no entry arrives at
+/// the landing site.
+/// </summary>
+public sealed record PlayerPlacement(
+    Guid CharacterId,
+    float X,
+    float Y,
+    int Facing,
+    float HitPoints,
+    int? BedSpawnX = null,
+    int? BedSpawnY = null);
+
+/// <summary>
+/// Save-format migrations (PU-11): each step upgrades a snapshot from its version to the next. Every save whose
+/// <see cref="GameSnapshot.FormatVersion"/> is at most the current one loads through them; newer saves are refused with a
+/// message. Each format change adds a step here and a fixture under <c>tests/fixtures/saves/&lt;version&gt;/</c>.
+/// </summary>
+public static class SaveMigrations
+{
+    /// <summary>Oldest snapshot version that still loads (version 2 is the oldest format any release wrote).</summary>
+    public const int OldestSupported = 2;
+
+    /// <summary>Upgrade steps by source version: <c>Steps[from]</c> turns a version-<c>from</c> snapshot into version <c>from + 1</c>.</summary>
+    public static readonly IReadOnlyDictionary<int, Func<GameSnapshot, Guid?, GameSnapshot>> Steps =
+        new Dictionary<int, Func<GameSnapshot, Guid?, GameSnapshot>>
+        {
+            // 2 → 3 (PU-9): the single saved player becomes the first entry of the per-character placement map, under the
+            // character that saved it (the embedded character copy, else the save envelope's character).
+            [2] = (snapshot, savedBy) => snapshot with
+            {
+                FormatVersion = 3,
+                Players = snapshot.Players ?? ((snapshot.Character?.CharacterId ?? savedBy) is { } id && id != Guid.Empty
+                    ? [new PlayerPlacement(id, snapshot.PlayerX, snapshot.PlayerY, snapshot.Facing, snapshot.HitPoints,
+                        snapshot.BedSpawnX, snapshot.BedSpawnY)]
+                    : null)
+            },
+        };
+
+    /// <summary>True when a save of this version can be read (possibly after migration).</summary>
+    public static bool CanRead(int version) => version >= OldestSupported && version <= GameSnapshot.CurrentFormatVersion;
+
+    /// <summary>Why a save of <paramref name="version"/> cannot be read, or null when it can.</summary>
+    public static string? RefusalFor(int version) =>
+        version > GameSnapshot.CurrentFormatVersion
+            ? $"it was saved by a newer version of Rimtera (save format {version}; this version reads up to {GameSnapshot.CurrentFormatVersion}). Update the game to play it"
+            : version < OldestSupported ? $"its save format ({version}) is too old to read"
+            : null;
+
+    /// <summary>
+    /// Brings a snapshot up to <see cref="GameSnapshot.CurrentFormatVersion"/>. <paramref name="savedBy"/> is the character the
+    /// save envelope names, used when the snapshot has no embedded character. Throws <see cref="InvalidDataException"/> for
+    /// versions that cannot be read.
+    /// </summary>
+    public static GameSnapshot Upgrade(GameSnapshot snapshot, Guid? savedBy = null)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        if (RefusalFor(snapshot.FormatVersion) is { } refusal)
+            throw new InvalidDataException($"The world cannot be loaded: {refusal}.");
+        while (snapshot.FormatVersion < GameSnapshot.CurrentFormatVersion)
+        {
+            var from = snapshot.FormatVersion;
+            if (!Steps.TryGetValue(from, out var step))
+                throw new InvalidDataException($"No migration from save format {from}.");
+            snapshot = step(snapshot, savedBy);
+            if (snapshot.FormatVersion != from + 1)
+                throw new InvalidDataException($"The migration from save format {from} did not advance the version.");
+        }
+        return snapshot;
+    }
 }
 
 /// <summary>
@@ -270,7 +359,8 @@ public sealed record EnemySnapshot(
     int AiStep = 0,
     float[]? Segments = null,
     AfflictionSnapshot[]? Afflictions = null,
-    HitImmunitySnapshot[]? HitImmunity = null);
+    HitImmunitySnapshot[]? HitImmunity = null,
+    bool FromStatue = false);
 
 /// <summary>An affliction carried by a live creature and the seconds it has left.</summary>
 public sealed record AfflictionSnapshot(StatusId Status, float Seconds);
@@ -316,3 +406,74 @@ public sealed record ProjectileSnapshot(
 
 /// <summary>A projectile's per-enemy repeat-hit cooldown.</summary>
 public sealed record HitCooldownSnapshot(long EnemyId, float Seconds);
+
+/// <summary>
+/// Atomic writes with one backup generation (PU-11): every save writes a temporary file, moves the current file to
+/// <c>X.bak</c>, then moves the new one into place. A crash leaves either the new file or the previous one (as the backup);
+/// readers fall back to the backup when the main file is missing or unreadable.
+/// </summary>
+public static class SafeFile
+{
+    public const string BackupSuffix = ".bak";
+
+    public static string BackupPath(string path) => path + BackupSuffix;
+
+    /// <summary>Writes through <paramref name="write"/> to a temporary file, then rotates it in (the old file becomes the backup).</summary>
+    public static void Write(string path, Action<Stream> write)
+    {
+        ArgumentNullException.ThrowIfNull(write);
+        if (Path.GetDirectoryName(Path.GetFullPath(path)) is { Length: > 0 } directory)
+            Directory.CreateDirectory(directory);
+        var temporary = path + ".tmp";
+        using (var stream = File.Create(temporary))
+            write(stream);
+        Replace(temporary, path);
+    }
+
+    public static void WriteAllText(string path, string text) =>
+        Write(path, stream =>
+        {
+            using var writer = new StreamWriter(stream, new System.Text.UTF8Encoding(false));
+            writer.Write(text);
+        });
+
+    /// <summary>Moves a finished temporary file over <paramref name="path"/>, keeping the previous file as the backup.</summary>
+    public static void Replace(string temporary, string path)
+    {
+        if (File.Exists(path))
+            File.Move(path, BackupPath(path), overwrite: true);
+        File.Move(temporary, path, overwrite: true);
+    }
+
+    /// <summary>
+    /// Reads <paramref name="path"/> with <paramref name="read"/> (null or an exception means unreadable), falling back to the
+    /// backup. <paramref name="fromBackup"/> says which one answered.
+    /// </summary>
+    public static T? ReadWithBackup<T>(string path, Func<string, T?> read, out bool fromBackup) where T : class
+    {
+        fromBackup = false;
+        if (TryRead(path, read) is { } main)
+            return main;
+        if (TryRead(BackupPath(path), read) is { } backup)
+        {
+            fromBackup = true;
+            return backup;
+        }
+        return null;
+    }
+
+    private static T? TryRead<T>(string path, Func<string, T?> read) where T : class
+    {
+        if (!File.Exists(path))
+            return null;
+        try
+        {
+            return read(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or
+                                       InvalidDataException or NotSupportedException or EndOfStreamException or ArgumentException)
+        {
+            return null;
+        }
+    }
+}

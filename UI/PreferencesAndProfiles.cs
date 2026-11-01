@@ -766,16 +766,18 @@ public sealed class UserProfileStore
     {
         lock (_gate)
         {
-            if (!File.Exists(_path))
+            if (!File.Exists(_path) && !File.Exists(SafeFile.BackupPath(_path)))
             {
                 _index = ProfileIndex.Empty;
                 return;
             }
             try
             {
-                _index = JsonSerializer.Deserialize<ProfileIndex>(File.ReadAllText(_path), JsonOptions) ?? ProfileIndex.Empty;
-                if (_index.FormatVersion != 1)
-                    _index = ProfileIndex.Empty;
+                // PU-11: a damaged profiles.json falls back to profiles.json.bak instead of starting empty.
+                _index = SafeFile.ReadWithBackup(_path, path =>
+                    JsonSerializer.Deserialize<ProfileIndex>(File.ReadAllText(path), JsonOptions) is { FormatVersion: 1 } index ? index : null,
+                    out var fromBackup) ?? ProfileIndex.Empty;
+                LoadedFromBackup = fromBackup;
                 _index = _index with
                 {
                     Worlds = _index.Worlds?
@@ -797,15 +799,10 @@ public sealed class UserProfileStore
         }
     }
 
-    private void SaveUnsafe()
-    {
-        var directory = System.IO.Path.GetDirectoryName(_path);
-        if (!string.IsNullOrEmpty(directory))
-            Directory.CreateDirectory(directory);
-        var temporary = _path + ".tmp";
-        File.WriteAllText(temporary, JsonSerializer.Serialize(_index, JsonOptions));
-        File.Move(temporary, _path, overwrite: true);
-    }
+    /// <summary>True when the last <see cref="Load"/> read profiles.json.bak because the main file was missing or damaged.</summary>
+    public bool LoadedFromBackup { get; private set; }
+
+    private void SaveUnsafe() => SafeFile.WriteAllText(_path, JsonSerializer.Serialize(_index, JsonOptions)); // keeps profiles.json.bak
 
     private static string NormalizeName(string value, string fallback)
     {

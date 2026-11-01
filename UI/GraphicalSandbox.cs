@@ -76,6 +76,9 @@ public static partial class GraphicalSandbox
         private readonly AudioEngine _audio = new();
         private readonly AudioDirector _audioDirector;
         private float _autosaveSeconds;
+        private SaveCoordinator? _saveCoordinator;
+        /// <summary>PU-11/PU-12: autosaves on a worker, synchronous saves after it, and the save on close.</summary>
+        private SaveCoordinator Saving => _saveCoordinator ??= new SaveCoordinator(_menu.Saves);
         private bool _jump;
         private bool _dash;
         private bool _mine;
@@ -1027,10 +1030,28 @@ public static partial class GraphicalSandbox
             }
 
             _autosaveSeconds += 1f / 60f;
-            if (_menu.Preferences.AutoSave && _autosaveSeconds >= _menu.Preferences.AutosaveMinutes * 60f)
+            if (_menu.Preferences.AutoSave && _autosaveSeconds >= _menu.Preferences.AutosaveMinutes * 60f && _activeWorld is { } autosaveWorld)
             {
+                // PU-12: capture here, compress and write on a worker; a save still writing skips this tick.
                 _autosaveSeconds = 0f;
-                SaveGame(showStatus: false);
+                Action? mapWriter = null;
+                if (_canvas.Map is { } autosaveMap && _activeCharacter is { } mapOwner)
+                {
+                    var writeMap = autosaveMap.CaptureForSave();
+                    var autosaveMapPath = MapPath(autosaveWorld, mapOwner);
+                    mapWriter = () =>
+                    {
+                        try
+                        {
+                            writeMap(autosaveMapPath);
+                        }
+                        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+                        {
+                            // The world is saved; the map keeps its previous file.
+                        }
+                    };
+                }
+                Saving.TryBeginAutosave(_game, autosaveWorld.Id, _activeCharacter?.Id, _activeCharacter?.Name, mapWriter);
             }
 
             SyncCanvas();
@@ -1053,11 +1074,14 @@ public static partial class GraphicalSandbox
                 Math.Clamp(y, 0, game.World.Height - 1));
         }
 
-        private async void StartWorld(WorldProfile world, CharacterProfile character)
+        private void StartWorld(WorldProfile world, CharacterProfile character) => StartWorld(world, character, fromBackup: false);
+
+        private async void StartWorld(WorldProfile world, CharacterProfile character, bool fromBackup)
         {
             if (_transition.BlocksGameplay)
                 return;
-            var hasSave = _menu.Saves.Exists(world.Id);
+            Saving.WaitForPending(); // never read a world while its last save is still being written
+            var hasSave = fromBackup || _menu.Saves.Exists(world.Id) || _menu.Saves.HasBackup(world.Id);
             _menu.Close();
             _menuOpen = false;
             _down.Clear();
@@ -1077,8 +1101,8 @@ public static partial class GraphicalSandbox
                 {
                     if (!hasSave)
                         return CreateSimulation(world, character, progress);
-                    if (!_menu.Saves.TryLoad(world.Id, out var snapshot) || snapshot is null)
-                        throw new InvalidDataException("the save file exists but could not be read");
+                    if (!_menu.Saves.TryLoad(world.Id, out var snapshot, out var loadError, backup: fromBackup) || snapshot is null)
+                        throw new InvalidDataException(loadError ?? "the save file exists but could not be read");
                     ((IProgress<GenerationProgress>)progress).Report(new GenerationProgress("Restoring the colony", 0.6, 0.6));
                     return GameSimulation.Restore(snapshot, character);
                 });
@@ -1087,8 +1111,9 @@ public static partial class GraphicalSandbox
             catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or ArgumentException)
             {
                 _transition.Clear();
-                _menu.Open();
-                _menu.SetStatus($"Could not load {world.Name}: {ex.Message}");
+                // PU-11: a failed load offers the backup of the previous save.
+                _menu.ShowLoadFailure(world, ex.Message.TrimEnd('.'), !fromBackup && _menu.Saves.HasBackup(world.Id),
+                    () => StartWorld(world, character, fromBackup: true));
                 _menuOpen = true;
                 UpdateMenuViewport();
                 SyncCanvas();
@@ -1255,7 +1280,7 @@ public static partial class GraphicalSandbox
             if (_game is null || _activeWorld is null || _transition.BlocksGameplay)
                 return;
             var world = _activeWorld;
-            var snapshot = _game.CaptureSnapshot(binaryCells: true);
+            var snapshot = _game.CaptureSnapshot(binaryCells: true, deferCellCompression: true); // compressed on the worker
             var characterId = _activeCharacter?.Id;
             var characterName = _activeCharacter?.Name;
             _menu.Close();
@@ -1265,13 +1290,14 @@ public static partial class GraphicalSandbox
             SyncCanvas();
             try
             {
-                var map = _canvas.Map;
+                var writeMap = _canvas.Map?.CaptureForSave();
                 var mapPath = _activeCharacter is { } mapCharacter ? MapPath(world, mapCharacter) : null;
                 await Task.Run(() =>
                 {
+                    Saving.WaitForPending();
                     _menu.Saves.Save(world.Id, snapshot, characterId, characterName);
-                    if (map is not null && mapPath is not null)
-                        map.Save(mapPath);
+                    if (writeMap is not null && mapPath is not null)
+                        writeMap(mapPath);
                 });
             }
             catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
@@ -1488,11 +1514,7 @@ public static partial class GraphicalSandbox
             }
             try
             {
-                _menu.Saves.Save(
-                    _activeWorld.Id,
-                    _game.CaptureSnapshot(binaryCells: true),
-                    _activeCharacter?.Id,
-                    _activeCharacter?.Name);
+                Saving.SaveNow(_game, _activeWorld.Id, _activeCharacter?.Id, _activeCharacter?.Name);
                 SaveMap();
                 return true;
             }
@@ -1549,8 +1571,10 @@ public static partial class GraphicalSandbox
             _audio.Dispose();
             Application.Idle -= OnIdle;
             timeEndPeriod(1);
-            if (_game is not null && _activeWorld is not null && _menu.Preferences.AutoSave)
+            // D-42 (PU-11): closing the window always saves an active world, whatever the Autosave setting.
+            if (_game is not null && SaveCoordinator.SavesOnClose(_activeWorld is not null, _menu.Preferences.AutoSave))
                 SaveGame(showStatus: false);
+            Saving.WaitForPending();
         }
     }
 
@@ -2447,7 +2471,14 @@ public static partial class GraphicalSandbox
             {
                 var size = minion.IsSentry ? 1.6f : 1.1f;
                 var bob = minion.IsSentry ? 0f : (float)Math.Sin(now * 4 + minion.Id) * 0.15f;
-                DrawSpriteActor(g, minion.SpriteName, minion.Position - new Vector2(size / 2f, size / 2f - bob), new Vector2(size, size),
+                // IC-7: a minion's own art, else its summoning item's (D-39 stand-in); allies never fall back to the enemy brush.
+                var art = _sprites.Find(minion.SpriteName) ?? (minion.Spec.StandInSprite is { } standIn ? _sprites.Find(standIn) : null);
+                if (art is null)
+                {
+                    DrawAllyGlyph(g, minion.Position, size, bob, startX, startY);
+                    continue;
+                }
+                DrawSpriteActor(g, art, minion.Position - new Vector2(size / 2f, size / 2f - bob), new Vector2(size, size),
                     1f, minion.Position.X > game.Player.Motion.Position.X, startX, startY);
             }
             DrawCompanions(g, game, startX, startY, now);
@@ -2641,6 +2672,16 @@ public static partial class GraphicalSandbox
         /// actor's idle pose or base sprite) the scale comes from that frame alone and every animation frame keeps it, so a
         /// body never grows or shrinks between frames; without one, the sprite is fitted to the box.
         /// </summary>
+        /// <summary>A neutral ally marker (a small player-coloured diamond) for a minion with no art: never the enemy's red box.</summary>
+        private void DrawAllyGlyph(Graphics g, Vector2 center, float size, float bob, int startX, int startY)
+        {
+            var cx = (center.X - startX) * TileSize;
+            var cy = (center.Y - startY) * TileSize + bob;
+            var r = Math.Max(3f, size * TileSize * 0.4f);
+            PointF[] diamond = [new(cx, cy - r), new(cx + r, cy), new(cx, cy + r), new(cx - r, cy)];
+            g.FillPolygon(_playerBrush, diamond);
+        }
+
         private void DrawSpriteActor(Graphics g, string sprite, Vector2 position, Vector2 size, float scale, bool flip,
             int startX, int startY, float bob = 0f, bool flash = false, bool flashWhite = false, float scaleX = 1f, float scaleY = 1f,
             string? reference = null, ImageAttributes? ghost = null)

@@ -266,6 +266,19 @@ public static class ControlsParitySelfTests
         var rest = full.ReturnCursor();
         check(rest.Count == 4 && full.Cursor.IsEmpty, "returning the cursor to a full bag hands back what did not fit");
 
+        // X-CP-6 (0.2.2): a favourite stack keeps its flag through ReturnCursor, into an empty slot or merged into a stack.
+        var favBag = new Inventory(items, slotCount: 3);
+        favBag.SetCursor(new ItemStack(ItemId.RockBlock, 4, Favorite: true));
+        favBag.ReturnCursor();
+        var landedFavourite = favBag.Slots.Any(stack => stack.ItemId == ItemId.RockBlock && stack.Count == 4 && stack.Favorite);
+        var mergeBag = new Inventory(items, slotCount: 3);
+        mergeBag.Add(ItemId.WoodBlock, 5);
+        mergeBag.SetCursor(new ItemStack(ItemId.WoodBlock, 3, Favorite: true));
+        mergeBag.ReturnCursor();
+        check(landedFavourite && mergeBag.Slots.Any(stack => stack.ItemId == ItemId.WoodBlock && stack.Count == 8 && stack.Favorite) &&
+              mergeBag.Cursor.IsEmpty,
+            "X-CP-6: a favourite returned from the cursor stays a favourite (also when it merges into a stack)");
+
         var game = NewGame(7303);
         ClearInventory(game);
         game.Player.Inventory.Add(ItemId.WoodBlock, 50 * game.Items[ItemId.WoodBlock].MaxStack);
@@ -432,8 +445,9 @@ public static class ControlsParitySelfTests
             regenAllowed += colony.NaturalLifeRegenPerSecond / 60f;
             Tick(colony);
         }
-        check(medic is not null && woundedNeedsTending && colony.Player.Health.NeedsTending &&
-              colony.Player.HitPoints - hpAfterHit <= regenAllowed + 0.05f,
-            "a crew medic standing beside the wounded player never tends them, and their health still only follows Terraria's natural regen");
+        // D-36 (0.2.2): the player is HP-only, so a hit leaves no wound to tend at all.
+        check(medic is not null && !woundedNeedsTending && !colony.Player.Health.NeedsTending &&
+              hpAfterHit < colony.Player.MaximumHitPoints && colony.Player.HitPoints - hpAfterHit <= regenAllowed + 0.05f,
+            "a crew medic standing beside the hurt player never heals them (the HP-only player has no wounds), and their health only follows Terraria's natural regen");
     }
 }

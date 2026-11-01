@@ -573,7 +573,8 @@ public static class CoreSelfTests
         saveGame.World.SetCell(new GridPoint(12, 30), new WorldCell { TileId = TileId.Rock, Shape = TileShape.SlopeUpLeft });
         var sidecarSnapshot = saveGame.CaptureSnapshot(binaryCells: true);
         saveRepository.Save(sidecarWorld, sidecarSnapshot);
-        var sidecarPath = Path.Combine(tempRoot, "saves", $"{sidecarWorld:N}.rimtera.cells");
+        // PU-11 (0.2.2): sidecars are stamped per save (<id>.<stamp>.cells), so the envelope always names a complete one.
+        var sidecarPath = Directory.EnumerateFiles(Path.Combine(tempRoot, "saves"), $"{sidecarWorld:N}.*.cells").SingleOrDefault() ?? "missing";
         var envelopeText = File.ReadAllText(Path.Combine(tempRoot, "saves", $"{sidecarWorld:N}.rimtera.json"));
         var sidecarLoaded = saveRepository.TryLoad(sidecarWorld, out var sidecarState) && sidecarState?.CellData is not null;
         var sidecarGame = sidecarLoaded ? GameSimulation.Restore(sidecarState!) : null;
@@ -633,9 +634,10 @@ public static class CoreSelfTests
             .Select((entry, index) => (entry, index))
             .First(item => item.entry.Label.StartsWith(savedWorld.Name, StringComparison.Ordinal)).index);
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
-        Check(selectedSecond && savedWorldListed && continueCharacter?.Id == savedCharacter.Id &&
-              menuFlow.SelectedCharacter?.Id == savedCharacter.Id,
-            "Single Player's world list marks saved worlds, and a saved world launches with the character stored in it");
+        // D-43 (PU-9, 0.2.2): any character may play any world; the menu launches the chosen character (Continue alone uses the saved one).
+        Check(selectedSecond && savedWorldListed && continueCharacter?.Id == secondCharacter.Id &&
+              menuFlow.SelectedCharacter?.Id == secondCharacter.Id,
+            "Single Player's world list marks saved worlds, and a saved world launches with the character chosen in the menu (D-43)");
 
         // Creative characters and worlds stay apart (Terraria's Journey split).
         var journeyHero = savedCharacter with { Id = Guid.NewGuid(), Difficulty = CharacterDifficulty.Creative };
@@ -1197,18 +1199,22 @@ public static class CoreSelfTests
             legTopSpeed = MathF.Max(legTopSpeed, MathF.Abs(legGame.Player.Motion.Velocity.X));
             steadyTopSpeed = MathF.Max(steadyTopSpeed, MathF.Abs(steadyGame.Player.Motion.Velocity.X));
         }
+        // D-36 (IC-4, 0.2.2): the player is HP-only, so ruined legs no longer slow them; the body still records the damage.
         Check(legHealth.Moving < 0.5f && steadyGame.Player.Health.Moving > 0.95f &&
-              legGame.Player.MoveCapacityFactor < 0.5f && !legGame.Player.IsDowned &&
-              steadyTopSpeed > 0f && legTopSpeed < steadyTopSpeed * 0.6f,
-            "leg damage lowers the moving capacity and the player's run speed");
+              legGame.Player.MoveCapacityFactor == 1f && !legGame.Player.IsDowned &&
+              steadyTopSpeed > 0f && MathF.Abs(legTopSpeed - steadyTopSpeed) < 0.01f,
+            "leg damage lowers the body's moving capacity but never the player's run speed (D-36)");
 
         var brainGame = new GameSimulation(seed: 3232, width: 80, height: 48);
         var brainHealth = brainGame.Player.Health;
         brainHealth.ApplyDamageToPart(brainHealth.FindPart("brain")!, 50f, DamageKind.Shot);
         brainGame.Tick(new GameInput(new MovementInput(0f)));
-        Check(brainHealth.IsDead && brainHealth.DeathCause?.Contains("brain") == true &&
-              brainGame.Player.IsDead && brainGame.IsOver && brainGame.Player.HitPoints == 0f,
-            "destroying the brain kills even with hit points left");
+        // D-36 (IC-4, 0.2.2): a colonist's body still dies of a destroyed brain; the player dies only at 0 hit points.
+        var colonistBrain = new HealthComponent(ColonistAnatomy.CreateTorso(), seed: 5);
+        colonistBrain.ApplyDamageToPart(colonistBrain.FindPart("brain")!, 50f, DamageKind.Shot);
+        Check(colonistBrain.IsDead && colonistBrain.DeathCause?.Contains("brain") == true &&
+              !brainHealth.IsDead && !brainGame.Player.IsDead && !brainGame.IsOver && brainGame.Player.HitPoints > 0f,
+            "destroying the brain kills a colonist even with hit points left, never the HP-only player");
 
         // Thoughts and mood.
         var painGame = new GameSimulation(seed: 3333, width: 80, height: 48);
@@ -1344,7 +1350,7 @@ public static class CoreSelfTests
         static string Describe(HealthComponent health) => string.Join("|", health.Injuries
             .Select(injury => $"{injury.Kind}:{injury.Part.Name}:{injury.Severity:0.000}:{injury.IsTended}"));
         var legacyMind = GameSimulation.Restore(mindSnapshot with { PlayerState = null, ColonistStates = null });
-        Check(mindJson.FormatVersion == 2 && loadedPlayer.Health.FindPart("left hand")!.IsMissing &&
+        Check(mindJson.FormatVersion == GameSnapshot.CurrentFormatVersion && loadedPlayer.Health.FindPart("left hand")!.IsMissing &&
               Describe(loadedPlayer.Health) == Describe(savedPlayer.Health) &&
               Describe(loadedCrew.Health) == Describe(savedCrew.Health) &&
               loadedPlayer.Health.GetPartHealth(loadedPlayer.Health.FindPart("right leg")!) ==
@@ -1576,7 +1582,7 @@ public static class CoreSelfTests
         Check(bigSnapshot.Cells is null && bigSnapshot.CompressedCells is { Length: > 0 } packedCells &&
               CellCodec.Decode(packedCells, bigA.World.Count).AsSpan().SequenceEqual(bigA.World.Cells) &&
               bigRestored.World.Cells.SequenceEqual(bigA.World.Cells) && bigRestored.Blight == WorldBlight.Radiated &&
-              bigJson.Length * 40L < jsonCellBytes && bigSnapshot.FormatVersion == 2,
+              bigJson.Length * 40L < jsonCellBytes && bigSnapshot.FormatVersion == GameSnapshot.CurrentFormatVersion,
             "compressed cell saves round-trip a Large world exactly at a small fraction of the JSON cell size");
 
         var oldStyle = new GameSimulation(seed: 789, width: 80, height: 48);
@@ -1714,6 +1720,7 @@ public static class CoreSelfTests
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         BalanceSelfTests.Run(Check); // 0.2.0 A: the boss curve (--boss-balance), the 60-180 s band and D-6 difficulty scaling (PC-15, BO-23)
+        SaveSafetySelfTests.Run(Check); // 0.2.2 D: save backups and migrations, the 0.1.6 fixture, threaded autosave, any character on any world, the HP-only player, minions, statue spawns (PU-11/12, PU-9, IC-4, IC-7, EN-6)
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }
