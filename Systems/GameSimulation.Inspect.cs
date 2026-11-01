@@ -46,7 +46,7 @@ public sealed partial class GameSimulation
         var lines = new List<string>
         {
             $"Health {npc.HitPoints:0}/{npc.MaximumHitPoints:0}",
-            npc.HomeCell is { } home ? $"Lives at {home.X},{home.Y} · happiness {GetHappiness(npc):+0.0;-0.0;0}" : "Homeless",
+            npc.HomeCell is { } home ? $"Lives at {home.X},{home.Y}{(OutpostOf(npc) is { } outpost ? $" ({outpost.Label})" : "")} · happiness {GetHappiness(npc):+0.0;-0.0;0}" : "Homeless",
             $"Doing: {npc.Activity}",
             $"Best at: {string.Join(", ", Enum.GetValues<ColonistSkill>().OrderByDescending(stats.Level).Take(3).Select(skill => $"{skill} {stats.Level(skill)}{(stats.Passion(skill) == PassionLevel.None ? "" : "+")}"))}",
             !npc.WorksStations || TownTrades.Idle(npc.Kind) ? "Works no stations"

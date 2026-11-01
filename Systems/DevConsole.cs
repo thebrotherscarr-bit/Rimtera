@@ -96,6 +96,7 @@ public sealed class DevConsole
         new("where", "where", "Prints your tile, biome, depth layer and the time.", false, _ => Where()),
         new("power", "power | power set <0-1000> | power tier <1-5> | power feed", "Shows the station AI's power, sets it or its tier, or feeds it from your bag.", true, Power),
         new("ai", "ai down | ai rebuild", "Takes the station AI down (machines go dark) or rebuilds it.", true, Ai),
+        new("outposts", "outposts", "Lists the outposts: where they are, who lives there and how many are armed.", false, _ => Outposts()),
         new("research", "research list | research done <tier>|all | research reset <tier>|all", "Lists the research tiers, finishes one or all, or puts them back.", true, Research),
     ];
 
@@ -157,6 +158,15 @@ public sealed class DevConsole
         // 0.3.10: a settler is a generated person, not the catalog's placeholder name.
         var npc = kind == TownNpcKind.Settler ? _game.AddSettlerAt(Beside(2f)) : _game.AddTownNpc(kind, Beside(2f), bound: false);
         return [$"{npc.Name} the {npc.Definition.Role} is here."];
+    }
+
+    private IEnumerable<string> Outposts()
+    {
+        var outposts = _game.Outposts;
+        if (outposts.Count == 0)
+            return [$"No outposts: everyone lives within {GameSimulation.OutpostDistance:0} tiles of the base."];
+        return outposts.Select(outpost => $"{outpost.Label} at {outpost.Center.X:0},{outpost.Center.Y:0}: " +
+                                          $"{string.Join(", ", outpost.People.Select(npc => npc.Name))} ({outpost.Guards} armed)");
     }
 
     private IEnumerable<string> KillAll()

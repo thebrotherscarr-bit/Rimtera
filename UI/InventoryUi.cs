@@ -759,7 +759,8 @@ public sealed class InventoryUiState : UiState
         {
             var resident = npc;
             var home = npc.HomeCell is null ? "homeless" : $"happiness {game.GetHappiness(npc):+0.0;-0.0;0}";
-            Line($"{npc.Name} · {npc.Definition.Role} · {home}", $"housing-npc-{npc.Id}", new UiColor(226, 230, 238));
+            var where = game.OutpostOf(npc) is { } outpost ? $" · {outpost.Label}" : "";
+            Line($"{npc.Name} · {npc.Definition.Role} · {home}{where}", $"housing-npc-{npc.Id}", new UiColor(226, 230, 238));
             if (npc.Gear.Count > 0)
                 Line($"   {string.Join(", ", npc.Gear.OrderBy(pair => pair.Key).Select(pair => game.Items[pair.Value].Name))} · DEF {game.ResidentDefense(npc)}",
                     $"housing-gear-{npc.Id}", new UiColor(170, 200, 230));
@@ -791,6 +792,10 @@ public sealed class InventoryUiState : UiState
                 });
             y += 24f;
         }
+        // 0.4.2: the outposts (people living far from the base), with how many guard each.
+        foreach (var outpost in game.Outposts.Take(3))
+            Line($"{outpost.Label} at {outpost.Center.X:0},{outpost.Center.Y:0}: {outpost.People.Count} people, {outpost.Guards} armed",
+                $"housing-outpost-{outpost.Number}", new UiColor(150, 210, 170));
         foreach (var lost in game.LostResidentKinds().Take(4))
             Line($"Vacant: {TownNpcCatalog.Get(lost).Role} (lost)", $"housing-lost-{lost}", new UiColor(150, 160, 172));
     }
