@@ -182,9 +182,7 @@ public static class StorageSelfTests
                       Button(chestHub, "chest-priority") is not null;
         Button(chestHub, $"chest-filter-{StorageCategory.Blocks}")?.Command?.Invoke();
         var hub = new Rimtera.UI.InventoryUiState(ui.Player.Inventory, game: ui);
-        Button(hub, "tab-work")?.Command?.Invoke();
-        Button(hub, $"work-npc-{resident.Id}")?.Command?.Invoke();
-        check(buttons && ui.ChestFilter(Near) == (StorageCategory.All & ~StorageCategory.Blocks) && !resident.WorksStations,
-            "an open chest shows a toggle per category, and the Work tab turns a resident's bill work on and off");
+        check(buttons && ui.ChestFilter(Near) == (StorageCategory.All & ~StorageCategory.Blocks) && resident.WorksStations && Button(hub, "tab-work") is null,
+            "an open chest shows a toggle per category; residents work their trade by default (no Work tab since 0.3.9)");
     }
 }

@@ -36,6 +36,8 @@ public sealed class StationBill
     public int Done { get; set; }
     /// <summary>Paused by the player: nobody works it until it is resumed.</summary>
     public bool Suspended { get; set; }
+    /// <summary>Set by the colony itself (0.3.9: keep healing and food in stock), not by a player; refreshed as the best recipe changes.</summary>
+    public bool Auto { get; init; }
 
     public void SetTarget(int target) => Target = Math.Clamp(target, MinimumTarget, MaximumTarget);
 
@@ -64,14 +66,14 @@ public sealed class StationBill
     }) + (Suspended ? ", paused" : "");
 
     public StationBillSnapshot Capture(GridPoint station) =>
-        new(station.X, station.Y, RecipeId, Mode, Target, Done, Suspended);
+        new(station.X, station.Y, RecipeId, Mode, Target, Done, Suspended, Auto);
 
     public static StationBill Restore(StationBillSnapshot saved) =>
-        new(saved.RecipeId, saved.Mode, saved.Target) { Done = Math.Max(0, saved.Done), Suspended = saved.Suspended };
+        new(saved.RecipeId, saved.Mode, saved.Target) { Done = Math.Max(0, saved.Done), Suspended = saved.Suspended, Auto = saved.Auto };
 }
 
 /// <summary>A saved bill: the station tile it belongs to and its order.</summary>
-public sealed record StationBillSnapshot(int X, int Y, string RecipeId, BillMode Mode, int Target, int Done, bool Suspended);
+public sealed record StationBillSnapshot(int X, int Y, string RecipeId, BillMode Mode, int Target, int Done, bool Suspended, bool Auto = false);
 
 /// <summary>
 /// Someone who can work station bills and haul (0.2.4): crew members, and town residents beside their shops. The job

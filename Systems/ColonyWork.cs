@@ -59,17 +59,29 @@ public static class WorkCatalog
 
 /// <summary>
 /// A colonist's work priorities, RimWorld's way: 1 (first) to 4 (last), 0 (never). Among equal numbers the work type's
-/// order decides. New crew start at 3, or 2 for work whose skill they have a passion for.
+/// order decides. Since 0.3.9 there is no Work tab: each person orients toward their preferred work by themselves, from
+/// their background (which sets their skills and passions). Their two best skills' work comes first, then any work they
+/// are good at (skill 6+) or have a passion for, then the rest.
 /// </summary>
 public sealed class ColonyWorkSettings
 {
     private readonly int[] _priorities = new int[Enum.GetValues<WorkType>().Length];
 
+    /// <summary>Skill level from which a person counts as good at a kind of work.</summary>
+    public const int GoodSkill = 6;
+
     public static ColonyWorkSettings For(ColonistStats stats)
     {
         var settings = new ColonyWorkSettings();
+        // The two best skills (a passion breaks ties): the work they are drawn to first.
+        var best = Enum.GetValues<ColonistSkill>()
+            .OrderByDescending(skill => stats.Level(skill) + (stats.Passion(skill) == PassionLevel.None ? 0f : 0.5f))
+            .Take(2).ToHashSet();
         foreach (var info in WorkCatalog.All)
-            settings._priorities[(int)info.Type] = stats.Passion(info.Skill) == PassionLevel.None ? WorkCatalog.Default : WorkCatalog.Passionate;
+            settings._priorities[(int)info.Type] =
+                best.Contains(info.Skill) ? WorkCatalog.Highest
+                : stats.Level(info.Skill) >= GoodSkill || stats.Passion(info.Skill) != PassionLevel.None ? WorkCatalog.Passionate
+                : WorkCatalog.Default;
         return settings;
     }
 

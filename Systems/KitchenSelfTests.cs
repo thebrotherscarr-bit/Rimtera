@@ -131,11 +131,8 @@ public static class KitchenSelfTests
         var hub = new Rimtera.UI.InventoryUiState(ui.Player.Inventory, game: ui);
         Rimtera.UI.UiButtonElement? Button(string id) =>
             hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
-        Button("tab-work")?.Command?.Invoke();
-        var id = ui.Colonists[0].Id;
-        Button($"work-{id}-{WorkType.Fish}")?.Command?.Invoke();
-        check(Button($"work-{id}-{WorkType.Cook}") is not null && ui.Colonists[0].Work.Priority(WorkType.Fish) == WorkCatalog.Highest,
-            "the Work tab has Cook and Fish columns, and clicking sets them");
+        check(Button("tab-work") is null && WorkCatalog.Get(WorkType.Cook).HasJobs && WorkCatalog.Get(WorkType.Fish).HasJobs,
+            "Cook and Fish are work people choose by skill (no Work tab since 0.3.9)");
 
         // ---- 0.2.9 meal quality: a better cook's food comes out with extra servings more often ----
         check(GameSimulation.CookServingChance(0) == 0f && Math.Abs(GameSimulation.CookServingChance(10) - 0.4f) < 1e-4f &&

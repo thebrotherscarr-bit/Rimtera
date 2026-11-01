@@ -62,8 +62,14 @@ public static class ColonyWorkSelfTests
         var sample = new GameSimulation(seed: 9601, width: 80, height: 48);
         sample.AddStartingCrewForChecks();
         var crewmate = sample.Colonists[0];
-        var defaultsRight = WorkCatalog.All.All(info =>
-            crewmate.Work.Priority(info.Type) == (crewmate.ColonistStats.Passion(info.Skill) == PassionLevel.None ? WorkCatalog.Default : WorkCatalog.Passionate));
+        // 0.3.9: preferred work comes from the person's skills: their two best first, then anything they are good at
+        // (skill 6+) or love, then the rest; nothing is refused.
+        var stats = crewmate.ColonistStats;
+        var best = Enum.GetValues<ColonistSkill>().OrderByDescending(skill => stats.Level(skill) + (stats.Passion(skill) == PassionLevel.None ? 0f : 0.5f)).Take(2).ToHashSet();
+        var defaultsRight = WorkCatalog.All.All(info => crewmate.Work.Priority(info.Type) ==
+            (best.Contains(info.Skill) ? WorkCatalog.Highest
+                : stats.Level(info.Skill) >= ColonyWorkSettings.GoodSkill || stats.Passion(info.Skill) != PassionLevel.None ? WorkCatalog.Passionate
+                : WorkCatalog.Default));
         var settings = ColonyWorkSettings.For(crewmate.ColonistStats);
         settings.Set(WorkType.Fish, 3);
         var cycle = new List<int>();
@@ -79,7 +85,7 @@ public static class ColonyWorkSelfTests
         settings.Set(WorkType.Tend, 2);
         check(defaultsRight && cycle.SequenceEqual([4, 0, 1, 2, 3]) &&
               settings.Order().SequenceEqual([WorkType.Fish, WorkType.Guard, WorkType.Tend]) && !crewmate.FollowsPlayer,
-            "work priorities: 3 by default, 2 for a passion; clicking cycles 1-2-3-4-off; 1 is done first, ties by work type; crew stay home");
+            "work priorities come from skills (best two first, then good or loved work); the cycle still runs 1-2-3-4-off; 1 is done first, ties by work type; crew stay home");
 
         // ---- old saves: 0.2.1-0.2.8 priorities held Haul (at 2) and Build (at 8); 0.2.9 drops those two ----
         var migrated = new ColonyWorkSettings();
@@ -128,21 +134,23 @@ public static class ColonyWorkSelfTests
         kept.Colonists[1].FollowsPlayer = true;
         kept.Colonists[0].Carried = new ItemStack(ItemId.RockBlock, 7);
         var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
-        check(reloaded.Colonists[0].Work.Capture().SequenceEqual(kept.Colonists[0].Work.Capture()) && reloaded.Colonists[1].FollowsPlayer &&
+        var derived = ColonyWorkSettings.For(reloaded.Colonists[0].ColonistStats).Capture();
+        check(reloaded.Colonists[0].Work.Capture().SequenceEqual(derived) && reloaded.Colonists[1].FollowsPlayer &&
               !reloaded.Colonists[0].FollowsPlayer && reloaded.Colonists[0].Carried == new ItemStack(ItemId.RockBlock, 7),
-            "work priorities, following and a carried stack are saved with the world");
+            "following and a carried stack are saved with the world; work priorities come from each person's skills again on load (0.3.9)");
 
-        // ---- the Work tab in the inventory hub ----
+        // ---- 0.3.9: no Work tab; each person's preferred work comes from their background's skills ----
         var tabbed = Arena(9606);
         var hub = new Rimtera.UI.InventoryUiState(tabbed.Player.Inventory, game: tabbed);
         Rimtera.UI.UiButtonElement? Button(string id) =>
             hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
-        Button("tab-work")?.Command?.Invoke();
         var first = tabbed.Colonists[0];
-        Button($"work-{first.Id}-{WorkType.Fish}")?.Command?.Invoke();
-        Button($"work-{first.Id}-follow")?.Command?.Invoke();
-        check(first.Work.Priority(WorkType.Fish) == WorkCatalog.Highest && first.FollowsPlayer &&
-              Button($"work-{first.Id}-{WorkType.Guard}") is not null && Button($"work-{first.Id}-{WorkType.Tend}") is not null,
-            "the hub's Work tab lists each crew member's work priorities and their stay-home toggle, and clicking changes them");
+        var firstStats = first.ColonistStats;
+        var auto = ColonyWorkSettings.For(firstStats);
+        var bestSkill = Enum.GetValues<ColonistSkill>().MaxBy(skill => firstStats.Level(skill) + (firstStats.Passion(skill) == PassionLevel.None ? 0f : 0.5f));
+        var bestWork = WorkCatalog.All.Where(info => info.Skill == bestSkill).Select(info => info.Type).ToArray();
+        check(Button("tab-work") is null && Button("tab-bills") is null &&
+              bestWork.All(type => auto.Priority(type) == WorkCatalog.Highest) && WorkCatalog.All.All(info => auto.Priority(info.Type) != WorkCatalog.Off),
+            $"there is no Work or Bills tab; each person puts the work of their best skill first ({bestSkill}: {string.Join(", ", bestWork)}) and never refuses work");
     }
 }
