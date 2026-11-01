@@ -26,4 +26,6 @@ The code locations below were checked on 2026-10-21.
 
 Decision noted for G2a: the Bloom Matriarch's loot is tier 4, so gating it behind the Fracture fits Rimtera's data. Terraria's analogue, Queen Bee, is pre-hardmode, so retiering it to Easy with tier-3 loot would be the other option.
 
-The rest of the diff (G3, G6–G16) is not queued yet. Pick from `docs/PROGRESSION_DIFF.md` when the queue runs.
+All of G0–G16 are done, G3 and G6–G16 included: see `docs/PROGRESSION_DIFF.md`, "Status: all gaps closed (2026-10-21)".
+This table is kept as history. One correction (PC-21, 0.2.2): G2c's Scout Mech gate still let every incursion boss in
+before the Fracture; PC-4 gates the incursion roll on the Fracture.

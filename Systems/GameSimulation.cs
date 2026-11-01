@@ -1015,7 +1015,7 @@ public sealed partial class GameSimulation : IStoryHost
         var hitTicks = DrillHitTicks(item);
         if (item.ToolPower < definition.MinimumToolPower)
         {
-            PostMessage($"{definition.Name} needs a stronger drill.");
+            PostMessage(cell.TileId is TileId.PrecursorBrick or TileId.PrecursorGlyph ? ContentTiles.PrecursorSealMessage : $"{definition.Name} needs a stronger drill.");
             SetPlayerCooldown(hitTicks);
             return;
         }

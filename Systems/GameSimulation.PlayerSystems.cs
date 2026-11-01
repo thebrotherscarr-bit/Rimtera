@@ -438,7 +438,8 @@ public sealed partial class GameSimulation
         var center = enemy.Motion.Position + enemy.Motion.Size / 2f;
         if (!enemy.IsBoss && luck > 0f && ArsenalItems.MobDrops.TryGetValue(enemy.Kind, out var drops))
             foreach (var (item, percent) in drops)
-                if (LuckRandom.NextDouble() < luck * 0.5f && LuckRandom.Next(100) < percent)
+                if (LuckRandom.NextDouble() < luck * 0.5f && LuckRandom.Next(100) < percent &&
+                    (FractureActive || !ArsenalItems.MobDropWaitsForFracture(item)))
                     DropLoot(enemy, item, 1);
         if (!enemy.IsBoss)
             return;

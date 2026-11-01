@@ -98,7 +98,7 @@ internal static partial class ArsenalItems
         ["astral-handler"] = (SetSpecial.BurstWhenHit, 2.2f)
     };
 
-    /// <summary>Non-recipe sources: "boss:Kind", "mob:Kind:percent", "cache", "shop:Npc".</summary>
+    /// <summary>Non-recipe sources: "boss:Kind", "mob:Kind:percent[:fracture]", "cache", "shop:Npc".</summary>
     public static readonly Dictionary<ItemId, string> LootSources = new();
     /// <summary>Recipes given as ingredient strings ("A*2+B*1@Station") or derived ("craft:Material"), per item.</summary>
     internal static readonly Dictionary<ItemId, string> RecipeHints = new();
@@ -119,6 +119,14 @@ internal static partial class ArsenalItems
         .GroupBy(entry => Enum.Parse<EnemyKind>(entry.Parts[1]))
         .ToDictionary(group => group.Key, group => group.Select(entry => (entry.Key, int.Parse(entry.Parts[2]))).OrderBy(e => e.Key).ToArray());
     private static IReadOnlyDictionary<EnemyKind, (ItemId Item, int Percent)[]>? _mobDrops;
+
+    /// <summary>
+    /// True for a rare creature drop marked ":fracture" ("mob:Kind:percent:fracture"): it only drops once the Fracture has
+    /// happened (the Phase dirk, tier 6, from the dungeon's vengeful wisps).
+    /// </summary>
+    public static bool MobDropWaitsForFracture(ItemId item) =>
+        LootSources.TryGetValue(item, out var source) && source.StartsWith("mob:", StringComparison.Ordinal) &&
+        source.EndsWith(":fracture", StringComparison.Ordinal);
 
     /// <summary>Items found in supply caches.</summary>
     public static IEnumerable<ItemId> CacheItems => LootSources.Where(pair => pair.Value == "cache").Select(pair => pair.Key).OrderBy(id => id);

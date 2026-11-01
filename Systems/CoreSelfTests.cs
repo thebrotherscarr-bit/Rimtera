@@ -1713,6 +1713,7 @@ public static class CoreSelfTests
         CraftingGuideSelfTests.Run(Check); // crafting guidance: recipe guide lookups, "close to" recipes, tooltips, the station AI's next steps
         PlayerDebuffSelfTests.Run(Check); // 0.1.9 combat core: creature debuffs, afflictions, contact boxes, hurt variance (stream B)
         CraftingAuditSelfTests.Run(Check); // crafting progression: a felled tree builds the first station; every station and item is reachable (docs/CRAFTING_PROGRESSION.md)
+        ProgressionGateSelfTests.Run(Check); // 0.2.2 stream B: the Leviathan waits for the Fracture, transitive stations, the sealed temple, no tier 6+ before the Fracture
         SoundEventSelfTests.Run(Check); // 0.1.9 feedback: simulation sound events, despawns are not kills, dust under the cap, crit records (PE-4/5/7/14)
         TooltipSelfTests.Run(Check); // 0.1.9 IC-17: the truthful item tooltip (class damage, real ammo, calibration, sets, sell value)
         HealingLadderSelfTests.Run(Check); // 0.1.9 C1: healing and charge ladders, their gates, potion sickness, quick heal, cooked food

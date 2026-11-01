@@ -366,7 +366,8 @@ internal static class ContentRecipes
             (ItemId.SporeCrown, bio, [(ItemId.GlowSpore, 15), (ItemId.MushroomCapBlock, 10)]),
             (ItemId.RoyalNectar, bio, [(ItemId.NectarBlock, 15), (ItemId.HiveCombBlock, 10)]),
             (ItemId.PrismCatalyst, fab2, [(ItemId.PrismShard, 12), (ItemId.LumeniteBar, 6)]),
-            (ItemId.VaultCore, research, [(ItemId.AncientPowerCell, 2), (ItemId.PrecursorRelic, 1)]),
+            // Tier 6: the lumenite (post-Fracture) keeps the core out of a pre-Fracture bag; the boss still waits for the vault.
+            (ItemId.VaultCore, research, [(ItemId.AncientPowerCell, 2), (ItemId.PrecursorRelic, 1), (ItemId.LumeniteBar, 5)]),
             (ItemId.MoonEaterLure, chem, [(ItemId.ObsidianShard, 8), (ItemId.BioGel, 6)]),
             (ItemId.EclipseOrb, fab2, [(ItemId.VoidEssence, 4), (ItemId.LumeniteBar, 4)]),
             (ItemId.WarlordBanner, loom, [(ItemId.ClothRoll, 4), (ItemId.ScrapIronOre, 20)]),
@@ -399,7 +400,8 @@ internal static class ContentRecipes
         Add(Key(ItemId.AcidWader), ItemId.AcidWader, 1, At(tinker), (ItemId.UraniumRod, 6), (ItemId.ClothRoll, 4));
         Add(Key(ItemId.LavaLure), ItemId.LavaLure, 1, At(tinker), (ItemId.PyrociteBar, 6), (ItemId.ObsidianShard, 6));
         Add(Key(ItemId.CatchScanner), ItemId.CatchScanner, 1, At(tinker), (ItemId.CircuitBoard, 2), (ItemId.GlassBlock, 2));
-        Add(Key(ItemId.AbyssBait), ItemId.AbyssBait, 1, At(bio), (ItemId.AcidEel, 3), (ItemId.VoidEssence, 1));
+        // PC-3: flight essence (after the Fracture) instead of void essence, which coastal hab pods hold before it.
+        Add(Key(ItemId.AbyssBait), ItemId.AbyssBait, 1, At(bio), (ItemId.AcidEel, 3), (ItemId.FlightEssence, 1));
         AddAlt(Key(ItemId.CookedFish), ItemId.CookedFish, 1, cook,
             [ItemId.TideFish, ItemId.FishSilver, ItemId.FrostCod, ItemId.ReefSnapper, ItemId.MudSkipper, ItemId.CaveBlindfish,
              ItemId.SporeGuppy, ItemId.BlightCarp, ItemId.NectarMinnow, ItemId.PrismTrout, ItemId.FishGlow], 1);

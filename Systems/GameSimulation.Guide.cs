@@ -56,7 +56,7 @@ public sealed partial class GameSimulation
                 continue;
             var station = Tiles[tile].Station;
             if (station != CraftingStationId.None && stations.Add(station))
-                stations.UnionWith(station.Implied());
+                stations.UnionWith(station.ImpliedClosure());
             if (!light && TilePhysics.GetTileLight(tile) is not null)
                 light = true;
         }

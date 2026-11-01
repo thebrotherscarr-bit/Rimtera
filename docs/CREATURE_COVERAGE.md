@@ -112,7 +112,7 @@ Every boss now has an obtainable summon item. The one exception is the Abyss Lev
 | Pirate Dreadnought | Event | Flying Dutchman | post | Dreadnought flag (Loom); Pirate Boarding finale | — |
 | Protocol Dragon | Event | Betsy | post | Protocol key (Research Terminal); Defense Protocol finale | — |
 | Mothership Core | Event | Martian Saucer | post | Mothership beacon (Void Forge); Precursor Probes finale | — |
-| Abyss Leviathan | Event | Duke Fishron | post | Abyss bait fished in acid (bait from the Bio Lab) | — |
+| Abyss Leviathan | Event | Duke Fishron | post | Abyss bait fished in acid (bait from the Bio Lab, with flight essence) | After the Fracture (PC-3) |
 | **Hollow Regent** (new) | Event | Pumpking | post | Hollow Moon wave 8; **Regent's wick** (Nano-Fabricator Mk2: 20 hollow embers, 6 lumenite bars) | After the Fracture, at night |
 | **Rime Seraph** (new) | Event | Ice Queen | post | Rime Moon wave 8; **Seraph frost-core** (Nano-Fabricator Mk2: 20 rime shards, 6 lumenite bars) | After the Fracture, at night |
 | Astro-God | Final | Moon Lord | end | Countdown after the obelisks; Astral sigil (Void Forge) | Obelisks down |
@@ -147,7 +147,7 @@ The numbers below come from `--boss-balance` (`Systems/BossBalance.cs`) and are 
 - On Brutal the times double (124-351 s) and unhealed survival is 7-14 s. That is Expert's squeeze: the player needs better than tier gear, buffs or arenas.
 - On Annihilation the times triple (187-526 s) and unhealed survival is 4-9 s.
 
-**Reached early.** The Pirate Dreadnought, Protocol Dragon and Abyss Leviathan can be summoned before the Fracture: their summons have no gate, and the Defense Protocol is always available. So the audit, and this table, give them the pre-Fracture kit. Gating them would move them to the tier-6 kit; re-run `suggest` if that changes.
+**Reached early.** The Pirate Dreadnought and Protocol Dragon can be summoned before the Fracture: their summons have no gate, and the Defense Protocol is always available. So the audit, and this table, give them the pre-Fracture kit. Gating them would move them to a post-Fracture kit; re-run `suggest` if that changes. The Abyss Leviathan waits for the Fracture since 0.2.2 (PC-3), so it now gets the post-Fracture kit and was retuned with `suggest` to a 120 s target (Duke Fishron's post-mechanical place): 47,000 HP, 32 damage, defense 30.
 
 | Boss | Tier | # | Kit stage · reference weapon | Life · def · stim | HP | Def | Dmg | Hits | TTK s | Hit taken | Unhealed s | With stims s | Brutal TTK · unhealed | Annihilation TTK · unhealed |
 |---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
@@ -179,7 +179,7 @@ The numbers below come from `--boss-balance` (`Systems/BossBalance.cs`) and are 
 | Asteroid Miner Mech | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 10400 | 16 | 15 | 225 | 75 | 13 | 27 | 89 | 149 · 11 | 224 · 7 |
 | Moon Eater | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 10900 | 16 | 15 | 235 | 78 | 13 | 27 | 89 | 157 · 11 | 235 · 7 |
 | Protocol Dragon | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 12200 | 16 | 14 | 263 | 88 | 11 | 31 | 107 | 175 · 12 | 263 · 8 |
-| Abyss Leviathan | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 12500 | 16 | 14 | 270 | 90 | 11 | 31 | 107 | 180 · 12 | 269 · 8 |
+| Abyss Leviathan | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 47000 | 30 | 32 | 650 | 119 | 22 | 24 | 167 | 238 · 9 | 357 · 5 |
 | Eclipse Lord | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 47000 | 30 | 32 | 650 | 119 | 22 | 24 | 167 | 238 · 9 | 357 · 5 |
 | Mothership Core | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 53000 | 30 | 31 | 733 | 134 | 20 | 26 | 198 | 269 · 9 | 403 · 6 |
 | Hollow Regent | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 55000 | 30 | 31 | 761 | 139 | 20 | 26 | 198 | 279 · 9 | 418 · 6 |

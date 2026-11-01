@@ -519,7 +519,7 @@ public sealed class CraftingSystem
             var dx = player.X - (x + 0.5f);
             var dy = player.Y - (y + 0.5f);
             if (dx * dx + dy * dy <= radiusSquared && found.Add(station))
-                implied.AddRange(station.Implied());
+                implied.AddRange(station.ImpliedClosure());
         }
         found.UnionWith(implied);
         return found;
@@ -590,5 +590,27 @@ public sealed class CraftingSystem
             index.Add(key, recipes);
         }
         recipes.Add(recipe);
+    }
+}
+
+/// <summary>
+/// PC-18: station inheritance is transitive. <see cref="CraftingStationNames.Implied"/> lists the stations one station
+/// directly stands in for; the closure follows those links to the end, so an Astral Assembler counts as the Void Forge,
+/// the Ore Refinery Mk2 it implies and the Ore Refinery that implies (Terraria's Recipe.SetupTileInheritance chains the
+/// same way).
+/// </summary>
+public static class CraftingStationInheritance
+{
+    /// <summary>Every station <paramref name="station"/> stands in for, directly or through another (itself excluded).</summary>
+    public static IReadOnlySet<CraftingStationId> ImpliedClosure(this CraftingStationId station)
+    {
+        var seen = new HashSet<CraftingStationId>();
+        var queue = new Queue<CraftingStationId>();
+        queue.Enqueue(station);
+        while (queue.Count > 0)
+            foreach (var next in queue.Dequeue().Implied())
+                if (next != station && seen.Add(next))
+                    queue.Enqueue(next);
+        return seen;
     }
 }
