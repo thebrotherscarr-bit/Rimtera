@@ -2,7 +2,7 @@
 
 The audio companion to `docs/COMFYUI.md`: one pipeline that turns the game's audio NEEDS into finished, levelled, named files the game loads. It covers weapon and tool sounds, character and creature sounds, UI, ambience and music.
 
-Status: **built.** The needs export (`--sound-cues`, 527 cues), fallback playback, the specific triggers, both models, every script in `tools/audio/`, the OGG music player and the ambience layer all exist. Overnight runs fill the files in.
+Status: **built.** The needs export (`--sound-cues`, 532 cues), fallback playback, the specific triggers, both models, every script in `tools/audio/`, the OGG music player and the ambience layer all exist. Overnight runs fill the files in.
 
 ## What exists today
 | Piece | Where | What it does |
@@ -13,7 +13,7 @@ Status: **built.** The needs export (`--sound-cues`, 527 cues), fallback playbac
 | Audacity exporter | `tools/sounds/aup4_export.py` | Unpacks `.aup4` projects without Audacity; `--split` cuts a long take into clips at silences, ready to rename into cues. Sources live in `Assets/Sounds/raw/` |
 | Music | `UI/AudioEngine.cs` `MusicState` | Procedural synth: 14 themes (title, 10 biomes, underground, core, boss), styled after Vivaldi, Bach and Tchaikovsky. One boss theme for all bosses, no event music, night only slows the tempo |
 | Ambience | `AudioEngine.Mix` | Rain noise only |
-| Triggers | `UI/AudioDirector.cs` | About 20 triggers, inferred from cooldowns and inventory changes (Terraria has about 1,700 sound call sites; see `docs/breakdown/09_presentation_engine.md` S1–S26) |
+| Triggers | `Systems/SoundEvents.cs`, `UI/AudioDirector.cs` | The simulation's sound events (PE-4) and death and hit records (PE-5, PE-14), plus the older triggers inferred from cooldowns and hit points (Terraria has about 1,700 sound call sites; see `docs/breakdown/09_presentation_engine.md` S1–S26) |
 
 ## The four source lanes
 Every cue gets its sound from one of four lanes. The needs map (below) records which lane each cue uses.
@@ -30,7 +30,7 @@ Every cue gets its sound from one of four lanes. The needs map (below) records w
 ## The needs map (what the game needs to sound like)
 One table, `tools/audio/audio_needs.tsv`, generated from the game by `dotnet run -- --sound-cues` (`UI/SoundCatalog.cs`), like `--tile-sprites` and `--entity-sprites` for art. Columns: `cue`, `category`, `trigger` (what in the game plays it), `variants`, `seconds`, `loop`, `offset` (loudness, dB from −16 LUFS), `lane`, `fallback`, `bpm`, `key`, `meter` (the music style card) and `prompt`. Status is not stored: the scripts read it from the files (a file in `Assets/` is in the game; one in `tools/audio/candidates/` is waiting for audition). The `terraria_equivalent` column is added by the later audio diff.
 
-**Everything that needs a sound has one.** Every cue names a fallback cue, and every chain ends at one of the 23 synthesised effects (`AudioEngine.SynthesisedCues`). So `use_bow_heavy` → `use_bow` → `shoot` plays from day one and upgrades itself as files arrive. Only music, ambience, footsteps, idle calls and the heartbeat wait silently for their files. The self-test (`SoundCatalogSelfTests`) checks three things: every weapon style, tool, tile material, creature, boss, event and music theme has a cue; every chain ends at a real sound; and every music slot has a style card. Counts today: weapons 40, impacts 11, tools 16, tiles 36, interactions 41, UI 14, player 30, creatures 54, bosses 133, events 48, ambience 40, music 64.
+**Everything that needs a sound has one.** Every cue names a fallback cue, and every chain ends at one of the 28 synthesised effects (`AudioEngine.SynthesisedCues`). So `use_bow_heavy` → `use_bow` → `shoot` plays from day one and upgrades itself as files arrive. Only music, ambience, footsteps, idle calls and the heartbeat wait silently for their files. The self-test (`SoundCatalogSelfTests`) checks three things: every weapon style, tool, tile material, creature, boss, event and music theme has a cue; every chain ends at a real sound; and every music slot has a style card. Counts today: weapons 40, impacts 11, tools 16, tiles 36, interactions 45, UI 14, player 31, creatures 54, bosses 133, events 48, ambience 40, music 64.
 
 **What the game plays now** (`UI/AudioDirector.cs`):
 - the weapon style cue (`use_<style>`, with `_heavy` at tier 4 and up)
@@ -38,6 +38,9 @@ One table, `tools/audio/audio_needs.tsv`, generated from the game by `dotnet run
 - the creature's material impact, plus its family voice (`creature_<family>_<size>_hurt` and `_death`)
 - each boss's own roar, hurt and death
 - each event's start and end stinger
+- the simulation's sound events (`GameSimulation.SoundEvents`, 0.1.9 PE-4), each at its position with pan and distance falloff and a per-kind rate limit: `break_<material>` and `dig_<material>` on every tool hit and block break, `place_wall`, Tech and Command uses, `craft` (or `craft_smelt`, `craft_forge`, `craft_brew`, `craft_weave` by station), `shop_buy` and `shop_sell`, `potion` and `eat`, `door_open` and `door_close`, `chest_open` and `chest_close`, `splash_<liquid>` entering or leaving a liquid, `explosion`, the player's `death` with `death_sting`, `jump_double` and `pickup` or `pickup_coin`. A plain jump or landing is silent (D-59), and crafts no longer play `pickup`
+- death records (`GameSimulation.RecentDeaths`, PE-5): only creatures that died cry out; despawns are silent, and a bug-net catch plays `catch_critter`
+- hit records (`GameSimulation.HitRecords`, PE-14): a crit adds `impact_crit`, and damage over time ticks without a hit sound
 
 Recorded or promoted files load from `Assets/Sounds` and are levelled with the cue's catalog offset.
 
@@ -104,7 +107,7 @@ The steps as built:
 
 ## Engine work the new sounds need
 These are already planned in the roadmap (PE-4, PE-5, PE-6, S1–S26 in breakdown 09). The audio flow depends on them; it doesn't replace them.
-- **Sound events from the simulation.** A `SoundEvents` queue with a position for each event, instead of inferring sounds from cooldowns and inventory changes. Every trigger in the needs map emits its cue.
+- **Sound events from the simulation:** done for the 0.1.9 list (`Systems/SoundEvents.cs`, tested by `SoundEventSelfTests`). A `SoundEvents` queue holds (kind, variant, position) for each event; the audio director and the animator each drain it with their own cursor. The remaining needs-map triggers move over as their features are touched.
 - **Mixer.**
   - Pitch variation per play (about ±5–10%, as in Terraria).
   - Distance falloff and pan for every world sound.
@@ -121,7 +124,7 @@ These are already planned in the roadmap (PE-4, PE-5, PE-6, S1–S26 in breakdow
   - **Weather:** acid rain, blizzard, sandstorm, heavy or light rain, or wind, on the surface only, louder with intensity. A rain file replaces the synth rain noise.
   - **Spot loops:** waterfalls, molten flows, running stations (machinery) and campfires. Every 20 frames the director scans 24 tiles around the player; each spot gets louder the more of it is near and pans toward where it is.
   - Each layer crossfades on its own and follows the Ambient volume slider.
-- **Despawns stay silent;** catches get their own sound (PE-5).
+- **Despawns stay silent;** catches get their own sound (PE-5): done (`RecentDeaths` with Died, Despawned or Caught).
 
 ## Quality rules
 - Your own recordings and assets always take precedence; the generator fills gaps and offers alternatives, never overwrites.

@@ -271,7 +271,7 @@ internal sealed class AudioEngine : IDisposable
     /// <summary>The effects <see cref="Synthesize"/> makes; every <see cref="SoundCatalog"/> fallback chain ends at one.</summary>
     internal static readonly string[] SynthesisedCues =
         ["dig", "place", "break", "jump", "land", "swing", "zap", "shoot", "hit", "hurt", "death", "explosion", "pickup", "coin", "craft",
-         "click", "hover", "splash", "thunder", "boss", "event", "bite", "door"];
+         "click", "hover", "splash", "thunder", "boss", "event", "bite", "door", "eat", "drink", "chest", "grab", "death_sting"];
 
     private void Synthesize()
     {
@@ -317,6 +317,25 @@ internal sealed class AudioEngine : IDisposable
         _effects["event"] = Make(0.8f, (t, p) => (Sine(t, 392) * 0.4f + Sine(t, 523) * 0.3f + Sine(t, 659) * 0.3f) * Env(p, 0.05f) * 0.45f);
         _effects["bite"] = Make(0.15f, (t, p) => (Sine(t, 1200 + MathF.Sin(t * 60) * 200) * 0.3f) * Env(p, 0.01f));
         _effects["door"] = Make(0.2f, (t, p) => (Filtered(Noise(), 0.1f) * 0.8f + Sine(t, 70) * 0.4f) * Env(p, 0.02f));
+        // PE-4 fallbacks: three crunchy bites, two gulps with a fizz, a latch and creak, a soft grab, and the death sting.
+        _effects["eat"] = Make(0.42f, (t, p) =>
+        {
+            var bite = p * 3f % 1f; // three bites
+            return Filtered(Noise(), 0.35f) * (bite < 0.08f ? bite / 0.08f : MathF.Pow(1f - (bite - 0.08f) / 0.92f, 3f)) * 0.9f;
+        });
+        _effects["drink"] = Make(0.5f, (t, p) =>
+        {
+            var gulp = p * 2f % 1f; // two gulps
+            var tone = Sine(t, 180 + gulp * 140) * MathF.Sin(MathF.PI * gulp) * 0.45f;
+            return tone + Filtered(Noise(), 0.6f) * 0.08f * (1f - p);
+        });
+        _effects["chest"] = Make(0.32f, (t, p) =>
+            (p < 0.12f ? Square(t, 900) * 0.12f * (1f - p / 0.12f) : 0f) + Sine(t, 240 - p * 120) * Env(p, 0.15f) * 0.3f +
+            Filtered(Noise(), 0.08f) * Env(p, 0.1f) * 0.6f);
+        _effects["grab"] = Make(0.12f, (t, p) => (Sine(t, 660 + p * 220) * 0.3f + Filtered(Noise(), 0.2f) * 0.3f) * Env(p, 0.05f));
+        _effects["death_sting"] = Make(1.3f, (t, p) =>
+            (Sine(t, 220) * (p < 0.33f ? 1f : 0f) + Sine(t, 207.65f) * (p is >= 0.33f and < 0.66f ? 1f : 0f) + Sine(t, 146.83f) * (p >= 0.66f ? 1f : 0f) +
+             Sine(t, 110) * 0.5f) * Env(p, 0.02f) * 0.35f);
     }
 
     // ---------------------------------------------------------------- recorded sounds

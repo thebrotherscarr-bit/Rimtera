@@ -588,6 +588,7 @@ public sealed partial class GameSimulation
     /// <summary>Area damage to creatures only: blasts never break tiles and never hurt the player.</summary>
     private void Explode(Vector2 center, float radius, float damage, float knockback, ItemDefinition? source, bool critical = false)
     {
+        SoundEvents.Emit(SoundEventKind.Explosion, string.Empty, center, (int)MathF.Round(radius));
         foreach (var enemy in _enemies.Where(enemy => enemy.IsAlive && EnemyProjectileDistance(enemy, center) <= radius).ToArray())
         {
             var dealt = StrikeEnemy(enemy, damage, critical, source?.EffectiveClass ?? DamageClass.None);

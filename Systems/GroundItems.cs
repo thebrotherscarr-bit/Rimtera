@@ -258,6 +258,7 @@ public sealed partial class GameSimulation
 
     private void OnItemPickedUp(ItemId item, int count)
     {
+        SoundEvents.Emit(SoundEventKind.Pickup, item == ItemId.Credits ? "coin" : string.Empty, PlayerCenter, (int)item);
         if (item is ItemId.CopperOre or ItemId.CobaltOre or ItemId.ViridiumOre or ItemId.ScrapIronOre or ItemId.GlacialOre
             or ItemId.UraniumOre or ItemId.PyrociteOre or ItemId.LumeniteOre or ItemId.VoidsteelOre or ItemId.MeteoriteOre or ItemId.AstralOre)
             Achievements.TryUnlock("first-ore");

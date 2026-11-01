@@ -53,6 +53,8 @@ public static partial class GraphicalSandbox
             _menu.ShowInventory(state, onClose: () =>
             {
                 game.CloseBank();
+                if (cell is { } chest)
+                    game.CloseContainer(chest); // the lid closes (PE-4 chest_close)
                 CloseMenu();
             });
             _menuOpen = true;

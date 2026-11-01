@@ -116,6 +116,7 @@ land	player	landing	4	0.4	no	-2	generate		0		0	landing on the ground after a jum
 land_hard	player	a hard fall that hurts	3	0.5	no	0	generate	land	0		0	a heavy hard landing, crunch and grunt. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 hurt	player	the player takes damage	5	0.5	no	0	record		0		0	a male space-colonist pained grunt, short. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 death	player	the player dies	3	1.5	no	0	record		0		0	a dramatic death, fading groan and body fall. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
+death_sting	player	the player dies (a short falling musical sting under the voice)	1	2.0	no	0	generate		0		0	a short sad falling three-note synth and strings sting, sci-fi frontier video game, clean
 respawn	player	the player respawns	2	1.5	no	0	generate	teleport	0		0	a teleporter respawn materialising, rising shimmer. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 breath_out	player	breath runs out underwater	2	0.8	no	0	generate	hurt	0		0	underwater bubbles, gasping. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 drown	player	drowning damage	2	0.8	no	0	generate	hurt	0		0	choking underwater bubbles. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
@@ -141,15 +142,19 @@ craft_smelt	interactions	crafting at a refinery or furnace	3	1.0	no	0	generate	c
 craft_forge	interactions	crafting at a forge or anvil	3	0.8	no	0	generate	craft	0		0	hammering metal on an anvil, ringing clang. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 craft_brew	interactions	crafting at a lab	3	0.8	no	0	generate	craft	0		0	bubbling chemistry glassware, liquid gurgle. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 craft_weave	interactions	crafting at a loom	3	0.8	no	0	generate	craft	0		0	a textile machine, rhythmic shuttle clatter. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
-potion	interactions	drinking a medkit or stim	3	0.8	no	0	generate	pickup	0		0	drinking from a bottle, gulps and a fizz. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
-eat	interactions	eating food	3	0.8	no	0	generate	pickup	0		0	eating crunchy food, chewing bites. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
+potion	interactions	drinking a medkit or stim	3	0.8	no	0	generate	drink	0		0	drinking from a bottle, gulps and a fizz. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
+drink	interactions	any drink (the potion fallback)	3	0.6	no	0	generate		0		0	two quick gulps from a bottle. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
+eat	interactions	eating food	3	0.8	no	0	generate		0		0	eating crunchy food, chewing bites. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 equip	interactions	equipping armor or an accessory	3	0.5	no	-2	generate	click	0		0	fastening armor plates, clicks and cloth. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 critter_release	interactions	releasing a caught critter	3	0.4	no	-3	generate	pickup	0		0	a small creature released, soft poof. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 door_open	interactions	opening a door	3	0.6	no	0	generate	door	0		0	a sci-fi sliding door opening, pneumatic hiss. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 door_close	interactions	closing a door	3	0.6	no	0	generate	door	0		0	a sci-fi sliding door shutting, hiss and thunk. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 door	interactions	a door moves	3	0.6	no	0	generate		0		0	a metal door moving. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
-chest_open	interactions	opening a storage container	3	0.6	no	0	generate	door	0		0	a metal storage crate lid opening, latch click and creak. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
-chest_close	interactions	closing a storage container	3	0.5	no	0	generate	door	0		0	a metal crate lid closing, thunk. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
+chest_open	interactions	opening a storage container	3	0.6	no	0	generate	chest	0		0	a metal storage crate lid opening, latch click and creak. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
+chest_close	interactions	closing a storage container	3	0.5	no	0	generate	chest	0		0	a metal crate lid closing, thunk. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
+chest	interactions	a container lid moves (the chest fallback)	3	0.5	no	0	generate		0		0	a metal crate latch and lid. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
+catch_critter	interactions	a bug net catches a critter	3	0.4	no	-3	generate	grab	0		0	a soft net scoop and a tiny surprised chirp. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
+grab	interactions	grabbing something small (the catch fallback)	3	0.3	no	-3	generate		0		0	a soft quick grab, cloth and a light pop. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 splash	interactions	entering or leaving liquid	3	0.8	no	0	generate		0		0	a body splashing into water. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 splash_water	interactions	entering water	3	0.8	no	0	generate	splash	0		0	splashing into water. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech
 splash_fuel	interactions	entering the fuel sea	3	0.8	no	0	generate	splash	0		0	splashing into thick oily liquid, gloopy. sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech

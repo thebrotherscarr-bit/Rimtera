@@ -226,6 +226,7 @@ public sealed partial class GameSimulation
             return;
         foreach (var enemy in leaving)
         {
+            RecordDeath(enemy, DeathReason.Despawned); // PE-5: leaving is silent (Systems/SoundEvents.cs)
             _enemies.Remove(enemy);
             _farSeconds.Remove(enemy.Id);
         }
@@ -240,6 +241,7 @@ public sealed partial class GameSimulation
             return;
         foreach (var boss in _enemies.Where(enemy => enemy.IsBoss && enemy.IsAlive && EnemyArchetypes.EventBosses.Contains(enemy.Kind)).ToArray())
         {
+            RecordDeath(boss, DeathReason.Despawned);
             _enemies.Remove(boss);
             PostMessage($"The {boss.DisplayName} retreats from the dawn light.");
         }
@@ -257,6 +259,7 @@ public sealed partial class GameSimulation
             return;
         foreach (var boss in _enemies.Where(enemy => enemy.IsBoss && enemy.IsAlive).ToArray())
         {
+            RecordDeath(boss, DeathReason.Despawned);
             _enemies.Remove(boss);
             PostMessage($"The {boss.DisplayName} loses interest and leaves.");
         }
