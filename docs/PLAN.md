@@ -13,6 +13,7 @@ Written 2026-10-31; re-based on `docs/VISION.md` (2026-11-01), which now holds t
   - No post-game content; alternate endings and win conditions are a later talk.
   - **1.0 has every part in:** the whole base game working and tested.
   - **A dev console** to trigger any game state, event or spawn (0.3.6).
+  - **Look, feel and sound of Rimtera before 1.0** (milestone 0.10.0): every sprite, animation, UI piece, music theme, sound and the game feel in the Rimtera style; a style track feeds assets in through every milestone.
   - **Assets** come from the owner's local ComfyUI runs. Claude may ask for assets to be generated or refined in the Rimtera style; the boss sheet (`sheet_00c_bosses`) is the style preference. Requests go in `docs/ASSET_REQUESTS.md` (`docs/VISION.md` §7).
 - **In one line:** Terraria is the base, with a sci-fi twist, an AI storyteller, and a more in-depth NPC system (`docs/VISION.md`).
 - **Terraria first.** The foundations (world, chests, items, crafting, progression, enemies, town NPCs) should feel like Terraria and keep Terraria's progress loops. 0.3.x diffs each foundation against Terraria and fixes the gaps.
@@ -48,6 +49,7 @@ The milestones to 1.0 are in `docs/VISION.md` §4:
 - 0.7.0 outposts and travel;
 - 0.8.0 the Fracture and the zealots;
 - 0.9.0 the escape (and continuing the world);
+- 0.10.0 look, feel and sound of Rimtera: every visual and sound in the Rimtera style;
 - 1.0.0 release, with every part in, working and tested;
 - 1.1.0 local co-op;
 - 1.2.0 online multiplayer.

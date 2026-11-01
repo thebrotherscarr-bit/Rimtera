@@ -106,6 +106,7 @@ landfall to launch, and its assets.
 | **0.7.0** | Outposts and travel |
 | **0.8.0** | The Fracture and the zealots |
 | **0.9.0** | The escape |
+| **0.10.0** | Look, feel and sound of Rimtera: every visual and sound in the Rimtera style |
 | **1.0.0** | Release: everything in, working and tested |
 | **1.1.0** | Local co-op: split-screen for up to four players |
 | **1.2.0** | Online: networked multiplayer |
@@ -178,8 +179,23 @@ launch you may continue the world, and the story from there is yours.
 | 0.9.4 | **Boarding and the escape screen:** who made it out, and the run's chronicle. |
 | 0.9.5 | **Continue the world** after launch, if you want to. |
 
-### 4.7 1.0.0: Release
-- Every part in, working and tested: all mechanics, the whole run, all assets.
+### 4.7 0.10.0: Look, feel and sound of Rimtera
+
+Before 1.0, the whole game has to look like Rimtera, feel like Rimtera and sound like Rimtera. The style track (§7)
+fills assets in along the way. This milestone closes it out: no placeholder, mismatched sprite or synth stand-in left.
+
+| Step | Contents |
+|---|---|
+| 0.10.1 | **The style guide, final.** Palette, outline, lighting and scale rules, and each biome's palette, settled from the boss sheet and the original sheets (drafted early, §7). |
+| 0.10.2 | **Every sprite in style.** Items, creatures, bosses, NPCs (each with its own sprite), tiles, walls and backgrounds, redrawn or refined to match the guide. A style check confirms each one. |
+| 0.10.3 | **Animation.** Every character, creature and boss animates in the same frame style. |
+| 0.10.4 | **The UI drawn from art.** Panels, slots, bars, buttons, cursor and title in the boss-sheet look. The renderer changes to draw the UI art rather than code shapes. |
+| 0.10.5 | **Music.** Every biome, event, boss and the escape has its theme, in one Rimtera sound. |
+| 0.10.6 | **Sound effects, ambience and voices.** Every cue (`--sound-cues`) has a recorded or generated sound, and every biome has its ambience. |
+| 0.10.7 | **Game feel.** Hit feedback, screen shake, particles, lighting and the final mix, so it plays like Rimtera. |
+
+### 4.8 1.0.0: Release
+- Every part in, working and tested: all mechanics, the whole run, and all assets in the Rimtera style.
 - Run length tuned to 10–14 hours on medium worlds, plus a balance pass across the whole run.
 - Onboarding, save stability and polish.
 
@@ -202,20 +218,22 @@ launch you may continue the world, and the story from there is yours.
 - Every new mechanic adds its console commands in the same step that adds the mechanic.
 - The self-tests (core, Batch A, the deterministic demo, the asset check, the bench) keep running on every step.
 
-## 7. Assets: art and audio through ComfyUI
+## 7. Style: art, audio and feel through ComfyUI
+- **The goal:** before 1.0 the game looks like Rimtera, feels like Rimtera and sounds like Rimtera (milestone 0.10.0).
 - **The pipeline:**
-  - Art and audio are made locally in ComfyUI, with the flows in `docs/COMFYUI.md`.
+  - Art and audio are made locally in ComfyUI, with the flows in `docs/COMFYUI.md` and `docs/AUDIO_FLOW.md`.
   - The owner decides when ComfyUI runs.
   - Claude asks for assets to be generated or refined, and integrates what comes back.
 - **The style:**
-  - Assets follow the Rimtera style in the docs (`docs/ART_PROMPTS.md`, `docs/BIOME_THEMES.md`) and the original art
+  - The Rimtera style is the one in the docs (`docs/ART_PROMPTS.md`, `docs/BIOME_THEMES.md`) and the original art
     sheets in `art/sheets/`.
   - The **boss sheet (`sheet_00c_bosses`)** is the preferred reference for style choices: riveted gunmetal, amber-gold
     accents.
-- **How it fits each step:**
+  - A written **style guide** is drafted early and settled in 0.10.1, so every request follows the same rules.
+- **A style track runs through every milestone:**
   1. A step that adds things to see or hear lists them in `docs/ASSET_REQUESTS.md`. Each entry gives the sprite or
      sound name, its size or length, the flow to use, a prompt and the style reference.
   2. Until the real asset arrives, a kitbashed placeholder keeps the asset check clean.
   3. When the owner's ComfyUI run delivers the asset, it replaces the placeholder in a later step.
-- **1.0 ships with every placeholder replaced.**
-
+- **0.10.0 closes the track:** every placeholder replaced, every sprite and sound checked against the guide, the UI
+  drawn from art, and the game-feel pass done.
