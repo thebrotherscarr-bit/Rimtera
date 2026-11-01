@@ -334,12 +334,12 @@
         "Node name for S&R": "TextEncodeQwenImage21"
       },
       "widgets_values": [
-        "Image 2 shows the art style only. A single empty rectangular game menu panel seen straight on, filling most of the picture: a thick riveted gunmetal border with corner brackets and small rivets, a flat dark blue-grey interior, symmetrical, no text, no icons, as pixel art game UI in image 2's Neo-Terra sci-fi style: dark gunmetal blue-grey riveted metal, thin cyan accent lights, clean dark outlines, light from the top left, crisp 16-bit pixels, flat colours, no blur. Flat solid magenta background (#FF00FF) around it, no other objects, no shadows.",
+        "Image 2 shows the art style only. A single empty rectangular game menu panel seen straight on, filling most of the picture: a thick riveted gunmetal border with corner brackets and small rivets, a flat dark blue-grey interior, symmetrical, no text, no icons, as pixel art game UI in image 2's Neo-Terra sci-fi style: dark riveted gunmetal panels with amber-gold accents, like the frames, headers and title on image 2, clean dark outlines, light from the top left, crisp 16-bit pixels, flat colours, no blur. Flat solid magenta background (#FF00FF) around it, no other objects, no shadows.",
         "",
         768
       ],
       "widgets_values_named": {
-        "prompt": "Image 2 shows the art style only. A single empty rectangular game menu panel seen straight on, filling most of the picture: a thick riveted gunmetal border with corner brackets and small rivets, a flat dark blue-grey interior, symmetrical, no text, no icons, as pixel art game UI in image 2's Neo-Terra sci-fi style: dark gunmetal blue-grey riveted metal, thin cyan accent lights, clean dark outlines, light from the top left, crisp 16-bit pixels, flat colours, no blur. Flat solid magenta background (#FF00FF) around it, no other objects, no shadows.",
+        "prompt": "Image 2 shows the art style only. A single empty rectangular game menu panel seen straight on, filling most of the picture: a thick riveted gunmetal border with corner brackets and small rivets, a flat dark blue-grey interior, symmetrical, no text, no icons, as pixel art game UI in image 2's Neo-Terra sci-fi style: dark riveted gunmetal panels with amber-gold accents, like the frames, headers and title on image 2, clean dark outlines, light from the top left, crisp 16-bit pixels, flat colours, no blur. Flat solid magenta background (#FF00FF) around it, no other objects, no shadows.",
         "negative_prompt": "",
         "resolution": 768
       }

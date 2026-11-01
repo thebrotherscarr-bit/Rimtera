@@ -334,12 +334,12 @@
         "Node name for S&R": "TextEncodeQwenImage21"
       },
       "widgets_values": [
-        "Image 2 shows the art style only. The word RIMTERA as a bold chunky video game title logo, every letter clearly readable and spelled exactly R-I-M-T-E-R-A, metallic gunmetal letters with cyan glowing edges and a thin planetary ring sweeping behind them, centred, as pixel art game UI in image 2's Neo-Terra sci-fi style: dark gunmetal blue-grey riveted metal, thin cyan accent lights, clean dark outlines, light from the top left, crisp 16-bit pixels, flat colours, no blur. Flat solid magenta background (#FF00FF) around it, no other objects, no shadows.",
+        "Image 2 shows the art style only. The word RIMTERA as a bold chunky video game title logo, every letter clearly readable and spelled exactly R-I-M-T-E-R-A, bold amber-gold letters with a dark outline, like image 2's title and a thin planetary ring sweeping behind them, centred, as pixel art game UI in image 2's Neo-Terra sci-fi style: dark riveted gunmetal panels with amber-gold accents, like the frames, headers and title on image 2, clean dark outlines, light from the top left, crisp 16-bit pixels, flat colours, no blur. Flat solid magenta background (#FF00FF) around it, no other objects, no shadows.",
         "",
         768
       ],
       "widgets_values_named": {
-        "prompt": "Image 2 shows the art style only. The word RIMTERA as a bold chunky video game title logo, every letter clearly readable and spelled exactly R-I-M-T-E-R-A, metallic gunmetal letters with cyan glowing edges and a thin planetary ring sweeping behind them, centred, as pixel art game UI in image 2's Neo-Terra sci-fi style: dark gunmetal blue-grey riveted metal, thin cyan accent lights, clean dark outlines, light from the top left, crisp 16-bit pixels, flat colours, no blur. Flat solid magenta background (#FF00FF) around it, no other objects, no shadows.",
+        "prompt": "Image 2 shows the art style only. The word RIMTERA as a bold chunky video game title logo, every letter clearly readable and spelled exactly R-I-M-T-E-R-A, bold amber-gold letters with a dark outline, like image 2's title and a thin planetary ring sweeping behind them, centred, as pixel art game UI in image 2's Neo-Terra sci-fi style: dark riveted gunmetal panels with amber-gold accents, like the frames, headers and title on image 2, clean dark outlines, light from the top left, crisp 16-bit pixels, flat colours, no blur. Flat solid magenta background (#FF00FF) around it, no other objects, no shadows.",
         "negative_prompt": "",
         "resolution": 768
       }
