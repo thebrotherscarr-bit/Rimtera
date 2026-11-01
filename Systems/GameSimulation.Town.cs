@@ -45,6 +45,7 @@ public sealed partial class GameSimulation
                 continue;
             if (npc.Kind == TownNpcKind.TradeConsul && IsNight)
             {
+                DropColonistLoad(npc);
                 _townNpcs.Remove(npc);
                 PostMessage($"{npc.Name} the {npc.Definition.Role} has left the colony.");
             }
@@ -241,6 +242,7 @@ public sealed partial class GameSimulation
             WarnStationAiHurt(npc);
             return false;
         }
+        DropColonistLoad(npc);
         _townNpcs.Remove(npc);
         Record($"{npc.Name} the {npc.Definition.Role} was slain.");
         if (StationAiDefeat(npc))
@@ -323,6 +325,23 @@ public sealed partial class GameSimulation
                 continue;
             }
             var center = npc.Motion.Position + npc.Motion.Size / 2f;
+            // 0.2.4: a housed resident works station bills near home by day (beside the shop), like an Operate colonist.
+            if (npc.HomeCell is not null && !shelter && npc.WorksStations)
+            {
+                Vector2? step = null;
+                if (TryOperate(npc, center, deltaSeconds, to => step = to))
+                {
+                    StepTownNpcToward(npc, center, step ?? center, deltaSeconds);
+                    continue;
+                }
+            }
+            else
+            {
+                npc.OperateStation = null;
+                npc.OperateProgress = 0f;
+                if (!npc.WorksStations)
+                    DropHeld(npc, center);
+            }
             Vector2 target;
             if (npc.HomeCell is { } home)
             {
@@ -350,11 +369,17 @@ public sealed partial class GameSimulation
                 target = PlayerCenter;
                 npc.Activity = "Looking for a home";
             }
-            var dx = target.X - center.X;
-            var horizontal = MathF.Abs(dx) > 0.6f ? MathF.Sign(dx) : 0f;
-            var jump = horizontal != 0f && npc.Motion.Grounded && IsGroundBlockedAhead(npc.Motion, horizontal);
-            _colonistMovement.Step(npc.Motion, new MovementInput(horizontal, JumpPressed: jump, SpeedMultiplier: 0.7f), deltaSeconds, World, Tiles);
+            StepTownNpcToward(npc, center, target, deltaSeconds);
         }
+    }
+
+    /// <summary>A resident's walk: toward the target at 70% pace, hopping a one-tile step.</summary>
+    private void StepTownNpcToward(TownNpc npc, Vector2 center, Vector2 target, float deltaSeconds)
+    {
+        var dx = target.X - center.X;
+        var horizontal = MathF.Abs(dx) > 0.6f ? MathF.Sign(dx) : 0f;
+        var jump = horizontal != 0f && npc.Motion.Grounded && IsGroundBlockedAhead(npc.Motion, horizontal);
+        _colonistMovement.Step(npc.Motion, new MovementInput(horizontal, JumpPressed: jump, SpeedMultiplier: 0.7f), deltaSeconds, World, Tiles);
     }
 
     // ------------------------------------------------------------------ happiness and shops
@@ -504,7 +529,10 @@ public sealed partial class GameSimulation
     }
 
     private TownNpcSnapshot[] CaptureTownNpcs() => _townNpcs.Select(npc => new TownNpcSnapshot(npc.Kind, npc.Name,
-        npc.Motion.Position.X, npc.Motion.Position.Y, npc.HomeCell?.X, npc.HomeCell?.Y, npc.IsBound, npc.HitPoints)).ToArray();
+        npc.Motion.Position.X, npc.Motion.Position.Y, npc.HomeCell?.X, npc.HomeCell?.Y, npc.IsBound, npc.HitPoints,
+        npc.WorksStations ? null : false,
+        npc.Held.Count == 0 ? null : npc.Held.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
+        npc.Carried.IsEmpty ? null : npc.Carried)).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -525,6 +553,12 @@ public sealed partial class GameSimulation
             // living resident never loads dead.
             if (saved.Hp is { } hp && float.IsFinite(hp))
                 npc.HitPoints = Math.Clamp(hp, 1f, npc.MaximumHitPoints);
+            npc.WorksStations = saved.WorksStations ?? true;
+            foreach (var held in saved.Held ?? [])
+                if (!held.IsEmpty && Items.Contains(held.ItemId))
+                    npc.Held[held.ItemId] = npc.Held.GetValueOrDefault(held.ItemId) + held.Count;
+            if (saved.Carried is { IsEmpty: false } carried && Items.Contains(carried.ItemId))
+                npc.Carried = carried;
             _townNpcs.Add(npc);
         }
     }

@@ -38,7 +38,7 @@ public sealed partial class GameSimulation
                 WorkType.Guard => TryGuard(agent, center, deltaSeconds),
                 WorkType.Tend => TryTend(agent, center, deltaSeconds, elapsedHours),
                 WorkType.Haul => TryHaul(agent, center, deltaSeconds),
-                WorkType.Operate => TryOperate(agent, center, deltaSeconds),
+                WorkType.Operate => TryOperate(agent, center, deltaSeconds, target => StepColonistToward(agent, center, target, deltaSeconds, 1f)),
                 _ => false // no job giver yet
             };
             if (worked)
@@ -139,7 +139,7 @@ public sealed partial class GameSimulation
     private bool TryHaul(ColonistAgent agent, Vector2 center, float deltaSeconds)
     {
         if (!agent.Carried.IsEmpty)
-            return DeliverCarried(agent, center, deltaSeconds); // nowhere to put it: keep carrying until a chest has room
+            return DeliverCarried(agent, center, target => StepColonistToward(agent, center, target, deltaSeconds, 1f)); // nowhere to put it: keep carrying until a chest has room
 
         GroundItem? pick = null;
         var nearest = float.MaxValue;
@@ -176,7 +176,7 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>Walks the carried stack to the nearest chest with room and puts it in; false when no chest near home has room.</summary>
-    private bool DeliverCarried(ColonistAgent agent, Vector2 center, float deltaSeconds, GridPoint? nearStation = null)
+    private bool DeliverCarried(IStationWorker agent, Vector2 center, Action<Vector2> move, GridPoint? nearStation = null)
     {
         // An operator's product goes to the chest nearest its station (where a "keep N" bill counts it), else near home.
         var target = (nearStation is { } station ? NearestWithRoom(BillStorage(station), agent.Carried.ItemId, agent.Motion.Position) : null)
@@ -193,7 +193,7 @@ public sealed partial class GameSimulation
             Flags.Increment("colony.hauled", stored);
         }
         else
-            StepColonistToward(agent, center, chestCenter, deltaSeconds, 1f);
+            move(chestCenter);
         return true;
     }
 
@@ -218,26 +218,7 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>The nearest chest within haul range of the colonist's home with room for <paramref name="item"/>.</summary>
-    private GridPoint? StorageFor(ColonistAgent agent, ItemId item) =>
+    private GridPoint? StorageFor(IStationWorker agent, ItemId item) =>
         NearestWithRoom(StorageCellsNear(agent.HomePosition), item, agent.Motion.Position);
 
-    /// <summary>The chest among <paramref name="cells"/> nearest <paramref name="from"/> with room for <paramref name="item"/>.</summary>
-    private GridPoint? NearestWithRoom(IReadOnlyList<GridPoint> cells, ItemId item, Vector2 from)
-    {
-        GridPoint? best = null;
-        var nearest = float.MaxValue;
-        foreach (var cell in cells)
-        {
-            if (GetContainer(cell) is not { } inventory || inventory.GetAddableCount(item) <= 0)
-                continue;
-            var at = new Vector2(cell.X + 0.5f, cell.Y + 0.5f);
-            var distance = Vector2.DistanceSquared(at, from);
-            if (distance < nearest)
-            {
-                nearest = distance;
-                best = cell;
-            }
-        }
-        return best;
-    }
 }

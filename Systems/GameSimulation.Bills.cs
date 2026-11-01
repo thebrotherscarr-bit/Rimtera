@@ -124,21 +124,27 @@ public sealed partial class GameSimulation
         StorageCellsNear(new Vector2(station.X + 0.5f, station.Y + 0.5f), BillStorageRadius);
 
     /// <summary>Seconds one craft takes this colonist: the base time over their crafting speed (Crafting skill).</summary>
-    public static float OperateSeconds(Rimtera.Characters.ColonistStats stats) =>
-        BillBaseSeconds / Math.Max(0.2f, stats.CraftingSpeed);
+    public static float OperateSeconds(Rimtera.Characters.ColonistStats stats) => OperateSeconds(stats.CraftingSpeed);
+
+    public static float OperateSeconds(float craftingSpeed) => BillBaseSeconds / Math.Max(0.2f, craftingSpeed);
 
     /// <summary>The chance a craft yields an extra batch: 2% per Crafting level above 10.</summary>
     public static float ExtraBatchChance(Rimtera.Characters.ColonistStats stats) =>
-        Math.Max(0, stats.Level(Rimtera.Characters.ColonistSkill.Crafting) - ExtraItemSkill) * 0.02f;
+        ExtraBatchChance(stats.Level(Rimtera.Characters.ColonistSkill.Crafting));
+
+    public static float ExtraBatchChance(int craftingLevel) => Math.Max(0, craftingLevel - ExtraItemSkill) * 0.02f;
+
+    /// <summary>Everyone who can work bills: the crew and the town's residents.</summary>
+    private IEnumerable<IStationWorker> StationWorkers() => _colonists.Cast<IStationWorker>().Concat(_townNpcs);
 
     private sealed record BillJob(GridPoint Station, StationBill Bill, RecipeDefinition Recipe, Dictionary<ItemId, int> Plan);
 
     /// <summary>The Operate job giver: store a finished product, else take the first wanted bill that can be made.</summary>
-    private bool TryOperate(ColonistAgent agent, Vector2 center, float deltaSeconds)
+    private bool TryOperate(IStationWorker agent, Vector2 center, float deltaSeconds, Action<Vector2> move)
     {
         if (!agent.Carried.IsEmpty)
         {
-            if (DeliverCarried(agent, center, deltaSeconds, agent.OperateStation))
+            if (DeliverCarried(agent, center, move, agent.OperateStation))
                 return true;
             // Nowhere to store it: set it down by the station area so a hauler (or the player) can take it.
             SpawnGroundItem(agent.Carried.ItemId, agent.Carried.Count, center, agent.Carried.Calibration);
@@ -191,7 +197,7 @@ public sealed partial class GameSimulation
                 }
             }
             else
-                StepColonistToward(agent, center, at, deltaSeconds, 1f);
+                move(at);
             return true;
         }
 
@@ -200,13 +206,13 @@ public sealed partial class GameSimulation
         if (!Reaches(center, job.Station))
         {
             agent.Activity = $"Going to the {StationAt(job.Station).DisplayName()} to make {product}";
-            StepColonistToward(agent, center, stationAt, deltaSeconds, 1f);
+            move(stationAt);
             return true;
         }
         agent.Activity = $"Making {product} at the {StationAt(job.Station).DisplayName()}";
-        StepColonistToward(agent, center, center, deltaSeconds, 1f);
+        move(center);
         agent.OperateProgress += deltaSeconds;
-        if (agent.OperateProgress < OperateSeconds(agent.ColonistStats))
+        if (agent.OperateProgress < OperateSeconds(agent.CraftingSpeed))
             return true;
 
         agent.OperateProgress = 0f;
@@ -220,7 +226,7 @@ public sealed partial class GameSimulation
         }
         var output = Items[job.Recipe.Output];
         var made = job.Recipe.OutputCount;
-        if (output.MaxStack > 1 && CraftRandom.NextDouble() < ExtraBatchChance(agent.ColonistStats))
+        if (output.MaxStack > 1 && CraftRandom.NextDouble() < ExtraBatchChance(agent.CraftingLevel))
             made += job.Recipe.OutputCount;
         var calibration = output.Calibratable || CalibrationCatalog.IsAccessory(output) ? RollCalibration(output) : Calibration.None;
         agent.Carried = new ItemStack(job.Recipe.Output, made, calibration);
@@ -234,11 +240,11 @@ public sealed partial class GameSimulation
     private static bool Reaches(Vector2 center, GridPoint cell) => DistanceToRect(center, new Vector2(cell.X, cell.Y), Vector2.One) < 1.5f;
 
     /// <summary>The first bill this colonist can work: their own station first, then stations near home nobody else is at.</summary>
-    private BillJob? FindBillJob(ColonistAgent agent)
+    private BillJob? FindBillJob(IStationWorker agent)
     {
         var stations = _bills.Keys
             .Where(station => Vector2.Distance(new Vector2(station.X + 0.5f, station.Y + 0.5f), agent.HomePosition) <= OperateRadius &&
-                              !_colonists.Any(other => !ReferenceEquals(other, agent) && other.IsAlive && other.OperateStation == station))
+                              !StationWorkers().Any(other => !ReferenceEquals(other, agent) && other.IsAlive && other.OperateStation == station))
             .OrderBy(station => station == agent.OperateStation ? 0 : 1)
             .ThenBy(station => Vector2.DistanceSquared(new Vector2(station.X + 0.5f, station.Y + 0.5f), agent.Motion.Position))
             .ToArray();
@@ -276,15 +282,15 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>Sets down ingredients a colonist no longer has a bill for, where haulers (or the player) can pick them up.</summary>
-    private void DropHeld(ColonistAgent agent, Vector2 at)
+    private void DropHeld(IStationWorker agent, Vector2 at)
     {
         foreach (var (item, count) in agent.Held)
             SpawnGroundItem(item, count, at);
         agent.Held.Clear();
     }
 
-    /// <summary>A dead colonist's load falls where they died.</summary>
-    private void DropColonistLoad(ColonistAgent agent)
+    /// <summary>A dead worker's load falls where they died.</summary>
+    private void DropColonistLoad(IStationWorker agent)
     {
         var at = agent.Motion.Position + agent.Motion.Size / 2f;
         if (!agent.Carried.IsEmpty)

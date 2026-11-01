@@ -1726,6 +1726,7 @@ public static class CoreSelfTests
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab
+        StorageSelfTests.Run(Check); // 0.2.4: storage tags, delivery by tag, residents working bills
         ColonyRulingSelfTests.Run(Check); // 0.2.2 E: no auto-tend, no player needs, harmless breaks, unhappy residents stay, HUD, resident HP (NC-1/2/7/9/16/20)
         CreativeResearchSelfTests.Run(Check); // 0.2.2 E: research on the character, old world flags migrated, weather and spread powers, the Creative kit (PC-13, X-CR-10, PC-14)
         BalanceSelfTests.Run(Check); // 0.2.0 A: the boss curve (--boss-balance), the 60-180 s band and D-6 difficulty scaling (PC-15, BO-23)
