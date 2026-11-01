@@ -63,7 +63,7 @@ public sealed partial class GameSimulation : IStoryHost
     // Separate stream so boss choices never shift the ambient spawn sequence.
     private readonly Random _bossRandom;
     private readonly HashSet<EnemyKind> _defeatedBosses = new();
-    private readonly PawnMovementSystem _playerMovement = new(new PawnMovementSettings { DoubleTapDashWindow = 0.25f });
+    private readonly PawnMovementSystem _playerMovement = new(PlayerMovementSettings);
     private readonly PawnMovementSystem _enemyMovement = new(new PawnMovementSettings
     {
         GroundAcceleration = 18f,

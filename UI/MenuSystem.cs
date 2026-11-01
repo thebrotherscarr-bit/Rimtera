@@ -3,6 +3,20 @@ using Rimtera.Systems;
 
 namespace Rimtera.UI;
 
+/// <summary>
+/// Terraria's pause rules: with Autopause off, the inventory, the colonist sheet and the screens opened from the world
+/// (talking to a town NPC, a shop, a sign, the bestiary, the station AI) leave the world running; the settings, controls,
+/// pause menu and everything else always pause it. With Autopause on, every screen pauses.
+/// </summary>
+public static class MenuPauseRules
+{
+    public static readonly IReadOnlySet<string> InWorldScreens =
+        new HashSet<string>(StringComparer.Ordinal) { "npc-talk", "npc-shop", "sign", "bestiary", "station-ai" };
+
+    public static bool WorldRuns(UiState? screen, bool autoPause) =>
+        !autoPause && screen is InventoryUiState or ColonistSheetState || !autoPause && screen is { } open && InWorldScreens.Contains(open.Id);
+}
+
 public sealed record MenuEntry(
     string Label,
     Action? Activate = null,
@@ -1246,6 +1260,8 @@ public sealed class MenuFlow
                 break;
             case OptionsCategory.Interface:
                 entries.Add(Percent("Zoom", () => Preferences.Zoom, value => Preferences.Zoom = value, 0.1f, 0.6f, 2f, "How close the camera is to the world. In game, = and - zoom too."));
+                entries.Add(Percent("Camera smoothing", () => Preferences.CameraSmoothing, value => Preferences.CameraSmoothing = value, 0.1f, 0f, 1f,
+                    "0% keeps the camera on you every frame, as in Terraria. Higher values let it ease after you."));
                 entries.Add(Percent("UI scale", () => Preferences.UiScale, value => Preferences.UiScale = value, 0.05f, 0.75f, 1.5f, "Size of menus and panels."));
                 entries.Add(Choice("Health bars", () => Preferences.EnemyHealthBars, value => Preferences.EnemyHealthBars = value, "Above or below damaged creatures, or hidden."));
                 entries.Add(Toggle("Guide hints", () => Preferences.GuideHints, value => Preferences.GuideHints = value, "The station AI's next-step hint at the top of the screen. Click its × to hide one tip."));

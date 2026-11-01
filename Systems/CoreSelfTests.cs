@@ -392,6 +392,12 @@ public static class CoreSelfTests
         Check(new GamePreferences().AutosaveMinutes == 10 && oddAutosave.AutosaveMinutes == 10 && fiveMinutes.AutosaveMinutes == 5,
             "autosave runs every 10 minutes by default; 2, 5, 10 and 15 are the choices");
 
+        var shopScreen = new MenuScreen("npc-shop", "Shop", Array.Empty<MenuEntry>(), string.Empty);
+        var pauseScreen = new MenuScreen("pause-menu", "Settings", Array.Empty<MenuEntry>(), string.Empty);
+        Check(MenuPauseRules.WorldRuns(shopScreen, autoPause: false) && !MenuPauseRules.WorldRuns(pauseScreen, autoPause: false) &&
+              !MenuPauseRules.WorldRuns(shopScreen, autoPause: true),
+            "Terraria's pause rules: with Autopause off a shop keeps the world running and the settings pause it; with it on, both pause");
+
         var tempRoot = Path.Combine(Path.GetTempPath(), $"rimtera-ui-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempRoot);
         var profilesPath = Path.Combine(tempRoot, "profiles.json");

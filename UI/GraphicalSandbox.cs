@@ -913,9 +913,8 @@ public static partial class GraphicalSandbox
                     hub.RefreshCursorLabel();
                 }
             }
-            // Autopause off: the world keeps running behind the inventory and colonist sheet.
-            var runBehindMenu = _menuOpen && _game is not null && !_menu.Preferences.AutoPause &&
-                                _menu.Ui.CurrentState is InventoryUiState or ColonistSheetState;
+            // Autopause off: the world keeps running behind the inventory, the colonist sheet and the in-world screens.
+            var runBehindMenu = _menuOpen && _game is not null && MenuPauseRules.WorldRuns(_menu.Ui.CurrentState, _menu.Preferences.AutoPause);
             _canvas.WorldRunsBehindMenu = runBehindMenu;
             if (runBehindMenu && !PlaysThroughMenu)
             {
@@ -2211,14 +2210,16 @@ public static partial class GraphicalSandbox
             var frameDelta = _lastWorldFrame > 0 ? (float)Math.Clamp(now - _lastWorldFrame, 0, 0.1) : 1f / 60f;
             _lastWorldFrame = now;
 
-            // Smooth camera: the centre eases toward the player (frame-rate independent) instead of snapping, and the
-            // view scrolls by whole pixels inside a tile rather than jumping a tile at a time. Teleports snap.
+            // The camera centres on the player every frame, as in Terraria, unless Camera smoothing is set: then the
+            // centre eases toward the player (frame-rate independent). Either way the view scrolls by whole pixels inside
+            // a tile rather than jumping a tile at a time. Teleports snap.
             var target = motion.Position + motion.Size / 2f;
-            if (!_cameraReady || Vector2.Distance(_camera, target) > 24f)
+            var smoothing = _menu.Preferences.CameraSmoothing;
+            if (!_cameraReady || smoothing <= 0f || Vector2.Distance(_camera, target) > 24f)
                 _camera = target;
             else
-                _camera += new Vector2((target.X - _camera.X) * (1f - MathF.Exp(-frameDelta * CameraFollowX)),
-                    (target.Y - _camera.Y) * (1f - MathF.Exp(-frameDelta * CameraFollowY)));
+                _camera += new Vector2((target.X - _camera.X) * (1f - MathF.Exp(-frameDelta * CameraFollowX / smoothing)),
+                    (target.Y - _camera.Y) * (1f - MathF.Exp(-frameDelta * CameraFollowY / smoothing)));
             _cameraReady = true;
             var screenTilesW = Width / (float)TileSize;
             var screenTilesH = (Height - HudHeight) / (float)TileSize;

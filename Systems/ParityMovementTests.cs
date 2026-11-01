@@ -201,11 +201,20 @@ public static class ParityMovementTests
         var faller = NewGame(7106);
         Arena(faller);
         Place(faller, new Vector2(20f, 2f));
-        Tick(faller, 60);
+        Tick(faller, 30); // Terraria's gravity reaches its 37.5 tiles/s cap within half a second (about 11 tiles)
         var v1 = faller.Player.Motion.Velocity.Y;
-        Tick(faller, 10);
+        Tick(faller, 5);
         var v2 = faller.Player.Motion.Velocity.Y;
         check(v1 > 5f && Math.Abs(v1 - v2) < 0.01f, $"A4 gravity accelerates to a terminal fall speed ({v2:0.0} tiles/s)");
+
+        // ---- Terraria's feel in numbers (roadmap PU-1): run, start, stop, jump heights and terminal speed ----
+        var sprinter = NewGame(7130);
+        Arena(sprinter, x: 10f);
+        var reach90 = TicksUntil(sprinter, Run(1f), () => Vx(sprinter) >= 0.9f * top) / 60f;
+        check(top is >= 10f and <= 12f && reach90 is >= 0.4f and <= 0.7f && decelTicks / 60f is >= 0.15f and <= 0.3f &&
+              tapApex is >= 1.5f and <= 2.5f && holdApex is >= 6f and <= 7f && v2 is >= 35f and <= 40f,
+            $"the player moves like Terraria's: top run {top:0.0} tiles/s, 90% in {reach90:0.00} s, stop in {decelTicks / 60f:0.00} s, " +
+            $"jump {tapApex:0.0} (tap) to {holdApex:0.0} tiles (held), terminal fall {v2:0.0} tiles/s");
         float FallDamage(float height, ItemId? gear = null, bool pool = false)
         {
             var game = NewGame(7107);
@@ -230,6 +239,22 @@ public static class ParityMovementTests
             Tick(game, 240);
             return hp - game.Player.HitPoints;
         }
+        float MountedFall(MountKind kind, float height)
+        {
+            var game = NewGame(7108);
+            Arena(game);
+            game.Player.Inventory.Add(TravelContent.Mounts[kind].Item, 1);
+            game.ToggleMount(kind);
+            game.Player.Heal(1e6f);
+            var hp = game.Player.HitPoints;
+            Place(game, new Vector2(20f, Floor - game.Player.Motion.Size.Y - height));
+            Tick(game, 240);
+            return game.IsMounted ? hp - game.Player.HitPoints : -1f;
+        }
+        var bikeFall = MountedFall(MountKind.HoverBike, 30.4f);
+        var striderFall = MountedFall(MountKind.DuneStrider, 30.4f);
+        check(bikeFall == 0f && Math.Abs(striderFall - 25f) < 0.5f,
+            $"each mount has its own fall: the hover-bike takes none, the dune strider half (30 tiles: bike {bikeFall:0}, strider {striderFall:0})");
         var shortFall = FallDamage(12f);
         var midFall = FallDamage(29f);
         var longFall = FallDamage(33f);
@@ -376,8 +401,14 @@ public static class ParityMovementTests
         Fill(swim, 17, Floor - 12, 23, Floor - 1, LiquidKind.Water);
         Place(swim, new Vector2(19.6f, Floor - swim.Player.Motion.Size.Y - 0.01f));
         var swimStart = swim.Player.Motion.Position.Y;
+        Tick(swim, 60, new MovementInput(0f, JumpHeld: true));
+        var paddled = swimStart - swim.Player.Motion.Position.Y;
+        swim.Player.Inventory.Add(ItemId.DiversKit, 1);
+        swim.Player.Equipment.Set(EquipmentSlot.Accessory, ItemId.DiversKit);
+        Place(swim, new Vector2(19.6f, Floor - swim.Player.Motion.Size.Y - 0.01f));
         Tick(swim, 40, new MovementInput(0f, JumpHeld: true));
-        check(swim.Player.Motion.Position.Y < swimStart - 1.5f, "A8 holding jump swims upward");
+        check(swim.Player.Motion.Position.Y < swimStart - 1.5f && paddled is > 0.5f and <= 2.6f && swim.CanSwim,
+            $"A8 with fins (the Diver's kit) holding jump swims upward; without them it only paddles (about 2 tiles/s: {paddled:0.0} tiles in 1 s)");
         var exit = NewGame(7117);
         Arena(exit);
         for (var y = Floor - 9; y < Floor; y++)
@@ -461,7 +492,7 @@ public static class ParityMovementTests
         Tick(hooker, 2);
         var fired = hooker.TryFireGrapple(new Vector2(22f, Floor - 11.5f));
         var hookStart = hooker.Player.Motion.Position.Y;
-        Tick(hooker, 50);
+        Tick(hooker, 40); // pulled up, but not yet against the ceiling the hook holds
         var pulled = hooker.Grapple is { Latched: true } && hooker.Player.Motion.Position.Y < hookStart - 3f;
         Tick(hooker, 1, new MovementInput(0f, JumpPressed: true, JumpHeld: true));
         var jumpedOff = hooker.Grapple is null && hooker.Player.Motion.Velocity.Y < 0f;

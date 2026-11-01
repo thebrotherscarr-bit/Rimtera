@@ -74,16 +74,48 @@ public sealed record BannerTileSnapshot(int X, int Y, EnemyKind Kind);
 public sealed partial class GameSimulation
 {
     // ------------------------------------------------------------------ tuning
+
+    /// <summary>
+    /// The player moves like Terraria's (a 16-pixel tile; the body is Terraria's size): a top run of about 11 tiles/s,
+    /// reached in about half a second and lost in a quarter; gravity 90 tiles/s² to a 37.5 tiles/s fall; a jump of
+    /// 18.8 tiles/s held for a quarter second (about 6.5 tiles high, a tap about 2). Creatures and crew keep their own.
+    /// </summary>
+    public static readonly PawnMovementSettings PlayerMovementSettings = new()
+    {
+        DoubleTapDashWindow = 0.25f,
+        MaximumRunSpeed = 11.25f,
+        GroundAcceleration = 18f,
+        AirAcceleration = 18f,
+        GroundFriction = 45f,
+        AirFriction = 8f,
+        Gravity = 90f,
+        TerminalFallSpeed = 37.5f,
+        JumpImpulse = 18.8f,
+        JumpSustainSeconds = 0.25f,
+        DashSpeed = 27f,
+        WingLiftAcceleration = 18f * GravityScale,
+        MaximumWingRiseSpeed = 8f * LiftScale,
+        WingTerminalFallSpeed = 3f * LiftScale,
+        ClimbSpeed = 8f
+    };
+
+    /// <summary>
+    /// Old-to-new scales for the player's hand-tuned speeds: gravity is 3.75 times stronger, so a launch speed grows by
+    /// its square root to reach the same height in tiles; sideways speeds grow with the run speed.
+    /// </summary>
+    private const float GravityScale = 90f / 24f, LiftScale = 1.9365f, RunScale = 11.25f / 5f;
     /// <summary>Terraria's air: about 23 seconds under water, refilled within a second of surfacing.</summary>
     public const float BaseBreathSeconds = 23f;
     public const float RebreatherBreathMultiplier = 6f;
     /// <summary>Hit points per second lost while drowning (Terraria's is about 17).</summary>
     public const float DrownDamagePerSecond = 17f;
     public const float SafeFallTiles = 25f;
+    /// <summary>The fastest a player without fins rises under water (tiles/s).</summary>
+    public const float PaddleSpeed = 2f;
     /// <summary>Terraria's fall damage: 10 per whole tile fallen beyond 25, measured from the highest point.</summary>
     public const float FallDamagePerTile = 10f;
     /// <summary>Upward speed (tiles/s) given when swimming up out of a liquid with jump held.</summary>
-    public const float LiquidExitBoost = 11.5f;
+    public const float LiquidExitBoost = 11.5f * LiftScale;
     public const float PotionSicknessSeconds = 45f;
     public const float PhaseStrainSeconds = 6f;
     public const int LoadoutCount = 3;
@@ -175,6 +207,9 @@ public sealed partial class GameSimulation
     /// <summary>The liquid the player's body is in (None on dry land).</summary>
     public LiquidKind SwimmingIn => _bodyLiquid;
     public bool IsSwimming => _bodyLiquid != LiquidKind.None;
+
+    /// <summary>Fins (the swim tag, on the Diver's kit) or a swimming mount: full strokes under water.</summary>
+    public bool CanSwim => HasTag("swim") || MountSwimsIn(_bodyLiquid);
     /// <summary>Rocket fuel left in seconds (rocket pack and jet boots).</summary>
     public float RocketFuel => _rocketFuel;
     public float MaximumRocketFuel => (HasTag("flight") ? 3f : 0f) + (HasTag("rocket-boots") ? 1.6f : 0f) + GearWingFlightSeconds;
@@ -335,7 +370,7 @@ public sealed partial class GameSimulation
             {
                 _grapple = null;
                 _grappleSpare = null;
-                velocity.Y = Math.Min(velocity.Y, -7.5f);
+                velocity.Y = Math.Min(velocity.Y, -7.5f * LiftScale);
                 jumpUsed = true;
                 _doubleJumpUsed = false;
             }
@@ -344,16 +379,19 @@ public sealed partial class GameSimulation
                 movement = movement with { Grapple = new GrappleConstraint(hook.Anchor, hook.RopeLength) };
                 var toAnchor = hook.Anchor - PlayerCenter;
                 if (toAnchor.LengthSquared() > 0.01f)
-                    velocity += Vector2.Normalize(toAnchor) * 30f * deltaSeconds;
-                velocity.Y -= 24f * deltaSeconds * 0.6f;
+                    velocity += Vector2.Normalize(toAnchor) * 30f * GravityScale * deltaSeconds;
+                velocity.Y -= PlayerMovementSettings.Gravity * deltaSeconds * 0.6f;
                 motion.FallPeakY = motion.Position.Y;
             }
         }
 
-        // Swimming: jump strokes upward in any liquid.
+        // Swimming: with fins (the swim tag) jump strokes upward in any liquid; without them, under water a held jump only
+        // paddles up slowly, as in Terraria before flippers.
         if (_bodyLiquid != LiquidKind.None && (movement.JumpPressed || movement.JumpHeld) && !jumpUsed)
         {
-            var stroke = _bodyLiquid == LiquidKind.Nectar ? -2.5f : -4.6f;
+            var stroke = CanSwim || !HeadSubmerged
+                ? (_bodyLiquid == LiquidKind.Nectar ? -2.5f : -4.6f) * LiftScale
+                : -(PaddleSpeed + PlayerMovementSettings.Gravity * deltaSeconds); // net of this step's gravity
             velocity.Y = Math.Min(velocity.Y, stroke);
             jumpUsed = movement.JumpPressed;
         }
@@ -367,23 +405,23 @@ public sealed partial class GameSimulation
         if (wall && movement.JumpPressed && !jumpUsed)
         {
             // Wall jump off the claws.
-            velocity = new Vector2(-dir * 5.5f, -8.6f);
+            velocity = new Vector2(-dir * 5.5f * RunScale, -8.6f * LiftScale);
             jumpUsed = true;
             _doubleJumpUsed = false;
         }
 
         if (airborne && movement.JumpPressed && !jumpUsed && _bodyLiquid == LiquidKind.None && HasTag("double-jump") && !_doubleJumpUsed)
         {
-            velocity.Y = -8.6f;
+            velocity.Y = -8.6f * LiftScale;
             _doubleJumpUsed = true;
             jumpUsed = true;
             Flags.Increment("player.double_jumps");
         }
 
         // Rocket pack / jet boots: hold jump in the air once the launch has slowed.
-        if (airborne && movement.JumpHeld && !jumpUsed && _rocketFuel > 0f && velocity.Y > -4f && _bodyLiquid == LiquidKind.None)
+        if (airborne && movement.JumpHeld && !jumpUsed && _rocketFuel > 0f && velocity.Y > -4f * LiftScale && _bodyLiquid == LiquidKind.None)
         {
-            velocity.Y = Math.Max(velocity.Y - (24f + 34f) * deltaSeconds, -6.5f);
+            velocity.Y = Math.Max(velocity.Y - (24f + 34f) * GravityScale * deltaSeconds, -6.5f * LiftScale);
             _rocketFuel = Math.Max(0f, _rocketFuel - deltaSeconds);
             _rocketActive = true;
             motion.FallPeakY = motion.Position.Y;
@@ -417,8 +455,8 @@ public sealed partial class GameSimulation
         else if (_rocketFuel > MaximumRocketFuel)
             _rocketFuel = MaximumRocketFuel;
 
-        if (_gliding && motion.WingEnergy <= 0f && velocity.Y > 2.2f)
-            velocity.Y = 2.2f;
+        if (_gliding && motion.WingEnergy <= 0f && velocity.Y > 2.2f * LiftScale)
+            velocity.Y = 2.2f * LiftScale;
         if (_gliding)
             motion.FallPeakY = Math.Max(motion.FallPeakY, motion.Position.Y - 4f);
 
@@ -426,7 +464,7 @@ public sealed partial class GameSimulation
         _clinging = !motion.Grounded && dir != 0 && HasTag("climb") && TouchingWall(dir) && velocity.Y > 0f;
         if (_clinging)
         {
-            velocity.Y = Math.Min(velocity.Y, 1.6f);
+            velocity.Y = Math.Min(velocity.Y, 1.6f * LiftScale);
             motion.FallPeakY = motion.Position.Y;
         }
 
@@ -438,19 +476,20 @@ public sealed partial class GameSimulation
         if (_bodyLiquid != LiquidKind.None)
         {
             var sink = _bodyLiquid switch { LiquidKind.Nectar => 0.9f, LiquidKind.Lava => 1.6f, _ => 2.2f };
-            velocity.Y = Math.Clamp(velocity.Y, -6f, sink);
+            velocity.Y = Math.Clamp(velocity.Y, CanSwim || !HeadSubmerged ? -6f * LiftScale : -PaddleSpeed, sink * LiftScale);
             motion.FallPeakY = motion.Position.Y;
         }
-        if (IsMounted && velocity.Y > 9f)
-            velocity.Y = 9f;
+        if (ActiveMountSpec is { } mountFall && velocity.Y > mountFall.FallCap)
+            velocity.Y = mountFall.FallCap;
         AfterMountMovement(movement, ref velocity);
         motion.Velocity = velocity;
 
-        // Fall damage: 10 per tile beyond 25; featherfall, flight gear, the mount and liquids negate it.
+        // Fall damage: 10 per tile beyond 25 (a mount takes its share); featherfall, flight gear and liquids negate it.
         var fall = motion.LastLandingFallDistance;
-        if (FallDamage(fall) > 0f && !FallNegated())
+        var mountFactor = ActiveMountSpec?.FallFactor ?? 1f;
+        if (FallDamage(fall) * mountFactor > 0f && !FallNegated())
         {
-            var damage = FallDamage(fall);
+            var damage = FallDamage(fall) * mountFactor;
             var applied = Player.TakeDamage(damage, DamageKind.Blunt);
             ReportPartLoss(Player, Player.LastDamage);
             if (applied > 0f)
@@ -468,7 +507,7 @@ public sealed partial class GameSimulation
     public static float FallDamage(float tiles) => Math.Max(0f, MathF.Floor(tiles + 0.001f) - SafeFallTiles) * FallDamagePerTile;
 
     private bool FallNegated() =>
-        IsMounted || HasTag("featherfall") || HasTag("flight") || HasTag("rocket-boots") ||
+        HasTag("featherfall") || HasTag("flight") || HasTag("rocket-boots") ||
         _bodyLiquid != LiquidKind.None || _grapple is { Latched: true };
 
     private void UpdateBreath(float deltaSeconds)

@@ -238,7 +238,7 @@ public sealed partial class GameSimulation
         _doubleJumpUsed = false;
         if (movement.JumpPressed && !jumpUsed)
         {
-            velocity.Y = -8.6f;
+            velocity.Y = -8.6f * LiftScale;
             jumpUsed = true;
         }
     }

@@ -157,13 +157,15 @@ public static class BatchBSelfTests
             swimmer.World.SetTile(new GridPoint(28, y), TileId.Rock);
         }
         Fill(swimmer, 23, 8, 27, 19, LiquidKind.Water);
+        swimmer.Player.Inventory.Add(ItemId.DiversKit, 1);
+        Equip(swimmer, EquipmentSlot.Accessory, ItemId.DiversKit); // fins: full strokes
         swimmer.Player.Motion.Position = new Vector2(24.6f, 9f);
         swimmer.Player.Motion.Velocity = Vector2.Zero;
         Tick(swimmer, 20);
         var sinkSpeed = swimmer.Player.Motion.Velocity.Y;
         Tick(swimmer, 1, new MovementInput(0f, JumpPressed: true, JumpHeld: true));
         var stroke = swimmer.Player.Motion.Velocity.Y;
-        check(sinkSpeed is > 0f and <= 2.25f && stroke < -3f && swimmer.SwimmingIn == LiquidKind.Water,
+        check(sinkSpeed is > 0f and <= 2.2f * 1.94f && stroke < -3f && swimmer.SwimmingIn == LiquidKind.Water,
             "liquids slow sinking and jump strokes swim upward");
 
         // ---- Fall damage and featherfall ----
@@ -211,7 +213,7 @@ public static class BatchBSelfTests
         gliderWings.Player.Motion.WingEnergy = 0f;
         Tick(gliderWings, 30, new MovementInput(0f, JumpHeld: true));
         var glideSpeed = gliderWings.Player.Motion.Velocity.Y;
-        check(gliderWings.IsGliding && glideSpeed <= 2.3f,
+        check(gliderWings.IsGliding && glideSpeed <= 2.2f * 1.94f,
             "glider wings spend wing energy, then glide at a slow fall");
 
         var climber = NewGame(9108);
@@ -225,7 +227,7 @@ public static class BatchBSelfTests
         var slide = climber.Player.Motion.Velocity.Y;
         var clinging = climber.IsWallClinging;
         Tick(climber, 1, new MovementInput(1f, JumpPressed: true));
-        check(clinging && slide <= 1.61f && climber.Player.Motion.Velocity.X < 0f && climber.Player.Motion.Velocity.Y < -5f,
+        check(clinging && slide <= 1.6f * 1.94f && climber.Player.Motion.Velocity.X < 0f && climber.Player.Motion.Velocity.Y < -5f,
             "climbing claws slow a wall slide and allow wall jumps");
 
         var hooker = NewGame(9109);

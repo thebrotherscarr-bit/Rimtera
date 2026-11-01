@@ -539,7 +539,7 @@ internal static partial class ArsenalItems
         new(ItemId.StormCapacitor, "Storm capacitor", 6, "charge:30;tags:chargehit:6", "SiphonCoil*1+CapacitorTap*1@TinkerBench", null),
         new(ItemId.GhostCloak, "Ghost cloak", 6, "tags:dodge:10", "PhaseCloak*1+BlinkModule*1@TinkerBench", null),
         new(ItemId.RetributionMesh, "Retribution mesh", 5, "def:3;tags:thorns:60,endurance:4", "SpikeLattice*1+BarbMesh*1+AblativeCore*1@TinkerBench", null),
-        new(ItemId.DiversKit, "Diver's kit", 3, "tags:gills,breath,water-walk", "GillImplant*1+OxygenTank*1+HydroSkimmers*1@TinkerBench", null),
+        new(ItemId.DiversKit, "Diver's kit", 3, "tags:gills,breath,water-walk,swim", "GillImplant*1+OxygenTank*1+HydroSkimmers*1@TinkerBench", null),
         new(ItemId.EnvironmentalSuit, "Environmental suit", 4, "tags:cold,heat,poison,toxic,breath", "ThermalRegulator*1+FilterImplant*1+OxygenTank*1@TinkerBench", null),
         new(ItemId.VitalCore, "Vital core", 5, "life:50;regen:0.6", "VitalBooster*1+HeartPump*1+NanoMender*1@TinkerBench", null),
         new(ItemId.MobilityRig, "Mobility rig", 5, "move:16;tags:double-jump,featherfall", "SprintServosMkIII*1+DoubleJumpCanister*1+GravDamper*1@TinkerBench", null),

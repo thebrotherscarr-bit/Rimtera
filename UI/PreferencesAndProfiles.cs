@@ -85,6 +85,8 @@ public sealed record GamePreferences
     public bool AutoSave { get; set; } = true;
     /// <summary>Minutes between autosaves (2, 5, 10 or 15); the save itself runs off the game thread.</summary>
     public int AutosaveMinutes { get; set; } = 10;
+    /// <summary>How much the camera eases after the player: 0 snaps to them every frame (Terraria's way), 1 is the softest.</summary>
+    public float CameraSmoothing { get; set; }
     public static readonly int[] AutosaveChoices = [2, 5, 10, 15];
     public bool AutoPause { get; set; }
     /// <summary>A faint ghost of the block or wall where it would go, as Terraria's Placement Preview.</summary>
@@ -134,6 +136,7 @@ public sealed record GamePreferences
         Fullscreen = ScreenMode == WindowMode.Fullscreen;
         WindowBorderless = ScreenMode == WindowMode.Borderless;
         BackgroundParallax = ClampFinite(BackgroundParallax, 1f, 0f, 2f);
+        CameraSmoothing = ClampFinite(CameraSmoothing, 0f, 0f, 1f);
         if (!AutosaveChoices.Contains(AutosaveMinutes))
             AutosaveMinutes = 10;
         Zoom = ClampFinite(Zoom, 1f, 0.5f, 2.5f);
