@@ -229,7 +229,7 @@ fills assets in along the way. This milestone closes it out: no placeholder, mis
     sheets in `art/sheets/`.
   - The **boss sheet (`sheet_00c_bosses`)** is the preferred reference for style choices: riveted gunmetal, amber-gold
     accents.
-  - A written **style guide** is drafted early and settled in 0.10.1, so every request follows the same rules.
+  - The **style guide** (`docs/STYLE_GUIDE.md`, drafted 2026-11-01 from the four reference sheets in `docs/style/`) is used by every request and settled in 0.10.1.
 - **A style track runs through every milestone:**
   1. A step that adds things to see or hear lists them in `docs/ASSET_REQUESTS.md`. Each entry gives the sprite or
      sound name, its size or length, the flow to use, a prompt and the style reference.
