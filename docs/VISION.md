@@ -149,7 +149,7 @@ launch you may continue the world, and the story from there is yours.
 | 0.6.3 | **The threat budget and warnings.** Strength scales with progress and wealth. Warnings come as letters with a countdown. *(Done.)* |
 | 0.6.4 | **The event catalogue.** Terraria's events and invasions under the storyteller, plus arrivals, sickness, power outages for the station AI, supply drops and traders. *(Done.)* |
 | 0.6.5 | **Purposeful events.** Each act's key events push you toward the next step of progress. *(Done.)* |
-| 0.6.6 | **The History tab:** the run's story so far. |
+| 0.6.6 | **The History tab:** the run's story so far. *(Done.)* |
 
 ### 4.4 0.7.0: Outposts and travel
 

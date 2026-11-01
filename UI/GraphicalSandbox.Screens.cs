@@ -46,6 +46,7 @@ public static partial class GraphicalSandbox
             state.CrewRequested += OpenColonistSheet;
             state.BestiaryRequested += OpenBestiary;
             state.FeatsRequested += OpenAchievements;
+            state.HistoryRequested += OpenHistory;
             state.Modifiers = () => ((ModifierKeys & Keys.Shift) != 0, (ModifierKeys & Keys.Control) != 0, (ModifierKeys & Keys.Alt) != 0);
             _menu.ShowInventory(state, onClose: () =>
             {
@@ -117,6 +118,16 @@ public static partial class GraphicalSandbox
             var tracker = _game.Achievements;
             var entries = MenuFlow.FeatEntries(tracker.IsUnlocked, tracker.UnlockTimes).ToList();
             ShowGameList("achievements", "Feats", entries, $"{tracker.UnlockedCount} of {tracker.TotalCount} unlocked");
+        }
+
+        /// <summary>0.6.6: the History tab: the run's story so far (GameSimulation.History.cs).</summary>
+        private void OpenHistory()
+        {
+            if (_game is null)
+                return;
+            var lines = _game.History();
+            var entries = lines.Skip(1).Select(line => new MenuEntry(line.Heading ? $"— {line.Text} —" : line.Text, Enabled: false)).ToList();
+            ShowGameList("history", "History", entries, lines.Count > 1 ? lines[1].Text : "The run so far.");
         }
 
         private void ShowGameList(string id, string title, List<MenuEntry> entries, string summary)
