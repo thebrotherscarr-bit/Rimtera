@@ -70,6 +70,12 @@ public static partial class ContentTiles
 
     public static IReadOnlyList<ContentTileDefinition> Definitions => _definitions;
 
+    /// <summary>Drill power the precursor temple's brick and glyph need (WT-1, D-35): Terraria's 210 on the gear curve.</summary>
+    public static int PrecursorBrickToolPower => GearCurve.DrillPowerFromTerraria(210);
+
+    /// <summary>What a drill too weak for the temple brick says (WT-1).</summary>
+    public const string PrecursorSealMessage = "The precursor brick needs a stronger drill. Its makers sealed this temple against anything weaker.";
+
     /// <summary>Crafted wall items and the player wall id each places.</summary>
     public static IReadOnlyList<(ItemId Item, ushort Wall, string Name)> WallItems { get; } =
     [
@@ -211,8 +217,13 @@ public static partial class ContentTiles
         Crafted(TileId.Grate, "Grate", 40, 1.4f, 36, ItemId.GrateBlock, 1);
         Crafted(TileId.Plate, "Steel plate", 54, 1.9f, 35, ItemId.PlateBlock, 1);
         Crafted(TileId.Vent, "Vent block", 40, 1.4f, 36, ItemId.VentBlock, 1);
-        Crafted(TileId.PrecursorBrick, "Precursor brick", 120, 3f, 17, ItemId.PrecursorBrickBlock, 5);
-        Crafted(TileId.PrecursorGlyph, "Precursor glyph", 120, 3f, 17, ItemId.PrecursorGlyphBlock, 5);
+        // WT-1 (D-35): the precursor temple is sealed like Terraria's Lihzahrd brick (pickaxe power 210). The curve maps 210 to
+        // 122, above every drill before the Vault Colossus (the void auger, 120) and below the astral drills (128).
+        // The bricks also stay explosion-proof (GameSimulation.IsExplosionProof).
+        list.Add(new(TileId.PrecursorBrick, "Precursor brick", true, 120, 3f, 17, ItemId.PrecursorBrickBlock,
+            MinimumToolPower: PrecursorBrickToolPower, Value: 12, Tier: 5));
+        list.Add(new(TileId.PrecursorGlyph, "Precursor glyph", true, 120, 3f, 17, ItemId.PrecursorGlyphBlock,
+            MinimumToolPower: PrecursorBrickToolPower, Value: 12, Tier: 5));
 
         // ---- Stations ----
         void Station(TileId id, string name, CraftingStationId station, int tier) =>

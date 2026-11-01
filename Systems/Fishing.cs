@@ -30,7 +30,8 @@ public readonly record struct FishingContext(
     float Power,
     bool Night,
     float Rain,
-    SeasonWindow Season = SeasonWindow.None);
+    SeasonWindow Season = SeasonWindow.None,
+    bool Fractured = false);
 
 /// <summary>The cast bobber (renderer: position, bite flag and the reel window).</summary>
 public sealed class FishingBobber
@@ -170,7 +171,8 @@ public static class FishingTables
             FishingRarity.Uncommon => context.Depth >= FishingDepth.Caverns ? ItemId.FishGlow : Of(ItemId.ReefSnapper, ItemId.TideFish),
             FishingRarity.Rare => CrateFor(context),
             FishingRarity.Epic => context.Depth >= FishingDepth.Caverns ? ItemId.FishingLure : ItemId.FishingLine,
-            _ => context.Zone == BiomeZone.CrystalSpires ? ItemId.CrystalCrate : ItemId.AstralCrate
+            // The Astral crate (tier 6) waits for the Fracture; before it a legendary catch is an alloy crate.
+            _ => context.Zone == BiomeZone.CrystalSpires ? ItemId.CrystalCrate : context.Fractured ? ItemId.AstralCrate : ItemId.AlloyCrate
         };
     }
 

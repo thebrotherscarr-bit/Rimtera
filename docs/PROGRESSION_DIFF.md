@@ -68,7 +68,7 @@ what, and where the run ends. It is a diff only. No game code was changed to wri
 | Mining gates (pre-hardmode) | Basic ores 0; meteorite 50; evil ore and obsidian 55; hellstone and evil stone 65 (knowledge) | 0 for ferrite and scrap-iron. **35** for cobalt, glacial, uranium, pyrocite, viridium and obsidian (`World/TileGrid.cs:655-666,686`). 50 for meteorite (`World/ContentTiles.cs:168`) | ◐ | Every pre-hardmode biome ore shares one threshold (35). The ferrite drill (38) opens all of them at once. Pyrocite, the "hellstone" analog, needs 35, not a higher rung. |
 | Tool power ladder | Copper 35 … gold/platinum 55-59, Nightmare/Deathbringer 65, Molten 100 (knowledge) | Survey drill 20, ferrite drill 38 (`ItemSystem.cs:1627-1630`); ferrite rock drill 42, cobalt 55, glacial 70, viridium 85, lumenite 100, voidsteel 120, astral 150 (`Content/ContentItems.cs:340-346`) | ◐ | |
 | Gear tiers and stations | Armour per ore bar at the anvil (knowledge) | Generated tier gear: tiers 1-2 at the Power Forge, 3 at Power Forge Mk2, 4 at Alloy Anvil, 5 at Nano-Fabricator Mk2, 6 at Void Forge, 7 at Astral Assembler (`ContentRecipes.cs:13-18`). Armour sets: Scav (1) → Cobalt trooper (2) → biome sets (3) → Viridium (4) → Lumenite (5) → Voidsteel (6) → Astral (7) (`ContentItems.cs:378-401`), plus 27 arsenal sets (`ArsenalItems.Data.cs:423-449`) | ✅ | |
-| Station gating | The Hellforge needs underworld travel; hardmode anvils need hardmode bars (knowledge) | Power Forge Mk2 needs the **Overseer circuit** from the first boss (`ContentRecipes.cs:73`, `GameSimulation.World.cs:245-246`). Ore Refinery Mk2 and the Alloy Anvil need heart fragments from blight hearts (`ContentRecipes.cs:74-75`) | ✅ | A good boss-to-station gate. |
+| Station gating | The Hellforge needs underworld travel; hardmode anvils need hardmode bars (knowledge) | Power Forge Mk2 needs the **Overseer circuit** from the first boss (`ContentRecipes.cs:73`, `GameSimulation.World.cs:245-246`). Ore Refinery Mk2 and the Alloy Anvil need heart fragments from blight hearts (`ContentRecipes.cs:74-75`) | ✅ | A good boss-to-station gate for the crafted copy. **Correction (PC-21, 0.2.2):** the Power Forge Mk2 is also found as the Reactor forge in Irradiated Core ruins and can be mined before the Overseer (`--craft-audit`: "Built Power Forge Mk2 via mine Reactor forge", stage 6), as Terraria's Hellforge needs no boss. |
 | First night | Zombies and flying eyes; Blood Moon possible (knowledge) | Night spawn tables; the Rust Moon (blood-moon analog) only once max HP ≥ 120 or the Overseer is down (`WorldEvents.cs:429-430`, flag set in `GameSimulation.World.cs:471-472`) | ✅ | |
 | First boss options | King Slime (Slime Crown, or natural spawn gated by `AnyPlayerReadyToFightKingSlime`: `statLifeMax` + `statDefense` (evidence)); Eye of Cthulhu (summon item, or natural at night via `spawnEye` gated on life/defence in `UpdateTime_StartNight` (evidence)) | **Overseer mech** (`EnemyKind.StoneSentinel`, 520 HP) from the Reactor key (5 ferrite bars + 3 energy crystals at the Nano-Fabricator) (`ContentItems.cs:490`, `ContentRecipes.cs:339`). Also the Swarm pheromone (Alpha Skitter: bio-gel + berries at the Chem Lab) and Spore crown (Spore Monarch) | ◐ | No boss ever **arrives on its own** before the Fracture. Gap G6. |
 
@@ -114,7 +114,7 @@ missing links:
 | 5 | Lunatic Cultist (`downedAncientCultist`, `CultistRitual.*`) | Void Cantor at `RitualSite` after the Colossus (`GameSimulation.Hardmode.cs:125-126,175-178`) | ✅ | |
 | 6 | Four pillars (`downedTower*`), shields | Four obelisks with sieges, shielded until 20 kills each (`GameSimulation.Hardmode.cs:36-41,179-180`) | ✅ | |
 | 7 | Moon Lord (`MoonlordCountdown`, `downedMoonlord`); the Celestial Sigil is crafted from pillar fragments | Astro-God after a 60 s countdown (`GameSimulation.World.cs:401-406,482-494`) | ◐ | The **Astral sigil** has no gate (`HardmodeSummonRefusal` has no AstroGod case, `GameSimulation.Hardmode.cs:109-128`). Its recipe uses lumenite, voidsteel and prism shards, not obelisk drops (`ContentRecipes.cs:354`). Players can skip the cultist and the obelisks entirely (gap G5). |
-| 8 | Hardmode-only optional bosses (Queen Slime, Empress of Light, Duke Fishron, event moons) | Prism Empress (crystal altar, or the Prism catalyst at tier 5); Abomination (Tainted tissue: heart fragments + gel, **ungated**); Abyss Leviathan (fishing); event bosses at dusk once any easy boss is down (`GameSimulation.cs:2382-2391`) | ◐ | Breaking a crystal altar and using the Tainted tissue spawn Hard bosses before the Fracture. Dusk incursions bring 1200-1500 HP event bosses after only the first easy kill (gap G2). |
+| 8 | Hardmode-only optional bosses (Queen Slime, Empress of Light, Duke Fishron, event moons) | Prism Empress (crystal altar, or the Prism catalyst at tier 5); Abomination (Tainted tissue); Abyss Leviathan (abyss bait in acid, **after the Fracture** only; the bait takes flight essence: PC-3, 0.2.2); event bosses at dusk | ◐ | G2 closed the altar, tissue and hive routes. **Correction (PC-21):** "dusk incursions wait for the Scout Mech" still admitted every incursion boss before the Fracture, and their summon items need no gate; PC-4 (0.2.2, stream C) gates the incursion roll on the Fracture. `--craft-audit` lists the bosses still fightable before the Fracture under "Bosses reachable before the Fracture" (PC-7). |
 
 ## 6. Town NPCs as a progression track
 
@@ -304,7 +304,7 @@ The suite passed 446 checks at the time of this pass; the current suite is 550. 
 |---|---|
 | G0 | Explorer and Creative drop no credits on death. |
 | G1 | Before the Fracture, radiated hearts summon the new Easy-tier **Fallout Hive-mind** (800 HP; summon item: Fallout hive cell). Spore hearts give cobalt, not viridium. Hard-trio kills before the Fracture don't count toward the trio. |
-| G2 | Before the Fracture: Tainted tissue, the Prism catalyst and Royal nectar are refused. Altars, hives and brood pods give loot but no boss. Dusk incursions wait for the Scout Mech. |
+| G2 | Before the Fracture: Tainted tissue, the Prism catalyst and Royal nectar are refused. Altars, hives and brood pods give loot but no boss. Dusk incursions wait for the Scout Mech (**correction, PC-21:** that admitted all the incursion bosses before the Fracture; PC-4 fixes it in 0.2.2). |
 | G4 | Altars need the `altar-breaker` capability: the Core breaker and later tools. Lumenite needs tool power 85, voidsteel 100. The Alloy Anvil needs **fission slag** from the Fission Tyrant. |
 | G5 | The Astral sigil needs `obelisks.down`. |
 | G6 | **Overseer patrol:** with max life ≥ 140 and defense ≥ 6, dusk has a 25% chance (3-day cooldown) of bringing the Overseer, with a warning line, until it is beaten. |
@@ -321,3 +321,18 @@ The suite passed 446 checks at the time of this pass; the current suite is 550. 
 | G16 | Brutal stays ×1.4. New **Annihilation** world tier: ×2 creatures, hardmode ×2.6/×1.8, defense counts in full, relics drop only here, free sixth slot. |
 
 Also: Annihilation is part of the "Hardened" secret seed, which now only raises a world's difficulty and never lowers it.
+
+## Parity step 0.1.7 progression items (built in 0.2.2)
+
+| ID | State | What |
+|---|---|---|
+| PC-1 | stream C, 0.2.2 | No Rust Moon boss and no Moon Eater lure before the Fracture |
+| PC-2 | stream C, 0.2.2 | The Defense Protocol finale is tiered (no Protocol Dragon before the Vault Colossus) |
+| PC-3 | **closed** (stream B) | The Abyss Leviathan only bites after the Fracture (`GameSimulation.RollCatch` posts "The deep stays quiet…" and keeps the bait); abyss bait takes flight essence. Retuned as a post-Fracture fight: 47,000 HP, 32 damage, defense 30 (`--boss-balance`: 119 s) |
+| PC-4 | stream C, 0.2.2 | No pre-Fracture incursion bosses and no early upgrade drops |
+| PC-7 | **closed** (stream B) | `--craft-audit` dates every boss that needs no Fracture before the Fracture and prints them; tier 6+ before the Fracture is 0 (gated run) |
+| PC-18 | **closed** (stream B) | Station inheritance is transitive |
+| WT-1 | **closed** (stream B) | The precursor temple's brick and glyph need drill power 122 (Terraria's 210): only the astral drills, after the Void Cantor |
+
+Until stream C's gates are modelled in `CraftingAudit.BossGateOpen`, the audit keeps the Moon Eater, the Protocol Dragon,
+the incursion bosses and the Pirate Dreadnought on `PreFractureBossReview` (see [CRAFTING_PROGRESSION.md](CRAFTING_PROGRESSION.md) §6).
