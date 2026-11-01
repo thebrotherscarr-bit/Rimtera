@@ -848,6 +848,9 @@ public sealed partial class GameSimulation
             case ItemId.HoverBikeKey:
                 ToggleMount(MountKind.HoverBike);
                 break;
+            case ItemId.BionicArm or ItemId.BionicLeg or ItemId.BionicEye or ItemId.NeuralCoprocessor:
+                PostMessage(UseBionic(item.Id)); // 0.5.4: fitted to the nearest resident who needs it
+                break;
             case ItemId.AiCore:
                 if (!StationAiOnline && Player.Inventory.TryConsume(item.Id))
                     RebuildStationAi();

@@ -66,6 +66,8 @@ public sealed partial class GameSimulation
                 LastingInjury.LostArm => "lost arm",
                 _ => "lost leg"
             }))}");
+        if (npc.Bionics.Count > 0)
+            lines.Add($"Bionics: {string.Join(", ", npc.Bionics.Select(part => part == BionicPart.NeuralCoprocessor ? "neural coprocessor" : $"bionic {part.ToString().ToLowerInvariant()}"))}");
         if (npc.Gear.Count > 0)
         {
             var (damage, reach, _) = ResidentAttack(npc);

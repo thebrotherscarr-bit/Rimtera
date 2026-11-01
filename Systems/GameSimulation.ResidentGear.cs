@@ -49,6 +49,8 @@ public sealed partial class GameSimulation
         var held = item ?? (Player.Inventory.SelectedStack.IsEmpty ? null : Player.Inventory.SelectedStack.ItemId);
         if (npc.IsBound || !npc.IsAlive || !_townNpcs.Contains(npc))
             return $"{npc.Name} cannot take gear right now.";
+        if (held is { } bionic && BionicFor(bionic) is not null)
+            return FitBionic(npc, bionic); // 0.5.4: a bionic is fitted, not worn
         if (npc.Kind == TownNpcKind.StationAi || TownTrades.Idle(npc.Kind) && npc.Kind != TownNpcKind.TradeConsul)
             return $"{npc.Name} cannot wear or wield gear.";
         if (held is not { } gear)
@@ -139,7 +141,8 @@ public sealed partial class GameSimulation
         var damage = definition.Damage * (0.75f + stats.Level(skill) * 0.025f) *
                      (melee ? stats.MeleeDamageMultiplier : stats.ShootingDamageMultiplier);
         if (!melee) // 0.5.3: a lost eye blunts their aim
-            damage *= npc.Injuries.Count(injury => injury == LastingInjury.LostEye) switch { 0 => 1f, 1 => 0.75f, _ => 0.4f };
+            damage *= npc.Injuries.Count(injury => injury == LastingInjury.LostEye) switch { 0 => 1f, 1 => 0.75f, _ => 0.4f } *
+                      (npc.Bionics.Contains(BionicPart.Eye) ? 1.1f : 1f); // 0.5.4: a bionic eye aims truer
         var reach = melee ? Math.Max(UnarmedReach + 0.4f, definition.Reach > 0f ? definition.Reach : 1.6f) : RangedGuardReach;
         var seconds = Math.Max(0.25f, (definition.UseCooldownTicks > 0 ? definition.UseCooldownTicks : 30) / 60f);
         return (damage, reach, seconds);

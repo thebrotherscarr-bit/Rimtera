@@ -122,6 +122,11 @@ public static class PlayerSystemsContent
         // 0.3.8: rebuilds a destroyed station AI. Made from raw materials at an unpowered bench, so a dark base can always make one.
         Add(new ItemDefinition(ItemId.AiCore, "AI core", ItemUseKind.Utility, 5)
             { Tier = 1, Rarity = ItemRarity.Uncommon, Value = 120, UseCooldownTicks = 30 });
+        // 0.5.4: bionics, fitted to a resident through the Housing tab's Give held by someone with medical skill.
+        Add(new ItemDefinition(ItemId.BionicArm, "Bionic arm", ItemUseKind.Utility, 5) { Tier = 2, Rarity = ItemRarity.Uncommon, Value = 300 });
+        Add(new ItemDefinition(ItemId.BionicLeg, "Bionic leg", ItemUseKind.Utility, 5) { Tier = 2, Rarity = ItemRarity.Uncommon, Value = 300 });
+        Add(new ItemDefinition(ItemId.BionicEye, "Bionic eye", ItemUseKind.Utility, 5) { Tier = 2, Rarity = ItemRarity.Uncommon, Value = 260 });
+        Add(new ItemDefinition(ItemId.NeuralCoprocessor, "Neural coprocessor", ItemUseKind.Utility, 5) { Tier = 3, Rarity = ItemRarity.Rare, Value = 500 });
         Add(Accessory(ItemId.CloverCircuit, "Clover circuit", 3) with { CritBonus = 2 });
         Add(Accessory(ItemId.BeaconHarness, "Beacon harness", 2) with { Defense = 3 });
         Add(Accessory(ItemId.ShroudCloak, "Shroud cloak", 2) with { MoveSpeedMultiplier = 1.04f });
@@ -166,6 +171,10 @@ public static class PlayerSystemsContent
         Add("dye-vat", ItemId.DyeVat, 1, CraftingStationId.Workbench, (ItemId.WoodBlock, 10), (ItemId.CopperBar, 2));
         Add("fortune-tonic", ItemId.FortuneTonic, 1, CraftingStationId.ChemLab, (ItemId.DyePetals, 1), (ItemId.EmeraldShard, 1), (ItemId.Berry, 2));
         Add("ai-core", ItemId.AiCore, 1, CraftingStationId.FieldWorkbench, (ItemId.EnergyCrystal, 8), (ItemId.CopperOre, 15), (ItemId.RockBlock, 20));
+        Add("bionic-arm", ItemId.BionicArm, 1, CraftingStationId.Workbench, (ItemId.CobaltBar, 8), (ItemId.CircuitBoard, 3), (ItemId.EnergyCrystal, 4));
+        Add("bionic-leg", ItemId.BionicLeg, 1, CraftingStationId.Workbench, (ItemId.CobaltBar, 10), (ItemId.CircuitBoard, 3), (ItemId.EnergyCrystal, 4));
+        Add("bionic-eye", ItemId.BionicEye, 1, CraftingStationId.Workbench, (ItemId.CircuitBoard, 4), (ItemId.EnergyCrystal, 6), (ItemId.CobaltBar, 2));
+        Add("neural-coprocessor", ItemId.NeuralCoprocessor, 1, CraftingStationId.Workbench, (ItemId.CircuitBoard, 6), (ItemId.EnergyCrystal, 8), (ItemId.ViridiumBar, 4));
         Add("battle-stim", ItemId.BattleStim, 1, CraftingStationId.ChemLab, (ItemId.BioGel, 1), (ItemId.EmberrootHerb, 1), (ItemId.GlowSpore, 1));
         Add("calming-stim", ItemId.CalmingStim, 1, CraftingStationId.ChemLab, (ItemId.BioGel, 1), (ItemId.MoonglowHerb, 1), (ItemId.Berry, 2));
         Add("clover-circuit", ItemId.CloverCircuit, 1, CraftingStationId.TinkerBench, (ItemId.LuckyCharm, 1), (ItemId.EmeraldShard, 5));

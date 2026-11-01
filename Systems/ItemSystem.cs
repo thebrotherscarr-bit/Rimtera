@@ -1388,6 +1388,8 @@ public enum ItemId : ushort
     BattleStim = 9600, CalmingStim = 9601,
     // ---- The station AI's power (0.3.8): a new core rebuilds a destroyed AI ----
     AiCore = 9602,
+    // ---- Bionics (0.5.4): replacement limbs and an implant, fitted to residents ----
+    BionicArm = 9603, BionicLeg = 9604, BionicEye = 9605, NeuralCoprocessor = 9606,
 }
 
 public enum ItemUseKind : byte
