@@ -261,10 +261,11 @@ public static class ModesSelfTests
 
         // ---- G16: Annihilation scaling, defense and relics ----
         var defenseHit = DefenseBalance.ApplyDefense(40f, 20, WorldDifficulty.Annihilation);
-        check(WorldSettings.EnemyScale(WorldDifficulty.Annihilation) == 2f && WorldSettings.EnemyScale(WorldDifficulty.Brutal) == 1.4f &&
+        check(WorldSettings.EnemyHealthScale(WorldDifficulty.Annihilation) == 3f && WorldSettings.EnemyDamageScale(WorldDifficulty.Annihilation) == 3f &&
+              WorldSettings.EnemyHealthScale(WorldDifficulty.Brutal) == 2f && WorldSettings.EnemyDamageScale(WorldDifficulty.Brutal) == 2f &&
               DefenseBalance.DefenseFactor(WorldDifficulty.Annihilation) == 1f && DefenseBalance.DefenseFactor(WorldDifficulty.Brutal) == 0.75f &&
               defenseHit == 20f && WorldSettings.Name(WorldDifficulty.Annihilation) == "Annihilation",
-            "Annihilation doubles creature strength and counts defense in full (Brutal stays x1.4 and three quarters)");
+            "D-6: Annihilation triples creature life and damage and counts defense in full (Brutal doubles them and counts three quarters)");
         var annihilation = NewGame(9308);
         annihilation.Difficulty = WorldDifficulty.Annihilation;
         var bossKind = EnemyKind.AlphaSkitter;

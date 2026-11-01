@@ -19,8 +19,26 @@ public sealed partial class GameSimulation
     public const EnemyKind BulbBoss = EnemyKind.MutatedFlora;
     /// <summary>The ritual boss waiting at the dungeon entrance after the vault boss.</summary>
     public const EnemyKind RitualBoss = EnemyKind.VoidCantor;
-    /// <summary>Ceiling on any single boss hit after difficulty scaling.</summary>
+    /// <summary>Ceiling on any single Classic boss hit for the final tier (the per-tier table is <see cref="BossDamageCapFor"/>).</summary>
     public const float BossDamageCap = 100f;
+
+    /// <summary>
+    /// Ceiling on a single boss hit after difficulty scaling (PC-15): per tier on Classic (gate and easy 50, hard and event
+    /// 80, final <see cref="BossDamageCap"/>), times the difficulty's damage scale so Brutal and Annihilation keep their ×2
+    /// and ×3 (D-6). No Classic boss reaches its ceiling (the curve holds without it); it guards against a stray hit.
+    /// </summary>
+    public static float BossDamageCapFor(EnemyArchetype archetype, WorldDifficulty difficulty)
+    {
+        ArgumentNullException.ThrowIfNull(archetype);
+        var classic = archetype.Tier switch
+        {
+            BossTier.Final => BossDamageCap,
+            BossTier.Hard or BossTier.Event => 80f,
+            _ => 50f
+        };
+        return classic * WorldSettings.EnemyDamageScale(difficulty);
+    }
+
     /// <summary>Chance per dusk (after the Fracture) that an undefeated hard-tier boss comes on its own.</summary>
     public const float HardBossNightChance = 0.2f;
     /// <summary>Minimum days between natural hard-boss arrivals.</summary>
@@ -63,14 +81,12 @@ public sealed partial class GameSimulation
                Obelisks.All(entry => entry.Obelisk != archetype.Kind); // the siege spawns its obelisks unscaled
     }
 
-    /// <summary>Hardmode multipliers on regular creatures' (health, damage) per world difficulty.</summary>
-    public static (float Health, float Damage) HardmodeScale(WorldDifficulty difficulty) => difficulty switch
-    {
-        WorldDifficulty.Explorer => (1.35f, 1.15f),
-        WorldDifficulty.Brutal => (2.1f, 1.5f),
-        WorldDifficulty.Annihilation => (2.6f, 1.8f),
-        _ => (1.7f, 1.3f)
-    };
+    /// <summary>
+    /// Hardmode multipliers on regular pre-Fracture-authored creatures' (health, damage). The same on every difficulty
+    /// (D-6): the world difficulty's own ×0.75/×1/×2/×3 (<see cref="WorldSettings.EnemyHealthScale"/>) applies on top, so
+    /// a Brutal creature stays twice its Classic self after the Fracture as before it.
+    /// </summary>
+    public static (float Health, float Damage) HardmodeScale(WorldDifficulty difficulty) => (1.7f, 1.3f);
 
     /// <summary>True when the player stands in the Irradiated Core (the bottom band of liquid uranium).</summary>
     public bool InIrradiatedCore => CurrentBiome.Zone == BiomeZone.MoltenChasm || PlayerCenter.Y >= World.Height * 0.8f;
@@ -138,7 +154,9 @@ public sealed partial class GameSimulation
     {
         if (!enemy.IsBoss)
             return damage;
-        var cap = preDifficulty ? BossDamageCap / WorldSettings.EnemyScale(Difficulty) : BossDamageCap;
+        var cap = BossDamageCapFor(enemy.Archetype, Difficulty);
+        if (preDifficulty)
+            cap /= WorldSettings.EnemyDamageScale(Difficulty);
         return Math.Min(damage, cap);
     }
 
@@ -206,7 +224,7 @@ public sealed partial class GameSimulation
                 continue;
             enemy.StatsScaled = true;
             if (enemy.IsBoss)
-                enemy.CapDamage(BossDamageCap);
+                enemy.CapDamage(BossDamageCapFor(enemy.Archetype, WorldDifficulty.Classic)); // authored damage, before difficulty
             else if (FractureActive && HardmodeRescales(enemy.Archetype))
                 enemy.ScaleStats(health, damage);
         }

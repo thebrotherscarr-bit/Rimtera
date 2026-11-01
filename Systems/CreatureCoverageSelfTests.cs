@@ -265,13 +265,13 @@ public static class CreatureCoverageSelfTests
         var eventKinds = Enum.GetValues<WorldEventKind>().SelectMany(probe.EventCreatures).ToHashSet();
         var slotted = biomeKinds.Concat(eventKinds).ToHashSet();
         var unslotted = CreatureCoverage.AllKinds.Where(kind => !slotted.Contains(kind) && !EnemyArchetypes.Get(kind).IsBoss).ToArray();
-        var outOfBand = CreatureCoverageData.Creatures.Where(row => row.Role == CoverageRole.MiniBoss ? row.HitPoints is < 900f or > 1800f
+        // Boss and mini-boss bands follow the 0.2.0 boss curve (PC-15, BO-23: Systems/BossBalance.cs, 60-180 s with tier gear).
+        var outOfBand = CreatureCoverageData.Creatures.Where(row => row.Role == CoverageRole.MiniBoss ? row.HitPoints is < 20000f or > 35000f
             : row.Hard ? row.HitPoints is < 150f or > 800f : row.HitPoints is < 25f or > 150f).Select(row => row.Kind.ToString())
             .Concat(CreatureCoverageData.Bosses.Where(boss => boss.Tier switch
             {
-                BossTier.Easy => boss.HitPoints is < 500f or > 1200f,
-                BossTier.Hard => boss.HitPoints is < 1400f or > 2800f,
-                _ => boss.HitPoints is < 1100f or > 4000f
+                BossTier.Easy => boss.HitPoints is < 9000f or > 17000f,
+                _ => boss.HitPoints is < 40000f or > 75000f
             }).Select(boss => boss.Kind.ToString())).ToArray();
         var undropped = CreatureCoverage.AllKinds.Where(kind => NpcDropRegistry.GetDrops(kind).Count == 0).ToArray();
         var unbannered = CreatureCoverageData.Creatures.Select(row => row.Kind).Where(kind => !PlayerItems.EarnsBanner(kind) ||

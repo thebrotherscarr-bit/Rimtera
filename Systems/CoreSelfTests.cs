@@ -812,7 +812,7 @@ public static class CoreSelfTests
                   new EnemyAgent(1, kind, Vector2.Zero).DisplayName == EnemyArchetypes.Get(kind).DisplayName),
             "enemy archetype table covers every creature kind with a display name");
         var legacySentinel = new EnemyAgent(1, EnemyKind.StoneSentinel, Vector2.Zero);
-        Check(legacySentinel.IsBoss && legacySentinel.MaximumHitPoints == 520f && legacySentinel.AttackDamage == 20f &&
+        Check(legacySentinel.IsBoss && legacySentinel.MaximumHitPoints == 9400f && legacySentinel.AttackDamage == 26f &&
               !new EnemyAgent(2, EnemyKind.MossSlime, Vector2.Zero).IsBoss &&
               archetypes.Count(archetype => archetype.IsBoss && archetype.Kind <= EnemyKind.SkyHawk) == 15 &&
               archetypes.Where(archetype => archetype.IsBoss && archetype.Kind != EnemyKind.StoneSentinel)
@@ -1712,6 +1712,7 @@ public static class CoreSelfTests
         HealingLadderSelfTests.Run(Check); // 0.1.9 C1: healing and charge ladders, their gates, potion sickness, quick heal, cooked food
         DropRuleSelfTests.Run(Check); // 0.1.9 C2-C5: drop chances and conditions, event drops, hearts and orbs, boss potions, 9999 stacks
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
+        BalanceSelfTests.Run(Check); // 0.2.0 A: the boss curve (--boss-balance), the 60-180 s band and D-6 difficulty scaling (PC-15, BO-23)
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }
