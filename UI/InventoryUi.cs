@@ -173,7 +173,7 @@ public sealed class InventoryUiState : UiState
     private string? _housingReport;
     private UiTextElement? _guideCaption;
 
-    private enum Tab { Gear, Housing, Emotes, Work, Bills, Farm }
+    private enum Tab { Gear, Housing, Emotes, Work, Bills, Farm, Build, Research }
     private int _billStation;
     private int _billRecipe;
 
@@ -527,6 +527,8 @@ public sealed class InventoryUiState : UiState
         Tab("tab-work", "Work", 6, () => SwitchTab(InventoryUiState.Tab.Work), _tab == InventoryUiState.Tab.Work);
         Tab("tab-bills", "Bills", 7, () => SwitchTab(InventoryUiState.Tab.Bills), _tab == InventoryUiState.Tab.Bills);
         Tab("tab-farm", "Farm", 8, () => SwitchTab(InventoryUiState.Tab.Farm), _tab == InventoryUiState.Tab.Farm);
+        Tab("tab-build", "Build", 9, () => SwitchTab(InventoryUiState.Tab.Build), _tab == InventoryUiState.Tab.Build);
+        Tab("tab-research", "Research", 10, () => SwitchTab(InventoryUiState.Tab.Research), _tab == InventoryUiState.Tab.Research);
         for (var i = 0; i < GameSimulation.LoadoutCount; i++)
         {
             var index = i;
@@ -536,7 +538,7 @@ public sealed class InventoryUiState : UiState
                 Rebuild();
             }, $"loadout-{i + 1}", new UiStyle
             {
-                Left = FromRight(258f), Top = UiLength.Px(gearTop + (9 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
+                Left = FromRight(258f), Top = UiLength.Px(gearTop + (11 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
             }) { TextScale = 0.75f, Color = game.ActiveLoadout == i ? UiColor.ButtonActive : UiColor.ButtonDefault });
         }
 
@@ -550,6 +552,10 @@ public sealed class InventoryUiState : UiState
             AddBills(game, gearTop);
         else if (_tab == InventoryUiState.Tab.Farm)
             AddFarm(game, gearTop);
+        else if (_tab == InventoryUiState.Tab.Build)
+            AddBuild(game, gearTop);
+        else if (_tab == InventoryUiState.Tab.Research)
+            AddResearch(game, gearTop);
         else
             AddEquipment(game, gearTop);
     }
@@ -663,11 +669,11 @@ public sealed class InventoryUiState : UiState
         }
         var working = WorkCatalog.All.Where(info => info.HasJobs).ToArray();
         // A grid, as in RimWorld's work tab: one column per work type (headed by its first letters), then where they stay.
-        const float column = 27f;
+        const float column = 22f;
         if (crew.Length > 0)
         {
             for (var c = 0; c < working.Length; c++)
-                Add(new UiTextElement(working[c].Label[..Math.Min(4, working[c].Label.Length)], $"work-head-{working[c].Type}", new UiStyle
+                Add(new UiTextElement(working[c].Label[..Math.Min(3, working[c].Label.Length)], $"work-head-{working[c].Type}", new UiStyle
                 {
                     Left = UiLength.Mixed(-250f + c * column, 1f), Top = UiLength.Px(top + 24f), Width = UiLength.Px(column), Height = UiLength.Px(14f)
                 }) { Scale = 0.45f, Color = new UiColor(170, 178, 192) });
@@ -726,7 +732,7 @@ public sealed class InventoryUiState : UiState
             }) { TextScale = 0.5f, Color = npc.WorksStations ? UiColor.ButtonActive : UiColor.ButtonDefault });
             y2 += 26f;
         }
-        Add(new UiTextElement("Operate, Brew and Cook work the Bills tab's bills (chem labs brew, cooking stations cook); Farm works the Farm tab's zones; Fish fishes water near home. Hungry crew eat from the chests near home.",
+        Add(new UiTextElement("Operate, Brew and Cook work the Bills tab's bills; Farm the Farm tab's zones; Fish water near home; Build the Build tab's blueprints; Research the Research tab's project. Hungry crew eat from chests near home.",
             "work-later", new UiStyle
             {
                 Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y2 + 4f), Width = UiLength.Px(240f), Height = UiLength.Px(32f)
@@ -761,6 +767,85 @@ public sealed class InventoryUiState : UiState
                 Left = UiLength.Px(right - (listed.Count - i) * (width + 2f)), Top = UiLength.Px(chestTop), Width = UiLength.Px(width), Height = UiLength.Px(20f)
             }) { TextScale = 0.45f, Color = (takes & category) != 0 ? UiColor.ButtonActive : UiColor.ButtonDefault });
         }
+    }
+
+    /// <summary>
+    /// The Build tab (0.2.7): blueprint mode on or off (while on, placing a block marks a blueprint for Build crew instead,
+    /// and clicking a marked cell again unmarks it), how many are waiting and for which blocks, and a clear button.
+    /// </summary>
+    private void AddBuild(GameSimulation game, float top)
+    {
+        UiStyle At(float left, float y, float width, float height = 22f) => new()
+        {
+            Left = UiLength.Mixed(-250f + left, 1f), Top = UiLength.Px(y), Width = UiLength.Px(width), Height = UiLength.Px(height)
+        };
+        void Text(string text, string id, float y, float scale = 0.6f, UiColor? color = null) =>
+            Add(new UiTextElement(text, id, At(0f, y, 240f, 18f)) { Scale = scale, Color = color ?? new UiColor(226, 230, 238) });
+        Text("Blueprints (Build crew place them)", "build-title", top, 0.8f, new UiColor(242, 176, 64));
+        Add(new UiButtonElement(game.BlueprintMode ? "Blueprint mode: on" : "Blueprint mode: off", () =>
+        {
+            game.BlueprintMode = !game.BlueprintMode;
+            Status(game.BlueprintMode ? "Blueprint mode on: placing a block marks it for Build crew." : "Blueprint mode off.");
+            Rebuild();
+        }, "build-mode", At(0f, top + 26f, 150f)) { TextScale = 0.55f, Color = game.BlueprintMode ? UiColor.ButtonActive : UiColor.ButtonDefault });
+        Add(new UiButtonElement("Clear all", () => { game.ClearBlueprints(); Rebuild(); }, "build-clear", At(156f, top + 26f, 84f)) { TextScale = 0.55f });
+        var y = top + 54f;
+        Text($"{game.Blueprints.Count} blueprint(s) waiting.", "build-count", y);
+        foreach (var (item, count) in game.Blueprints.Values.GroupBy(item => item).Select(group => (group.Key, group.Count()))
+                     .OrderByDescending(entry => entry.Item2).Take(8))
+        {
+            y += 18f;
+            var stored = game.Containers.Values.Sum(chest => chest.Count(item));
+            Text($"{game.Items[item].Name}: {count} (in chests: {stored})", $"build-item-{item}", y, 0.55f,
+                stored == 0 ? new UiColor(150, 160, 172) : null);
+        }
+        Text("Turn blueprint mode on, pick a block in the hotbar and click where it goes. Builders fetch blocks from chests near home.",
+            "build-help", y + 26f, 0.5f, new UiColor(150, 160, 172));
+    }
+
+    /// <summary>
+    /// The Research tab (0.2.7): one row per project with its progress; "Study" chooses the project Research crew work on
+    /// at a research terminal or lab near home.
+    /// </summary>
+    private void AddResearch(GameSimulation game, float top)
+    {
+        Add(new UiTextElement("Research (Research crew study it)", "research-title", new UiStyle
+        {
+            Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top), Width = UiLength.Px(240f), Height = UiLength.Px(22f)
+        }) { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
+        var y = top + 26f;
+        foreach (var project in GameSimulation.ResearchProjects)
+        {
+            var done = game.ResearchDone(project.Id);
+            var current = string.Equals(game.CurrentResearch, project.Id, StringComparison.OrdinalIgnoreCase);
+            var percent = (int)(100f * game.ResearchProgress(project.Id) / project.Cost);
+            var state = done ? "done" : !game.CanResearch(project.Id) ? $"needs {GameSimulation.FindProject(project.Requires!)!.Name}" : $"{percent}%";
+            Add(new UiTextElement($"{project.Name} · {state}", $"research-name-{project.Id}", new UiStyle
+            {
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y), Width = UiLength.Px(180f), Height = UiLength.Px(16f)
+            }) { Scale = 0.55f, Color = done ? new UiColor(150, 200, 150) : game.CanResearch(project.Id) ? new UiColor(226, 230, 238) : new UiColor(150, 160, 172) });
+            Add(new UiTextElement(project.Gives, $"research-gives-{project.Id}", new UiStyle
+            {
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y + 15f), Width = UiLength.Px(180f), Height = UiLength.Px(14f)
+            }) { Scale = 0.45f, Color = new UiColor(150, 160, 172) });
+            if (!done && game.CanResearch(project.Id))
+            {
+                var id = project.Id;
+                Add(new UiButtonElement(current ? "Studying" : "Study", () =>
+                {
+                    game.ChooseResearch(id);
+                    Rebuild();
+                }, $"research-{project.Id}", new UiStyle
+                {
+                    Left = UiLength.Mixed(-66f, 1f), Top = UiLength.Px(y + 2f), Width = UiLength.Px(56f), Height = UiLength.Px(22f)
+                }) { TextScale = 0.5f, Color = current ? UiColor.ButtonActive : UiColor.ButtonDefault });
+            }
+            y += 34f;
+        }
+        Add(new UiTextElement("Research crew study at a research terminal or lab within 24 tiles of home.", "research-help", new UiStyle
+        {
+            Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y + 4f), Width = UiLength.Px(240f), Height = UiLength.Px(28f)
+        }) { Scale = 0.5f, Color = new UiColor(150, 160, 172) });
     }
 
     /// <summary>

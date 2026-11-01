@@ -157,7 +157,7 @@ public sealed partial class GameSimulation
         agent.Activity = "Fishing";
         Move(center);
         agent.FarmProgress += deltaSeconds;
-        if (agent.FarmProgress < FishSeconds(agent.ColonistStats))
+        if (agent.FarmProgress < FishSeconds(agent.ColonistStats) / ResearchFishSpeed)
             return true;
         agent.FarmProgress = 0f;
         var context = GetFishingContext(water, LiquidKind.Water, MeasurePool(water, LiquidKind.Water), CrewFishingPower(agent.ColonistStats));

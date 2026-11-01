@@ -39,8 +39,8 @@ public static class WorkCatalog
         new(WorkType.Brew, "Brew", ColonistSkill.Medical, true, "Work bills at chem labs: brew potions from herbs."),
         new(WorkType.Cook, "Cook", ColonistSkill.Cooking, true, "Work bills at cooking stations: meals for the crew."),
         new(WorkType.Fish, "Fish", ColonistSkill.Animals, true, "Fish open water near home; store the catch."),
-        new(WorkType.Build, "Build", ColonistSkill.Construction, false, "Build from placed blueprints (coming)."),
-        new(WorkType.Research, "Research", ColonistSkill.Intellectual, false, "Unlock recipes and ship parts (coming)."),
+        new(WorkType.Build, "Build", ColonistSkill.Construction, true, "Build the blueprints the player places, with blocks from storage."),
+        new(WorkType.Research, "Research", ColonistSkill.Intellectual, true, "Study the chosen project at a research terminal or lab."),
         new(WorkType.Trade, "Trade", ColonistSkill.Social, false, "Better prices with traders (coming).")
     ];
 

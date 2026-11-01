@@ -866,6 +866,8 @@ public sealed class ColonistAgent : IColonyPawn, Rimtera.Systems.IStationWorker
     public Dictionary<Rimtera.Systems.ItemId, int> Pouch { get; } = new();
     /// <summary>The grow-zone cell this farmer is planting or harvesting, and the seconds put into it.</summary>
     public Rimtera.World.GridPoint? FarmTarget { get; set; }
+    /// <summary>Blocks a builder carries to the blueprints (Build work, 0.2.7).</summary>
+    public Rimtera.Systems.ItemStack BuildStock { get; set; }
     public float FarmProgress { get; set; }
     public PawnMotionState Motion { get; }
     public SurvivalNeeds Needs { get; }

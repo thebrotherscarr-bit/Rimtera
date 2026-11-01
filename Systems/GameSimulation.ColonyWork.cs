@@ -26,8 +26,10 @@ public sealed partial class GameSimulation
     /// <summary>Asks each enabled job giver in priority order; true when one gave a job and the colonist worked it.</summary>
     private bool TryColonyWork(ColonistAgent agent, Vector2 center, float deltaSeconds, float elapsedHours)
     {
+        if (agent.Work.Priority(WorkType.Build) == WorkCatalog.Off && !agent.BuildStock.IsEmpty)
+            DropBuildStock(agent, center); // taken off Build: blocks are set down for the haulers
         if (agent.Work.Priority(WorkType.Farm) == WorkCatalog.Off && agent.Work.Priority(WorkType.Fish) == WorkCatalog.Off &&
-            (agent.Pouch.Count > 0 || agent.FarmTarget is not null))
+            agent.Pouch.Count > 0)
             DropPouch(agent, center); // taken off Farm: seeds and herbs are set down for the haulers
         if (agent.Work.Priority(WorkType.Operate) == WorkCatalog.Off && agent.Work.Priority(WorkType.Brew) == WorkCatalog.Off &&
             agent.Work.Priority(WorkType.Cook) == WorkCatalog.Off &&
@@ -46,6 +48,8 @@ public sealed partial class GameSimulation
                 WorkType.Operate or WorkType.Brew or WorkType.Cook => TryOperate(agent, center, deltaSeconds, target => StepColonistToward(agent, center, target, deltaSeconds, 1f), work),
                 WorkType.Farm => TryFarm(agent, center, deltaSeconds),
                 WorkType.Fish => TryFish(agent, center, deltaSeconds),
+                WorkType.Build => TryBuild(agent, center, deltaSeconds),
+                WorkType.Research => TryResearch(agent, center, deltaSeconds),
                 _ => false // no job giver yet
             };
             if (worked)
@@ -53,7 +57,7 @@ public sealed partial class GameSimulation
                 agent.CurrentWork = work;
                 if (work is not (WorkType.Operate or WorkType.Brew or WorkType.Cook))
                     agent.OperateStation = null; // free the station for another operator meanwhile
-                if (work is not (WorkType.Farm or WorkType.Fish))
+                if (work is not (WorkType.Farm or WorkType.Fish or WorkType.Build or WorkType.Research))
                     agent.FarmTarget = null;
                 return true;
             }
