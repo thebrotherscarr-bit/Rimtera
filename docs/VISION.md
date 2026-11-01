@@ -25,7 +25,7 @@ and your people's outposts. Because the storyteller and the people differ every 
 | **Progress** | Terraria's ladder as it is: ores, bars, gear, bosses, hardmode | Research that takes time, opened by bosses |
 | **Pressure** | The events and invasions themselves | The storyteller that schedules them, with advance warning |
 | **People** | Move-in rules, shops, happiness, housing | Skills, backgrounds, traits, injuries, permadeath, gear, prisoners |
-| **Build your way** | Class gear and accessories, crafted and found | Equipping your people |
+| **Gear and build your way** | All of it: gearing, items, equipment, accessories, class builds | Only the act of equipping your people (with that same Terraria gear) |
 
 **Where they mix:** push yourself to progress, and let your people semi-automate around you. For example, build a
 potion setup, then find a good chemist who keeps you stocked with healing for your next dive. That is handy, never
@@ -41,6 +41,10 @@ required. You can always do it yourself.
   - class builds from gear you craft and find, as in Terraria.
 - **Research adds time on top.** Beating a boss opens the next research tier. Studying it takes time, and when it
   finishes it unlocks the new recipes and stations that tier brings. Better researchers study faster.
+
+- **Gear is Terraria's.** Gearing, itemization, equipment and accessories all follow Terraria: the same kinds of
+  weapons, armour sets, accessories and class builds, crafted and found the same way. Your people wear that same
+  gear: RimWorld supplies the act of equipping them, not a separate item system.
 
 ### 3.2 The station AI powers the base
 - The station AI powers the crafting stations.

@@ -20,6 +20,7 @@ Written 2026-10-31; re-based on `docs/VISION.md` (2026-11-01), which now holds t
   - A Terraria run with more chaos and calamity: 10–14 hours to launch, then you may **continue in the world** for a long-scale playthrough.
   - People start shallow (a trade, skills, an outpost to guard, gear), then gain RimWorld's depth: backgrounds, traits, incapabilities, lasting injuries, prisoners and conversion. Losing a skilled person matters.
   - **The colony works by default, by skill:** no bills or work orders to set. The 0.2.x Work tab and bills become optional, then are cut or hidden (0.3.9).
+  - **Gear is Terraria's** (owner, 2026-11-01): gearing, itemization, equipment and accessories all follow Terraria. People are equipped with that same gear.
   - **The station AI powers the crafting stations.** It boots on energy cells or ore, and its fuel is tied to progress. Losing it no longer ends the run: the stations go dark until it is rebuilt.
   - **The storyteller runs every event, with advance warning, and events are purposeful:** they push you through the run's story. A tower-defence feel at the base and the outposts.
   - **Local split-screen co-op for up to four in 1.1, networked multiplayer in 1.2**, both pre-planned (groundwork in 0.3.10).
