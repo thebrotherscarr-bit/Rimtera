@@ -37,6 +37,7 @@ public static class ItemAudit
     {
         "ammosave", "ap", "ap-melee", "attackspeed", "build", "chargecost", "chargehit", "crit", "dmg", "dmg-command", "dmg-melee",
         "dmg-ranged", "dmg-tech", "dodge", "drone", "endurance", "fish", "lifesteal", "light", "mining", "reach", "sentry", "speed", "thorns",
+        "potion-sickness",
     };
 
     private static ItemCatalog? _catalog;

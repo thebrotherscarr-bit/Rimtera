@@ -1377,6 +1377,13 @@ public enum ItemId : ushort
     GritStormRod = 6910, NautilusHarpoonGun = 6911, HexerSceptre = 6912, LancerJoust = 6913, RootwalkerBranch = 6914,
     PineNeedleRepeater = 6915, CryoTankCannon = 6916,
     // Kill banners use dynamic ids: PlayerItems.BannerBase + (int)EnemyKind.
+    // ---- Combat core: sustain (explicit band 9500-9599; definitions in Systems/Content/ContentItems.cs, docs/roadmap/0.1.9.md C1-C3) ----
+    // The healing ladder above the Med stim (100 / 150 / 200), the restoration stim (90, shorter sickness) and the charge
+    // ladder above the small charge cell (100 / 200 / 300).
+    TraumaStim = 9500, NaniteStim = 9501, PhoenixStim = 9502, RestorationStim = 9503,
+    ChargeCellMedium = 9504, ChargeCellLarge = 9505, ChargeCellPeak = 9506,
+    // Instant pickups dropped by kills: applied on touch, never enter the inventory.
+    HeartPickup = 9507, ChargeOrb = 9508,
 }
 
 public enum ItemUseKind : byte
@@ -1589,6 +1596,16 @@ public sealed record ItemDefinition(
     public float HealAmount { get; init; }
     /// <summary>Charge restored when consumed (charge cells).</summary>
     public float ChargeRestore { get; init; }
+    /// <summary>Healing items: potion sickness in real seconds (0 = the standard <see cref="GameSimulation.PotionSicknessSeconds"/>).</summary>
+    public float PotionSicknessSeconds { get; init; }
+    /// <summary>Cooked food: hit points restored when eaten (a deliberate use, so decision 3 holds).</summary>
+    public float FoodHeal { get; init; }
+    /// <summary>Hearts and charge orbs: applied the moment they are touched; they never enter the inventory.</summary>
+    public bool IsInstantPickup { get; init; }
+    /// <summary>Instant pickups: hit points healed on touch.</summary>
+    public float PickupHeal { get; init; }
+    /// <summary>Instant pickups: charge restored on touch.</summary>
+    public float PickupCharge { get; init; }
     /// <summary>Fishing rods: base fishing power; accessories and buffs add to it.</summary>
     public int FishingPower { get; init; }
     /// <summary>Bait strength (caught critters and special bait); 0 = not bait.</summary>
@@ -1634,6 +1651,8 @@ public sealed class ItemCatalog
         WeaponStyleAssignments.Apply(_items);
         DefenseBalance.Apply(_items);
         ToolCombat.Apply(_items); // tools are melee weapons too: tier damage, knockback and the melee class
+        ContentItems.ApplySustain(_items); // cooked food heals; the potion-sickness accessory tag (0.1.9 C1)
+        ContentItems.ApplyStackSizes(_items); // one stack-size pass: 9999 for every stackable (0.1.9 C5)
     }
 
     private readonly Dictionary<ItemId, ItemDefinition> _items = new()

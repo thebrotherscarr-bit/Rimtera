@@ -1280,6 +1280,7 @@ public sealed partial class GameSimulation : IStoryHost
         }
         Player.Needs.Restore(NeedKind.Food, food.FoodRestore);
         SoundEvents.Emit(SoundEventKind.Eat, string.Empty, PlayerCenter, (int)food.Id);
+        if (food.FoodHeal > 0f) Player.Heal(food.FoodHeal); // cooked food heals a little (0.1.9 C1; a deliberate use)
         GearOnAte(food);
         if (food.Id == ItemId.Berry)
             Player.Mind.Thoughts.AddMemory(ThoughtId.AteNanoBanana);
@@ -1726,6 +1727,7 @@ public sealed partial class GameSimulation : IStoryHost
         {
             foreach (var drop in BossDropsOrBag(enemy))
                 DropLoot(enemy, drop.Item, drop.Quantity);
+            DropSustainLoot(enemy); // boss potions, hearts and charge orbs (0.1.9 C2/C3; GroundItems.cs)
             OnCreatureDefeated(enemy);
 
             if (enemy.IsBoss)

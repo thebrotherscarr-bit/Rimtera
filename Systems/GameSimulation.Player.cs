@@ -116,7 +116,8 @@ public sealed partial class GameSimulation
     public const float FallDamagePerTile = 10f;
     /// <summary>Upward speed (tiles/s) given when swimming up out of a liquid with jump held.</summary>
     public const float LiquidExitBoost = 11.5f * LiftScale;
-    public const float PotionSicknessSeconds = 45f;
+    /// <summary>Potion sickness after a healing item (Terraria: 60 s; 45 s with the Charm of Myths analog).</summary>
+    public const float PotionSicknessSeconds = 60f;
     public const float PhaseStrainSeconds = 6f;
     public const int LoadoutCount = 3;
     public const int BankSlots = 40;
@@ -714,23 +715,33 @@ public sealed partial class GameSimulation
             PostMessage(candidates.Length == 0 ? "No healing items." : "Already at full health.");
             return false;
         }
-        var pick = candidates.Where(item => item.HealAmount >= missing).OrderBy(item => item.HealAmount).FirstOrDefault()
-                   ?? candidates.OrderByDescending(item => item.HealAmount).First();
+        var pick = PickHealingItem(candidates, missing)!;
         if (!Player.Inventory.TryConsume(pick.Id))
             return false;
         Player.Heal(pick.HealAmount);
-        ApplyPotionSickness();
+        ApplyPotionSickness(pick);
         PostMessage($"Quick heal: {pick.Name} (+{pick.HealAmount:0}).");
         return true;
     }
 
-    /// <summary>Uses a charge item when Charge is not full.</summary>
+    /// <summary>Quick heal's choice: the smallest healing item that covers the missing hit points, otherwise the largest.</summary>
+    public static ItemDefinition? PickHealingItem(IEnumerable<ItemDefinition> candidates, float missing)
+    {
+        var healing = candidates.Where(item => item.HealAmount > 0f).ToArray();
+        return healing.Where(item => item.HealAmount >= missing).OrderBy(item => item.HealAmount).FirstOrDefault()
+               ?? healing.OrderByDescending(item => item.HealAmount).FirstOrDefault();
+    }
+
+    /// <summary>Uses the charge item that best covers the missing charge (the smallest that covers it, else the largest).</summary>
     public bool QuickCharge()
     {
         if (Player.IsDead || Charge >= MaximumCharge - 0.5f)
             return false;
-        var pick = Player.Inventory.Slots.Where(stack => !stack.IsEmpty && Items[stack.ItemId].ChargeRestore > 0f)
-            .Select(stack => Items[stack.ItemId]).OrderBy(item => item.ChargeRestore).FirstOrDefault();
+        var missing = MaximumCharge - Charge;
+        var candidates = Player.Inventory.Slots.Where(stack => !stack.IsEmpty && Items[stack.ItemId].ChargeRestore > 0f)
+            .Select(stack => Items[stack.ItemId]).DistinctBy(item => item.Id).ToArray();
+        var pick = candidates.Where(item => item.ChargeRestore >= missing).OrderBy(item => item.ChargeRestore).FirstOrDefault()
+                   ?? candidates.OrderByDescending(item => item.ChargeRestore).FirstOrDefault();
         if (pick is null || !Player.Inventory.TryConsume(pick.Id))
         {
             PostMessage("No charge items.");
@@ -761,8 +772,19 @@ public sealed partial class GameSimulation
         return used;
     }
 
-    private void ApplyPotionSickness() =>
-        Player.Statuses.Apply(StatusId.PotionSickness, PotionSicknessSeconds * VitalHoursPerRealSecond);
+    /// <summary>
+    /// Real seconds of potion sickness a healing item brings on: its own (the restoration stim's 45 s) or the standard 60 s,
+    /// scaled by a worn "potion-sickness:factor" tag (the Bio-weave's 0.75, Terraria's Charm of Myths).
+    /// </summary>
+    public float PotionSicknessFor(ItemDefinition item)
+    {
+        var seconds = item.PotionSicknessSeconds > 0f ? item.PotionSicknessSeconds : PotionSicknessSeconds;
+        var factor = GearTagValue(ContentItems.PotionSicknessTag);
+        return factor > 0f ? seconds * Math.Clamp(factor, 0.25f, 1f) : seconds;
+    }
+
+    private void ApplyPotionSickness(ItemDefinition item) =>
+        Player.Statuses.Apply(StatusId.PotionSickness, PotionSicknessFor(item) * VitalHoursPerRealSecond);
 
     /// <summary>Batch B consumables (charge crystals, healing items' sickness). True when fully handled.</summary>
     private bool ConsumeBatchBItem(ItemDefinition item)
@@ -789,7 +811,14 @@ public sealed partial class GameSimulation
                 PostMessage("Stim fatigue: you cannot use another healing item yet.");
                 return true;
             }
-            ApplyPotionSickness();
+            ApplyPotionSickness(item);
+        }
+        if (item.IsInstantPickup)
+        {
+            // A heart or charge orb that somehow reached a bag (creative spawn, old save) is used up on the spot.
+            if (Player.Inventory.TryConsume(item.Id))
+                ApplyInstantPickup(item);
+            return true;
         }
         return false;
     }

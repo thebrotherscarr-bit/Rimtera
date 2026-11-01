@@ -473,7 +473,11 @@ public static class CraftingAudit
         foreach (var archetype in EnemyArchetypes.All)
         {
             var kind = archetype.Kind;
-            var drops = NpcDropRegistry.GetDrops(kind).Select(drop => drop.Item).ToList();
+            // Drop rules (0.1.9 C4): chances never block an item; conditions do. Unconditional rules join the kind's own rule,
+            // conditional ones get a rule of their own (after the Fracture, during their event); Brutal-only rules are skipped.
+            var allRules = NpcDropRegistry.GetDrops(kind).Where(drop => drop.MinimumDifficulty <= WorldDifficulty.Classic).ToArray();
+            var drops = allRules.Where(drop => !DropConditionGates(drop)).Select(drop => drop.Item).ToList();
+            var conditional = allRules.Where(DropConditionGates).ToArray();
             if (archetype.CreditDrop > 0)
                 drops.Add(ItemId.Credits);
             if (archetype.IsBoss)
@@ -493,7 +497,10 @@ public static class CraftingAudit
                     EnemyKind.VoidStalker => [ItemId.VoidEssence],
                     _ => Array.Empty<ItemId>()
                 });
+                // Every boss leaves healing stims of its tier (GameSimulation.DropSustainLoot, outside the salvage cache).
+                drops.Add(GameSimulation.BossPotions(archetype.Tier).Stim);
                 rules.Add(new Rule($"defeat {archetype.DisplayName}", state => state.Defeated.Contains(kind), drops.Where(items.Contains).ToArray()));
+                AddConditionalDropRules(rules, items, $"defeat {archetype.DisplayName}", state => state.Defeated.Contains(kind), conditional);
                 continue;
             }
             if (ArsenalItems.MobDrops.TryGetValue(kind, out var mob))
@@ -503,7 +510,7 @@ public static class CraftingAudit
                                                                           (!hard.Contains(kind) || state.Fracture), [critter]));
             if (PlayerItems.EarnsBanner(kind) && items.Contains(PlayerItems.BannerFor(kind)))
                 drops.Add(PlayerItems.BannerFor(kind));
-            if (drops.Count == 0)
+            if (drops.Count == 0 && conditional.Length == 0)
                 continue;
             Func<State, bool> ready;
             string where;
@@ -544,9 +551,28 @@ public static class CraftingAudit
                 where = "in the wild";
             }
             rules.Add(new Rule($"kill {archetype.DisplayName} ({where})", ready, drops.Where(items.Contains).Distinct().ToArray()));
+            AddConditionalDropRules(rules, items, $"kill {archetype.DisplayName} ({where})", ready, conditional);
         }
         // Essences: any creature after the Fracture in the right place.
         rules.Add(new Rule("Fracture essences", state => state.Fracture, [ItemId.FlightEssence, ItemId.PrismEssence, ItemId.BlightEssence]));
+        // Hearts and charge orbs: any hostile kill may leave one (instant pickups; GameSimulation.DropSustainLoot).
+        rules.Add(new Rule("hearts and charge orbs from kills", _ => true, [ItemId.HeartPickup, ItemId.ChargeOrb]));
+    }
+
+    /// <summary>Conditions that delay a drop in a Classic run: the Fracture and a running event (night and day come round).</summary>
+    private static bool DropConditionGates(NpcDropDefinition drop) =>
+        (drop.Conditions & (DropCondition.Fracture | DropCondition.DuringEvent)) != 0;
+
+    private static void AddConditionalDropRules(List<Rule> rules, ItemCatalog items, string source, Func<State, bool> ready,
+        IEnumerable<NpcDropDefinition> conditional)
+    {
+        foreach (var drop in conditional.Where(drop => items.Contains(drop.Item)))
+        {
+            var fracture = drop.Conditions.HasFlag(DropCondition.Fracture);
+            var during = drop.Conditions.HasFlag(DropCondition.DuringEvent) ? drop.Event : null;
+            rules.Add(new Rule($"{source}{(fracture ? " after the Fracture" : "")}{(during is { } kind ? $" during {kind}" : "")}",
+                state => ready(state) && (!fracture || state.Fracture) && (during is not { } e || state.Events.Contains(e)), [drop.Item]));
+        }
     }
 
     /// <summary>When each resident can move in (GameSimulation.Town RefreshUnlockFlags and friends).</summary>

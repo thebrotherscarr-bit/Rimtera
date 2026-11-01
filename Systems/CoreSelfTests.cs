@@ -23,10 +23,11 @@ public static class CoreSelfTests
 
         var itemCatalog = new ItemCatalog();
         var inventory = new Inventory(itemCatalog, slotCount: 4);
-        Check(inventory.Add(ItemId.Arrow, 1000) == 1000, "inventory accepts and splits stacks");
-        Check(inventory.Count(ItemId.Arrow) == 1000 && inventory.Slots.Count(stack => stack.Count == 999) == 1,
+        // Stacks hold 9999 since 0.1.9 (IC-19).
+        Check(inventory.Add(ItemId.Arrow, 10000) == 10000, "inventory accepts and splits stacks");
+        Check(inventory.Count(ItemId.Arrow) == 10000 && inventory.Slots.Count(stack => stack.Count == 9999) == 1,
             "inventory stack limits");
-        Check(inventory.TryConsume(ItemId.Arrow, 7) && inventory.Count(ItemId.Arrow) == 993,
+        Check(inventory.TryConsume(ItemId.Arrow, 7) && inventory.Count(ItemId.Arrow) == 9993,
             "inventory consumes across stacks");
 
         var tiles = new TileCatalog();
@@ -1707,6 +1708,8 @@ public static class CoreSelfTests
         CraftingAuditSelfTests.Run(Check); // crafting progression: a felled tree builds the first station; every station and item is reachable (docs/CRAFTING_PROGRESSION.md)
         SoundEventSelfTests.Run(Check); // 0.1.9 feedback: simulation sound events, despawns are not kills, dust under the cap, crit records (PE-4/5/7/14)
         TooltipSelfTests.Run(Check); // 0.1.9 IC-17: the truthful item tooltip (class damage, real ammo, calibration, sets, sell value)
+        HealingLadderSelfTests.Run(Check); // 0.1.9 C1: healing and charge ladders, their gates, potion sickness, quick heal, cooked food
+        DropRuleSelfTests.Run(Check); // 0.1.9 C2-C5: drop chances and conditions, event drops, hearts and orbs, boss potions, 9999 stacks
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }
