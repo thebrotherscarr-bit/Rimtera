@@ -10,6 +10,8 @@ public static class CoreSelfTests
 {
     public static int Run()
     {
+        // The checks were written against the 250-second cycle; the real clock has its own checks (ModesSelfTests).
+        GameSimulation.FastClock = true;
         var passed = 0;
         void Check(bool condition, string name)
         {
@@ -1051,7 +1053,7 @@ public static class CoreSelfTests
         static GameSimulation RunStory(int seed, int maxHours)
         {
             var sim = new GameSimulation(seed: seed, width: 80, height: 48);
-            var ticks = (int)(maxHours / (0.25f * GameSimulation.GameHoursPerRealSecond));
+            var ticks = (int)(maxHours / (0.25f * GameSimulation.ClockHoursPerRealSecond));
             for (var i = 0; i < ticks && sim.IncidentLog.Count < 2 && !sim.IsOver; i++)
             {
                 // Keep the idle test pawn alive so wildlife cannot end the run early.

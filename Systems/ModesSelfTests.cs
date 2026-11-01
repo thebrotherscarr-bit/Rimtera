@@ -276,5 +276,66 @@ public static class ModesSelfTests
         var gotRelic = relic is { } relicId && (annihilation.GroundItems.Any(item => item.ItemId == relicId) || annihilation.Player.Inventory.Count(relicId) > 0);
         check(gotRelic && annihilation.BagReplacesBossLoot(boss),
             "an Annihilation boss leaves its salvage cache and a relic (relics drop only on Annihilation)");
+
+        // ---- 0.1.11: Terraria's clock (a 15-minute day and a 9-minute night); buffs keep real time ----
+        var fast = GameSimulation.FastClock;
+        try
+        {
+            GameSimulation.FastClock = false;
+            var (day, night) = MeasureCycle(9312);
+            var buffClock = new GameSimulation(seed: 9313, width: 80, height: 48);
+            buffClock.Player.Statuses.Apply(StatusId.Regeneration, 4f);
+            var buffBefore = buffClock.ActiveBuffs.First(buff => buff.Status == StatusId.Regeneration).RemainingSeconds;
+            for (var i = 0; i < 40; i++)
+                buffClock.Tick(new GameInput(new MovementInput(0f)), 0.25f);
+            var after = buffClock.ActiveBuffs.First(buff => buff.Status == StatusId.Regeneration).RemainingSeconds;
+            GameSimulation.FastClock = true;
+            var (fastDay, fastNight) = MeasureCycle(9314);
+            check(MathF.Abs(day - 900f) <= 5f && MathF.Abs(night - 540f) <= 5f && MathF.Abs(buffBefore - 50f) < 0.5f && MathF.Abs(buffBefore - after - 10f) < 0.5f &&
+                  MathF.Abs(fastDay + fastNight - 250f) <= 5f,
+                $"a day lasts 15 real minutes and a night 9 ({day:0} s and {night:0} s); a buff still runs on real seconds; --fast-clock keeps the old 250 s cycle ({fastDay + fastNight:0} s)");
+        }
+        finally
+        {
+            GameSimulation.FastClock = fast;
+        }
+
+        // ---- 0.1.11: moons end at dawn and day events at dusk; outlasting one is not clearing it ----
+        var skies = new GameSimulation(seed: 9315, width: 80, height: 48) { FamilySpawnsEnabled = false };
+        skies.Flags.Set("boss.stone_sentinel.down");
+        skies.Flags.Set("blight.fracture");
+        skies.WorldEvents.TryStart(WorldEventKind.RustMoon, skies, forced: true, out _);
+        skies.WorldEvents.TryStart(WorldEventKind.DarkSun, skies, forced: true, out _);
+        skies.WorldEvents.Advance(1f, null, skies);
+        var bothRunning = skies.WorldEvents.IsActive(WorldEventKind.RustMoon) && skies.WorldEvents.IsActive(WorldEventKind.DarkSun);
+        skies.WorldEvents.Advance(0f, WorldEventMoment.Dawn, skies);
+        var moonGone = !skies.WorldEvents.IsActive(WorldEventKind.RustMoon) && skies.WorldEvents.IsActive(WorldEventKind.DarkSun);
+        skies.WorldEvents.Advance(0f, WorldEventMoment.Dusk, skies);
+        check(bothRunning && moonGone && !skies.WorldEvents.IsActive(WorldEventKind.DarkSun) &&
+              skies.WorldEvents.Completions(WorldEventKind.RustMoon) == 0 && skies.WorldEvents.Completions(WorldEventKind.DarkSun) == 0 &&
+              !skies.Flags.IsSet(skies.WorldEvents.Spec(WorldEventKind.RustMoon).FlagName),
+            "the Rust Moon ends at dawn and the Dark Sun at dusk, and outlasting them does not count as clearing them");
+    }
+
+    /// <summary>Real seconds of day and of night over one whole cycle, dawn to dawn.</summary>
+    private static (float Day, float Night) MeasureCycle(int seed)
+    {
+        var game = new GameSimulation(seed: seed, width: 80, height: 48);
+        const float step = 0.25f;
+        void Tick()
+        {
+            game.Player.Heal(game.Player.MaximumHitPoints);
+            game.Tick(new GameInput(new MovementInput(0f)), step);
+        }
+        for (var i = 0; i < 20000 && !game.IsNight; i++)
+            Tick();
+        for (var i = 0; i < 20000 && game.IsNight; i++)
+            Tick();
+        float day = 0f, night = 0f;
+        for (var i = 0; i < 20000 && !game.IsNight; i++, day += step)
+            Tick();
+        for (var i = 0; i < 20000 && game.IsNight; i++, night += step)
+            Tick();
+        return (day, night);
     }
 }

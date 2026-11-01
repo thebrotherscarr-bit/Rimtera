@@ -97,8 +97,11 @@ public sealed partial class GameSimulation
     public const float BannerRadius = 30f;
     public const float BannerDamageBonus = 1.25f;
     public const float BannerDamageTakenFactor = 0.8f;
-    public const float BaseRespawnSeconds = 5f;
-    public const float BossRespawnSeconds = 20f;
+    /// <summary>Terraria's respawn timer: 10 seconds, half as long again on Brutal and Annihilation; 3 on Explorer.</summary>
+    public const float BaseRespawnSeconds = 10f;
+    public const float HarshRespawnFactor = 1.5f;
+    public const float ExplorerRespawnSeconds = 3f;
+    public const float MaxRespawnSeconds = BaseRespawnSeconds * HarshRespawnFactor;
     public const float GrappleRange = 15f;
     public const float GrappleSpeed = 26f;
     public const float GrappleReelSpeed = 14f;
@@ -217,10 +220,10 @@ public sealed partial class GameSimulation
         get
         {
             var list = new List<BuffView>();
-            var secondsPerHour = 1f / GameHoursPerRealSecond;
+            var secondsPerHour = 1f / VitalHoursPerRealSecond;
             foreach (var status in Player.Statuses.Active)
                 list.Add(new BuffView(status.Id.ToString(), StatusName(status.Id), "buff_" + SnakeCase(status.Id.ToString()),
-                    status.RemainingHours * secondsPerHour / TimeRate, StatusEffectSystem.IsDebuff(status.Id), status.Id));
+                    status.RemainingHours * secondsPerHour, StatusEffectSystem.IsDebuff(status.Id), status.Id));
             if (ActiveMountSpec is { } mountSpec)
                 list.Add(new BuffView("mount", mountSpec.Name, "buff_" + mountSpec.Sprite[6..], float.PositiveInfinity, false));
             if (_pet is { } pet)
@@ -701,7 +704,7 @@ public sealed partial class GameSimulation
     }
 
     private void ApplyPotionSickness() =>
-        Player.Statuses.Apply(StatusId.PotionSickness, PotionSicknessSeconds * GameHoursPerRealSecond);
+        Player.Statuses.Apply(StatusId.PotionSickness, PotionSicknessSeconds * VitalHoursPerRealSecond);
 
     /// <summary>Batch B consumables (charge crystals, healing items' sickness). True when fully handled.</summary>
     private bool ConsumeBatchBItem(ItemDefinition item)
@@ -791,7 +794,7 @@ public sealed partial class GameSimulation
         Player.Motion.Velocity = Vector2.Zero;
         Player.Motion.FallPeakY = position.Y;
         _grapple = null;
-        Player.Statuses.Apply(StatusId.PhaseStrain, PhaseStrainSeconds * GameHoursPerRealSecond);
+        Player.Statuses.Apply(StatusId.PhaseStrain, PhaseStrainSeconds * VitalHoursPerRealSecond);
         Flags.Increment("player.teleports");
         PostMessage("You phase across the gap.");
         return true;
@@ -1055,9 +1058,14 @@ public sealed partial class GameSimulation
         return null;
     }
 
-    /// <summary>Seconds before a dead player may respawn: 3 (Explorer) or 5, or 20 while a boss lives.</summary>
+    /// <summary>
+    /// Seconds before a dead player may respawn, as in Terraria: 10, or 15 on Brutal and Annihilation worlds; 3 for an
+    /// Explorer. A living boss does not lengthen it in single player (it leaves once the player is dead).
+    /// </summary>
     public float GetRespawnDelay(CharacterDifficulty difficulty) =>
-        BossBlocksRespawn ? BossRespawnSeconds : difficulty == CharacterDifficulty.Explorer ? 3f : BaseRespawnSeconds;
+        difficulty == CharacterDifficulty.Explorer ? ExplorerRespawnSeconds
+        : Difficulty >= WorldDifficulty.Brutal ? BaseRespawnSeconds * HarshRespawnFactor
+        : BaseRespawnSeconds;
 
     /// <summary>Called every tick while the player is dead: tombstone on the first tick, then the respawn countdown.</summary>
     private void UpdateWhileDead(float deltaSeconds)
@@ -1067,7 +1075,7 @@ public sealed partial class GameSimulation
             _deathHandled = true;
             _grapple = null;
             ActiveMount = MountKind.None;
-            _respawnSeconds = BossBlocksRespawn ? BossRespawnSeconds : BaseRespawnSeconds;
+            _respawnSeconds = GetRespawnDelay(PlayerProfile.Difficulty);
             PlaceTombstone();
             Flags.Increment("player.deaths");
             Achievements.TryUnlock("first-fall");
@@ -1295,7 +1303,7 @@ public sealed partial class GameSimulation
                 _killCounts[kind] = value;
         Bestiary.Restore(state.Bestiary);
         if (float.IsFinite(state.RespawnSecondsRemaining))
-            _respawnSeconds = Math.Clamp(state.RespawnSecondsRemaining, 0f, BossRespawnSeconds);
+            _respawnSeconds = Math.Clamp(state.RespawnSecondsRemaining, 0f, MaxRespawnSeconds);
         RefreshBanners();
     }
 
