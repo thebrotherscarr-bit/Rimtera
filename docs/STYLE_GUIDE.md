@@ -115,16 +115,44 @@ From the boss sheet:
 
 Panels, slots, bars, buttons and the cursor follow it (0.10.4).
 
-## 6. Sound (draft, to match the look)
-- **Weapons and machines:** punchy, crunchy and synthetic: servo whine, metallic clank, energy zaps, chiptune-flavoured
-  impacts.
-- **Organics:** wet, chittering and growling, with a slight metallic edge on the mechanical-organic creatures.
-- **Music:**
-  - retro-synth layered with orchestral weight for bosses;
-  - each biome takes its mood from its palette (cold and airy for Frozen, low and heavy for Molten, buzzing and uneasy
-    for Radiated, clanky and rhythmic for Junk).
+## 6. Sound: MIDI-sounding, Rimtera's sound profile
+Settled with the owner 2026-11-01. It reconciles the audio already begun (`docs/AUDIO_FLOW.md`; the style cards in
+`UI/SoundCatalog.cs`) with this guide's look. **The preference is MIDI-sounding:** the sound of a General MIDI sound
+module and the 16-bit era, like a classic sandbox game's soundtrack, rather than realistic recordings.
+
+### 6.1 Music
+- **The composition stays as begun.** Each theme keeps its style card: tempo, key, meter and arrangement character.
+  That covers the classical bones (Vivaldi-like runs, Bach counterpoint, Tchaikovsky waltzes), the funk and breakbeat
+  grooves, and rock for heat and bosses.
+- **The sound is MIDI.** Everything is played on General MIDI sound-module instruments:
+  - synth leads and synth bass;
+  - sampled strings, brass, harp, harpsichord and bells;
+  - choir pads;
+  - a drum kit.
+
+  The shared music prompt says so for every slot.
+- **The procedural engine** (`UI/AudioEngine.cs`) is the always-there fallback, and it already sounds synthetic. It
+  stays as the floor every generated track sits on top of.
+- **Weight by moment:**
+  - biomes take their mood from their palette (cold and airy for Frozen, low and heavy for Molten, buzzing and uneasy
+    for Radiated, clanky and rhythmic for Junk);
+  - bosses add orchestral and choir weight on top of the MIDI band.
+
+### 6.2 Sound effects
+- **Weapons and machines:** punchy, crunchy and synthetic, with a slight bit-crushed edge: servo whine, metallic
+  clank, energy zaps, impacts with a chiptune flavour.
+- **Organics:** wet, chittering and growling, with a metallic edge on the mechanical-organic creatures.
+- **UI:** clean retro blips with a MIDI and chiptune flavour; soft, short and subtle.
+- **Ambience:** stays natural (field-recording style) so the world feels real under the stylised music. It gets the
+  per-layer reverb: dry on the surface, roomier underground, metallic in the core.
 - **The station AI:** a clean, slightly vocoded voice, with interface blips.
-- `docs/AUDIO_FLOW.md` holds the pipeline. The sound rules are settled with the owner in 0.10.5–0.10.6.
+- **Levels and tags:** loudness targets and the fallback chains are as in `docs/AUDIO_FLOW.md`.
+
+### 6.3 Where it lives
+- The shared prompt lines in `UI/SoundCatalog.cs` (`Style`, `ui`, `music`) carry this profile into every cue's
+  prompt in `tools/audio/audio_needs.tsv`, which is regenerated with `dotnet run -- --sound-cues`.
+- Clips already in `Assets/` stay. New generations use the updated prompts, and the earlier clips are re-auditioned in
+  0.10.5–0.10.6.
 
 ## 7. Using this guide
 - **Every request** in `docs/ASSET_REQUESTS.md` names the sheet to match and the rules above it relies on (palette row,
