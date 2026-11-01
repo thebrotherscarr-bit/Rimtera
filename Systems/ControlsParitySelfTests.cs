@@ -62,6 +62,7 @@ public static class ControlsParitySelfTests
         MouseState(check);
         HubPointer(check);
         UseAndSplit(check);
+        AutoSwingGear(check);
         CursorItem(check);
         ThrowAndHotbar(check);
         SmartSelect(check);
@@ -141,6 +142,52 @@ public static class ControlsParitySelfTests
         check(onPress && game.Player.Inventory.Cursor.Count == 7,
             "inventory slots pick up on the press, and the release does nothing more");
         game.ReturnCursorItem();
+    }
+
+    // ------------------------------------------------------------------ auto-swing gear (IC-15)
+
+    /// <summary>
+    /// Auto-swing accessories (the power glove, Terraria's feral claws) make every melee weapon and whip repeat while the
+    /// button is held. Drives the simulation the way the window does: the use gate fed with <see cref="GameSimulation.AutoReuseSelected"/>.
+    /// </summary>
+    private static void AutoSwingGear(Action<bool, string> check)
+    {
+        var items = new ItemCatalog();
+        var shortsword = items.All.First(item => item.Style == WeaponStyle.Shortsword);
+        var whip = items.All.First(item => item.Style == WeaponStyle.Whip);
+        var potion = items.All.First(item => item.UseKind == ItemUseKind.Consumable && item.HealAmount > 0f);
+        check(ItemUseRules.AutoReuse(shortsword, autoSwingActive: true) && ItemUseRules.AutoReuse(whip, autoSwingActive: true) &&
+              !ItemUseRules.AutoReuse(shortsword, autoSwingActive: false) && !ItemUseRules.AutoReuse(potion, autoSwingActive: true),
+            "auto-swing gear makes melee weapons and whips repeat; potions still need a fresh click");
+
+        int Swings(bool glove)
+        {
+            var game = NewGame(7311);
+            ClearInventory(game);
+            foreach (var slot in Enum.GetValues<EquipmentSlot>())
+                game.Player.Equipment.Set(slot, null);
+            if (glove)
+                game.Player.Equipment.Set(EquipmentSlot.Accessory, ItemId.PowerGlove);
+            game.Player.Inventory.Add(shortsword.Id, 1);
+            game.TrySelectInventorySlot(game.Player.Inventory.FindSlot(shortsword.Id));
+            var target = new GridPoint((int)(game.Player.Motion.Position.X + 3f), (int)(game.Player.Motion.Position.Y + 1f));
+            var gate = new UseButtonGate();
+            var swings = 0;
+            float? previous = null;
+            for (var tick = 0; tick < 90; tick++)
+            {
+                var use = gate.Update(held: true, game.AutoReuseSelected);
+                Tick(game, 1, use ? PlayerAction.UseSelected : PlayerAction.None, target);
+                var progress = game.PlayerSwing?.Progress;
+                if (progress is { } now && (previous is null || now < previous.Value))
+                    swings++;
+                previous = progress;
+            }
+            return swings;
+        }
+        var (without, with) = (Swings(glove: false), Swings(glove: true));
+        check(without == 1 && with >= 3,
+            $"holding use with a shortsword: one stab bare-handed, repeated stabs with the power glove ({without} vs {with} in 1.5 s)");
     }
 
     // ------------------------------------------------------------------ auto-reuse and the right-click split

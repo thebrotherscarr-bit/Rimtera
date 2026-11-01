@@ -91,7 +91,7 @@ public sealed partial class GameSimulation
             _secondsSinceHurt = 0f;
         else
             _secondsSinceHurt += deltaSeconds * (_sleeping ? 4f : 1f);
-        if (!Player.IsDead && Player.HitPoints < Player.MaximumHitPoints)
+        if (!Player.IsDead && Player.HitPoints < Player.MaximumHitPoints && !PlayerBleeding) // bleeding: no regeneration
         {
             var regen = NaturalLifeRegenPerSecond;
             if (regen > 0f)
@@ -182,7 +182,7 @@ public sealed partial class GameSimulation
         (int)(GearTagValue("ap") + (damageClass == DamageClass.Melee ? GearTagValue("ap-melee") : 0f));
 
     /// <summary>A creature's defense against player hits.</summary>
-    private static int CreatureDefense(EnemyAgent enemy) => Math.Max(0, enemy.Archetype.Defense);
+    private static int CreatureDefense(EnemyAgent enemy) => CorrodedDefense(enemy, Math.Max(0, enemy.Archetype.Defense));
 
     /// <summary>
     /// The roll for one use (a swing, a shot, a beam pulse): the ±15% spread rounded to whole points (luck rerolls) and
@@ -549,7 +549,7 @@ public sealed partial class GameSimulation
     /// <summary>Credits and event bookkeeping when a creature dies.</summary>
     private void OnCreatureDefeated(EnemyAgent enemy)
     {
-        var credits = enemy.Archetype.CreditDrop;
+        var credits = SalvageMarkCredits(enemy, enemy.Archetype.CreditDrop); // the salvage mark adds credits
         if (credits > 0)
             DropLoot(enemy, ItemId.Credits, credits);
         OnCreatureDefeatedForEvents(enemy);

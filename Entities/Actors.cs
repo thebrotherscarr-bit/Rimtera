@@ -439,6 +439,7 @@ public sealed record EnemyArchetype(
     /// 0 for every creature until the roster is tuned (CombatTuning.CreatureDamageTaken).
     /// </summary>
     public int Defense { get; init; }
+    public IReadOnlyList<(StatusId Status, float Chance, float Seconds)> Inflicts { get; init; } = [];
 }
 
 /// <summary>Original Neo-Terra creature roster. Pre-existing kinds keep their legacy tuning.</summary>
@@ -531,7 +532,8 @@ public static class EnemyArchetypes
         // End-world boss.
         new EnemyArchetype(EnemyKind.AstroGod, "Astro-God", new(5f, 5f), 6000f, 45f, true,
             BossTier.Final, ProjectileSpeed: 15f, VolleyCount: 8, PhaseThreshold: 0.5f) { AttackRange = 18f, AttackCooldown = 2.6f }
-    }.Concat(ContentCreatures.Archetypes()).Append(Rimtera.Systems.PhysicsContent.DungeonGuardian).ToDictionary(archetype => archetype.Kind);
+    }.Concat(ContentCreatures.Archetypes()).Append(Rimtera.Systems.PhysicsContent.DungeonGuardian)
+        .Select(Rimtera.Systems.CreatureInflictions.Attach).ToDictionary(archetype => archetype.Kind);
 
     /// <summary>Summon order for the challenge key: gate boss, easy tier, the core gate boss, hard tier, then the Astro-God.</summary>
     public static IReadOnlyList<EnemyKind> BossProgression { get; } = new[]
@@ -688,6 +690,9 @@ public sealed class EnemyAgent
         _afflictions ??= new Dictionary<StatusId, float>();
         _afflictions[id] = Math.Max(seconds, _afflictions.GetValueOrDefault(id));
     }
+
+    /// <summary>Ends an affliction early (water puts out burning).</summary>
+    internal bool ClearAffliction(StatusId id) => _afflictions?.Remove(id) == true;
 
     internal void TickAfflictions(float deltaSeconds)
     {
@@ -940,6 +945,8 @@ public sealed class ProjectileState
     public StatusId? InflictStatus { get; internal set; }
     /// <summary>Percent chance the affliction takes hold on each hit.</summary>
     public int InflictChance { get; internal set; } = 100;
+    /// <summary>The creature kind that fired a hostile shot (its debuffs ride on the bolt), or null.</summary>
+    public EnemyKind? SourceKind { get; internal set; }
 
     // ---- Weapon styles (GameSimulation.WeaponStyles.cs) ----
     /// <summary>Weapon style that launched this projectile (None for legacy shots, minions and enemies).</summary>

@@ -310,6 +310,9 @@ public sealed partial class GameSimulation
         StatusId.ChargeSurge => "Charge surge",
         StatusId.PotionSickness => "Stim fatigue",
         StatusId.PhaseStrain => "Phase strain",
+        StatusId.BrokenArmor => "Broken armor",
+        StatusId.CursedFire => "Cursed fire",
+        StatusId.SalvageMark => "Salvage mark",
         _ => id.ToString()
     };
 
@@ -1241,9 +1244,18 @@ public sealed partial class GameSimulation
 
     // ------------------------------------------------------------------ hit helpers used by the shared combat code
 
-    /// <summary>A creature's contact hit on the player: banner reduction and immunity frames apply.</summary>
-    private float HitPlayerFromEnemy(EnemyAgent enemy, float amount, DamageKind kind) =>
-        GearHitPlayer(enemy, CapBossHit(enemy, amount * BannerDefenseFactor(enemy.Kind) * DefenseBalance.EnemyHitScale(enemy.Archetype)), kind);
+    /// <summary>
+    /// A creature's contact hit on the player: the ±15% spread (luck counts against it), banner reduction, the boss cap and
+    /// immunity frames apply; a hit that lands rolls the creature's debuffs. Returns the damage applied.
+    /// </summary>
+    private float HitPlayerFromEnemy(EnemyAgent enemy, float amount, DamageKind kind)
+    {
+        var applied = GearHitPlayer(enemy, CapBossHit(enemy,
+            RollHurtVariance(amount * BannerDefenseFactor(enemy.Kind) * DefenseBalance.EnemyHitScale(enemy.Archetype))), kind);
+        if (applied > 0f)
+            InflictOnPlayer(enemy.Archetype);
+        return applied;
+    }
 
     /// <summary>Distance from a point to the nearest part of a creature (worm segments count).</summary>
     private float EnemyHitDistance(EnemyAgent enemy, Vector2 point)

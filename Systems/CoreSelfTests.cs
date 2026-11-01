@@ -1689,6 +1689,7 @@ public static class CoreSelfTests
         ItemAuditSelfTests.Run(Check); // every item has a function and a sprite of its own (docs/ITEM_AUDIT.md)
         CreatureCoverageSelfTests.Run(Check); // every biome, event and boss has its creatures, leaders and summons (docs/CREATURE_COVERAGE.md)
         CraftingGuideSelfTests.Run(Check); // crafting guidance: recipe guide lookups, "close to" recipes, tooltips, the station AI's next steps
+        PlayerDebuffSelfTests.Run(Check); // 0.1.9 combat core: creature debuffs, afflictions, contact boxes, hurt variance (stream B)
         CraftingAuditSelfTests.Run(Check); // crafting progression: a felled tree builds the first station; every station and item is reachable (docs/CRAFTING_PROGRESSION.md)
         Console.WriteLine($"{passed} checks passed.");
         return 0;

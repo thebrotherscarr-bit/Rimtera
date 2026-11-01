@@ -38,6 +38,18 @@ internal sealed class LightMap
     /// <summary>Whether coloured light tints the scene (High lighting).</summary>
     public bool ColouredGlow { get; set; } = true;
 
+    /// <summary>
+    /// Share of all light taken away (0 = none, 1 = black): the darkness debuff (GameSimulation.DarknessDimming) dims sky,
+    /// lamps and glow alike. The renderer sets it before <see cref="Compute"/>.
+    /// </summary>
+    public float Dimming
+    {
+        get => _dimming;
+        set => _dimming = float.IsFinite(value) ? Math.Clamp(value, 0f, 1f) : 0f;
+    }
+
+    private float _dimming;
+
     private float[] _r = [];
     private float[] _g = [];
     private float[] _b = [];
@@ -113,6 +125,16 @@ internal sealed class LightMap
 
         for (var pass = 0; pass < 2; pass++)
             Spread();
+        if (_dimming > 0f)
+        {
+            var keep = 1f - _dimming;
+            for (var i = 0; i < _r.Length; i++)
+            {
+                _r[i] *= keep;
+                _g[i] *= keep;
+                _b[i] *= keep;
+            }
+        }
         if (present)
             Present();
     }

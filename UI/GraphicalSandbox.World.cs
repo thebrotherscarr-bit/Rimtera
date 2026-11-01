@@ -472,16 +472,17 @@ public static partial class GraphicalSandbox
                 var rect = new RectangleF(x, y, icon, icon);
                 _hudRects.Add(rect);
                 _buffHits.Add((rect, buff.Key));
-                using (var back = new SolidBrush(buff.IsDebuff ? Color.FromArgb(170, 90, 24, 30) : Color.FromArgb(170, 20, 40, 60)))
+                // Debuffs are drawn red (frame, back and timer) so they read apart from buffs at a glance.
+                using (var back = new SolidBrush(buff.IsDebuff ? Color.FromArgb(190, 150, 20, 24) : Color.FromArgb(170, 20, 40, 60)))
                     g.FillRectangle(back, rect);
-                g.DrawRectangle(buff.IsDebuff ? Pens.IndianRed : Pens.SteelBlue, rect.X, rect.Y, rect.Width, rect.Height);
+                g.DrawRectangle(buff.IsDebuff ? Pens.Red : Pens.SteelBlue, rect.X, rect.Y, rect.Width, rect.Height);
                 if (_sprites.GetFitted(buff.IconName, icon - 6, icon - 6) is { } art)
                     g.DrawImage(art, rect.X + (icon - art.Width) / 2f, rect.Y + (icon - art.Height) / 2f, art.Width, art.Height);
                 else
                     g.DrawString(buff.Name[..Math.Min(2, buff.Name.Length)], _small, _hudBrush, rect.X + 4, rect.Y + 8);
                 var time = buff.RemainingSeconds >= 60f ? $"{buff.RemainingSeconds / 60f:0}m" : $"{buff.RemainingSeconds:0}s";
                 if (buff.RemainingSeconds < 3600f)
-                    g.DrawString(time, _small, _dimTextBrush, rect.X, rect.Bottom);
+                    g.DrawString(time, _small, buff.IsDebuff ? Brushes.IndianRed : _dimTextBrush, rect.X, rect.Bottom);
                 if (MousePosition is { } mouse && rect.Contains(mouse))
                     hover = buff.IsDebuff ? buff.Name : $"{buff.Name}   (right-click to cancel)";
                 x += icon + 6;

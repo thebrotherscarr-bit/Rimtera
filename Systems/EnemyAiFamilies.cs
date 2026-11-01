@@ -94,7 +94,7 @@ public sealed partial class GameSimulation
         }
 
         // Every segment bites on contact.
-        if (enemy.AttackCooldown <= 0f && segments.Any(segment => Vector2.Distance(segment, playerCenter) < 0.9f))
+        if (enemy.AttackCooldown <= 0f && segments.Any(segment => SegmentTouchesPlayer(enemy, segment))) // segment box vs player box
         {
             var damage = HitPlayerFromEnemy(enemy, ScaleIncoming(enemy.AttackDamage * 0.75f), DamageKind.Bite);
             enemy.AttackCooldown = enemy.Archetype.ContactCooldown;
@@ -139,7 +139,7 @@ public sealed partial class GameSimulation
                     direction.X * MathF.Sin(angle) + direction.Y * MathF.Cos(angle));
                 _projectiles.Add(new ProjectileState(_nextEntityId++, origin, direction * 4.5f, enemy.AttackDamage * DefenseBalance.EnemyHitScale(enemy.Archetype) * 0.8f,
                     1.5f, 5f, ProjectileTeam.Enemy, enemy.DisplayName, DamageKind.Burn)
-                { Homing = 1.6f, SpriteName = "bolt_homing" });
+                { Homing = 1.6f, SpriteName = "bolt_homing", SourceKind = enemy.Kind });
             }
             enemy.Lunging = false;
             enemy.AiStep = 0;

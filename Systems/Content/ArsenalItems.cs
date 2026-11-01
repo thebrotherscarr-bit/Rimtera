@@ -194,8 +194,8 @@ internal static partial class ArsenalItems
                 // Extra muzzle velocity (tiles per second) this ammo adds.
                 ProjectileSpeed = (Num("speed", 1f) - 1f) * 20f,
                 // On-hit status for the target (burn/poison flavour); ammo is never quick-buffed.
-                GrantsStatus = Has("burn") ? StatusId.Burning : Has("poison") ? StatusId.Poison : null,
-                StatusDurationHours = Has("burn") || Has("poison") ? 1f : 0f
+                GrantsStatus = Has("burn") ? StatusId.Burning : Has("poison") ? StatusId.Poison : Has("venom") ? StatusId.Venom : null,
+                StatusDurationHours = Has("burn") || Has("poison") || Has("venom") ? 1f : 0f
             });
             RecipeHints[row.Id] = row.Recipe;
             RecipeYield[row.Id] = row.Yield;

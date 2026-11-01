@@ -21,7 +21,11 @@ public enum StatusId : byte
     Phased,
     // Player & combat systems (append-only): creature afflictions applied by weapons and ammo (frostbite slows,
     // armour shred raises damage taken, confusion scrambles movement, marked draws focus) and the fortune tonic's luck.
-    Frostbite, ArmorShred, Confused, Marked, Lucky
+    Frostbite, ArmorShred, Confused, Marked, Lucky,
+    // Combat core (0.1.9, append-only): creature-inflicted debuffs on the player (IC-3) and the extra creature
+    // afflictions weapons and ammo carry (EN-17): corroded strips defense, the salvage mark adds credits on the kill,
+    // and wet puts burning out.
+    Bleeding, Chilled, Slow, Darkness, Weak, BrokenArmor, Silenced, Venom, Frostburn, CursedFire, Corroded, SalvageMark, Wet
 }
 
 public readonly record struct PlayerStats(
@@ -208,14 +212,55 @@ public sealed class StatusEffectSystem
         [StatusId.Gourmet] = new(StatusId.Gourmet, 12f, LifeRegenerationPerHour: 0.3f, DefenseBonus: 4, ImmunityTags: Tags("dmg:8", "crit:4", "speed:10")),
         // Player & combat systems: creature afflictions (ticked on creatures by GameSimulation.PlayerSystems) and luck.
         [StatusId.Frostbite] = new(StatusId.Frostbite, 2f), [StatusId.ArmorShred] = new(StatusId.ArmorShred, 2f),
-        [StatusId.Confused] = new(StatusId.Confused, 1f), [StatusId.Marked] = new(StatusId.Marked, 2f),
-        [StatusId.Lucky] = new(StatusId.Lucky, 12f)
+        [StatusId.Confused] = new(StatusId.Confused, DebuffCapHours, BlockedByImmunityTag: "confused"), [StatusId.Marked] = new(StatusId.Marked, 2f),
+        [StatusId.Lucky] = new(StatusId.Lucky, 12f),
+        // Combat core (IC-3): creature-inflicted debuffs. The movement, light, damage and use effects are read by
+        // GameSimulation.Debuffs; damage over time is Terraria's lifeRegen units (-N units = N/2 hit points a second)
+        // paid every half second. Each is blocked by the immunity tag of its matching accessory.
+        [StatusId.Bleeding] = new(StatusId.Bleeding, DebuffCapHours, BlockedByImmunityTag: "bleeding"),
+        [StatusId.Chilled] = new(StatusId.Chilled, DebuffCapHours, BlockedByImmunityTag: "cold"),
+        [StatusId.Slow] = new(StatusId.Slow, DebuffCapHours, BlockedByImmunityTag: "slow"),
+        [StatusId.Darkness] = new(StatusId.Darkness, DebuffCapHours, BlockedByImmunityTag: "darkness"),
+        [StatusId.Weak] = new(StatusId.Weak, DebuffCapHours, DefenseBonus: -4, BlockedByImmunityTag: "weak"),
+        [StatusId.BrokenArmor] = new(StatusId.BrokenArmor, DebuffCapHours, BlockedByImmunityTag: "broken-armor"),
+        [StatusId.Silenced] = new(StatusId.Silenced, DebuffCapHours, BlockedByImmunityTag: "silenced"),
+        [StatusId.Venom] = DamageOverTime(StatusId.Venom, 30, "venom"),
+        [StatusId.Frostburn] = DamageOverTime(StatusId.Frostburn, 16, "frostburn"),
+        [StatusId.CursedFire] = DamageOverTime(StatusId.CursedFire, 24, "cursed"),
+        // Creature-only afflictions (EN-17); listed so the status system knows them.
+        [StatusId.Corroded] = new(StatusId.Corroded, DebuffCapHours),
+        [StatusId.SalvageMark] = new(StatusId.SalvageMark, DebuffCapHours),
+        [StatusId.Wet] = new(StatusId.Wet, DebuffCapHours)
     };
+
+    /// <summary>Longest a creature-inflicted debuff may last on the player: 4 vital hours (50 real seconds).</summary>
+    public const float DebuffCapHours = 4f;
+
+    /// <summary>Real seconds between damage-over-time pulses of the Terraria-unit debuffs.</summary>
+    public const float DotPulseSeconds = 0.5f;
+
+    /// <summary>
+    /// A damage-over-time debuff in Terraria's lifeRegen units: -<paramref name="units"/> units lose units/2 hit points a
+    /// second, paid every <see cref="DotPulseSeconds"/> (1 vital hour = 12.5 real seconds).
+    /// </summary>
+    private static StatusDefinition DamageOverTime(StatusId id, int units, string immunityTag) =>
+        new(id, DebuffCapHours, TickIntervalHours: DotPulseSeconds * GameSimulation.VitalHoursPerRealSecond, DamagePerTick: units / 2f * DotPulseSeconds,
+            BlockedByImmunityTag: immunityTag);
+
+    /// <summary>Hit points a second a Terraria-unit damage-over-time status costs (0 for the rest).</summary>
+    public float DamagePerSecond(StatusId id) =>
+        _definitions[id] is { TickIntervalHours: > 0f, DamagePerTick: > 0f } definition
+            ? definition.DamagePerTick / (definition.TickIntervalHours / GameSimulation.VitalHoursPerRealSecond)
+            : 0f;
 
     private static HashSet<string> Tags(params string[] tags) => new(tags, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Debuffs (shown red in the buff bar; quick-buff never applies them).</summary>
-    public static bool IsDebuff(StatusId id) => id is StatusId.Poison or StatusId.Burning or StatusId.PotionSickness or StatusId.PhaseStrain;
+    public static bool IsDebuff(StatusId id) => id is StatusId.Poison or StatusId.Burning or StatusId.PotionSickness or StatusId.PhaseStrain
+        or StatusId.Frostbite or StatusId.ArmorShred or StatusId.Confused or StatusId.Marked
+        or StatusId.Bleeding or StatusId.Chilled or StatusId.Slow or StatusId.Darkness or StatusId.Weak or StatusId.BrokenArmor
+        or StatusId.Silenced or StatusId.Venom or StatusId.Frostburn or StatusId.CursedFire or StatusId.Corroded
+        or StatusId.SalvageMark or StatusId.Wet;
 
     public StatusDefinition this[StatusId id] => _definitions[id];
     public IEnumerable<StatusDefinition> All => _definitions.Values.OrderBy(definition => definition.Id);
