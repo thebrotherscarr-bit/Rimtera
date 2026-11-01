@@ -766,20 +766,28 @@ public sealed class InventoryUiState : UiState
             void RowButton(string text, string id, float left, Action command) =>
                 Add(new UiButtonElement(text, () => { command(); Status(_housingReport ?? ""); Rebuild(); }, id, new UiStyle
                 {
-                    Left = UiLength.Mixed(left, 1f), Top = UiLength.Px(y - 1f), Width = UiLength.Px(72f), Height = UiLength.Px(20f)
-                }) { TextScale = 0.6f });
+                    Left = UiLength.Mixed(left, 1f), Top = UiLength.Px(y - 1f), Width = UiLength.Px(56f), Height = UiLength.Px(20f)
+                }) { TextScale = 0.5f });
             RowButton("Move here", $"housing-move-{npc.Id}", -250f, () =>
             {
                 var center = game.Player.Motion.Position + game.Player.Motion.Size / 2f;
                 _housingReport = game.AssignHome(resident, new GridPoint((int)center.X, (int)center.Y));
             });
             // 0.4.0: hand a resident the item in your hand (a weapon, armour or an accessory), or take their gear back.
-            RowButton("Give held", $"housing-equip-{npc.Id}", -174f, () => _housingReport = game.EquipResident(resident));
+            RowButton("Give held", $"housing-equip-{npc.Id}", -190f, () => _housingReport = game.EquipResident(resident));
             if (npc.Gear.Count > 0)
-                RowButton("Take gear", $"housing-unequip-{npc.Id}", -98f, () =>
+                RowButton("Take gear", $"housing-unequip-{npc.Id}", -130f, () =>
                 {
                     var taken = game.UnequipResident(resident);
                     _housingReport = $"{resident.Name} hands back {taken} piece{(taken == 1 ? "" : "s")} of gear.";
+                });
+            // 0.4.1: an armed resident stands guard where you stand (or back around home).
+            if (npc.IsArmed)
+                RowButton(npc.Post is null ? "Post here" : "Clear post", $"housing-post-{npc.Id}", -70f, () =>
+                {
+                    var feet = new GridPoint((int)MathF.Floor(game.Player.Motion.Position.X + game.Player.Motion.Size.X / 2f),
+                        (int)MathF.Floor(game.Player.Motion.Position.Y + game.Player.Motion.Size.Y - 0.05f));
+                    _housingReport = game.SetGuardPost(resident, resident.Post is null ? feet : null);
                 });
             y += 24f;
         }

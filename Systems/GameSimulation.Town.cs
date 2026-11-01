@@ -351,10 +351,47 @@ public sealed partial class GameSimulation
             var center = npc.Motion.Position + npc.Motion.Size / 2f;
             if (npc.HomeCell is not null)
             {
-                // Guarding comes first, by night too: people hold their own area while you are away.
-                if (npc.Work.Priority(WorkType.Guard) != WorkCatalog.Off && TryGuard(npc, center, deltaSeconds))
+                if (npc.Work.Priority(WorkType.Guard) != WorkCatalog.Off)
                 {
-                    npc.CurrentWork = WorkType.Guard;
+                    // 0.4.1: a badly hurt guard falls back home to heal, and guards again once they have healed enough.
+                    if (npc.HitPoints < npc.MaximumHitPoints * FallBackShare)
+                        npc.FallingBack = true;
+                    else if (npc.HitPoints >= npc.MaximumHitPoints * RecoveredShare)
+                        npc.FallingBack = false;
+                    if (npc.FallingBack)
+                    {
+                        npc.CurrentWork = null;
+                        npc.Activity = "Falling back to heal";
+                        StepColonistToward(npc, center, npc.HomePosition, deltaSeconds, 1.1f);
+                        continue;
+                    }
+                    // Guarding comes first, by night too: people hold their own area while you are away.
+                    if (TryGuard(npc, center, deltaSeconds))
+                    {
+                        npc.CurrentWork = WorkType.Guard;
+                        continue;
+                    }
+                    // 0.4.1: an armed guard with a post holds it, day and night, walking a short beat around it.
+                    if (npc.Post is { } post && npc.IsArmed)
+                    {
+                        npc.CurrentWork = WorkType.Guard;
+                        npc.Activity = "On guard at their post";
+                        npc.WanderTimer -= deltaSeconds;
+                        if (npc.WanderTimer <= 0f || MathF.Abs(npc.WanderTarget.X - (post.X + 0.5f)) > PostBeat + 0.5f)
+                        {
+                            npc.WanderTimer = 4f + npc.Id % 3;
+                            npc.WanderTarget = new Vector2(post.X + 0.5f + ((npc.Id * 13 + TickNumber / 120) % 5 - 2) * PostBeat / 2f, post.Y + 0.5f);
+                        }
+                        StepColonistToward(npc, center, npc.WanderTarget, deltaSeconds, 0.8f);
+                        continue;
+                    }
+                }
+                else if (ThreatNear(center))
+                {
+                    // 0.4.1: someone who does not fight takes cover at home when creatures come near.
+                    npc.CurrentWork = null;
+                    npc.Activity = "Taking cover";
+                    StepColonistToward(npc, center, npc.HomePosition, deltaSeconds, 1.1f);
                     continue;
                 }
                 if (!shelter && TryColonyWork(npc, center, deltaSeconds, elapsedHours))
@@ -396,6 +433,39 @@ public sealed partial class GameSimulation
             StepTownNpcToward(npc, center, target, deltaSeconds);
         }
     }
+
+    /// <summary>A guard falls back below this share of their life, and guards again from <see cref="RecoveredShare"/>.</summary>
+    public const float FallBackShare = 0.3f, RecoveredShare = 0.7f;
+    /// <summary>How far either side of their post a guard walks (tiles); how near a creature sends the unarmed indoors.</summary>
+    public const float PostBeat = 3f, CoverRadius = 9f;
+
+    private bool ThreatNear(Vector2 at) => _enemies.Any(enemy => enemy.IsAlive && !enemy.IsPassive && enemy.AttackDamage > 0f &&
+        Vector2.Distance(enemy.Motion.Position + enemy.Motion.Size / 2f, at) <= CoverRadius);
+
+    /// <summary>
+    /// Sets an armed resident's guard post at <paramref name="cell"/> (0.4.1): it must be within reach of their home, so
+    /// they stay a guard of their own area. Null clears it. Returns the player-facing result.
+    /// </summary>
+    public string SetGuardPost(TownNpc npc, GridPoint? cell)
+    {
+        ArgumentNullException.ThrowIfNull(npc);
+        if (cell is not { } at)
+        {
+            npc.Post = null;
+            return $"{npc.Name} guards around home again.";
+        }
+        if (!npc.IsArmed)
+            return $"{npc.Name} needs a weapon to stand guard. Hand them one first.";
+        if (npc.HomeCell is null)
+            return $"{npc.Name} needs a home before they can guard a post.";
+        if (Vector2.Distance(new Vector2(at.X + 0.5f, at.Y + 0.5f), npc.HomePosition) > MaxPostDistance)
+            return $"Too far from {npc.Name}'s home: a post must be within {MaxPostDistance:0} tiles of it.";
+        npc.Post = at;
+        return $"{npc.Name} will stand guard here, day and night.";
+    }
+
+    /// <summary>The farthest a guard post may be from home (tiles).</summary>
+    public const float MaxPostDistance = 40f;
 
     /// <summary>A resident walks toward a target (work uses this): their move speed, scaled by <paramref name="speed"/>.</summary>
     private void StepColonistToward(TownNpc npc, Vector2 center, Vector2 target, float deltaSeconds, float speed) =>
@@ -600,7 +670,7 @@ public sealed partial class GameSimulation
         npc.Carried.IsEmpty ? null : npc.Carried,
         npc.Profile, npc.Kind == TownNpcKind.Settler ? npc.Look : null,
         npc.Pouch.Count == 0 ? null : npc.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
-        CaptureResidentGear(npc))).ToArray();
+        CaptureResidentGear(npc), npc.Post?.X, npc.Post?.Y)).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -624,6 +694,8 @@ public sealed partial class GameSimulation
             // NC-20: a hurt resident loads as hurt. Saves from before the field (or a bad value) load at full health; a
             // living resident never loads dead.
             RestoreResidentGear(npc, saved.Gear); // before the hit points: gear sets the maximum they are clamped to
+            if (saved.PostX is { } px && saved.PostY is { } py && World.Contains(px, py) && npc.IsArmed)
+                npc.Post = new GridPoint(px, py);
             if (saved.Hp is { } hp && float.IsFinite(hp))
                 npc.HitPoints = Math.Clamp(hp, 1f, npc.MaximumHitPoints);
             npc.WorksStations = saved.WorksStations ?? true;

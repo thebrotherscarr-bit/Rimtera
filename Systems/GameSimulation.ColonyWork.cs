@@ -70,7 +70,7 @@ public sealed partial class GameSimulation
         agent.StrikeTimer = Math.Max(0f, agent.StrikeTimer - deltaSeconds);
         var threat = _enemies
             .Where(enemy => enemy.IsAlive && !enemy.IsPassive && !enemy.IsBoss &&
-                            Vector2.Distance(enemy.Motion.Position + enemy.Motion.Size / 2f, agent.HomePosition) <= GuardRadius)
+                            Vector2.Distance(enemy.Motion.Position + enemy.Motion.Size / 2f, agent.GuardCenter) <= GuardRadius)
             .OrderBy(enemy => Vector2.DistanceSquared(enemy.Motion.Position + enemy.Motion.Size / 2f, center))
             .FirstOrDefault();
         if (threat is null)
