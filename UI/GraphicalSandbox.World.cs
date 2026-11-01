@@ -339,28 +339,9 @@ public static partial class GraphicalSandbox
         }
 
         /// <summary>Wires on every layer while a wiring tool or device is held, plus actuator marks.</summary>
-        /// <summary>Blueprints (0.2.7): a pale blue square on each marked cell, brighter in blueprint mode.</summary>
-        private void DrawBlueprints(Graphics g, GameSimulation game, int startX, int startY, int viewW, int viewH)
-        {
-            if (game.Blueprints.Count == 0)
-                return;
-            var alpha = game.BlueprintMode ? 120 : 60;
-            using var fill = new SolidBrush(Color.FromArgb(alpha / 2, 90, 150, 240));
-            using var pen = new Pen(Color.FromArgb(alpha + 60, 120, 180, 255), 1f);
-            foreach (var cell in game.Blueprints.Keys)
-            {
-                if (cell.X < startX - 1 || cell.Y < startY - 1 || cell.X > startX + viewW || cell.Y > startY + viewH)
-                    continue;
-                var rect = new Rectangle((cell.X - startX) * TileSize, (cell.Y - startY) * TileSize, TileSize - 1, TileSize - 1);
-                g.FillRectangle(fill, rect);
-                g.DrawRectangle(pen, rect);
-            }
-        }
-
         /// <summary>Grow zones (0.2.5): a faint green outline around each zone's row, as RimWorld tints its zones.</summary>
         private void DrawGrowZones(Graphics g, GameSimulation game, int startX, int startY, int viewW, int viewH)
         {
-            DrawBlueprints(g, game, startX, startY, viewW, viewH);
             if (game.GrowZones.Count == 0)
                 return;
             using var pen = new Pen(Color.FromArgb(150, 110, 210, 120), 1.5f) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash };

@@ -7,16 +7,14 @@ namespace Rimtera.Systems;
 
 /// <summary>
 /// Colony work (0.2.1, docs/DESIGN_COLONY_ESCAPE.md §3.3, the think-tree pattern in docs/RESEARCH.md): each colonist asks
-/// the job giver of every enabled work type, in priority order, for a job, and does the first one offered. Guard, Tend,
-/// Haul and Operate (station bills, 0.2.3: GameSimulation.Bills.cs) have job givers now; the other work types arrive with
-/// their systems (zones, research).
+/// the job giver of every enabled work type, in priority order, for a job, and does the first one offered. Guard and Tend
+/// have job givers here; Operate, Brew and Cook work bills (GameSimulation.Bills.cs), Farm grow zones, Fish water, Research
+/// projects. (Haul and Build were removed in 0.2.9: workers store what they make themselves.)
 /// </summary>
 public sealed partial class GameSimulation
 {
     /// <summary>How far from home (tiles) each kind of work reaches.</summary>
     public const float GuardRadius = 16f, TendRadius = 30f, HaulRadius = 24f;
-    /// <summary>Loose items this close to the player are left for the player to pick up.</summary>
-    public const float HaulPlayerClearance = 6f;
     /// <summary>A tended patient is "hurt" below this share of their health.</summary>
     public const float TendThreshold = 0.7f;
 
@@ -26,16 +24,14 @@ public sealed partial class GameSimulation
     /// <summary>Asks each enabled job giver in priority order; true when one gave a job and the colonist worked it.</summary>
     private bool TryColonyWork(ColonistAgent agent, Vector2 center, float deltaSeconds, float elapsedHours)
     {
-        if (agent.Work.Priority(WorkType.Build) == WorkCatalog.Off && !agent.BuildStock.IsEmpty)
-            DropBuildStock(agent, center); // taken off Build: blocks are set down for the haulers
         if (agent.Work.Priority(WorkType.Farm) == WorkCatalog.Off && agent.Work.Priority(WorkType.Fish) == WorkCatalog.Off &&
             agent.Pouch.Count > 0)
-            DropPouch(agent, center); // taken off Farm: seeds and herbs are set down for the haulers
+            DropPouch(agent, center); // taken off Farm and Fish: seeds, herbs and fish are set down
         if (agent.Work.Priority(WorkType.Operate) == WorkCatalog.Off && agent.Work.Priority(WorkType.Brew) == WorkCatalog.Off &&
             agent.Work.Priority(WorkType.Cook) == WorkCatalog.Off &&
             (agent.Held.Count > 0 || agent.OperateStation is not null))
         {
-            agent.OperateStation = null; // taken off Operate: set fetched ingredients down for the haulers
+            agent.OperateStation = null; // taken off bill work: fetched ingredients are set down
             DropHeld(agent, center);
         }
         foreach (var work in agent.Work.Order())
@@ -44,20 +40,18 @@ public sealed partial class GameSimulation
             {
                 WorkType.Guard => TryGuard(agent, center, deltaSeconds),
                 WorkType.Tend => TryTend(agent, center, deltaSeconds, elapsedHours),
-                WorkType.Haul => TryHaul(agent, center, deltaSeconds),
                 WorkType.Operate or WorkType.Brew or WorkType.Cook => TryOperate(agent, center, deltaSeconds, target => StepColonistToward(agent, center, target, deltaSeconds, 1f), work),
                 WorkType.Farm => TryFarm(agent, center, deltaSeconds),
                 WorkType.Fish => TryFish(agent, center, deltaSeconds),
-                WorkType.Build => TryBuild(agent, center, deltaSeconds),
                 WorkType.Research => TryResearch(agent, center, deltaSeconds),
-                _ => false // no job giver yet
+                _ => false // Trade has no job: the best Social on Trade bargains at shops (GameSimulation.Trade.cs)
             };
             if (worked)
             {
                 agent.CurrentWork = work;
                 if (work is not (WorkType.Operate or WorkType.Brew or WorkType.Cook))
                     agent.OperateStation = null; // free the station for another operator meanwhile
-                if (work is not (WorkType.Farm or WorkType.Fish or WorkType.Build or WorkType.Research))
+                if (work is not (WorkType.Farm or WorkType.Fish or WorkType.Research))
                     agent.FarmTarget = null;
                 return true;
             }
@@ -147,46 +141,7 @@ public sealed partial class GameSimulation
     /// <summary>Health a tender restores per vital hour (12.5 real seconds): faster with Medical skill.</summary>
     public static float TendHealPerVitalHour(ColonistStats stats) => 20f + stats.Level(ColonistSkill.Medical) * 3f;
 
-    // ------------------------------------------------------------------ haul
-
-    private bool TryHaul(ColonistAgent agent, Vector2 center, float deltaSeconds)
-    {
-        if (!agent.Carried.IsEmpty)
-            return DeliverCarried(agent, center, target => StepColonistToward(agent, center, target, deltaSeconds, 1f)); // nowhere to put it: keep carrying until a chest has room
-
-        GroundItem? pick = null;
-        var nearest = float.MaxValue;
-        foreach (var item in _groundItems)
-        {
-            if (item.PickupDelay > 0f || !item.Grounded || !Items.Contains(item.ItemId) || Items[item.ItemId].IsInstantPickup ||
-                Vector2.Distance(item.Position, agent.HomePosition) > HaulRadius ||
-                Vector2.Distance(item.Position, PlayerCenter) < HaulPlayerClearance ||
-                _colonists.Any(other => !ReferenceEquals(other, agent) && other.HaulTarget == item.Id))
-                continue;
-            var distance = Vector2.DistanceSquared(item.Position, center);
-            if (distance < nearest && StorageFor(agent, item.ItemId) is not null)
-            {
-                nearest = distance;
-                pick = item;
-            }
-        }
-        if (pick is null)
-        {
-            agent.HaulTarget = null;
-            return false;
-        }
-        agent.HaulTarget = pick.Id;
-        agent.Activity = $"Hauling {Items[pick.ItemId].Name}";
-        if (Vector2.Distance(pick.Position, center) < 1.4f)
-        {
-            agent.Carried = new ItemStack(pick.ItemId, pick.Count, pick.Calibration);
-            _groundItems.Remove(pick);
-            agent.HaulTarget = null;
-        }
-        else
-            StepColonistToward(agent, center, pick.Position, deltaSeconds, 1f);
-        return true;
-    }
+    // ------------------------------------------------------------------ storage
 
     /// <summary>Walks the carried stack to the nearest chest with room and puts it in; false when no chest near home has room.</summary>
     private bool DeliverCarried(IStationWorker agent, Vector2 center, Action<Vector2> move, GridPoint? nearStation = null)

@@ -844,12 +844,10 @@ public sealed class ColonistAgent : IColonyPawn, Rimtera.Systems.IStationWorker
     public Rimtera.Systems.ColonyWorkSettings Work { get; }
     /// <summary>Follows the player instead of staying at home (the Work tab's toggle). Crew stay home by default.</summary>
     public bool FollowsPlayer { get; set; }
-    /// <summary>A stack being hauled to storage.</summary>
+    /// <summary>A product (or catch) on its way to storage.</summary>
     public Rimtera.Systems.ItemStack Carried { get; set; }
     /// <summary>Seconds until the next guard strike.</summary>
     public float StrikeTimer { get; set; }
-    /// <summary>The loose item this colonist is walking to haul (so two haulers don't chase one item).</summary>
-    public long? HaulTarget { get; set; }
     /// <summary>The work being done this tick; null while on the camp routine.</summary>
     public Rimtera.Systems.WorkType? CurrentWork { get; set; }
     /// <summary>Ingredients fetched for a station bill (Operate work), held until the craft uses them.</summary>
@@ -866,8 +864,6 @@ public sealed class ColonistAgent : IColonyPawn, Rimtera.Systems.IStationWorker
     public Dictionary<Rimtera.Systems.ItemId, int> Pouch { get; } = new();
     /// <summary>The grow-zone cell this farmer is planting or harvesting, and the seconds put into it.</summary>
     public Rimtera.World.GridPoint? FarmTarget { get; set; }
-    /// <summary>Blocks a builder carries to the blueprints (Build work, 0.2.7).</summary>
-    public Rimtera.Systems.ItemStack BuildStock { get; set; }
     public float FarmProgress { get; set; }
     public PawnMotionState Motion { get; }
     public SurvivalNeeds Needs { get; }

@@ -154,13 +154,19 @@ public sealed partial class GameSimulation
             Move(at);
             return true;
         }
-        agent.Activity = "Fishing";
+        agent.Activity = CrewFishingGear(agent.HomePosition).Rod is { } withRod ? $"Fishing with a {Items[withRod].Name.ToLowerInvariant()}" : "Fishing";
         Move(center);
         agent.FarmProgress += deltaSeconds;
         if (agent.FarmProgress < FishSeconds(agent.ColonistStats) / ResearchFishSpeed)
             return true;
         agent.FarmProgress = 0f;
-        var context = GetFishingContext(water, LiquidKind.Water, MeasurePool(water, LiquidKind.Water), CrewFishingPower(agent.ColonistStats));
+        // 0.2.9: crew fish with the best rod and bait in the chests near home (the rod stays there; bait is used up as a
+        // player's is), on top of their own Animals skill.
+        var (rod, bait, baitChest) = CrewFishingGear(agent.HomePosition);
+        var power = CrewFishingPower(agent.ColonistStats) + (rod is { } r ? Items[r].FishingPower : 0) + (bait is { } b ? Items[b].BaitPower : 0);
+        if (bait is { } used && baitChest is { } holder && CrewFishingRandom.NextDouble() < BaitConsumeChance(Items[used].BaitPower))
+            GetContainer(holder)?.TryConsume(used, 1);
+        var context = GetFishingContext(water, LiquidKind.Water, MeasurePool(water, LiquidKind.Water), power);
         var rarity = FishingTables.RollRarity(context.Power, CrewFishingRandom);
         var caught = FishingTables.Pick(context, rarity, CrewFishingRandom);
         if (Items.Contains(caught))
@@ -169,6 +175,35 @@ public sealed partial class GameSimulation
             Flags.Increment("colony.fish");
         }
         return true;
+    }
+
+    /// <summary>
+    /// The best fishing rod (a utility item with fishing power) and the best bait in the chests near a home, and the chest
+    /// that holds that bait. Rods are shared: crew borrow them from storage and put them back.
+    /// </summary>
+    public (ItemId? Rod, ItemId? Bait, Rimtera.World.GridPoint? BaitChest) CrewFishingGear(System.Numerics.Vector2 home)
+    {
+        ItemId? rod = null, bait = null;
+        Rimtera.World.GridPoint? baitChest = null;
+        foreach (var cell in StorageCellsNear(home))
+        {
+            if (GetContainer(cell) is not { } chest)
+                continue;
+            foreach (var stack in chest.Slots)
+            {
+                if (stack.IsEmpty || !Items.Contains(stack.ItemId))
+                    continue;
+                var item = Items[stack.ItemId];
+                if (item.UseKind == ItemUseKind.Utility && item.FishingPower > 0 && (rod is null || item.FishingPower > Items[rod.Value].FishingPower))
+                    rod = item.Id;
+                if (item.BaitPower > 0 && (bait is null || item.BaitPower > Items[bait.Value].BaitPower))
+                {
+                    bait = item.Id;
+                    baitChest = cell;
+                }
+            }
+        }
+        return (rod, bait, baitChest);
     }
 
     /// <summary>Moves one stack of produce (anything but the seeds kept for replanting) from the pouch into the worker's hands.</summary>

@@ -43,8 +43,11 @@ public static class StorageCategories
     };
 }
 
-/// <summary>A saved chest filter (chests that take everything are not saved).</summary>
-public sealed record ChestFilterSnapshot(int X, int Y, StorageCategory Takes);
+/// <summary>How eagerly a chest is filled (0.2.9): workers fill First chests before Normal ones, and Normal before Low.</summary>
+public enum StoragePriority : byte { Low, Normal, First }
+
+/// <summary>A saved chest setting (chests that take everything at Normal priority are not saved).</summary>
+public sealed record ChestFilterSnapshot(int X, int Y, StorageCategory Takes, StoragePriority Priority = StoragePriority.Normal);
 
 /// <summary>
 /// Storage tags (0.2.4): each chest can be told what it takes. Haulers and bill workers carry a stack to the nearest chest
@@ -54,6 +57,25 @@ public sealed record ChestFilterSnapshot(int X, int Y, StorageCategory Takes);
 public sealed partial class GameSimulation
 {
     private readonly Dictionary<GridPoint, StorageCategory> _chestFilters = new();
+    private readonly Dictionary<GridPoint, StoragePriority> _chestPriorities = new();
+
+    public StoragePriority ChestPriority(GridPoint cell) => _chestPriorities.GetValueOrDefault(cell, StoragePriority.Normal);
+
+    public void SetChestPriority(GridPoint cell, StoragePriority priority)
+    {
+        if (priority == StoragePriority.Normal || !Enum.IsDefined(priority))
+            _chestPriorities.Remove(cell);
+        else
+            _chestPriorities[cell] = priority;
+    }
+
+    /// <summary>The chest panel's priority button: Normal → First → Low → Normal.</summary>
+    public void CycleChestPriority(GridPoint cell) => SetChestPriority(cell, ChestPriority(cell) switch
+    {
+        StoragePriority.Normal => StoragePriority.First,
+        StoragePriority.First => StoragePriority.Low,
+        _ => StoragePriority.Normal
+    });
 
     /// <summary>What a chest takes; everything unless the player has tagged it.</summary>
     public StorageCategory ChestFilter(GridPoint cell) => _chestFilters.GetValueOrDefault(cell, StorageCategory.All);
@@ -73,36 +95,47 @@ public sealed partial class GameSimulation
     public bool ChestTakes(GridPoint cell, ItemId item) =>
         Items.Contains(item) && (ChestFilter(cell) & StorageCategories.Of(Items[item])) != 0;
 
-    /// <summary>The chest among <paramref name="cells"/> that takes <paramref name="item"/> and has room: tagged chests first, then the nearest.</summary>
+    /// <summary>
+    /// The chest among <paramref name="cells"/> that takes <paramref name="item"/> and has room: the highest priority first
+    /// (0.2.9), then tagged chests before general ones, then the nearest.
+    /// </summary>
     private GridPoint? NearestWithRoom(IReadOnlyList<GridPoint> cells, ItemId item, Vector2 from)
     {
         GridPoint? best = null;
-        var bestScore = (Tagged: false, Distance: float.MaxValue);
+        var bestScore = (Priority: 0, Tagged: false, Distance: float.MaxValue);
         foreach (var cell in cells)
         {
             if (!ChestTakes(cell, item) || GetContainer(cell) is not { } inventory || inventory.GetAddableCount(item) <= 0)
                 continue;
+            var priority = (int)ChestPriority(cell);
             var tagged = ChestFilter(cell) != StorageCategory.All;
             var distance = Vector2.DistanceSquared(new Vector2(cell.X + 0.5f, cell.Y + 0.5f), from);
-            if (best is null || (tagged && !bestScore.Tagged) || (tagged == bestScore.Tagged && distance < bestScore.Distance))
+            var better = best is null || priority > bestScore.Priority ||
+                         (priority == bestScore.Priority && ((tagged && !bestScore.Tagged) || (tagged == bestScore.Tagged && distance < bestScore.Distance)));
+            if (better)
             {
                 best = cell;
-                bestScore = (tagged, distance);
+                bestScore = (priority, tagged, distance);
             }
         }
         return best;
     }
 
     private ChestFilterSnapshot[] CaptureChestFilters() =>
-        _chestFilters.Where(pair => World.Contains(pair.Key) && ContentTiles.Has(World.GetCell(pair.Key).TileId, TileTraits.Container))
-            .OrderBy(pair => pair.Key.Y).ThenBy(pair => pair.Key.X)
-            .Select(pair => new ChestFilterSnapshot(pair.Key.X, pair.Key.Y, pair.Value)).ToArray();
+        _chestFilters.Keys.Union(_chestPriorities.Keys)
+            .Where(cell => World.Contains(cell) && ContentTiles.Has(World.GetCell(cell).TileId, TileTraits.Container))
+            .OrderBy(cell => cell.Y).ThenBy(cell => cell.X)
+            .Select(cell => new ChestFilterSnapshot(cell.X, cell.Y, ChestFilter(cell), ChestPriority(cell))).ToArray();
 
     private void RestoreChestFilters(ChestFilterSnapshot[]? saved)
     {
         _chestFilters.Clear();
+        _chestPriorities.Clear();
         foreach (var entry in saved ?? [])
             if (entry is not null && World.Contains(entry.X, entry.Y))
+            {
                 SetChestFilter(new GridPoint(entry.X, entry.Y), entry.Takes);
+                SetChestPriority(new GridPoint(entry.X, entry.Y), entry.Priority);
+            }
     }
 }

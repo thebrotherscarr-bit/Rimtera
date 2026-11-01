@@ -85,8 +85,8 @@ Colonists already have twelve skills with passions. Each work type uses one skil
 | Brew | Medical | Turns herbs into potions from a bill queue |
 | Cook | Cooking | Meals and food buffs; keeps the crew fed |
 | Fish | Animals | Fish, crates, the daily quest fish |
-| Mine and haul | Mining | Mines marked areas; hauls ore and drops to storage |
-| Build | Construction | Builds and repairs from player-placed blueprints |
+| ~~Mine and haul~~ | — | Removed in 0.2.9 (not needed in Rimtera): workers carry what they make to storage themselves |
+| ~~Build~~ | — | Removed in 0.2.9 (not needed in Rimtera): the player builds |
 | Guard | Shooting or Melee | Holds a post; fights raids at home or at an outpost |
 | Tend | Medical | Treats wounds and sickness; later, rebuilds the station AI |
 | Research | Intellectual | Unlocks recipes and the ship's parts |
@@ -117,7 +117,7 @@ What each system needs, what exists, and what is missing. Sizes are rough: S (da
 | 4 | **Farming and brewing** | Done in 0.2.5: grow zones planted and harvested by Farm crew; brew bills at chem labs worked by Brew crew | Crops beyond herbs; planters as zone soil only | M |
 | 5 | **Cooking and food** | Done in 0.2.6: cook bills worked by Cook crew; crew eat from storage, most filling first | Meal quality from Cooking skill | M |
 | 6 | **Fishing by crew** | Done in 0.2.6: Fish crew fish open water near home and store the catch | Crew using rods and bait | S |
-| 7 | **Hauling and storage** | Done in 0.2.4: tagged chests (eight item categories); crew and residents haul drops and products to the chest that takes them | Storage zones on the floor; priorities between tagged chests | M |
+| 7 | **Storage** | Done in 0.2.4 and 0.2.9: tagged chests (eight item categories) with a priority (First, Normal, Low); workers carry their products to the chest that takes them (the Haul job was removed in 0.2.9) | Storage zones on the floor; priorities between tagged chests | M |
 | 8 | **Outposts and pylons** | Pylons need two housed residents nearby; recall items | Every pylon needs a staffed outpost (decided); outposts as named bases with their own crew and storage; raids can hit an outpost while you are away; recall items and potions to get home | M |
 | 9 | **Permadeath** | Town NPCs respawn on a timer; crew can die | Turn off the respawn timer; graves; death mood thoughts; replacements only from arrivals | S |
 | 10 | **Death drops** | Explorer, Classic, Salvager, Ironman, Creative | Easy / Medium / Hard as in §3.2 | S |

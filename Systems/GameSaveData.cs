@@ -63,7 +63,6 @@ public sealed record GameSnapshot(
     StationBillSnapshot[]? Bills = null,
     ChestFilterSnapshot[]? ChestFilters = null,
     GrowZoneSnapshot[]? GrowZones = null,
-    BlueprintSnapshot[]? Blueprints = null,
     ResearchSnapshot? Research = null)
 {
     /// <summary>

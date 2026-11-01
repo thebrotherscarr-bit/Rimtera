@@ -145,6 +145,9 @@ public sealed partial class GameSimulation
 
     public static float ExtraBatchChance(int craftingLevel) => Math.Max(0, craftingLevel - ExtraItemSkill) * 0.02f;
 
+    /// <summary>Meal quality (0.2.9): the chance a cook's food comes out with an extra serving, 4% a Cooking level (80% at most).</summary>
+    public static float CookServingChance(int cookingLevel) => Math.Clamp(cookingLevel * 0.04f, 0f, 0.8f);
+
     /// <summary>Everyone who can work bills: the crew and the town's residents.</summary>
     private IEnumerable<IStationWorker> StationWorkers() => _colonists.Cast<IStationWorker>().Concat(_townNpcs);
 
@@ -237,7 +240,11 @@ public sealed partial class GameSimulation
         }
         var output = Items[job.Recipe.Output];
         var made = job.Recipe.OutputCount;
-        if (output.MaxStack > 1 && CraftRandom.NextDouble() < ExtraBatchChance(agent.LevelFor(work ?? BillWork(job.Station))))
+        var kind = work ?? BillWork(job.Station);
+        // 0.2.9 meal quality: a cook's food comes out with extra servings, more often the better the cook (4% a Cooking
+        // level, 80% at most); other bills keep the extra-batch chance above skill 10.
+        var bonus = kind == WorkType.Cook && output.UseKind == ItemUseKind.Food ? CookServingChance(agent.LevelFor(kind)) : ExtraBatchChance(agent.LevelFor(kind));
+        if (output.MaxStack > 1 && CraftRandom.NextDouble() < bonus)
             made += job.Recipe.OutputCount;
         var calibration = output.Calibratable || CalibrationCatalog.IsAccessory(output) ? RollCalibration(output) : Calibration.None;
         agent.Carried = new ItemStack(job.Recipe.Output, made, calibration);

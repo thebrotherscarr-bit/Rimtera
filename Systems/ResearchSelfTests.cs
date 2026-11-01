@@ -4,8 +4,8 @@ using Rimtera.World;
 
 namespace Rimtera.Systems;
 
-/// <summary>Build and research (0.2.7): blueprints, the Build job giver, research projects and their effects, saves and the tabs.</summary>
-public static class ConstructionSelfTests
+/// <summary>Research (0.2.7): projects and their effects, saves and the Research tab. (Build and blueprints were removed in 0.2.9.)</summary>
+public static class ResearchSelfTests
 {
     private const int Floor = 40;
     private static readonly GridPoint Chest = new(58, Floor - 1), Bench = new(66, Floor - 1);
@@ -62,36 +62,6 @@ public static class ConstructionSelfTests
 
     public static void Run(Action<bool, string> check)
     {
-        // ---- blueprints: a block marks a cell; again unmarks it; only placeable blocks ----
-        var marks = Site(9971);
-        var rock = marks.Items[ItemId.RockBlock];
-        var cell = new GridPoint(30, Floor - 4);
-        var marked = marks.TryToggleBlueprint(rock, cell) && marks.Blueprints.GetValueOrDefault(cell) == ItemId.RockBlock;
-        var unmarked = marks.TryToggleBlueprint(rock, cell) && !marks.Blueprints.ContainsKey(cell);
-        check(marked && unmarked && !marks.CanBlueprint(marks.Items[ItemId.Berry]) && marks.Player.Inventory.Count(ItemId.RockBlock) == 0,
-            "a block marks a blueprint at a cell and marking it again removes it; only placeable blocks can be blueprinted, and nothing is spent");
-
-        // ---- building: a builder fetches blocks from a chest, places every blueprint, and returns the rest ----
-        var build = Site(9972);
-        var builder = build.Colonists[0];
-        builder.Work.Set(WorkType.Build, 1);
-        build.GetContainer(Chest)!.Add(ItemId.RockBlock, 10);
-        var shelf = Enumerable.Range(64, 4).Select(x => new GridPoint(x, Floor - 4)).ToArray();
-        foreach (var spot in shelf)
-            build.TryToggleBlueprint(build.Items[ItemId.RockBlock], spot);
-        var built = TickUntil(build, () => shelf.All(spot => build.World.TileAt(spot.X, spot.Y) == TileId.Rock) && builder.BuildStock.IsEmpty, 5400);
-        check(built && build.Blueprints.Count == 0 && build.GetContainer(Chest)!.Count(ItemId.RockBlock) == 6 && build.Flags.Get("colony.built") == 4,
-            $"a builder fetches blocks from a chest near home, places every blueprint and puts the spare blocks back " +
-            $"(built {shelf.Count(spot => build.World.TileAt(spot.X, spot.Y) == TileId.Rock)}/4, chest {build.GetContainer(Chest)!.Count(ItemId.RockBlock)}, {builder.Activity})");
-
-        // ---- without blocks in storage a blueprint waits ----
-        var waiting = Site(9973);
-        waiting.Colonists[0].Work.Set(WorkType.Build, 1);
-        waiting.TryToggleBlueprint(waiting.Items[ItemId.RockBlock], new GridPoint(64, Floor - 4));
-        TickUntil(waiting, () => false, 600);
-        check(waiting.Blueprints.Count == 1 && waiting.World.TileAt(64, Floor - 4) == TileId.Air,
-            "a blueprint with no blocks in storage waits");
-
         // ---- research: studying at a bench adds points; prerequisites; finishing applies the effect ----
         var lab = Site(9974);
         lab.World.SetTile(Bench, TileId.ResearchTerminal);
@@ -109,32 +79,29 @@ public static class ConstructionSelfTests
             $"a Research colonist studies the chosen project at a research terminal ({studied:0} points in 15 s); a project waits for its prerequisite; " +
             "finishing teaches recipes or speeds work");
 
-        // ---- saves keep blueprints and research, and re-teach researched recipes ----
+        // ---- saves keep research, and re-teach researched recipes ----
         var kept = Site(9975);
-        kept.TryToggleBlueprint(kept.Items[ItemId.RockBlock], new GridPoint(40, Floor - 4));
         kept.FinishResearch(GameSimulation.FindProject(GameSimulation.Metallurgy)!);
         kept.ChooseResearch(GameSimulation.CobaltStudies);
         var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
         var relearned = reloaded.Crafting.Recipes.Where(recipe => recipe.RequiresGuideUnlock && recipe.GuideUnlockMaterials?.Contains(ItemId.CopperBar) == true)
             .All(recipe => reloaded.Crafting.KnownGuideRecipes.Contains(recipe.Id));
-        check(reloaded.Blueprints.GetValueOrDefault(new GridPoint(40, Floor - 4)) == ItemId.RockBlock && reloaded.ResearchDone(GameSimulation.Metallurgy) &&
+        check(reloaded.ResearchDone(GameSimulation.Metallurgy) &&
               reloaded.CurrentResearch == GameSimulation.CobaltStudies && relearned,
-            "blueprints, finished research and the chosen project are saved, and researched recipes are known again after loading");
+            "finished research and the chosen project are saved, and researched recipes are known again after loading");
 
-        // ---- the Build and Research tabs, and the Work tab's ten columns ----
+        // ---- the Research tab, and the Work tab's columns (no Haul or Build since 0.2.9) ----
         var ui = Site(9976);
         var hub = new Rimtera.UI.InventoryUiState(ui.Player.Inventory, game: ui);
         Rimtera.UI.UiButtonElement? Button(string id) =>
             hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
-        Button("tab-build")?.Command?.Invoke();
-        Button("build-mode")?.Command?.Invoke();
-        var modeOn = ui.BlueprintMode;
+        var noBuildTab = Button("tab-build") is null;
         Button("tab-research")?.Command?.Invoke();
         Button($"research-{GameSimulation.Herbalism}")?.Command?.Invoke();
         Button("tab-work")?.Command?.Invoke();
         var id = ui.Colonists[0].Id;
-        check(modeOn && ui.CurrentResearch == GameSimulation.Herbalism &&
-              Button($"work-{id}-{WorkType.Build}") is not null && Button($"work-{id}-{WorkType.Research}") is not null,
-            "the Build tab turns blueprint mode on, the Research tab chooses a project, and the Work tab has Build and Research");
+        check(noBuildTab && ui.CurrentResearch == GameSimulation.Herbalism && Button($"work-{id}-{WorkType.Research}") is not null &&
+              Button($"work-{id}-{WorkType.Trade}") is not null && !Enum.GetNames<WorkType>().Contains("Haul") && !Enum.GetNames<WorkType>().Contains("Build"),
+            "the Research tab chooses a project; the Work tab has Research and Trade, and there is no Build tab, Haul or Build work");
     }
 }
