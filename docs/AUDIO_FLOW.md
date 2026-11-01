@@ -24,7 +24,7 @@ Every cue gets its sound from one of four lanes. The needs map (below) records w
    - **Free, open-source models only.** Stable Audio Open is excluded: its licence is not open source.
    - **Sound effects and ambience: MOSS-SoundEffect v2.0** (Apache 2.0; DiT + DAC VAE + Qwen3 text encoder, 48 kHz mono, up to 30 s per clip). Weights in `models/diffusers/MOSS-SoundEffect-v2.0` of the shared ComfyUI models folder; code in `tools/moss`. It pins transformers 4.57, which ComfyUI's environment cannot take, so it runs beside ComfyUI in `tools/moss-venv`, which borrows ComfyUI's ROCm torch through a `.pth` file. `tools/audio/setup_audio.ps1` rebuilds that venv. Tested on the RX 6800 XT: a 2 s effect takes about 25 s (the denoise window is sized to the clip; the default 30 s window took 404 s).
    - **Music: ACE-Step 1.5 turbo** (MIT), native ComfyUI nodes: `diffusion_models/acestep_v1.5_turbo.safetensors`, `text_encoders/qwen_0.6b_ace15.safetensors` + `qwen_1.7b_ace15.safetensors`, `vae/ace_1.5_vae.safetensors`. Instrumental (`[Instrumental]` lyrics), 8 steps. Tested: a 60 s track in 100 s. The decode is tiled (`VAEDecodeAudioTiled`): a whole-track decode asks MIOpen for 5 GB of workspace and crashes the server on gfx1030.
-   - Prompts follow the game's style card for sound: "sci-fi frontier, warm analog synth plus orchestral strings, clean and punchy, not harsh". Each category below has its own prompt template.
+   - Prompts follow the game's sound profile (`docs/STYLE_GUIDE.md` §6, settled 2026-11-01): **MIDI-sounding**. Music keeps each theme's composition style card but is played on General MIDI sound-module instruments, 16-bit era; effects are punchy, crunchy and synthetic with a slight bit-crushed edge; UI blips have a MIDI and chiptune flavour; ambience stays natural. Each category below has its own prompt template.
 4. **Synthesise (the existing procedural engine).** Always-available fallback for every cue, plus anything that should stay generative: the music engine's themes, short UI blips, stingers. A cue with no file still plays its synth version.
 
 ## The needs map (what the game needs to sound like)
@@ -76,7 +76,7 @@ Scripts in `tools/audio/`, mirroring `tools/comfy/`.
 
 Rough timing at full power: about 1,300 effect takes at 15–25 s each, 64 tracks at about 4 minutes each and 40 ambience loops at a few minutes each, so everything takes two or three nights. `--only` runs a single lane, and each night continues where the last one stopped.
 
-**Pause and resume:** close the run's window (or stop its processes) to pause; only the clip or track in progress is lost, because takes are written only when finished. Double-click `tools/audio/run_overnight.cmd` to resume, or pass the same options (`tools\audio\run_overnight.cmd --restricted`). Lanes already done are skipped in seconds. Output goes to the window and is appended to `%TEMP%\rimtera-audio-overnight.log`.
+**Pause and resume:** close the run's window (or stop its processes) to pause; only the clip or track in progress is lost, because takes are written only when finished. Double-click `tools/audio/run_overnight.cmd` to start or resume (on a PC that has never run it, it first runs the one-time `setup_audio.ps1` by itself), or pass the same options (`tools\audio\run_overnight.cmd --restricted`). Lanes already done are skipped in seconds. Output goes to the window and is appended to `%TEMP%\rimtera-audio-overnight.log`.
 
 The steps as built:
 

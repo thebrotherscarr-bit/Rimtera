@@ -1,20 +1,38 @@
 # Rimtera: long-term plan
 
-Written 2026-10-31. This is the path from today's build to 1.0. It ties together the design (`docs/DESIGN_COLONY_ESCAPE.md`), the Terraria-parity roadmap (`docs/ROADMAP_0.2.0.md` and `docs/roadmap/`) and the UI review (`docs/UI_UX_REVIEW.md`). Each milestone ends in a release and a **discussion point** where we play it, talk, and adjust the next milestone before starting it.
+Written 2026-10-31; re-based on `docs/VISION.md` (2026-11-01), which now holds the game's long-term vision and the milestones to 1.0. This file is the step-by-step plan under it. It ties together the design (`docs/DESIGN_COLONY_ESCAPE.md`), the Terraria-parity roadmap (`docs/ROADMAP_0.2.0.md` and `docs/roadmap/`) and the UI review (`docs/UI_UX_REVIEW.md`). Each milestone ends in a release and a **discussion point** where we play it, talk, and adjust the next milestone before starting it.
 
 ## Where we are
-- Released: **0.1.7**. On `main` since then: music streaming, the music player, the ambience layer, and the art and audio tooling.
-- The Terraria baseline is good and largely in place; the parity roadmap lists what is left.
-- The colony and storyteller layer that makes Rimtera its own game is designed but mostly unbuilt.
+- Released: **0.3.6**, the dev console. The Terraria foundations (world, contents, items, ore ladder, spawning, town NPCs) were diffed against Terraria and matched in 0.3.0–0.3.5.
+- Next: **0.3.7**, research tiers by boss (`docs/VISION.md` §4.1).
 
 ## Direction (owner, 2026-11-01)
+- **More calls (owner, 2026-11-01):**
+  - People: bionics yes; food is the only need; no mood or rest for now.
+  - Zealots do not convert your people.
+  - No post-game content; alternate endings and win conditions are a later talk.
+  - **1.0 has every part in:** the whole base game working and tested.
+  - **A dev console** to trigger any game state, event or spawn (0.3.6).
+  - **Look, feel and sound of Rimtera before 1.0** (milestone 0.10.0): every sprite, animation, UI piece, music theme, sound and the game feel in the Rimtera style; a style track feeds assets in through every milestone.
+  - **Assets** come from the owner's local ComfyUI runs. Claude may ask for assets to be generated or refined in the Rimtera style; the boss sheet (`sheet_00c_bosses`) is the style preference. Requests go in `docs/ASSET_REQUESTS.md` (`docs/VISION.md` §7).
+- **In one line:** Terraria is the base, with a sci-fi twist, an AI storyteller, and a more in-depth NPC system (`docs/VISION.md`).
 - **Terraria first.** The foundations (world, chests, items, crafting, progression, enemies, town NPCs) should feel like Terraria and keep Terraria's progress loops. 0.3.x diffs each foundation against Terraria and fixes the gaps.
 - **The colony waits for 0.4.0.** No RimWorld-style management (no blueprints and the like). The colonists are the NPCs: assistive, and acting like sentries for their area.
 - **RimWorld's part is the pressure.** Invasion-style raids and calamities, paced by a storyteller, on top of Terraria's progression.
 - **Owner's calls:**
   - The 0.2.x colony systems (Work tab, bills, farm zones, chest filters and priority, research, crew cooking and fishing) stay as they are and are revisited when 0.4.0 is designed.
   - The crew merge into the town NPCs: one kind of character that moves in like Terraria's, runs its shop, and guards and helps its own area.
-  - **Research is tied to bosses** (decided at the 0.3.5 check-in). Defeating a boss opens the next research, and what it opens is the right to **upgrade crafting stations**, each upgrade built from materials, the way Terraria makes you craft a new anvil for hardmode ores or build the next pickaxe from boss parts. Research no longer teaches item recipes or gates gear on study points; progression stays boss-driven. The study-point projects of 0.2.7 are reworked into this in 0.4.0.
+  - **Progress is Terraria's ladder, with research on top** (refined 2026-11-01): ores, bars, gear, bosses and stations work as in Terraria. Beating a boss opens the next research tier; studying it takes time and unlocks the tier's recipes and stations.
+  - **Build it your way, for the player and the NPCs**: as in Terraria, gear and items let a player build the character they want; unlike Terraria, the town NPCs can be equipped too, RimWorld-style (weapons, armour and accessories that change how they fight and guard their area).
+
+- **The long-term vision (owner, 2026-11-01; `docs/VISION.md`):**
+  - A Terraria run with more chaos and calamity: 10–14 hours to launch, then you may **continue in the world** for a long-scale playthrough.
+  - People start shallow (a trade, skills, an outpost to guard, gear), then gain RimWorld's depth: backgrounds, traits, incapabilities, lasting injuries, prisoners and conversion. Losing a skilled person matters.
+  - **The colony works by default, by skill:** the Work tab and bills are removed; people orient toward their preferred work from their background (0.3.9).
+  - **Gear is Terraria's** (owner, 2026-11-01): gearing, itemization, equipment and accessories all follow Terraria. People are equipped with that same gear.
+  - **The station AI powers the crafting stations.** It boots on energy cells or ore, and its fuel is tied to progress. Losing it no longer ends the run: the stations go dark until it is rebuilt.
+  - **The storyteller runs every event, with advance warning, and events are purposeful:** they push you through the run's story. A tower-defence feel at the base and the outposts.
+  - **Local split-screen co-op for up to four in 1.1, networked multiplayer in 1.2**, both pre-planned (groundwork in 0.3.11).
 
 ## How versions work
 - **Milestones** are minor versions: 0.2.0, 0.3.0 … 1.0.0. Each has a goal and a discussion point.
@@ -23,80 +41,25 @@ Written 2026-10-31. This is the path from today's build to 1.0. It ties together
 - The parity roadmap keeps its IDs (PC-, BO-, EN-…). Its steps are folded into the milestones below rather than renumbered.
 
 ## Milestones
+The milestones to 1.0 are in `docs/VISION.md` §4:
+- 0.3.6 the dev console, then the steps to 0.4.0;
+- 0.4.0 the colony defends;
+- 0.5.0 people with stories;
+- 0.6.0 the storyteller;
+- 0.7.0 outposts and travel;
+- 0.8.0 the Fracture and the zealots;
+- 0.9.0 the escape (and continuing the world);
+- 0.10.0 look, feel and sound of Rimtera: every visual and sound in the Rimtera style;
+- 1.0.0 release, with every part in, working and tested;
+- 1.1.0 local co-op;
+- 1.2.0 online multiplayer.
 
-### M1 → 0.2.0 "Stakes and baseline"
-**Goal:** losing means something, and the Terraria basics a player reaches for are all there.
-| Step | Contents |
-|---|---|
-| 0.1.8 **Stakes** | Easy / Medium / Hard / Ironman death drops; town NPCs and crew die for good, and come back only through arrivals; the station AI as the colony's heart (its loss ends the run); a run chronicle; the run-end screen |
-| 0.1.9 **Terraria basics** | Pet, light pet, mount and hook slots; right-click to cancel a buff; tooltip comparison; selling and buyback; the housing page with residents |
-| 0.1.10 **Coin and ammo slots** | Four coin and four ammo slots beside the bag, as in Terraria |
-| 0.1.11–0.1.15 **Foundations and combat** | Parity roadmap 0.1.8 (clock, statuses, movement, menus) and 0.1.9 (combat core) |
-| 0.2.0 **Baseline release** | Balance pass on the above; docs |
-
-**Discussion point D1** (after 0.1.8): does permadeath feel fair? Are death drops right? Should Explorer and Creative keep their safety nets?
-**Discussion point D2** (at 0.2.0): what feels most "Terraria" and what feels off; anything to pull forward.
-
-### M2 → 0.3.0 "The colony works"
-**Goal:** crew and town NPCs make the player's work faster and better, never automatic.
-- Work types and priorities, with job givers per work type (RimWorld's think-tree pattern, `docs/RESEARCH.md`).
-- Station bills worked by Crafting colonists; farming and brewing; cooking; crew fishing; tagged storage. (No Haul or Build work: removed in 0.2.9 as not needed in Rimtera; workers store what they make, and the player builds.)
-- Town NPCs work stations and jobs too, alongside their shops.
-- UI: the colonist bar, the Work tab in the hub, bills at a station, the zone tool in the hotbar, click-to-inspect cards.
-
-**Discussion point D3:** is the colony helping without playing the game for you? How much should skill matter?
-
-### M3 → 0.4.0 "The storyteller"
-**Goal:** a run tells a story: arrivals, troubles and calamities paced by what the player has done.
-- Storyteller components; acts as the progress score; adaptation; population intent; on/off threat cycles; the big-threat guarantee; follow-up triggers; the queue with warnings; shared cooldown tags; difficulty dials; Steady, Wild and Builder, picked at world creation (`docs/DESIGN_COLONY_ESCAPE.md` §5).
-- The incident catalogue: arrivals, threats, sickness, breakdowns, follow-ups.
-- Mental breaks with three levels; inspirations.
-- UI: letters and alerts on the right edge; the History tab (the run's story).
-- Parity roadmap 0.1.10 (creature AI and the boss framework) and 0.1.12 (events and weather, rescheduled through the storyteller).
-
-**Discussion point D4:** play a run on each storyteller. Which calamities were fun, which were cheap? Tune before adding pressure.
-
-### M4 → 0.5.0 "Pressure"
-**Goal:** the colony is something to defend, spread across the world.
-- Raids aimed at the colony and at outposts; guard posts; town NPCs fighting back; walls and doors mattering.
-- Outposts: every pylon needs a staffed outpost; recall items and potions.
-- Parity roadmap 0.1.11 (world and the progression ladder) and 0.1.13 (town and colony: happiness, pylons, reforging, move-in gates).
-
-**Discussion point D5:** is spreading out worth the risk? Do raids feel like they come for the colony, or for the player?
-
-### M5 → 0.6.0 "The escape"
-**Goal:** a run has an ending you can win.
-- The seven acts; the core's gate boss waking when you reach it; the Fracture; the four fuel cores and their collapse; the Astro-God; the ship, its parts and research; the fuel-up siege; boarding; the win screen.
-- The zealots (designed at **discussion point D6**, before this milestone starts).
-- Parity roadmap 0.1.14 (bespoke bosses, gear depth, building depth).
-
-**Discussion point D7:** play a full run. How long did it take? Was the hardmode ladder too long?
-
-### M6 → 0.7.0 "Depth and reconciliation"
-**Goal:** the Terraria and RimWorld interfaces read as one game.
-- UI depth from the review: Schedule and Research tabs, factions, medical, bestiary filters and search, map pins, reforge, dyes and vanity accessories, Journey-mode powers.
-- The Mechanic Mixer cards for every system, with MDA notes and the lens review (StewBones' tool).
-
-**Discussion point D8:** the lens review results. Cut, swap or strengthen cards.
-
-### M7 → 0.8.0 "Pacing and balance"
-**Goal:** a run takes 10–14 hours on a medium world, and every difficulty is fair.
-- Run pacing, the second ladder, the boss and gear curve, difficulty dials, storyteller tuning; playtests against the targets.
-- Parity roadmap 0.2.0 (balance, coloured lighting, CI asset and performance gates, the full parity play-through).
-
-**Discussion point D9:** playtest results against the targets.
-
-### M8 → 0.9.0 "Beta" and 1.0.0
-**Goal:** it looks, sounds and saves like a finished game.
-- Art and audio passes, performance, save safety, settings completeness, an onboarding pass for new players, credits.
-- 1.0: a final balance pass and release.
-
-**Discussion point D10:** what is in and out for 1.0.
+Each one is split into steps (0.4.1, 0.4.2 …) when it starts, and ends at a discussion point. The 2026-10-31 milestones (M1–M8) are replaced; their contents are folded into the list above.
 
 ## Standing decisions
 From the design conversation; reopened only at a discussion point.
 - Terraria is the baseline for feel and base mechanics; every system is twisted to Rimtera's needs.
-- Nothing carries over between runs. Winning is beating the end boss and launching.
+- Nothing carries over between runs. Winning is beating the end boss and launching; afterwards the world can be continued (2026-11-01).
 - People die for good. The player respawns, except on Ironman (the impossible run).
 - The storyteller is picked at world creation. Time is real-time; there are no speed buttons.
 
@@ -127,4 +90,10 @@ From the design conversation; reopened only at a discussion point.
 | 0.3.3 Foundations: crafting and progression | Done | The ore ladder by depth now follows Terraria (docs/WORLDGEN_DIFF.md §6). Cobalt, the tier-2 ore, was only in the caverns; it now runs from just under the surface, a third or more of the ore near the top as Terraria's iron and lead are, so the first tier-2 gear comes at Terraria's pace. Copper and scrap iron thin to make room; the caverns hold more viridium and less copper. Every layer's tier mix is within 12 points of Terraria's, and its total ore stays in range. The recipe chain, stations, boss order and gates were re-checked by the crafting audit and gear-curve tests and are unchanged. |
 | 0.3.4 Foundations: enemies, spawning and events | Done | Natural spawning now runs on Terraria's model (docs/breakdown/03_enemies_critters.md C1–C9): the base rate is Terraria's 1-in-600 roll a tick and the base population five; night on the surface is ×1/0.6 rate and ×1.3 cap, underground ×1/0.45 and ×1.8, the Fracture (hardmode) ×1/0.9 and one more slot; and spawns come faster while the area is emptier, as Terraria's ramp does. New battle and calming stims (Chem Lab) raise and lower spawns as Terraria's potions do. Rimtera keeps its blight, town calming and "fewer spawns while a boss lives" rules. The family stream's guards (EN-7) and statue spawns giving no loot (EN-6) were already in place. SpawnRateSelfTests holds the model. |
 | 0.3.5 Foundations: town NPCs | Done | Town NPCs follow Terraria's rules where they differed (docs/breakdown/08_npcs_town_colony.md): happiness is now Terraria 1.4's product of price factors (love ×0.88, like ×0.94, dislike ×1.06, hate ×1.12 for the home biome and each neighbour within 25 tiles of home; ×1.05 for each neighbour past three; ×0.95 for solitude; the full ×1.5 when homeless or more than 120 tiles from home; clamped to 0.75–1.5), and town gels and travelling traders no longer count as neighbours. The medic moves in after one life core with the quartermaster in town, as the Nurse does, and also clears debuffs; the armorer needs a gun or bullets, as the Arms Dealer does. Residents keep to their trades at the crafting stations (`TownTrades`): every working resident can use the basic benches (Nano-Fabricator, Field Workbench) at a generalist's skill, and works only their own trade's stations beyond those, at a specialist's skill (the medic and astro-botanist at the Chem Lab and Bio Lab, the cook, tide-warden and party planner at the Cooking Station, the chief engineer at the refineries, forges and kiln, the armorer and demolitionist at the Ammo Press, the tailor and pigment trader at the Loom and Dye Vat, the mechanic, pilot and aeronaut at the Tinker Bench and Drone Bay, the researchers at the Research Terminal, and so on); travelling traders and gels work nothing. Every station has a resident skilled at it; the inspect card lists a resident's trade. Unhappy residents stay and town NPC health is saved (both already in place). TownParitySelfTests holds the rules. NPCs fighting back is left for 0.4.0's sentries. |
-| 0.4.0 The colony: NPC sentries and invasions | Planned | The crew merge into the town NPCs, which become assistive colonists guarding their area. RimWorld-style invasions are aimed at the base and the NPCs' areas, paced by a storyteller and tied to Terraria's progression. The 0.2.x colony systems are kept, cut or folded in here. Research becomes boss-gated station upgrades (see Direction). |
+| 0.3.6 The dev console | Done | Press ` in a running game for a console (`docs/DEV_CONSOLE.md`): give items, spawn creatures, defeat any boss through its real defeat, move NPCs in, kill all, start the Fracture, start and stop events, set the time, flags and weather, heal, set life cores, god mode, buffs, teleport, scale spawning, find names, and help. Names match by id or display name. Commands that change the game mark the run (`dev.console.used`). DevConsoleSelfTests drives every command. Also: every ComfyUI job is one click (the new overnight art launcher; the audio launcher runs its one-time setup itself; both refresh the app's flows), and the sound profile is MIDI-sounding (`docs/STYLE_GUIDE.md` §6). |
+| 0.3.7 Progress: research tiers by boss | Next | Each boss opens the next research tier; studying it takes time and unlocks the tier's recipes and stations. The 0.2.7 study-point projects fold in. Terraria's own ladder stays the base. |
+| 0.3.8 The station AI powers the base | Planned | It boots on energy cells or ore; its fuel is tied to progress and higher-tier stations need more power; without it the stations go dark, and losing it means rebuilding it before progress resumes. |
+| 0.3.9 The colony by default | Planned | The Work tab and bills are removed (owner, 2026-11-01). People orient themselves toward their preferred work from their background and skills, and work it by skill with nothing to set: a chemist keeps healing in stock, a cook keeps food. |
+| 0.3.10 One kind of character | Planned | The crew merge into the town NPCs. |
+| 0.3.11 Multiplayer groundwork | Planned | Per-player input, camera, inventory and saves; game state separated from player commands (for 1.1 split-screen and 1.2 online). |
+| 0.4.0 The colony defends | Planned | Guards and outposts, equipping people, purposeful storyteller raids with advance warning, a balance pass; split into 0.4.x steps when it starts (`docs/VISION.md`). |

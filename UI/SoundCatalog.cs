@@ -28,7 +28,7 @@ public sealed record SoundCue(
 /// </summary>
 public static class SoundCatalog
 {
-    private const string Style = "sci-fi frontier video game sound effect, clean, punchy, close, no music, no speech";
+    private const string Style = "sci-fi frontier retro video game sound effect, MIDI and sound-module era, punchy and crunchy, synthetic with a slight bit-crushed edge, clean, close, no music, no speech";
 
     private static readonly Lazy<IReadOnlyList<SoundCue>> _all = new(Build);
     private static readonly Lazy<Dictionary<string, SoundCue>> _byCue = new(() => _all.Value.ToDictionary(cue => cue.Cue, StringComparer.OrdinalIgnoreCase));
@@ -348,7 +348,7 @@ public static class SoundCatalog
 
     private static void AddUi(Action<SoundCue> add)
     {
-        const string ui = "clean sci-fi user interface sound, short, soft, subtle, no music";
+        const string ui = "clean retro sci-fi interface blip, MIDI and chiptune flavour, short, soft, subtle, no music";
         (string Cue, string Trigger, string Sound, string Fallback, float Offset)[] rows =
         [
             ("hover", "the cursor moves over a button", "a tiny soft tick", "", -12f),
@@ -504,7 +504,7 @@ public static class SoundCatalog
 
     private static void AddMusic(Action<SoundCue> add)
     {
-        const string music = "instrumental video game soundtrack, loopable, no vocals";
+        const string music = "instrumental video game soundtrack in a MIDI style: General MIDI sound-module instruments (synth leads, sampled strings, brass, choir pads, a drum kit), 16-bit era like a classic sandbox game soundtrack, loopable, no vocals";
         foreach (var (theme, bpm, key, meter, card, surface, underground) in MusicThemes)
         {
             var slot = surface ? $"mus_{theme}_day" : $"mus_{theme}";

@@ -2628,6 +2628,20 @@ public sealed partial class GameSimulation : IStoryHost
     /// <summary>Column the colony landed on; respawns return here.</summary>
     public int SpawnColumn { get; private set; }
 
+    /// <summary>The landing site at the surface, where the player wakes without a bed (the dev console's tp spawn).</summary>
+    public System.Numerics.Vector2 LandingSpot
+    {
+        get
+        {
+            var column = Math.Clamp(SpawnColumn == 0 ? World.Width / 2 : SpawnColumn, 2, World.Width - 3);
+            return new System.Numerics.Vector2(column, FindSurface(column) - Player.Motion.Size.Y);
+        }
+    }
+
+    /// <summary>Forces the weather at once (the dev console). Null leaves a value as it is.</summary>
+    public void ForceWeather(float? rain = null, float? snow = null, float? dust = null, float? fog = null, bool? storm = null) =>
+        _weather.Force(rain: rain, snow: snow, dust: dust, fog: fog, storm: storm, immediate: true);
+
     private float ScaleIncoming(float damage) => damage * WorldSettings.EnemyDamageScale(Difficulty);
 
     private float ScaleOutgoing(float damage) => damage / WorldSettings.EnemyHealthScale(Difficulty);
