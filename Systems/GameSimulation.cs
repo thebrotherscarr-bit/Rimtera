@@ -415,7 +415,7 @@ public sealed partial class GameSimulation : IStoryHost
             WhipMarkedEnemy: _whipMarkedEnemy,
             WhipBuffSeconds: _whipBuffSeconds,
             Run: CaptureRun(),
-            MiscEquipment: CaptureMisc()) { CellData = cellData };
+            MiscEquipment: CaptureMisc(), BedSpawnX: _bedSpawn?.X, BedSpawnY: _bedSpawn?.Y) { CellData = cellData };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -523,6 +523,8 @@ public sealed partial class GameSimulation : IStoryHost
         game.RestoreEntities(snapshot);
         game.RestoreRun(snapshot.Run);
         game.RestoreMisc(snapshot.MiscEquipment);
+        if (snapshot is { BedSpawnX: { } bedX, BedSpawnY: { } bedY } && game.World.Contains(bedX, bedY))
+            game._bedSpawn = new GridPoint(bedX, bedY);
         game.LoadWiringFromFlags();
 
         var motion = game.Player.Motion;
@@ -2617,10 +2619,24 @@ public sealed partial class GameSimulation : IStoryHost
     {
         var creditsDropped = DropDeathCredits(difficulty);
 
-        var column = Math.Clamp(SpawnColumn == 0 ? World.Width / 2 : SpawnColumn, 2, World.Width - 3);
-        Player.Respawn(new Vector2(column, FindSurface(column) - Player.Motion.Size.Y));
-        var message = $"{Player.Colonist.Name} wakes at the landing site.";
-        Record($"{Player.Colonist.Name} fell, and woke at the landing site.");
+        string message;
+        if (BedSpawnPosition() is { } beside)
+        {
+            Player.Respawn(beside);
+            message = $"{Player.Colonist.Name} wakes in bed.";
+            Record($"{Player.Colonist.Name} fell, and woke in bed.");
+        }
+        else
+        {
+            var lostBed = _bedSpawn is not null;
+            _bedSpawn = null;
+            var column = Math.Clamp(SpawnColumn == 0 ? World.Width / 2 : SpawnColumn, 2, World.Width - 3);
+            Player.Respawn(new Vector2(column, FindSurface(column) - Player.Motion.Size.Y));
+            message = lostBed
+                ? $"Your bed is missing or obstructed. {Player.Colonist.Name} wakes at the landing site."
+                : $"{Player.Colonist.Name} wakes at the landing site.";
+            Record($"{Player.Colonist.Name} fell, and woke at the landing site.");
+        }
         if (creditsDropped > 0)
             message += $" {creditsDropped} credits lie where you fell.";
         PostMessage(message);

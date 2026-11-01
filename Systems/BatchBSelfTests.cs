@@ -138,12 +138,15 @@ public static class BatchBSelfTests
         Tick(diver, 120);
         var breathDropped = diver.HeadSubmerged && diver.Breath < fullBreath - 1.5f && diver.IsSwimming;
         var hpBefore = diver.Player.HitPoints;
-        Tick(diver, 60 * 12);
+        Tick(diver, 60 * 24);
         var drowned = diver.Player.HitPoints < hpBefore;
         diver.Player.Inventory.Add(ItemId.RebreatherMask, 1);
         Equip(diver, EquipmentSlot.Accessory, ItemId.RebreatherMask);
         check(breathDropped && drowned && diver.MaximumBreath == GameSimulation.BaseBreathSeconds * GameSimulation.RebreatherBreathMultiplier,
-            "a submerged head drains breath, empty breath drowns, and the rebreather triples capacity");
+            "a submerged head drains breath, empty breath drowns, and the rebreather gives six times the air");
+        check(GameSimulation.FallDamage(25f) == 0f && GameSimulation.FallDamage(26f) == 10f && GameSimulation.FallDamage(30f) == 50f &&
+              GameSimulation.FallDamage(35f) == 100f && GameSimulation.BaseBreathSeconds == 23f,
+            "Terraria's fall damage (10 per tile beyond 25: 26 → 10, 30 → 50, 35 → 100) and 23 seconds of air");
 
         // ---- Swimming ----
         var swimmer = NewGame(9104);
