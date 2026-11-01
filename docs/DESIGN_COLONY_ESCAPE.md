@@ -1,6 +1,6 @@
 # Rimtera design: the colony escape
 
-Written 2026-10-31. This is the game's design direction: what a run is, which rules make it, and which systems it needs. It sits above `docs/ROADMAP_0.2.0.md`. That roadmap's parity work is the baseline; this document says what is built on top of it.
+Written 2026-10-31. The long-term vision above it is `docs/VISION.md` (2026-11-01); where they differ, the vision wins. This is the game's design direction: what a run is, which rules make it, and which systems it needs. It sits above `docs/ROADMAP_0.2.0.md`. That roadmap's parity work is the baseline; this document says what is built on top of it.
 
 ## 1. The game in one paragraph
 
@@ -251,6 +251,10 @@ To go into `design/cards/` in the StewBones Mixer format once this direction is 
 | Zealot conversion | On hold. Discuss when act 5 (the zealots) is built |
 | Storyteller choice | Picked at world creation, fixed for the run |
 | Run length | 10–14 hours from landfall to launch on a medium world; 8–15 is the outer range |
+| After the ending (2026-11-01) | The world can be continued after launch for a long-scale playthrough, as Terraria's can after the Moon Lord (`docs/VISION.md`) |
+| The station AI (2026-11-01) | It powers the crafting stations and runs on power. Losing it no longer loses the run: the stations go dark until it is rebuilt. This replaces §3.4's "its loss ends the run" |
+| The colony's work (2026-11-01) | Default and skill-based: no bills or work orders to set |
+| Multiplayer (2026-11-01) | Local split-screen co-op for up to four players, after 1.0 |
 
 ### 7.2 Still open
 1. **Zealots:** whether a converted colonist can be won back, and how conversion works, when act 5 is designed.
