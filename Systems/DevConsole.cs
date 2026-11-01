@@ -154,7 +154,8 @@ public sealed class DevConsole
     private IEnumerable<string> Npc(string[] args)
     {
         var kind = Parse<TownNpcKind>(Rest(args, 0, "a town NPC kind"), "town NPC");
-        var npc = _game.AddTownNpc(kind, Beside(2f), bound: false);
+        // 0.3.10: a settler is a generated person, not the catalog's placeholder name.
+        var npc = kind == TownNpcKind.Settler ? _game.AddSettlerAt(Beside(2f)) : _game.AddTownNpc(kind, Beside(2f), bound: false);
         return [$"{npc.Name} the {npc.Definition.Role} is here."];
     }
 

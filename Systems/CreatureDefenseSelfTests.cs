@@ -27,7 +27,7 @@ public static class CreatureDefenseSelfTests
             game.World.SetCell(cell, data);
         }
         Place(game, new Vector2(30f, 20f - game.Player.Motion.Size.Y - 0.01f));
-        foreach (var agent in game.Colonists)
+        foreach (var agent in game.Settlers)
             agent.Motion.Position = new Vector2(10f, 20f - agent.Motion.Size.Y - 0.01f);
         Step(game, 3);
         return game;

@@ -62,7 +62,7 @@ public sealed class ColonistSheetState : UiState
         AddPageButton("Health", 3, 0.25f);
         AddPageButton("Mood", 4, 0.375f);
         AddPageButton("Social", 5, 0.50f);
-        AddPageButton("Crew", 2, 0.625f);
+        AddPageButton("People", 2, 0.625f);
         if (_game is not null && _page is 3 or 4 or 5)
             AddSubjectButton(0.75f);
         AddPageButton("Close", -1, 0.875f, close: true);
@@ -199,29 +199,28 @@ public sealed class ColonistSheetState : UiState
         {
             AddColumn(0, new List<Line>
             {
-                Line.Head("Crew"),
-                Line.Text("Crew members join once a world is running and there is housing for them."),
+                Line.Head("People"),
+                Line.Text("People move in once a world is running and there is housing for them."),
                 Line.Text("Open this sheet during play to see each of them.")
             }, wide: true);
             return;
         }
 
         var columns = new[] { new List<Line>(), new List<Line>() };
-        if (_game.Colonists.Count == 0)
-            columns[0].AddRange([Line.Head("Crew"), Line.Text("No one has joined yet. Build houses and they will come.")]);
+        if (_game.People.Count == 0)
+            columns[0].AddRange([Line.Head("People"), Line.Text("No one lives here yet. Build houses and they will come.")]);
         var index = 0;
-        foreach (var agent in _game.Colonists)
+        foreach (var npc in _game.People.Take(12))
         {
             var column = columns[index++ % 2];
             if (column.Count > 0)
                 column.Add(Line.Gap);
-            column.Add(Line.Head($"{agent.Profile.Name}  ·  {agent.Profile.BackstoryName}"));
-            column.Add(Line.Row("Life", $"{agent.HitPoints:0} / {agent.MaximumHitPoints:0}"));
-            column.Add(Line.Row("Mood", $"{Percent(agent.Mood)}  {agent.MoodLabel}"));
-            column.Add(Line.Row("Food / rest", $"{Percent(agent.Needs.FoodReserve)} / {Percent(agent.Needs.RestReserve)}"));
-            column.Add(Line.Row("Traits", agent.Profile.TraitSummary));
-            column.Add(Line.Row("Best at", string.Join(", ", TopSkills(agent.ColonistStats, 2).Select(line => line.Label))));
-            column.Add(Line.Row("Doing", agent.IsAlive ? $"{agent.Activity}" : "Down"));
+            column.Add(Line.Head($"{npc.Name}  ·  {npc.Role}"));
+            column.Add(Line.Row("Life", $"{npc.HitPoints:0} / {npc.MaximumHitPoints:0}"));
+            column.Add(Line.Row("Background", npc.Profile.BackstoryName));
+            column.Add(Line.Row("Traits", npc.Profile.TraitSummary));
+            column.Add(Line.Row("Best at", string.Join(", ", TopSkills(npc.Stats, 2).Select(line => line.Label))));
+            column.Add(Line.Row("Doing", npc.Activity));
         }
         AddColumn(0, columns[0]);
         AddColumn(1, columns[1]);
@@ -290,7 +289,7 @@ public sealed class ColonistSheetState : UiState
         vitals.Add(Line.Row("Blood loss", Percent(health.BloodLoss)));
         vitals.Add(Line.Row("State", pawn.IsDowned ? $"Downed: {health.DownedReason}" : pawn.IsAlive ? "Conscious and mobile" : "Dead"));
         vitals.Add(Line.Gap);
-        vitals.Add(Line.Text("Crew with Medical skill tend each other."));
+        vitals.Add(Line.Text("Residents good at medicine tend each other, never you."));
         vitals.Add(Line.Text("Tended wounds stop bleeding and heal faster."));
         AddColumn(1, vitals);
     }
@@ -313,7 +312,7 @@ public sealed class ColonistSheetState : UiState
                 Line.Text("You have no needs to keep up and never break."),
                 Line.Text("Food gives buffs (Well Fed); thoughts still come and go."),
                 Line.Gap,
-                Line.Text("Crew have needs and moods of their own: see their pages.")
+                Line.Text("Residents have no needs or moods yet: see the People page.")
             });
         }
         else
@@ -357,7 +356,7 @@ public sealed class ColonistSheetState : UiState
     {
         if (_game is null || Subject() is not { } pawn)
         {
-            AddColumn(0, [Line.Head("Social"), Line.Text("Relationships form once the crew has landed.")], wide: true);
+            AddColumn(0, [Line.Head("Social"), Line.Text("Relationships come with the colony's people in a later update.")], wide: true);
             return;
         }
         var lines = new List<Line> { Line.Head($"Opinions  ·  {pawn.Name}") };

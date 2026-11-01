@@ -247,7 +247,7 @@ public static class ControlCatalog
         new("Craft", "Craft selected recipe", ControlGroup.Panels, [], "Crafting lives in the inventory."),
         new("CraftPrevious", "Previous recipe", ControlGroup.Panels, []),
         new("CraftNext", "Next recipe", ControlGroup.Panels, []),
-        new("Colonist", "Crew", ControlGroup.Panels, [], "Or the Crew tab in the inventory."),
+        new("Colonist", "People", ControlGroup.Panels, [], "Or the People tab in the inventory."),
         new("Bestiary", "Bestiary", ControlGroup.Panels, [], "Or the Bestiary tab in the inventory."),
         new("Achievements", "Feats", ControlGroup.Panels, [], "Or the Feats tab in the inventory."),
         new("ControlsHelp", "Show / hide key help", ControlGroup.Panels, ["Oem2"]),
@@ -298,7 +298,7 @@ public static class ControlCatalog
         return
         [
             $"{move} move   {K("Jump")} jump   Left click use   Right click interact   {K("Grapple")} grapple   {K("Mount")} mount   {K("ThrowItem")} throw   {K("SmartSelect")} smart select   {K("SmartCursor")} smart cursor",
-            $"{K("QuickHeal")} heal   {K("QuickCharge")} charge   {K("QuickBuff")} buff   {K("Inventory")} inventory, crafting, crew, settings   {K("Map")} map   {K("MapStyle")} map style   {K("ControlsHelp")} hide"
+            $"{K("QuickHeal")} heal   {K("QuickCharge")} charge   {K("QuickBuff")} buff   {K("Inventory")} inventory, crafting, people, settings   {K("Map")} map   {K("MapStyle")} map style   {K("ControlsHelp")} hide"
         ];
     }
 }

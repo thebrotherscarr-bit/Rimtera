@@ -7,24 +7,25 @@ namespace Rimtera.UI;
 public sealed record ColonistBarEntry(long Id, string Name, string Initials, float Health, float Mood, bool Downed, bool Breaking, string Activity);
 
 /// <summary>
-/// The colonist bar (0.2.8, RimWorld's): a row of crew portraits along the top of the screen, between the hotbar and the
-/// life panel. Each shows the crew member's initials with a health bar and a mood bar, red when downed and purple while a
-/// mental break runs; clicking one opens their inspect card. The renderer draws it; this class decides what and where.
+/// The colonist bar (0.2.8, RimWorld's): a row of portraits of the colony's people along the top of the screen, between
+/// the hotbar and the life panel. Each shows a resident's initials with a health bar and a happiness bar (0.3.10: the
+/// crew became residents); clicking one opens their inspect card. The renderer draws it; this class decides what and where.
 /// </summary>
 public static class ColonistBar
 {
     public const float Slot = 40f, Gap = 6f, MinimumSlot = 24f, Top = 8f;
 
     public static IReadOnlyList<ColonistBarEntry> Entries(GameSimulation game) =>
-        game.Colonists.Where(agent => agent.IsAlive).Select(agent => new ColonistBarEntry(
-            agent.Id,
-            agent.Name,
-            Initials(agent.Name),
-            Math.Clamp(agent.HitPoints / Math.Max(1f, agent.MaximumHitPoints), 0f, 1f),
-            Math.Clamp(agent.Mood, 0f, 1f),
-            agent.IsDowned,
-            agent.Mind.Breaker.IsBreaking,
-            agent.Activity)).ToArray();
+        game.People.Select(npc => new ColonistBarEntry(
+            npc.Id,
+            npc.Name,
+            Initials(npc.Name),
+            Math.Clamp(npc.HitPoints / Math.Max(1f, npc.MaximumHitPoints), 0f, 1f),
+            // 0.3.10: the people are residents, so the second bar is Terraria's happiness (no mood yet).
+            Math.Clamp(0.5f + game.GetHappiness(npc) / 8f, 0f, 1f),
+            false,
+            false,
+            npc.Activity)).ToArray();
 
     /// <summary>Up to two capital letters from a name ("Sable Lark" → "SL").</summary>
     public static string Initials(string name)

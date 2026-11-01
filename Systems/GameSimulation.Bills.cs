@@ -149,7 +149,7 @@ public sealed partial class GameSimulation
     public static float CookServingChance(int cookingLevel) => Math.Clamp(cookingLevel * 0.04f, 0f, 0.8f);
 
     /// <summary>Everyone who can work bills: the crew and the town's residents.</summary>
-    private IEnumerable<IStationWorker> StationWorkers() => _colonists.Cast<IStationWorker>().Concat(_townNpcs);
+    private IEnumerable<IStationWorker> StationWorkers() => _townNpcs;
 
     private sealed record BillJob(GridPoint Station, StationBill Bill, RecipeDefinition Recipe, Dictionary<ItemId, int> Plan);
 

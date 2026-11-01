@@ -396,8 +396,7 @@ public sealed partial class GameSimulation
         }
         var box = new Vector2(point.X, point.Y);
         if (_enemies.Any(enemy => enemy.IsAlive && Overlaps(enemy.Motion, box, Vector2.One)) ||
-            _townNpcs.Any(npc => Overlaps(npc.Motion, box, Vector2.One)) ||
-            _colonists.Any(agent => Overlaps(agent.Motion, box, Vector2.One)))
+            _townNpcs.Any(npc => Overlaps(npc.Motion, box, Vector2.One)))
         {
             PostMessage("Cannot place: something is in the way.");
             return true;
@@ -730,7 +729,7 @@ public sealed partial class GameSimulation
             foreach (var door in cells)
             {
                 var box = new Vector2(door.X, door.Y);
-                if (ActorOverlaps(Player.Motion, box) || _colonists.Any(agent => ActorOverlaps(agent.Motion, box)) ||
+                if (ActorOverlaps(Player.Motion, box) ||
                     _townNpcs.Any(npc => ActorOverlaps(npc.Motion, box)))
                     return false;
             }

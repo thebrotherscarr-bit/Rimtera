@@ -18,9 +18,9 @@ public static class InspectSelfTests
             game.World.SetTile(new GridPoint(x, y), y >= Floor ? TileId.Rock : TileId.Air);
         game.Player.Motion.Position = new Vector2(8f, Floor - game.Player.Motion.Size.Y - 0.01f);
         game.AddStartingCrewForChecks();
-        for (var i = 0; i < game.Colonists.Count; i++)
+        for (var i = 0; i < game.Settlers.Count; i++)
         {
-            var agent = game.Colonists[i];
+            var agent = game.Settlers[i];
             agent.Motion.Position = new Vector2(40f + i * 10f, Floor - agent.Motion.Size.Y - 0.01f);
             agent.HomePosition = agent.Motion.Position;
         }
@@ -35,26 +35,27 @@ public static class InspectSelfTests
     {
         // ---- picking: whoever is under the point, crew first; nothing on empty ground ----
         var game = Town(9981);
-        var crew = game.Colonists[0];
+        var crew = game.Settlers[0];
         var npc = game.AddTownNpc(TownNpcKind.Mechanic, new Vector2(80f, Floor - 3f), bound: false);
         npc.HomeCell = new GridPoint(80, Floor - 2);
         var slime = game.SpawnCreatureAt(EnemyKind.MossSlime, new Vector2(100f, Floor - 1.2f));
-        check(game.PickInspectTarget(Center(crew.Motion)) == new InspectTarget(InspectKind.Colonist, crew.Id) &&
+        check(game.PickInspectTarget(Center(crew.Motion)) == new InspectTarget(InspectKind.Resident, crew.Id) &&
               game.PickInspectTarget(Center(npc.Motion)) == new InspectTarget(InspectKind.Resident, npc.Id) &&
               game.PickInspectTarget(Center(slime.Motion)) == new InspectTarget(InspectKind.Creature, slime.Id) &&
               game.PickInspectTarget(new Vector2(20f, Floor - 6f)) is null,
-            "a middle click picks the crew member, resident or creature under the cursor, and nothing on empty ground");
+            "a middle click picks the settler, resident or creature under the cursor, and nothing on empty ground");
 
         // ---- cards: what each says ----
-        var crewCard = game.Inspect(new InspectTarget(InspectKind.Colonist, crew.Id));
+        var crewCard = game.Inspect(new InspectTarget(InspectKind.Resident, crew.Id));
         var npcCard = game.Inspect(new InspectTarget(InspectKind.Resident, npc.Id));
         var slimeCard = game.Inspect(new InspectTarget(InspectKind.Creature, slime.Id));
-        check(crewCard is { Mood: not null } && crewCard.Title == crew.Name && crewCard.Lines.Any(line => line.StartsWith("Mood")) &&
-              crewCard.Lines.Any(line => line.StartsWith("Food")) && crewCard.Lines.Any(line => line.StartsWith("Doing:")) &&
-              crewCard.Lines.Any(line => line.StartsWith("Best at:")) &&
-              npcCard is { Mood: null } && npcCard.Subtitle.Contains(npc.Definition.Role) && npcCard.Lines.Any(line => line.Contains("bills")) &&
+        check(crewCard is { Mood: null } && crewCard.Title == crew.Name && crewCard.Subtitle.StartsWith("Settler") &&
+              crewCard.Lines.Any(line => line.StartsWith("Doing:")) && crewCard.Lines.Any(line => line.StartsWith("Best at:")) &&
+              crewCard.Lines.Any(line => line.Contains("any station")) &&
+              npcCard is { Mood: null } && npcCard.Subtitle.Contains(npc.Definition.Role) && npcCard.Lines.Any(line => line.StartsWith("Best at:")) &&
+              npcCard.Lines.Any(line => line.Contains(CraftingStationId.TinkerBench.DisplayName())) &&
               slimeCard is not null && slimeCard.Title == slime.DisplayName && slimeCard.Lines.Any(line => line.StartsWith("Defense")),
-            "a crew card shows health, mood, needs, what they are doing, their work and best skills; a resident's shows role, home and bill work; a creature's shows health and defense");
+            "one card for every resident (0.3.10): a settler's and a trade's both show role, background, what they are doing, their best skills and the stations they work; a creature's shows health and defense");
 
         // ---- live: the card follows health, and closes when its subject dies ----
         var before = game.Inspect(new InspectTarget(InspectKind.Creature, slime.Id))!.Health;
@@ -66,10 +67,10 @@ public static class InspectSelfTests
 
         // ---- the colonist bar: one portrait per living crew member, with initials, health and mood ----
         var entries = ColonistBar.Entries(game);
-        check(entries.Count == game.Colonists.Count(agent => agent.IsAlive) && entries[0].Id == crew.Id &&
+        check(entries.Count == game.People.Count && entries.Any(entry => entry.Id == crew.Id) && entries.Any(entry => entry.Id == npc.Id) &&
               entries.All(entry => entry.Health is > 0f and <= 1f && entry.Mood is >= 0f and <= 1f) &&
               ColonistBar.Initials("Sable Lark") == "SL" && ColonistBar.Initials("Ash") == "A",
-            "the colonist bar has a portrait per living crew member with initials, health and mood");
+            "the colonist bar has a portrait per living resident with initials, health and happiness");
 
         // ---- layout: centred between hotbar and life panel; shrinks, then wraps ----
         var few = ColonistBar.Layout(3, 500f, 900f);

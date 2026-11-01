@@ -26,9 +26,9 @@ public static class ColonyWorkSelfTests
         game.Player.Motion.Position = new Vector2(8f, Floor - game.Player.Motion.Size.Y - 0.01f);
         game.Player.Motion.Velocity = Vector2.Zero;
         game.AddStartingCrewForChecks();
-        for (var i = 0; i < game.Colonists.Count; i++)
+        for (var i = 0; i < game.Settlers.Count; i++)
         {
-            var agent = game.Colonists[i];
+            var agent = game.Settlers[i];
             agent.Motion.Position = new Vector2(60f + i * 3f, Floor - agent.Motion.Size.Y - 0.01f);
             agent.Motion.Velocity = Vector2.Zero;
             agent.HomePosition = agent.Motion.Position;
@@ -61,16 +61,18 @@ public static class ColonyWorkSelfTests
         // ---- priorities: defaults from passions, the Work tab's cycle, the order work is considered in ----
         var sample = new GameSimulation(seed: 9601, width: 80, height: 48);
         sample.AddStartingCrewForChecks();
-        var crewmate = sample.Colonists[0];
+        var crewmate = sample.Settlers[0];
         // 0.3.9: preferred work comes from the person's skills: their two best first, then anything they are good at
         // (skill 6+) or love, then the rest; nothing is refused.
-        var stats = crewmate.ColonistStats;
+        var stats = crewmate.Stats;
         var best = Enum.GetValues<ColonistSkill>().OrderByDescending(skill => stats.Level(skill) + (stats.Passion(skill) == PassionLevel.None ? 0f : 0.5f)).Take(2).ToHashSet();
-        var defaultsRight = WorkCatalog.All.All(info => crewmate.Work.Priority(info.Type) ==
+        var derivedSettings = ColonyWorkSettings.For(stats);
+        var defaultsRight = crewmate.Work.Capture().SequenceEqual(TownPeople.WorkFor(TownNpcKind.Settler, stats).Capture()) &&
+                            WorkCatalog.All.All(info => derivedSettings.Priority(info.Type) ==
             (best.Contains(info.Skill) ? WorkCatalog.Highest
                 : stats.Level(info.Skill) >= ColonyWorkSettings.GoodSkill || stats.Passion(info.Skill) != PassionLevel.None ? WorkCatalog.Passionate
                 : WorkCatalog.Default));
-        var settings = ColonyWorkSettings.For(crewmate.ColonistStats);
+        var settings = ColonyWorkSettings.For(crewmate.Stats);
         settings.Set(WorkType.Fish, 3);
         var cycle = new List<int>();
         for (var i = 0; i < 5; i++)
@@ -84,8 +86,8 @@ public static class ColonyWorkSelfTests
         settings.Set(WorkType.Guard, 2);
         settings.Set(WorkType.Tend, 2);
         check(defaultsRight && cycle.SequenceEqual([4, 0, 1, 2, 3]) &&
-              settings.Order().SequenceEqual([WorkType.Fish, WorkType.Guard, WorkType.Tend]) && !crewmate.FollowsPlayer,
-            "work priorities come from skills (best two first, then good or loved work); the cycle still runs 1-2-3-4-off; 1 is done first, ties by work type; crew stay home");
+              settings.Order().SequenceEqual([WorkType.Fish, WorkType.Guard, WorkType.Tend]),
+            "work priorities come from skills (best two first, then good or loved work); the cycle still runs 1-2-3-4-off; 1 is done first, ties by work type");
 
         // ---- old saves: 0.2.1-0.2.8 priorities held Haul (at 2) and Build (at 8); 0.2.9 drops those two ----
         var migrated = new ColonyWorkSettings();
@@ -98,11 +100,11 @@ public static class ColonyWorkSelfTests
         float Tended(bool tender)
         {
             var game = Arena(9603);
-            var patient = game.Colonists[1];
-            patient.TakeDamage(patient.MaximumHitPoints * 0.6f);
+            var patient = game.Settlers[1];
+            patient.HitPoints -= patient.MaximumHitPoints * 0.6f;
             var before = patient.HitPoints;
             if (tender)
-                game.Colonists[0].Work.Set(WorkType.Tend, 1);
+                game.Settlers[0].Work.Set(WorkType.Tend, 1);
             Tick(game, 600);
             return patient.HitPoints - before;
         }
@@ -116,7 +118,7 @@ public static class ColonyWorkSelfTests
         {
             var game = Arena(9604);
             if (guard)
-                game.Colonists[0].Work.Set(WorkType.Guard, 1);
+                game.Settlers[0].Work.Set(WorkType.Guard, 1);
             var intruder = game.SpawnCreatureAt(EnemyKind.MossSlime, new Vector2(56f, Floor - 1.2f));
             var health = intruder.HitPoints;
             Tick(game, 600, keep: intruder);
@@ -129,23 +131,23 @@ public static class ColonyWorkSelfTests
 
         // ---- saves keep priorities, following and a carried stack ----
         var kept = Arena(9605);
-        kept.Colonists[0].Work.Set(WorkType.Fish, 1);
-        kept.Colonists[0].Work.Set(WorkType.Guard, 4);
-        kept.Colonists[1].FollowsPlayer = true;
-        kept.Colonists[0].Carried = new ItemStack(ItemId.RockBlock, 7);
+        kept.Settlers[0].Work.Set(WorkType.Fish, 1);
+        kept.Settlers[0].Work.Set(WorkType.Guard, 4);
+        kept.Settlers[0].Carried = new ItemStack(ItemId.RockBlock, 7);
         var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
-        var derived = ColonyWorkSettings.For(reloaded.Colonists[0].ColonistStats).Capture();
-        check(reloaded.Colonists[0].Work.Capture().SequenceEqual(derived) && reloaded.Colonists[1].FollowsPlayer &&
-              !reloaded.Colonists[0].FollowsPlayer && reloaded.Colonists[0].Carried == new ItemStack(ItemId.RockBlock, 7),
-            "following and a carried stack are saved with the world; work priorities come from each person's skills again on load (0.3.9)");
+        var derived = ColonyWorkSettings.For(reloaded.Settlers[0].Stats).Capture();
+        check(reloaded.Settlers.Count == 2 && reloaded.Settlers[0].Work.Capture().SequenceEqual(derived) &&
+              reloaded.Settlers[0].Name == kept.Settlers[0].Name && reloaded.Settlers[0].Stats.SkillLevels.SequenceEqual(kept.Settlers[0].Stats.SkillLevels) &&
+              reloaded.Settlers[0].Carried == new ItemStack(ItemId.RockBlock, 7),
+            "settlers, their skills and a carried stack are saved with the world; work priorities come from each person's skills again on load (0.3.9)");
 
         // ---- 0.3.9: no Work tab; each person's preferred work comes from their background's skills ----
         var tabbed = Arena(9606);
         var hub = new Rimtera.UI.InventoryUiState(tabbed.Player.Inventory, game: tabbed);
         Rimtera.UI.UiButtonElement? Button(string id) =>
             hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
-        var first = tabbed.Colonists[0];
-        var firstStats = first.ColonistStats;
+        var first = tabbed.Settlers[0];
+        var firstStats = first.Stats;
         var auto = ColonyWorkSettings.For(firstStats);
         var bestSkill = Enum.GetValues<ColonistSkill>().MaxBy(skill => firstStats.Level(skill) + (firstStats.Passion(skill) == PassionLevel.None ? 0f : 0.5f));
         var bestWork = WorkCatalog.All.Where(info => info.Skill == bestSkill).Select(info => info.Type).ToArray();

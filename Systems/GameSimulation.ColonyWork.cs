@@ -19,16 +19,16 @@ public sealed partial class GameSimulation
     public const float TendThreshold = 0.7f;
 
     /// <summary>The work the colonist chose this tick (the Work tab shows it); null while on the camp routine.</summary>
-    public static WorkType? CurrentWork(ColonistAgent agent) => agent.CurrentWork;
+    public static WorkType? CurrentWork(TownNpc agent) => agent.CurrentWork;
 
     /// <summary>Asks each enabled job giver in priority order; true when one gave a job and the colonist worked it.</summary>
-    private bool TryColonyWork(ColonistAgent agent, Vector2 center, float deltaSeconds, float elapsedHours)
+    private bool TryColonyWork(TownNpc agent, Vector2 center, float deltaSeconds, float elapsedHours)
     {
         if (agent.Work.Priority(WorkType.Farm) == WorkCatalog.Off && agent.Work.Priority(WorkType.Fish) == WorkCatalog.Off &&
             agent.Pouch.Count > 0)
             DropPouch(agent, center); // taken off Farm and Fish: seeds, herbs and fish are set down
-        if (agent.Work.Priority(WorkType.Operate) == WorkCatalog.Off && agent.Work.Priority(WorkType.Brew) == WorkCatalog.Off &&
-            agent.Work.Priority(WorkType.Cook) == WorkCatalog.Off &&
+        if ((!agent.WorksStations || agent.Work.Priority(WorkType.Operate) == WorkCatalog.Off && agent.Work.Priority(WorkType.Brew) == WorkCatalog.Off &&
+            agent.Work.Priority(WorkType.Cook) == WorkCatalog.Off) &&
             (agent.Held.Count > 0 || agent.OperateStation is not null))
         {
             agent.OperateStation = null; // taken off bill work: fetched ingredients are set down
@@ -36,6 +36,8 @@ public sealed partial class GameSimulation
         }
         foreach (var work in agent.Work.Order())
         {
+            if (!agent.WorksStations && work is WorkType.Operate or WorkType.Brew or WorkType.Cook)
+                continue; // kept off the stations (the dev console and tests): bill work is skipped
             var worked = work switch
             {
                 WorkType.Guard => TryGuard(agent, center, deltaSeconds),
@@ -63,7 +65,7 @@ public sealed partial class GameSimulation
 
     // ------------------------------------------------------------------ guard
 
-    private bool TryGuard(ColonistAgent agent, Vector2 center, float deltaSeconds)
+    private bool TryGuard(TownNpc agent, Vector2 center, float deltaSeconds)
     {
         agent.StrikeTimer = Math.Max(0f, agent.StrikeTimer - deltaSeconds);
         var threat = _enemies
@@ -79,7 +81,7 @@ public sealed partial class GameSimulation
         {
             if (agent.StrikeTimer <= 0f)
             {
-                threat.TakeDamage(GuardStrikeDamage(agent.ColonistStats));
+                threat.TakeDamage(GuardStrikeDamage(agent.Stats));
                 agent.StrikeTimer = 1f;
             }
             StepColonistToward(agent, center, center, deltaSeconds, 1f);
@@ -95,27 +97,15 @@ public sealed partial class GameSimulation
 
     // ------------------------------------------------------------------ tend
 
-    private bool TryTend(ColonistAgent agent, Vector2 center, float deltaSeconds, float elapsedHours)
+    private bool TryTend(TownNpc agent, Vector2 center, float deltaSeconds, float elapsedHours)
     {
         Vector2? patientAt = null;
         string? patientName = null;
         Action<float>? heal = null;
         var best = float.MaxValue;
-        foreach (var other in _colonists)
-        {
-            if (ReferenceEquals(other, agent) || !other.IsAlive || !(other.IsDowned || other.HitPoints < other.MaximumHitPoints * TendThreshold))
-                continue;
-            var at = other.Motion.Position + other.Motion.Size / 2f;
-            if (Vector2.Distance(at, agent.HomePosition) > TendRadius || Vector2.DistanceSquared(at, center) >= best)
-                continue;
-            best = Vector2.DistanceSquared(at, center);
-            patientAt = at;
-            patientName = other.Name;
-            heal = other.Heal;
-        }
         foreach (var npc in _townNpcs)
         {
-            if (!npc.IsAlive || npc.IsBound || npc.HitPoints >= npc.MaximumHitPoints * TendThreshold)
+            if (ReferenceEquals(npc, agent) || !npc.IsAlive || npc.IsBound || npc.HitPoints >= npc.MaximumHitPoints * TendThreshold)
                 continue;
             var at = npc.Motion.Position + npc.Motion.Size / 2f;
             if (Vector2.Distance(at, agent.HomePosition) > TendRadius || Vector2.DistanceSquared(at, center) >= best)
@@ -130,7 +120,7 @@ public sealed partial class GameSimulation
         agent.Activity = $"Tending {patientName}";
         if (Vector2.Distance(spot, center) < 1.6f)
         {
-            heal(TendHealPerVitalHour(agent.ColonistStats) * elapsedHours);
+            heal(TendHealPerVitalHour(agent.Stats) * elapsedHours);
             StepColonistToward(agent, center, center, deltaSeconds, 1f);
         }
         else

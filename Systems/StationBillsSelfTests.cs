@@ -32,9 +32,9 @@ public static class StationBillsSelfTests
         game.Player.Motion.Position = new Vector2(8f, Floor - game.Player.Motion.Size.Y - 0.01f);
         game.Player.Motion.Velocity = Vector2.Zero;
         game.AddStartingCrewForChecks();
-        for (var i = 0; i < game.Colonists.Count; i++)
+        for (var i = 0; i < game.Settlers.Count; i++)
         {
-            var agent = game.Colonists[i];
+            var agent = game.Settlers[i];
             agent.Motion.Position = new Vector2(60f + i * 3f, Floor - agent.Motion.Size.Y - 0.01f);
             agent.Motion.Velocity = Vector2.Zero;
             agent.HomePosition = agent.Motion.Position;
@@ -100,7 +100,7 @@ public static class StationBillsSelfTests
 
         // ---- Operate: an operator fetches from the chest, crafts at the station, and stores the product ----
         var work = Workshop(9702);
-        var operatorAgent = work.Colonists[0];
+        var operatorAgent = work.Settlers[0];
         operatorAgent.Work.Set(WorkType.Operate, 1);
         var bill = work.AddBill(Bench, "furnace", BillMode.DoCount, 2)!;
         var store = work.GetContainer(Chest)!;
@@ -115,13 +115,13 @@ public static class StationBillsSelfTests
         int RockUsed(Action<GameSimulation, StationBill> setup)
         {
             var game = Workshop(9703);
-            game.Colonists[0].Work.Set(WorkType.Operate, 1);
+            game.Settlers[0].Work.Set(WorkType.Operate, 1);
             var order = game.AddBill(Bench, "furnace", BillMode.UntilHave, 1)!;
             setup(game, order);
             Tick(game, 1800);
-            return 60 - game.GetContainer(Chest)!.Count(ItemId.RockBlock) - game.Colonists.Sum(agent => agent.Held.GetValueOrDefault(ItemId.RockBlock));
+            return 60 - game.GetContainer(Chest)!.Count(ItemId.RockBlock) - game.Settlers.Sum(agent => agent.Held.GetValueOrDefault(ItemId.RockBlock));
         }
-        var offOperate = RockUsed((game, _) => game.Colonists[0].Work.Set(WorkType.Operate, WorkCatalog.Off));
+        var offOperate = RockUsed((game, _) => game.Settlers[0].Work.Set(WorkType.Operate, WorkCatalog.Off));
         var paused = RockUsed((_, order) => order.Suspended = true);
         var stocked = RockUsed((game, _) => game.GetContainer(Chest)!.Add(ItemId.FurnaceBlock, 1));
         var wanted = RockUsed((_, _) => { });
@@ -130,14 +130,14 @@ public static class StationBillsSelfTests
 
         // ---- short ingredients: the bill waits, and nothing is taken from the chest ----
         var short_ = Workshop(9704, rock: 10, wood: 15);
-        short_.Colonists[0].Work.Set(WorkType.Operate, 1);
+        short_.Settlers[0].Work.Set(WorkType.Operate, 1);
         var waiting = short_.AddBill(Bench, "furnace")!;
         Tick(short_, 900);
-        check(waiting.Done == 0 && short_.GetContainer(Chest)!.Count(ItemId.RockBlock) == 10 && short_.Colonists[0].Held.Count == 0,
+        check(waiting.Done == 0 && short_.GetContainer(Chest)!.Count(ItemId.RockBlock) == 10 && short_.Settlers[0].Held.Count == 0,
             "a bill whose ingredients the chests near the station can't cover waits, and its operator takes nothing");
 
         // ---- skill: higher Crafting crafts faster, and above 10 can make an extra batch ----
-        var crew = Workshop(9705).Colonists[0].ColonistStats;
+        var crew = Workshop(9705).Settlers[0].Stats;
         Rimtera.Characters.ColonistStats WithCrafting(int level)
         {
             var levels = crew.SkillLevels.ToArray();
@@ -152,7 +152,7 @@ public static class StationBillsSelfTests
 
         // ---- taken off Operate mid-job: fetched ingredients are set down for the haulers ----
         var dropped = Workshop(9706);
-        var quitter = dropped.Colonists[0];
+        var quitter = dropped.Settlers[0];
         quitter.Work.Set(WorkType.Operate, 1);
         dropped.AddBill(Bench, "furnace", BillMode.Forever);
         var fetched = TickUntil(dropped, () => quitter.Held.Count > 0);
@@ -168,7 +168,7 @@ public static class StationBillsSelfTests
         saved.Done = 4;
         saved.Suspended = true;
         kept.AddBill(Bench, "anvil");
-        kept.Colonists[0].Held[ItemId.RockBlock] = 7;
+        kept.Settlers[0].Held[ItemId.RockBlock] = 7;
         var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
         var back = reloaded.BillsAt(Bench);
         var gone = Workshop(9708);
@@ -176,7 +176,7 @@ public static class StationBillsSelfTests
         gone.World.SetTile(Bench, TileId.Air);
         check(back.Count == 2 && back[0].RecipeId == "furnace" && back[0].Mode == BillMode.UntilHave && back[0].Target == 12 &&
               back[0].Done == 4 && back[0].Suspended && back[1].RecipeId == "anvil" &&
-              reloaded.Colonists[0].Held.GetValueOrDefault(ItemId.RockBlock) == 7 &&
+              reloaded.Settlers[0].Held.GetValueOrDefault(ItemId.RockBlock) == 7 &&
               GameSimulation.Restore(gone.CaptureSnapshot()).Bills.Count == 0,
             "bills and fetched ingredients are saved with the world; a station that is gone takes its bills with it");
 

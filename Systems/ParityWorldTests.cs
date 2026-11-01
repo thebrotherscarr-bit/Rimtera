@@ -156,7 +156,7 @@ public static class ParityWorldTests
     {
         var fresh = new GameSimulation(seed: 9420, width: 80, height: 48);
         var nearHologram = fresh.Guide.Position + new Vector2(0.5f, 0.5f);
-        check(fresh.Colonists.Count == 0 && fresh.TownNpcs.All(npc => npc.IsBound) && !fresh.GuideMovedIn &&
+        check(fresh.Settlers.Count == 0 && fresh.TownNpcs.All(npc => npc.IsBound) && !fresh.GuideMovedIn &&
               fresh.IsNearGuide(nearHologram) && fresh.LastMessage.Contains("touches down", StringComparison.Ordinal),
             "a new world starts with just you and the station AI's hologram, as Terraria starts with you and the Guide");
 
@@ -178,7 +178,7 @@ public static class ParityWorldTests
         var guideFollows = colony.GuideMovedIn && guideHome is { } home &&
                            Vector2.Distance(colony.GuidePosition, new Vector2(home.X + 0.5f, home.Y + 0.5f)) < 3f &&
                            colony.IsNearGuide(new Vector2(home.X + 0.5f, home.Y)) && !colony.IsNearGuide(colony.Guide.Position + new Vector2(60f, 0f));
-        var crewBefore = colony.Colonists.Count;
+        var crewBefore = colony.Settlers.Count;
         // A second housed resident makes room for one crew member. Other residents it draws (merchant, consul, gels)
         // compete for the free houses, so build a second storey of them; crew take one once the newcomers are housed.
         var second = colony.AddTownNpc(TownNpcKind.Quartermaster, colony.StandingAt(secondHouse), bound: false);
@@ -186,12 +186,12 @@ public static class ParityWorldTests
         foreach (var x0 in new[] { 4, 22, 40, 58 })
             BuildRoom(colony, x0, top: 16, width: 12);
         // Crew come through the storyteller's arrival stream, by day, into a free house: let the clock run.
-        var housedFirst = colony.Colonists.Count == 0;
-        RunUntil(colony, () => colony.Colonists.Count > 0, cap: 60000);
-        var recruit = colony.Colonists.FirstOrDefault();
+        var housedFirst = colony.Settlers.Count == 0;
+        RunUntil(colony, () => colony.Settlers.Count > 0, cap: 60000);
+        var recruit = colony.Settlers.FirstOrDefault();
         var feetOnFloor = recruit is not null && colony.Regions.GetRegion(RegionMap.CellAt(recruit.Motion.Position + recruit.Motion.Size / 2f)) is not null &&
                           !PawnMovementSystem.OverlapsSolid(recruit.Motion.Position, recruit.Motion.Size, colony.World, colony.Tiles);
-        check(guideFollows && crewBefore == 0 && housedFirst && colony.Colonists.Count >= 1 && colony.Colonists.Count <= colony.CrewCapacity && feetOnFloor &&
+        check(guideFollows && crewBefore == 0 && housedFirst && colony.Settlers.Count >= 1 && colony.Settlers.Count <= colony.CrewCapacity && feetOnFloor &&
               colony.Storyteller.RecentIncidents.Any(record => record.IncidentId == Storyteller.ArrivalId),
             "the guide moves into the first house and is found there; crew arrive through the storyteller's arrival stream, into a free house, up to one per two housed residents");
     }

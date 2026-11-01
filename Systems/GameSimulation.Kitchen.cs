@@ -7,14 +7,12 @@ using Rimtera.World;
 namespace Rimtera.Systems;
 
 /// <summary>
-/// Cooking and fishing (0.2.6, docs/DESIGN_COLONY_ESCAPE.md §4 rows 5 and 6). Cook crew work the bills at cooking stations
-/// (GameSimulation.Bills.cs); hungry crew eat from the chests near home, the most filling food first, before they forage;
-/// Fish crew fish open water near home and carry the catch to storage.
+/// Cooking and fishing (0.2.6, docs/DESIGN_COLONY_ESCAPE.md §4 rows 5 and 6). Cooks work the cooking stations
+/// (GameSimulation.Bills.cs, GameSimulation.Stocking.cs); fishers fish open water near home and carry the catch to storage.
+/// (Eating from storage left with the crew in 0.3.10; food comes back as everyone's one need in 0.5.5.)
 /// </summary>
 public sealed partial class GameSimulation
 {
-    /// <summary>A colonist eats from storage below this food level.</summary>
-    public const float EatBelow = 0.6f;
     /// <summary>A fishing spot: open water this close to home (tiles), in a pool at least this big.</summary>
     public const float FishRadius = 24f;
     public const int FishPoolMinimum = 25;
@@ -29,47 +27,6 @@ public sealed partial class GameSimulation
     /// <summary>How much of a colonist's food need an item fills (its food value; 0 for anything inedible).</summary>
     public float FoodValue(ItemId item) =>
         Items.Contains(item) && Items[item].UseKind == ItemUseKind.Food ? Math.Max(0f, Items[item].FoodRestore) : 0f;
-
-    /// <summary>
-    /// A hungry colonist walks to the nearest chest near home with food in it and eats the most filling item there.
-    /// False when not hungry or there is no food in storage (the colonist then forages as before).
-    /// </summary>
-    private bool TryEatFromStorage(ColonistAgent agent, Vector2 center, float deltaSeconds)
-    {
-        if (agent.Needs.FoodReserve >= EatBelow)
-            return false;
-        GridPoint? pantry = null;
-        var nearest = float.MaxValue;
-        foreach (var cell in StorageCellsNear(agent.HomePosition))
-        {
-            if (GetContainer(cell) is not { } chest || !chest.Slots.Any(stack => !stack.IsEmpty && FoodValue(stack.ItemId) > 0f))
-                continue;
-            var distance = Vector2.DistanceSquared(new Vector2(cell.X + 0.5f, cell.Y + 0.5f), center);
-            if (distance < nearest)
-            {
-                nearest = distance;
-                pantry = cell;
-            }
-        }
-        if (pantry is not { } at)
-            return false;
-        if (!Reaches(center, at))
-        {
-            agent.Activity = "Going to eat";
-            StepColonistToward(agent, center, new Vector2(at.X + 0.5f, at.Y + 0.5f), deltaSeconds, 1f);
-            return true;
-        }
-        var chestInventory = GetContainer(at)!;
-        var meal = chestInventory.Slots.Where(stack => !stack.IsEmpty && FoodValue(stack.ItemId) > 0f)
-            .OrderByDescending(stack => FoodValue(stack.ItemId)).ThenBy(stack => stack.ItemId).First().ItemId;
-        if (!chestInventory.TryConsume(meal, 1))
-            return false;
-        agent.Needs.Restore(NeedKind.Food, FoodValue(meal));
-        agent.Activity = $"Eating {Items[meal].Name}";
-        Flags.Increment("colony.meals");
-        StepColonistToward(agent, center, center, deltaSeconds, 1f);
-        return true;
-    }
 
     /// <summary>A colonist's fishing speed: Animals skill (0.65 + 0.035 a level, 1 at 10) on their work factor.</summary>
     public static float FishSpeed(ColonistStats stats) => WorkCatalog.SkillSpeed(stats, WorkType.Fish);
@@ -123,7 +80,7 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>The Fish job giver: carry a full catch to storage, else fish at the spot near home.</summary>
-    private bool TryFish(ColonistAgent agent, Vector2 center, float deltaSeconds)
+    private bool TryFish(TownNpc agent, Vector2 center, float deltaSeconds)
     {
         void Move(Vector2 to) => StepColonistToward(agent, center, to, deltaSeconds, 1f);
         if (!agent.Carried.IsEmpty)
@@ -157,13 +114,13 @@ public sealed partial class GameSimulation
         agent.Activity = CrewFishingGear(agent.HomePosition).Rod is { } withRod ? $"Fishing with a {Items[withRod].Name.ToLowerInvariant()}" : "Fishing";
         Move(center);
         agent.FarmProgress += deltaSeconds;
-        if (agent.FarmProgress < FishSeconds(agent.ColonistStats))
+        if (agent.FarmProgress < FishSeconds(agent.Stats))
             return true;
         agent.FarmProgress = 0f;
         // 0.2.9: crew fish with the best rod and bait in the chests near home (the rod stays there; bait is used up as a
         // player's is), on top of their own Animals skill.
         var (rod, bait, baitChest) = CrewFishingGear(agent.HomePosition);
-        var power = CrewFishingPower(agent.ColonistStats) + (rod is { } r ? Items[r].FishingPower : 0) + (bait is { } b ? Items[b].BaitPower : 0);
+        var power = CrewFishingPower(agent.Stats) + (rod is { } r ? Items[r].FishingPower : 0) + (bait is { } b ? Items[b].BaitPower : 0);
         if (bait is { } used && baitChest is { } holder && CrewFishingRandom.NextDouble() < BaitConsumeChance(Items[used].BaitPower))
             GetContainer(holder)?.TryConsume(used, 1);
         var context = GetFishingContext(water, LiquidKind.Water, MeasurePool(water, LiquidKind.Water), power);
@@ -207,7 +164,7 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>Moves one stack of produce (anything but the seeds kept for replanting) from the pouch into the worker's hands.</summary>
-    private bool UnloadPouch(ColonistAgent agent)
+    private bool UnloadPouch(TownNpc agent)
     {
         var (item, count) = agent.Pouch.First(pair => IsSeed(pair.Key) ? pair.Value > SeedsKept : pair.Value > 0);
         var take = Math.Min(IsSeed(item) ? count - SeedsKept : count, Items[item].MaxStack);

@@ -125,7 +125,7 @@ launch you may continue the world, and the story from there is yours.
 | 0.3.7 | **Research tiers by boss.** Each boss opens the next research tier. Studying it takes time, and finishing it unlocks the tier's recipes and stations. The 0.2.7 study-point projects fold in. Terraria's own ladder stays the base. |
 | 0.3.8 | **The station AI powers the base.** It boots on energy cells or ore. Its fuel is tied to progress, and higher-tier stations need more power. The stations go dark without it, and you rebuild it to carry on. |
 | 0.3.9 | **The colony by default.** The Work tab and bills are removed. People orient toward their preferred work from their background, and work it by skill: a chemist keeps healing in stock, a cook keeps food. |
-| 0.3.10 | **One kind of character.** The crew merge into the town NPCs. |
+| 0.3.10 | **One kind of character.** The crew merge into the town NPCs. *(Done: every resident is a person with skills who works by skill; the crew became settlers.)* |
 | 0.3.11 | **Multiplayer groundwork.** Per-player input, camera, inventory and saves; game state separated from player commands. |
 | 0.4.0 | **The colony defends.** Guards and outposts, equipping people (with Terraria's gear), purposeful storyteller raids with warnings, a balance pass. Split into 0.4.x steps when we get there. |
 

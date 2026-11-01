@@ -1,4 +1,5 @@
 using System.Numerics;
+using Rimtera.Characters;
 using Rimtera.Entities;
 using Rimtera.World;
 
@@ -44,7 +45,13 @@ public enum TownNpcKind : byte
     /// <summary>Moves in once the player carries a dye material; sells dyes and pigments.</summary>
     PigmentTrader = 161,
     /// <summary>Moves in once ten residents live in the colony; throws colony parties.</summary>
-    PartyPlanner = 162
+    PartyPlanner = 162,
+    // ---- One kind of character (0.3.10): the crew became residents ----
+    /// <summary>
+    /// A person who joins the colony rather than a trade that moves in: storyteller arrivals and the crew of older saves.
+    /// Any number can live here; each works any station, by the work their skills draw them to, and sells nothing.
+    /// </summary>
+    Settler = 170
 }
 
 public enum Affection : sbyte
@@ -67,29 +74,38 @@ public sealed record TownNpcDefinition(
     string[] Lines,
     bool Survivor = false);
 
-/// <summary>A resident (or a bound survivor waiting to be freed).</summary>
+/// <summary>
+/// A resident (or a bound survivor waiting to be freed). Since 0.3.10 this is the game's one kind of character: residents
+/// move in like Terraria's town NPCs and run their shops, and each is a person with skills and passions (the crew's
+/// RimWorld side) who works their trade by skill and guards and helps their own area.
+/// </summary>
 public sealed class TownNpc : IStationWorker
 {
-    internal TownNpc(long id, TownNpcDefinition definition, string name, Vector2 position)
+    internal TownNpc(long id, TownNpcDefinition definition, string name, Vector2 position, CharacterProfile? profile = null)
     {
         Id = id;
         Definition = definition;
         Name = name;
         Motion = new PawnMotionState(position, HumanoidBody.Size);
         WanderTarget = position;
+        SetProfile(profile ?? TownPeople.ProfileFor(definition.Kind, name, unchecked((int)id * 7919 + (int)definition.Kind)));
     }
 
     public long Id { get; }
     public TownNpcDefinition Definition { get; }
     public TownNpcKind Kind => Definition.Kind;
     public string Name { get; }
+    /// <summary>The role shown with the name: the trade, or "Settler".</summary>
+    public string Role => Definition.Role;
     public PawnMotionState Motion { get; }
     /// <summary>A cell inside the NPC's room, or null while homeless.</summary>
     public GridPoint? HomeCell { get; internal set; }
     /// <summary>Survivors start tied up inside structures until the player frees them.</summary>
     public bool IsBound { get; internal set; }
+    /// <summary>A settler's look (one of the crew sprites); 0 for trades, who use their definition's sprite.</summary>
+    public int Look { get; internal set; }
     /// <summary>Sprite name for the renderer (npc_bound_survivor while bound).</summary>
-    public string SpriteName => IsBound ? "npc_bound_survivor" : Definition.Sprite;
+    public string SpriteName => IsBound ? "npc_bound_survivor" : Kind == TownNpcKind.Settler ? TownPeople.SettlerSprite(Look) : Definition.Sprite;
     public float Happiness { get; internal set; }
     public string Activity { get; internal set; } = "Settling in";
     internal Vector2 WanderTarget { get; set; }
@@ -100,21 +116,52 @@ public sealed class TownNpc : IStationWorker
     public bool IsAlive => HitPoints > 0f;
     internal float HurtCooldown { get; set; }
 
+    // ---- 0.3.10: the person (the crew's skills, passions and work) ----
+    /// <summary>Who they are: skills, passions, background and traits.</summary>
+    public CharacterProfile Profile { get; private set; } = null!;
+    public ColonistStats Stats { get; private set; } = null!;
+    /// <summary>The work they turn to, by skill (0.3.9: no Work tab; set from their skills and passions).</summary>
+    public ColonyWorkSettings Work { get; private set; } = null!;
+    /// <summary>The work being done this tick; null while on the home routine.</summary>
+    public WorkType? CurrentWork { get; set; }
+    /// <summary>Seconds until the next guard strike.</summary>
+    public float StrikeTimer { get; set; }
+    /// <summary>Seeds, herbs and fish carried (Farm and Fish work).</summary>
+    public Dictionary<ItemId, int> Pouch { get; } = new();
+    /// <summary>The grow-zone cell, fishing spot or research bench being worked, and the seconds put into it.</summary>
+    public GridPoint? FarmTarget { get; set; }
+    public float FarmProgress { get; set; }
+
+    internal void SetProfile(CharacterProfile profile)
+    {
+        Profile = profile;
+        Stats = profile.Stats;
+        Work = TownPeople.WorkFor(Kind, Stats);
+    }
+
+    /// <summary>The stations of this person's trade (none for a settler, who works any station by skill).</summary>
+    public IReadOnlyList<CraftingStationId> Trade => TownTrades.TradeOf(Kind);
+
     // ---- 0.2.4: residents work station bills beside their shops ----
-    /// <summary>The Crafting level residents work bills at (crafting speed 0.86, a little slower than a trained crew member).</summary>
-    public const int CraftingSkill = 6;
     /// <summary>Works bills at stations near home by day (the Work tab's toggle); on by default.</summary>
     public bool WorksStations { get; set; } = true;
     public Dictionary<ItemId, int> Held { get; } = new();
     public ItemStack Carried { get; set; }
     public GridPoint? OperateStation { get; set; }
     public float OperateProgress { get; set; }
-    public Vector2 HomePosition => HomeCell is { } home ? new Vector2(home.X + 0.5f, home.Y + 0.5f) : Motion.Position;
+    /// <summary>Home: the middle of the home cell (setting it moves the home cell there; tests and the dev console).</summary>
+    public Vector2 HomePosition
+    {
+        get => HomeCell is { } home ? new Vector2(home.X + 0.5f, home.Y + 0.5f) : Motion.Position;
+        internal set => HomeCell = new GridPoint((int)MathF.Floor(value.X), (int)MathF.Floor(value.Y));
+    }
     string IStationWorker.Activity { get => Activity; set => Activity = value; }
-    float IStationWorker.SpeedFor(WorkType work) => TownTrades.Speed(CraftingSkill);
-    int IStationWorker.LevelFor(WorkType work) => CraftingSkill;
-    bool IStationWorker.CanWorkAt(CraftingStationId station) => TownTrades.CanWork(Kind, station);
-    int? IStationWorker.SkillAt(CraftingStationId station) => TownTrades.Skill(Kind, station);
+    float IStationWorker.SpeedFor(WorkType work) => WorkCatalog.SkillSpeed(Stats, work);
+    int IStationWorker.LevelFor(WorkType work) => Stats.Level(WorkCatalog.Get(work).Skill);
+    bool IStationWorker.CanWorkAt(CraftingStationId station) => Kind == TownNpcKind.Settler ||
+        !TownTrades.Idle(Kind) && (Trade.Contains(station) || TownTrades.BasicBenches.Contains(station));
+
+    public void Heal(float amount) => HitPoints = Math.Min(MaximumHitPoints, HitPoints + Math.Max(0f, amount));
 }
 
 /// <summary>
@@ -124,8 +171,8 @@ public sealed class TownNpc : IStationWorker
 /// </summary>
 public static class TownTrades
 {
-    /// <summary>Skill at the basic benches, and at a resident's own trade stations.</summary>
-    public const int GeneralSkill = TownNpc.CraftingSkill, TradeSkill = 12;
+    /// <summary>The least skill a resident has in their trade's skills, and at most a generalist's elsewhere (0.3.10: residents' own skills set the rest).</summary>
+    public const int GeneralSkill = 6, TradeSkill = 12;
 
     public static readonly CraftingStationId[] BasicBenches = [CraftingStationId.Workbench, CraftingStationId.FieldWorkbench];
 
@@ -167,17 +214,15 @@ public static class TownTrades
     public static bool CanWork(TownNpcKind kind, CraftingStationId station) =>
         !Idle(kind) && (TradeOf(kind).Contains(station) || BasicBenches.Contains(station));
 
-    /// <summary>The resident's skill at a station: the trade skill at their own stations, the generalist's at the basic benches.</summary>
-    public static int? Skill(TownNpcKind kind, CraftingStationId station) =>
-        TradeOf(kind).Contains(station) ? TradeSkill : CanWork(kind, station) ? GeneralSkill : null;
-
     /// <summary>Work speed for a skill level (1 at skill 10, as crew).</summary>
     public static float Speed(int skill) => 0.65f + skill * 0.035f;
 }
 
 /// <summary>A saved resident. <see cref="Hp"/> was appended in 0.2.2 (NC-20); older saves leave it null (full health).</summary>
 public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, float Y, int? HomeX, int? HomeY, bool Bound, float? Hp = null,
-    bool? WorksStations = null, ItemStack[]? Held = null, ItemStack? Carried = null);
+    bool? WorksStations = null, ItemStack[]? Held = null, ItemStack? Carried = null,
+    // 0.3.10: the person (skills, passions, background), a settler's look, and what Farm and Fish work carry.
+    Rimtera.Characters.CharacterProfile? Person = null, int? Look = null, ItemStack[]? Pouch = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 
@@ -400,5 +445,10 @@ public static class TownNpcCatalog
         yield return LeisureContent.Greenskeeper(); // Systems/Golf.cs
         foreach (var resident in ContentFillTown.Definitions()) yield return resident; // Systems/Content/ContentFillTown.cs
         foreach (var resident in TownContent.Definitions()) yield return resident; // Systems/Content/TownContent.cs
+        // 0.3.10: settlers (the crew's successors) have no shop and no move-in rule: they join through the storyteller.
+        yield return new(TownNpcKind.Settler, "Settler", TownPeople.SettlerSprites[0], ["Settler"],
+            [(BiomeZone.Grassland, Affection.Like)], [], [],
+            ["I came a long way to find a place like this.", "Point me at the work. I'll get it done.",
+             "Somebody has to keep the benches running."]);
     }
 }

@@ -351,26 +351,12 @@ public sealed partial class GameSimulation
     {
         var player = new AggroTarget(AggroTargetKind.Player, PlayerActorId, playerCenter);
         // Bosses, divers, casters, worms and mimics keep hunting the player; walkers, hoppers and plain fliers weigh aggro.
-        if (enemy.IsBoss || enemy.IsPassive || enemy.Archetype.Stationary || (_colonists.Count == 0 && _townNpcs.Count == 0) ||
+        if (enemy.IsBoss || enemy.IsPassive || enemy.Archetype.Stationary || _townNpcs.Count == 0 ||
             enemy.Family is EnemyAiFamily.DivingFlyer or EnemyAiFamily.Caster or EnemyAiFamily.Worm or EnemyAiFamily.Mimic)
             return player;
         var center = enemy.Motion.Position + enemy.Motion.Size / 2f;
         var best = player;
         var bestScore = Player.IsDead ? float.MaxValue : Vector2.Distance(center, playerCenter) - PlayerAggro / 100f * AggroTilesPer100;
-        foreach (var agent in _colonists)
-        {
-            if (!agent.IsAlive)
-                continue;
-            var at = agent.Motion.Position + agent.Motion.Size / 2f;
-            if (!Player.IsDead && Vector2.Distance(at, playerCenter) < SharedTargetRadius)
-                continue;
-            var distance = Vector2.Distance(center, at);
-            if (distance <= 22f && distance + ColonistAggroPenalty < bestScore)
-            {
-                bestScore = distance + ColonistAggroPenalty;
-                best = new AggroTarget(AggroTargetKind.Colonist, agent.Id, at);
-            }
-        }
         foreach (var npc in _townNpcs)
         {
             if (!npc.IsAlive || npc.IsBound)
@@ -388,29 +374,8 @@ public sealed partial class GameSimulation
         return best;
     }
 
-    /// <summary>Creatures that chose a colonist strike it on contact (residents are already hurt by any overlap).</summary>
-    private void UpdateColonistContact()
-    {
-        if (_aggroTargets.Count == 0)
-            return;
-        foreach (var enemy in _enemies)
-        {
-            if (!enemy.IsAlive || enemy.AttackCooldown > 0f || enemy.AttackDamage <= 0f || enemy.Disguised ||
-                !_aggroTargets.TryGetValue(enemy.Id, out var target) || target.Kind != AggroTargetKind.Colonist)
-                continue;
-            var agent = _colonists.FirstOrDefault(colonist => colonist.Id == target.Id && colonist.IsAlive);
-            if (agent is null)
-                continue;
-            var center = enemy.Motion.Position + enemy.Motion.Size / 2f;
-            if (Vector2.Distance(center, agent.Motion.Position + agent.Motion.Size / 2f) > 1.15f)
-                continue;
-            agent.TakeDamage(ScaleIncoming(enemy.AttackDamage) * 0.6f, ColonistAnatomy.ContactDamageKind(enemy.Archetype));
-            enemy.AttackCooldown = enemy.Archetype.ContactCooldown;
-            if (PlayerSystemsRandom.Next(3) == 0)
-                ShowEmote(agent.Id, EmoteKind.Scared);
-        }
-        _aggroTargets.Clear();
-    }
+    /// <summary>Aggro choices last one tick (residents are hurt by any hostile overlap, GameSimulation.Town).</summary>
+    private void UpdateColonistContact() => _aggroTargets.Clear();
 
     // ================================================================== salvage caches, trophies and relics
 
@@ -688,9 +653,6 @@ public sealed partial class GameSimulation
         ShowEmote(PlayerActorId, kind);
         if (kind != EmoteKind.Wave)
             return;
-        foreach (var agent in _colonists.Where(agent => agent.IsAlive && Vector2.Distance(agent.Motion.Position, Player.Motion.Position) < 8f))
-            if (PlayerSystemsRandom.Next(2) == 0)
-                ShowEmote(agent.Id, EmoteKind.Wave);
         foreach (var npc in _townNpcs.Where(npc => npc.IsAlive && Vector2.Distance(npc.Motion.Position, Player.Motion.Position) < 8f))
             if (PlayerSystemsRandom.Next(2) == 0)
                 ShowEmote(npc.Id, EmoteKind.Wave);
@@ -702,8 +664,6 @@ public sealed partial class GameSimulation
     {
         if (id == PlayerActorId)
             return Player.Motion.Position + new Vector2(Player.Motion.Size.X / 2f, -0.4f);
-        if (_colonists.FirstOrDefault(agent => agent.Id == id) is { IsAlive: true } colonist)
-            return colonist.Motion.Position + new Vector2(colonist.Motion.Size.X / 2f, -0.4f);
         if (_townNpcs.FirstOrDefault(npc => npc.Id == id) is { IsAlive: true } npc)
             return npc.Motion.Position + new Vector2(npc.Motion.Size.X / 2f, -0.4f);
         return null;
@@ -727,17 +687,6 @@ public sealed partial class GameSimulation
         var bossAlive = _enemies.Any(enemy => enemy.IsAlive && enemy.IsBoss);
         bool Threatened(Vector2 at) => bossAlive || _enemies.Any(enemy => enemy.IsAlive && !enemy.IsPassive &&
                                                                           Vector2.Distance(enemy.Motion.Position, at) < 7f);
-        foreach (var agent in _colonists)
-        {
-            if (!agent.IsAlive || _emotes.ContainsKey(agent.Id) || PlayerSystemsRandom.Next(100) >= 12)
-                continue;
-            EmoteKind? kind = Threatened(agent.Motion.Position) ? EmoteKind.Scared
-                : agent.Needs.FoodReserve < 0.3f ? EmoteKind.Hungry
-                : IsNight && (ClockHour >= 23f || ClockHour < 4f) ? EmoteKind.Sleepy
-                : PlayerSystemsRandom.Next(4) == 0 ? EmoteKind.Happy : null;
-            if (kind is { } chosen)
-                ShowEmote(agent.Id, chosen);
-        }
         foreach (var npc in _townNpcs)
         {
             if (!npc.IsAlive || npc.IsBound || _emotes.ContainsKey(npc.Id) || PlayerSystemsRandom.Next(100) >= 10)

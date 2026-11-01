@@ -531,12 +531,6 @@ public sealed partial class GameSimulation
             }
             else
                 _acidWarned = false;
-            foreach (var agent in _colonists.Where(agent => agent.IsAlive))
-            {
-                var center = ClampCell(RegionMap.CellAt(agent.Motion.Position + agent.Motion.Size / 2f));
-                if (AcidDepth(center) > 0.2f)
-                    agent.TakeDamage(3f, DamageKind.Burn);
-            }
         }
         var below = new GridPoint(feet.X, Math.Min(World.Height - 1, feet.Y + 1));
         if (Player.Motion.Grounded && ContentTiles.Has(World.GetCell(below).TileId, TileTraits.Conveyor))

@@ -29,9 +29,9 @@ public static class StorageSelfTests
         game.Player.Motion.Velocity = Vector2.Zero;
         game.SetTimeOfDay(10f);
         game.AddStartingCrewForChecks();
-        for (var i = 0; i < game.Colonists.Count; i++)
+        for (var i = 0; i < game.Settlers.Count; i++)
         {
-            var agent = game.Colonists[i];
+            var agent = game.Settlers[i];
             agent.Motion.Position = new Vector2(60f + i * 3f, Floor - agent.Motion.Size.Y - 0.01f);
             agent.Motion.Velocity = Vector2.Zero;
             agent.HomePosition = agent.Motion.Position;
@@ -92,9 +92,9 @@ public static class StorageSelfTests
             game.GetContainer(Near)!.Add(ItemId.WoodBlock, 5);
             game.SetChestFilter(Near, nearTakes);
             game.SetChestFilter(Far, farTakes);
-            game.Colonists[0].Work.Set(WorkType.Operate, 1);
+            game.Settlers[0].Work.Set(WorkType.Operate, 1);
             var bill = game.AddBill(Bench, "furnace", BillMode.DoCount, 1)!;
-            TickUntil(game, () => bill.Done >= 1 && game.Colonists[0].Carried.IsEmpty, 3600);
+            TickUntil(game, () => bill.Done >= 1 && game.Settlers[0].Carried.IsEmpty, 3600);
             return [game.GetContainer(Near)!.Count(ItemId.FurnaceBlock), game.GetContainer(Far)!.Count(ItemId.FurnaceBlock),
                 game.GroundItems.Where(item => item.ItemId == ItemId.FurnaceBlock).Sum(item => item.Count)];
         }
@@ -111,9 +111,9 @@ public static class StorageSelfTests
             game.GetContainer(Near)!.Add(ItemId.WoodBlock, 5);
             game.SetChestPriority(Near, nearPriority);
             game.SetChestFilter(Far, farTakes);
-            game.Colonists[0].Work.Set(WorkType.Operate, 1);
+            game.Settlers[0].Work.Set(WorkType.Operate, 1);
             var bill = game.AddBill(Bench, "furnace", BillMode.DoCount, 1)!;
-            TickUntil(game, () => bill.Done >= 1 && game.Colonists[0].Carried.IsEmpty, 3600);
+            TickUntil(game, () => bill.Done >= 1 && game.Settlers[0].Carried.IsEmpty, 3600);
             return [game.GetContainer(Near)!.Count(ItemId.FurnaceBlock), game.GetContainer(Far)!.Count(ItemId.FurnaceBlock)];
         }
         var first = Prioritised(StoragePriority.First, StorageCategory.Blocks);

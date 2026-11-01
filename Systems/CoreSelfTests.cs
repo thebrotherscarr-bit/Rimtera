@@ -512,9 +512,9 @@ public static class CoreSelfTests
             exitGame: () => { },
             openColonist: () => { });
         var pauseWithColonist = menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).ToArray();
-        Check(pauseWithColonist[1] == "Inventory" && pauseWithColonist[2] == "Crew" &&
+        Check(pauseWithColonist[1] == "Inventory" && pauseWithColonist[2] == "People" &&
               pauseWithColonist[^1] == "Save & Quit Game",
-            "hosts without the inventory hub (the terminal) still get Inventory and Crew in Settings");
+            "hosts without the inventory hub (the terminal) still get Inventory and People in Settings");
         menuFlow.Handle(new UiInputFrame(default, BackPressed: true));
         var inventoryClosed = false;
         menuFlow.ShowInventory(new InventoryUiState(uiInventory), () => inventoryClosed = true);
@@ -587,31 +587,30 @@ public static class CoreSelfTests
         var colonyGame = new GameSimulation(seed: 2211, width: 80, height: 48, colonist: draftProfile);
         colonyGame.AddStartingCrewForChecks();
         Check(colonyGame.Player.Colonist.Id == draftProfile.Id &&
-              colonyGame.Colonists.Count == 2 &&
+              colonyGame.Settlers.Count == 2 &&
               colonyGame.Player.MaximumHitPoints == draftProfile.EffectiveMaximumHealth &&
               float.IsFinite(colonyGame.Player.Mood) &&
-              colonyGame.Colonists.All(agent => float.IsFinite(agent.Mood)),
-            "colonist stats seed the player and a generated, inspectable NPC crew");
-        var colonyAgent = colonyGame.Colonists[0];
+              colonyGame.Settlers.All(npc => npc.Stats.SkillLevels.Length == ColonistCatalog.SkillCount && npc.Kind == TownNpcKind.Settler),
+            "colonist stats seed the player, and settlers are generated, inspectable residents with skills (0.3.10)");
+        var colonyAgent = colonyGame.Settlers[0];
         colonyAgent.Motion.Position = new Vector2(22.5f, 16f);
-        colonyAgent.Needs.SetReserves(0.44f, 0.55f, 0.33f, 0.66f);
+        colonyAgent.HitPoints = 90f;
         var colonySnapshot = colonyGame.CaptureSnapshot();
-        Check(colonySnapshot.Colonists?.Length == 2 && colonySnapshot.JoyReserve is not null &&
-              colonySnapshot.ComfortReserve is not null,
-            "world snapshots include player joy/comfort and the colonist roster");
+        Check(colonySnapshot.Colonists is null && colonySnapshot.Content?.TownNpcs?.Count(npc => npc.Kind == TownNpcKind.Settler && npc.Person is not null) == 2 &&
+              colonySnapshot.JoyReserve is not null && colonySnapshot.ComfortReserve is not null,
+            "world snapshots include player joy/comfort and the settlers as residents, each with their person");
         var restoredColony = GameSimulation.Restore(colonySnapshot, draftProfile);
         Check(restoredColony.PlayerProfile.Id == draftProfile.Id &&
-              restoredColony.Colonists.Count == 2 &&
-              restoredColony.Colonists[0].Profile.Name == colonyGame.Colonists[0].Profile.Name &&
-              Vector2.Distance(restoredColony.Colonists[0].Motion.Position, colonyAgent.Motion.Position) < 0.001f &&
-              Math.Abs(restoredColony.Colonists[0].Needs.FoodReserve - 0.44f) < 0.001f &&
-              Math.Abs(restoredColony.Colonists[0].Needs.JoyReserve - 0.33f) < 0.001f,
-            "restoring a snapshot preserves the character sheet and colonist NPC state");
+              restoredColony.Settlers.Count == 2 &&
+              restoredColony.Settlers[0].Name == colonyGame.Settlers[0].Name &&
+              restoredColony.Settlers[0].Stats.SkillLevels.SequenceEqual(colonyGame.Settlers[0].Stats.SkillLevels) &&
+              Vector2.Distance(restoredColony.Settlers[0].Motion.Position, colonyAgent.Motion.Position) < 0.001f &&
+              Math.Abs(restoredColony.Settlers[0].HitPoints - 90f) < 0.001f,
+            "restoring a snapshot preserves the character sheet and each settler's person, place and health");
         for (var i = 0; i < 20; i++)
             restoredColony.Tick(new GameInput(new MovementInput(0f)));
-        Check(float.IsFinite(restoredColony.Colonists[0].Motion.Position.X) &&
-              restoredColony.Colonists.All(agent => agent.Needs.FoodReserve is >= 0f and <= 1f),
-            "colonist NPCs update needs and movement inside the fixed-step simulation");
+        Check(float.IsFinite(restoredColony.Settlers[0].Motion.Position.X) && restoredColony.Settlers.All(npc => npc.HitPoints > 0f),
+            "settlers move inside the fixed-step simulation");
 
         var secondCharacter = profileStore.CreateCharacter("Second Tester");
         menuFlow.Open();
@@ -691,7 +690,7 @@ public static class CoreSelfTests
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
         var colonistBindingIndex = menuFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))
-            .Single(item => item.entry.Label.StartsWith("Crew:", StringComparison.Ordinal)).index;
+            .Single(item => item.entry.Label.StartsWith("People:", StringComparison.Ordinal)).index;
         menuFlow.CurrentScreen.SelectIndex(colonistBindingIndex);
         menuFlow.Handle(new UiInputFrame(default, ConfirmPressed: true));
         var bindingCapture = menuFlow.Ui.CurrentState is BindingCaptureState;
@@ -1137,7 +1136,7 @@ public static class CoreSelfTests
               loadedTeller.TemperatureOffset == savedTeller.TemperatureOffset && savedTeller.TemperatureOffset != 0f &&
               loadedTeller.TemperatureOffsetHoursRemaining == savedTeller.TemperatureOffsetHoursRemaining &&
               loadedTeller.HoursElapsed == savedTeller.HoursElapsed && loadedTeller.WanderersJoined == savedTeller.WanderersJoined &&
-              restoredStory.Colonists.Count == storyA.Colonists.Count &&
+              restoredStory.Settlers.Count == storyA.Settlers.Count &&
               restoredStory.IncidentLog.Select(record => record.IncidentId).SequenceEqual(storyA.IncidentLog.Select(record => record.IncidentId)) &&
               restoredStory.OutdoorTemperatureOffset == storyA.OutdoorTemperatureOffset &&
               legacyStory.IncidentLog.Count == 0 && legacyStory.Storyteller.CooldownHours > 0f,
@@ -1253,122 +1252,51 @@ public static class CoreSelfTests
               memoryTracker.Memories.Count == 0 && memoryTracker.TotalMoodOffset == 0f,
             "memories stack to a limit with diminishing returns, merge when fresh, and expire");
 
-        static (MentalBreakKind Kind, long StartTick, bool Catharsis) RunBreak()
-        {
-            var sim = new GameSimulation(seed: 3434, width: 80, height: 48);
-            sim.AddStartingCrewForChecks();
-            var crew = sim.Colonists[0];
-            var started = MentalBreakKind.None;
-            var startTick = -1L;
-            var catharsis = false;
-            for (var i = 0; i < 4000 && !catharsis && crew.IsAlive; i++)
-            {
-                crew.Needs.SetReserves(0f, 0f, 0f, 0f);
-                if (started == MentalBreakKind.None)
-                    crew.Mind.Mood.Force(0.02f);
-                sim.Player.Heal(sim.Player.MaximumHitPoints);
-                sim.Tick(new GameInput(new MovementInput(0f)), 0.25f);
-                if (started == MentalBreakKind.None && crew.Mind.Breaker.IsBreaking)
-                {
-                    started = crew.MentalBreak;
-                    startTick = sim.TickNumber;
-                }
-                catharsis = started != MentalBreakKind.None && crew.Mind.Thoughts.HasMemory(ThoughtId.Catharsis);
-            }
-            return (started, startTick, catharsis);
-        }
-        var breakA = RunBreak();
-        var breakB = RunBreak();
-        Check(breakA.Kind != MentalBreakKind.None && breakA.Catharsis && breakA == breakB,
-            "a forced low-mood colonist breaks deterministically and recovers with a catharsis memory");
-
-        // Relations and interactions.
-        var socialGame = new GameSimulation(seed: 3535, width: 80, height: 48);
-        socialGame.AddStartingCrewForChecks();
-        var chatter = socialGame.Colonists[0];
-        var listener = socialGame.Colonists[1];
-        ColonySocialSystem.SetBoth(chatter, listener, RelationKind.Crewmate, 0f);
-        var opinionBefore = SocialRules.Opinion(chatter, listener);
-        for (var i = 0; i < 12; i++)
-            socialGame.Social.Interact(chatter, listener, InteractionKind.Chitchat, socialGame.ElapsedGameHours);
-        for (var i = 0; i < 5; i++)
-            socialGame.Social.Interact(chatter, listener, InteractionKind.DeepTalk, socialGame.ElapsedGameHours);
-        var chatterView = socialGame.GetOpinions(chatter).Single(view => view.OtherKey == listener.SocialKey);
-        Check(SocialRules.Opinion(chatter, listener) > opinionBefore + 20f &&
-              SocialRules.DerivedRelation(chatter, listener) == RelationKind.Friend &&
-              chatterView.RelationLabel == "Friend" && chatterView.Opinion >= SocialRules.FriendOpinion &&
-              SocialRules.Compatibility(chatter.Profile, listener.Profile) == SocialRules.Compatibility(listener.Profile, chatter.Profile),
-            "repeated chats raise opinion until the pair count as friends");
-
-        var fightGame = new GameSimulation(seed: 3636, width: 80, height: 48);
-        fightGame.AddStartingCrewForChecks();
-        var bully = fightGame.Colonists[0];
-        var victim = fightGame.Colonists[1];
-        ColonySocialSystem.SetBoth(bully, victim, RelationKind.Crewmate, 0f);
-        var fought = false;
-        for (var i = 0; i < 30 && !fought; i++)
-            fought = fightGame.Social.Interact(bully, victim, InteractionKind.Insult, fightGame.ElapsedGameHours).SocialFight;
-        Check(fought && SocialRules.Opinion(victim, bully) <= SocialRules.RivalOpinion &&
-              victim.Health.Injuries.Any(injury => injury.Kind == ConditionKind.Bruise) &&
-              bully.Health.Injuries.Any(injury => injury.Kind == ConditionKind.Bruise) &&
-              victim.HitPoints < victim.MaximumHitPoints &&
-              victim.Mind.Thoughts.HasMemory(ThoughtId.SocialFight, bully.SocialKey),
-            "insults at low opinion can start a social fight that bruises both sides");
-
-        var griefGame = new GameSimulation(seed: 3737, width: 80, height: 48);
-        griefGame.AddStartingCrewForChecks();
-        var mourner = griefGame.Colonists[0];
-        var lost = griefGame.Colonists[1];
-        ColonySocialSystem.SetBoth(mourner, lost, RelationKind.Crewmate, 0f);
-        for (var i = 0; i < 12; i++)
-            griefGame.Social.Interact(mourner, lost, InteractionKind.Chitchat, griefGame.ElapsedGameHours);
-        for (var i = 0; i < 5; i++)
-            griefGame.Social.Interact(mourner, lost, InteractionKind.DeepTalk, griefGame.ElapsedGameHours);
-        var moodBeforeGrief = mourner.Mind.Thoughts.TotalMoodOffset;
-        lost.Health.DestroyPart(lost.Health.FindPart("heart")!);
-        griefGame.Tick(new GameInput(new MovementInput(0f)));
-        Check(!lost.IsAlive && lost.HitPoints == 0f &&
-              mourner.Mind.Thoughts.HasMemory(ThoughtId.FriendDied, lost.SocialKey) &&
-              mourner.Mind.Thoughts.TotalMoodOffset < moodBeforeGrief &&
-              griefGame.Player.Mind.Thoughts.Memories.Any(memory => memory.OtherKey == lost.SocialKey),
-            "a friend's death leaves a relation-scaled grief memory");
+        // 0.3.10: the crew became residents, who have no mood, mental breaks or relations yet (docs/VISION.md §3.3); the
+        // relation rules stay for the player and come back for the colony's people later.
 
         // Body, mind and social state survive a save round-trip; older saves still load.
         var mindSave = new GameSimulation(seed: 3838, width: 80, height: 48);
         mindSave.AddStartingCrewForChecks();
         var savedPlayer = mindSave.Player;
-        var savedCrew = mindSave.Colonists[0];
         savedPlayer.Health.ApplyDamageToPart(savedPlayer.Health.FindPart("left hand")!, 100f, DamageKind.Cut);
         savedPlayer.Health.Tend(0.6f);
         savedPlayer.Health.ApplyDamageToPart(savedPlayer.Health.FindPart("right leg")!, 9f, DamageKind.Bite);
         savedPlayer.Mind.Thoughts.AddMemory(ThoughtId.KilledCreature);
-        savedCrew.Health.ApplyDamageToPart(savedCrew.Health.FindPart("torso")!, 8f, DamageKind.Burn);
-        mindSave.Social.Interact(savedCrew, savedPlayer, InteractionKind.Chitchat, mindSave.ElapsedGameHours);
-        ColonySocialSystem.SetBoth(savedCrew, mindSave.Colonists[1], RelationKind.Lover, 0f);
-        savedCrew.Mind.Breaker.Start(MentalBreakKind.Daze, MentalBreakSeverity.Minor, 2f);
         var mindSnapshot = mindSave.CaptureSnapshot();
         var mindJson = System.Text.Json.JsonSerializer.Deserialize<GameSnapshot>(
             System.Text.Json.JsonSerializer.Serialize(mindSnapshot, snapshotJson), snapshotJson)!;
         var mindLoaded = GameSimulation.Restore(mindJson, savedPlayer.Colonist);
         var loadedPlayer = mindLoaded.Player;
-        var loadedCrew = mindLoaded.Colonists[0];
         static string Describe(HealthComponent health) => string.Join("|", health.Injuries
             .Select(injury => $"{injury.Kind}:{injury.Part.Name}:{injury.Severity:0.000}:{injury.IsTended}"));
         var legacyMind = GameSimulation.Restore(mindSnapshot with { PlayerState = null, ColonistStates = null });
         Check(mindJson.FormatVersion == GameSnapshot.CurrentFormatVersion && loadedPlayer.Health.FindPart("left hand")!.IsMissing &&
               Describe(loadedPlayer.Health) == Describe(savedPlayer.Health) &&
-              Describe(loadedCrew.Health) == Describe(savedCrew.Health) &&
               loadedPlayer.Health.GetPartHealth(loadedPlayer.Health.FindPart("right leg")!) ==
               savedPlayer.Health.GetPartHealth(savedPlayer.Health.FindPart("right leg")!) &&
               loadedPlayer.Mind.Thoughts.HasMemory(ThoughtId.KilledCreature) &&
-              loadedPlayer.Mind.Thoughts.HasMemory(ThoughtId.Chitchat, savedCrew.SocialKey) &&
               loadedPlayer.Mind.Thoughts.Memories.Count == savedPlayer.Mind.Thoughts.Memories.Count &&
-              loadedCrew.Mind.Relations.Get(mindLoaded.Colonists[1].SocialKey) == RelationKind.Lover &&
-              loadedCrew.Mind.Breaker.ActiveKind == MentalBreakKind.Daze &&
-              MathF.Abs(SocialRules.Opinion(loadedPlayer, loadedCrew) - SocialRules.Opinion(savedPlayer, savedCrew)) < 0.001f &&
-              MathF.Abs(loadedCrew.Mood - savedCrew.Mood) < 0.0001f &&
-              legacyMind.Player.Health.Injuries.Count == 0 && legacyMind.Colonists.Count == 2,
-            "snapshots round-trip body conditions, memories, relations and break state; older saves still load");
+              mindLoaded.Settlers.Select(npc => npc.Name).SequenceEqual(mindSave.Settlers.Select(npc => npc.Name)) &&
+              legacyMind.Player.Health.Injuries.Count == 0 && legacyMind.Settlers.Count == 2,
+            "snapshots round-trip the player's body conditions and memories, and the settlers; older saves still load");
+
+        // 0.3.10: a save from before the merge holds crew; they come back as settlers, where they stood, the dead left dead.
+        var oldCrew = new GameSimulation(seed: 3839, width: 80, height: 48);
+        var crewSnapshot = oldCrew.CaptureSnapshot() with
+        {
+            Colonists =
+            [
+                new ColonistSnapshot(0, 20.5f, 10f, 50f, 0.8f, 0.8f, 0.7f, 0.7f, null, false, new ItemStack(ItemId.RockBlock, 3), null, null),
+                new ColonistSnapshot(1, 30.5f, 10f, 0f, 0.8f, 0.8f, 0.7f, 0.7f, null, false, default, null, null)
+            ]
+        };
+        var settled = GameSimulation.Restore(crewSnapshot);
+        var expectedName = ColonistCatalog.GenerateCrew(3839, 2, settled.PlayerProfile.Name)[0].Name;
+        Check(settled.Settlers.Count == 1 && settled.Settlers[0].Name == expectedName &&
+              MathF.Abs(settled.Settlers[0].Motion.Position.X - 20.5f) < 0.01f && settled.Settlers[0].HitPoints < settled.Settlers[0].MaximumHitPoints &&
+              settled.Settlers[0].Carried == new ItemStack(ItemId.RockBlock, 3),
+            $"a save's crew load as settlers: the living one where they stood, hurt and carrying their stack; the dead one stays dead ({settled.Settlers.Count} settled)");
 
         // ---- Engine and world generation (ENGINE_WORLDGEN.md section 3) ----
 
@@ -1732,6 +1660,7 @@ public static class CoreSelfTests
         StockingSelfTests.Run(Check); // 0.3.9: no bills or Work tab; labs keep healing and cooking stations keep food by themselves
         DropRuleSelfTests.Run(Check); // 0.1.9 C2-C5: drop chances and conditions, event drops, hearts and orbs, boss potions, 9999 stacks
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
+        TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab
         StorageSelfTests.Run(Check); // 0.2.4: storage tags, delivery by tag, residents working bills
