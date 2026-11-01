@@ -117,7 +117,7 @@ What each system needs, what exists, and what is missing. Sizes are rough: S (da
 | 4 | **Farming and brewing** | Herbs grow; potions are crafted by hand | Grow zones, colonist planting and harvesting, brew bills | M |
 | 5 | **Cooking and food** | Food items and needs | Meals with skill-based quality, cook bills, crew eating from storage | M |
 | 6 | **Fishing by crew** | Player fishing, quest fish | A fishing spot job for crew | S |
-| 7 | **Hauling and storage** | Chests | Storage zones or tagged chests; crew haul drops and products to them | M |
+| 7 | **Hauling and storage** | Done in 0.2.4: tagged chests (eight item categories); crew and residents haul drops and products to the chest that takes them | Storage zones on the floor; priorities between tagged chests | M |
 | 8 | **Outposts and pylons** | Pylons need two housed residents nearby; recall items | Every pylon needs a staffed outpost (decided); outposts as named bases with their own crew and storage; raids can hit an outpost while you are away; recall items and potions to get home | M |
 | 9 | **Permadeath** | Town NPCs respawn on a timer; crew can die | Turn off the respawn timer; graves; death mood thoughts; replacements only from arrivals | S |
 | 10 | **Death drops** | Explorer, Classic, Salvager, Ironman, Creative | Easy / Medium / Hard as in §3.2 | S |

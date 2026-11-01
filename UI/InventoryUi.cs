@@ -317,6 +317,7 @@ public sealed class InventoryUiState : UiState
                 Left = UiLength.Px(InventoryLayout.Left - 10f), Top = UiLength.Px(chestTop), Width = UiLength.Px(300f), Height = UiLength.Px(22f)
             }) { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
             AddGrid(ChestInventory, chestTop + 24f, "chest");
+            AddChestFilter(chestTop);
         }
         _cursorLabel = new UiTextElement(string.Empty, "inventory-cursor", new UiStyle
         {
@@ -656,7 +657,6 @@ public sealed class InventoryUiState : UiState
             {
                 Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top + 28f), Width = UiLength.Px(240f), Height = UiLength.Px(18f)
             }) { Scale = 0.7f, Color = new UiColor(170, 178, 192) });
-            return;
         }
         var working = WorkCatalog.All.Where(info => info.HasJobs).ToArray();
         for (var row = 0; row < crew.Length; row++)
@@ -690,11 +690,60 @@ public sealed class InventoryUiState : UiState
                 Left = UiLength.Mixed(-250f + working.Length * 50f, 1f), Top = UiLength.Px(y + 20f), Width = UiLength.Px(47f), Height = UiLength.Px(24f)
             }) { TextScale = 0.45f });
         }
-        Add(new UiTextElement("Operate works the bills set in the Bills tab. Farm, brew, cook, fish, build, research and trade come later.",
+        var y2 = crew.Length == 0 ? top + 52f : top + 32f + crew.Length * 50f;
+        // 0.2.4: housed residents work bills at stations near home by day, beside their shops (on by default).
+        foreach (var npc in game.TownNpcs.Where(npc => !npc.IsBound && npc.HomeCell is not null).Take(5))
+        {
+            var resident = npc;
+            Add(new UiTextElement($"{npc.Name} ({npc.Definition.Role}) · {npc.Activity}", $"work-npc-name-{npc.Id}", new UiStyle
+            {
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y2 + 3f), Width = UiLength.Px(178f), Height = UiLength.Px(18f)
+            }) { Scale = 0.6f, Color = new UiColor(226, 230, 238) });
+            Add(new UiButtonElement(npc.WorksStations ? "Bills: on" : "Bills: off", () =>
+            {
+                resident.WorksStations = !resident.WorksStations;
+                Rebuild();
+            }, $"work-npc-{npc.Id}", new UiStyle
+            {
+                Left = UiLength.Mixed(-68f, 1f), Top = UiLength.Px(y2), Width = UiLength.Px(58f), Height = UiLength.Px(22f)
+            }) { TextScale = 0.5f, Color = npc.WorksStations ? UiColor.ButtonActive : UiColor.ButtonDefault });
+            y2 += 26f;
+        }
+        Add(new UiTextElement("Operate works the bills set in the Bills tab; residents work them by day too. Farm, brew, cook, fish, build, research and trade come later.",
             "work-later", new UiStyle
             {
-                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top + 32f + crew.Length * 50f), Width = UiLength.Px(240f), Height = UiLength.Px(32f)
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y2 + 4f), Width = UiLength.Px(240f), Height = UiLength.Px(32f)
             }) { Scale = 0.6f, Color = new UiColor(150, 160, 172) });
+    }
+
+    /// <summary>
+    /// Storage tags (0.2.4): on a placed chest's title row, one toggle per kind of item. Crew and residents carry products
+    /// and loose items to the chest that takes them, a tagged chest before one that takes everything.
+    /// </summary>
+    private void AddChestFilter(float chestTop)
+    {
+        if (_game is not { } game || _chestCell is not { } cell)
+            return;
+        const float width = 40f;
+        var right = InventoryLayout.Left + InventoryLayout.Columns * InventoryLayout.Stride - 10f;
+        var listed = StorageCategories.Listed;
+        var takes = game.ChestFilter(cell);
+        Add(new UiTextElement("Takes:", "chest-filter-label", new UiStyle
+        {
+            Left = UiLength.Px(right - listed.Count * (width + 2f) - 42f), Top = UiLength.Px(chestTop + 3f), Width = UiLength.Px(40f), Height = UiLength.Px(18f)
+        }) { Scale = 0.6f, Color = new UiColor(170, 178, 192) });
+        for (var i = 0; i < listed.Count; i++)
+        {
+            var (category, label) = listed[i];
+            Add(new UiButtonElement(label, () =>
+            {
+                game.ToggleChestCategory(cell, category);
+                Rebuild();
+            }, $"chest-filter-{category}", new UiStyle
+            {
+                Left = UiLength.Px(right - (listed.Count - i) * (width + 2f)), Top = UiLength.Px(chestTop), Width = UiLength.Px(width), Height = UiLength.Px(20f)
+            }) { TextScale = 0.45f, Color = (takes & category) != 0 ? UiColor.ButtonActive : UiColor.ButtonDefault });
+        }
     }
 
     /// <summary>

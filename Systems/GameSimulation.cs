@@ -398,7 +398,8 @@ public sealed partial class GameSimulation : IStoryHost
             Run: CaptureRun(),
             MiscEquipment: CaptureMisc(), BedSpawnX: _bedSpawn?.X, BedSpawnY: _bedSpawn?.Y,
             Players: CapturePlacements(),
-            Bills: CaptureBills()) { CellData = cellData, CellRuns = cellRuns };
+            Bills: CaptureBills(),
+            ChestFilters: CaptureChestFilters()) { CellData = cellData, CellRuns = cellRuns };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -487,6 +488,7 @@ public sealed partial class GameSimulation : IStoryHost
         var arriving = colonist is not null && savedBy is { } saver && saver != Guid.Empty && saver != game.PlayerProfile.Id;
         game.RestorePlacements(snapshot);
         game.RestoreBills(snapshot.Bills);
+        game.RestoreChestFilters(snapshot.ChestFilters);
         if (!arriving)
             game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
         game._heartsBroken = snapshot.HeartsBroken ?? 0;

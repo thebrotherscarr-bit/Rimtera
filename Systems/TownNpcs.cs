@@ -68,7 +68,7 @@ public sealed record TownNpcDefinition(
     bool Survivor = false);
 
 /// <summary>A resident (or a bound survivor waiting to be freed).</summary>
-public sealed class TownNpc
+public sealed class TownNpc : IStationWorker
 {
     internal TownNpc(long id, TownNpcDefinition definition, string name, Vector2 position)
     {
@@ -99,10 +99,25 @@ public sealed class TownNpc
     public float HitPoints { get; internal set; } = 160f;
     public bool IsAlive => HitPoints > 0f;
     internal float HurtCooldown { get; set; }
+
+    // ---- 0.2.4: residents work station bills beside their shops ----
+    /// <summary>The Crafting level residents work bills at (crafting speed 0.86, a little slower than a trained crew member).</summary>
+    public const int CraftingSkill = 6;
+    /// <summary>Works bills at stations near home by day (the Work tab's toggle); on by default.</summary>
+    public bool WorksStations { get; set; } = true;
+    public Dictionary<ItemId, int> Held { get; } = new();
+    public ItemStack Carried { get; set; }
+    public GridPoint? OperateStation { get; set; }
+    public float OperateProgress { get; set; }
+    public Vector2 HomePosition => HomeCell is { } home ? new Vector2(home.X + 0.5f, home.Y + 0.5f) : Motion.Position;
+    string IStationWorker.Activity { get => Activity; set => Activity = value; }
+    float IStationWorker.CraftingSpeed => 0.65f + CraftingSkill * 0.035f;
+    int IStationWorker.CraftingLevel => CraftingSkill;
 }
 
 /// <summary>A saved resident. <see cref="Hp"/> was appended in 0.2.2 (NC-20); older saves leave it null (full health).</summary>
-public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, float Y, int? HomeX, int? HomeY, bool Bound, float? Hp = null);
+public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, float Y, int? HomeX, int? HomeY, bool Bound, float? Hp = null,
+    bool? WorksStations = null, ItemStack[]? Held = null, ItemStack? Carried = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 

@@ -817,7 +817,7 @@ public enum ProjectileTeam : byte
     Enemy
 }
 
-public sealed class ColonistAgent : IColonyPawn
+public sealed class ColonistAgent : IColonyPawn, Rimtera.Systems.IStationWorker
 {
     private readonly BodyPart _torso;
 
@@ -858,6 +858,10 @@ public sealed class ColonistAgent : IColonyPawn
     public Rimtera.World.GridPoint? OperateStation { get; set; }
     /// <summary>Seconds of work put into the current craft.</summary>
     public float OperateProgress { get; set; }
+    string Rimtera.Systems.IStationWorker.Activity { get => Activity; set => Activity = value; }
+    Vector2 Rimtera.Systems.IStationWorker.HomePosition => HomePosition;
+    float Rimtera.Systems.IStationWorker.CraftingSpeed => ColonistStats.CraftingSpeed;
+    int Rimtera.Systems.IStationWorker.CraftingLevel => ColonistStats.Level(ColonistSkill.Crafting);
     public PawnMotionState Motion { get; }
     public SurvivalNeeds Needs { get; }
     public HealthComponent Health { get; }
