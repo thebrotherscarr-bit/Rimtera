@@ -236,7 +236,8 @@ public sealed partial class GameSimulation
 
     /// <summary>The first mount whose item the player carries (hover-bike first), for the mount key.</summary>
     private MountKind? FirstCarriedMount() =>
-        TravelContent.Mounts.Values.FirstOrDefault(spec => Player.Inventory.Count(spec.Item) > 0)?.Kind;
+        (MiscEquipped(MiscSlot.Mount) is { } equipped ? TravelContent.MountForItem(equipped) : null)
+        ?? TravelContent.Mounts.Values.FirstOrDefault(spec => Player.Inventory.Count(spec.Item) > 0)?.Kind;
 
     /// <summary>Travel item uses (mount keys). True when handled.</summary>
     private bool UseTravelItem(ItemDefinition item, GridPoint point)

@@ -582,6 +582,41 @@ public sealed class InventoryUiState : UiState
         Slot(EquipmentSlot.Head, "Vanity", vanity: true, 120f, 0);
         Slot(EquipmentSlot.Body, "Vanity", vanity: true, 120f, 1);
         Slot(EquipmentSlot.Legs, "Vanity", vanity: true, 120f, 2);
+
+        // Terraria's misc equipment: pet, light pet, mount and hook, under the vanity column. Drop a fitting item from the
+        // cursor in (what was there comes back on the cursor); click empty-handed to take it out.
+        (MiscSlot Slot, string Label)[] misc = [(MiscSlot.Pet, "Pet"), (MiscSlot.LightPet, "Light"), (MiscSlot.Mount, "Mount"), (MiscSlot.Hook, "Hook")];
+        for (var index = 0; index < misc.Length; index++)
+        {
+            var (miscSlot, label) = misc[index];
+            var element = new UiStackSlotElement($"equip-misc-{miscSlot}", label,
+                () => game.MiscEquipped(miscSlot) is { } id ? new ItemStack(id, 1) : default, new UiStyle
+                {
+                    Left = UiLength.Mixed(-120f, 1f), Top = UiLength.Px(top + (4 + index) * InventoryLayout.Stride),
+                    Width = UiLength.Px(InventoryLayout.Slot), Height = UiLength.Px(InventoryLayout.Slot)
+                });
+            element.ClickOnPress = true;
+            element.OnClick(click =>
+            {
+                var held = _controller.CursorStack;
+                if (!held.IsEmpty)
+                {
+                    if (held.Count != 1 || !game.SetMisc(miscSlot, held.ItemId, out var previous))
+                    {
+                        Status($"That doesn't go in the {label.ToLowerInvariant()} slot.");
+                        return;
+                    }
+                    _controller.DropCursor();
+                    if (previous is { } back)
+                        _controller.PickUp(new ItemStack(back, 1));
+                    Status($"Equipped {game.Items[held.ItemId].Name}.");
+                }
+                else if (game.MiscEquipped(miscSlot) is { } worn && game.SetMisc(miscSlot, null, out _))
+                    _controller.PickUp(new ItemStack(worn, 1));
+                RefreshCursorLabel();
+            });
+            Add(element);
+        }
     }
 
     /// <summary>Terraria's housing panel: check the room you stand in, and who lives with you.</summary>
@@ -598,16 +633,43 @@ public sealed class InventoryUiState : UiState
             Status(_housingReport);
             Rebuild();
         }, "housing-check", new UiStyle { Left = left, Top = UiLength.Px(top + 28f), Width = UiLength.Px(120f), Height = UiLength.Px(28f) }) { TextScale = 0.75f });
-        var lines = new List<string>();
-        if (_housingReport is not null)
-            lines.Add(_housingReport);
-        lines.Add(game.Colonists.Count == 0 ? "No crew yet." : "Crew:");
-        lines.AddRange(game.Colonists.Where(colonist => colonist.IsAlive).Take(10).Select(colonist => $"{colonist.Profile.Name} · {colonist.Activity}"));
-        for (var i = 0; i < lines.Count; i++)
-            Add(new UiTextElement(lines[i], $"housing-line-{i}", new UiStyle
+        // Terraria's housing page: every resident with where they live and how happy they are; "Move here" assigns them
+        // the room the player stands in. Then the crew, and any role left empty by a death.
+        var y = top + 64f;
+        void Line(string text, string id, UiColor color)
+        {
+            Add(new UiTextElement(text, id, new UiStyle
             {
-                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top + 62f + i * 20f), Width = UiLength.Px(240f), Height = UiLength.Px(20f)
-            }) { Scale = 0.7f });
+                Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y), Width = UiLength.Px(240f), Height = UiLength.Px(18f)
+            }) { Scale = 0.7f, Color = color });
+            y += 20f;
+        }
+        if (_housingReport is not null)
+            Line(_housingReport, "housing-report", new UiColor(242, 176, 64));
+        var residents = game.TownNpcs.Where(npc => !npc.IsBound).Take(8).ToList();
+        Line(residents.Count == 0 ? "No residents yet." : "Residents", "housing-residents", new UiColor(242, 176, 64));
+        foreach (var npc in residents)
+        {
+            var resident = npc;
+            var home = npc.HomeCell is null ? "homeless" : $"happiness {game.GetHappiness(npc):+0.0;-0.0;0}";
+            Add(new UiButtonElement("Move here", () =>
+            {
+                var center = game.Player.Motion.Position + game.Player.Motion.Size / 2f;
+                _housingReport = game.AssignHome(resident, new GridPoint((int)center.X, (int)center.Y));
+                Status(_housingReport);
+                Rebuild();
+            }, $"housing-move-{npc.Id}", new UiStyle
+            {
+                Left = UiLength.Mixed(-82f, 1f), Top = UiLength.Px(y - 1f), Width = UiLength.Px(72f), Height = UiLength.Px(20f)
+            }) { TextScale = 0.6f });
+            Line($"{npc.Name} · {npc.Definition.Role} · {home}", $"housing-npc-{npc.Id}", new UiColor(226, 230, 238));
+        }
+        var crew = game.Colonists.Where(colonist => colonist.IsAlive).Take(6).ToList();
+        Line(crew.Count == 0 ? "No crew yet." : "Crew", "housing-crew", new UiColor(242, 176, 64));
+        foreach (var colonist in crew)
+            Line($"{colonist.Profile.Name} · {colonist.Activity}", $"housing-crew-{colonist.Id}", new UiColor(226, 230, 238));
+        foreach (var lost in game.LostResidentKinds().Take(4))
+            Line($"Vacant: {TownNpcCatalog.Get(lost).Role} (lost)", $"housing-lost-{lost}", new UiColor(150, 160, 172));
     }
 
     /// <summary>Shows a message on the status line under the grid (crafting results, for one).</summary>

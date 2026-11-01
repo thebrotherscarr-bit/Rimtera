@@ -207,6 +207,9 @@ public sealed partial class GameSimulation
     {
         get
         {
+            // The hook slot comes first, as in Terraria; otherwise the best hook worn as an accessory.
+            if (MiscEquipped(MiscSlot.Hook) is { } hooked && GrowthItems.HookFor(hooked) is { } equipped)
+                return equipped;
             HookSpec? best = null;
             foreach (var slot in Player.Equipment.ActiveAccessorySlots)
                 if (Player.Equipment[slot] is { } id && Items.Contains(id) && Items[id].ImmunityTags.Contains("grapple"))
@@ -218,6 +221,9 @@ public sealed partial class GameSimulation
             return best;
         }
     }
+    /// <summary>A grappling hook is equipped: in the hook slot or worn as an accessory.</summary>
+    public bool HasGrapple => MiscEquipped(MiscSlot.Hook) is not null || Player.Stats.ImmunityTags.Contains("grapple");
+
     /// <summary>True when the equipped wings can climb (glide rigs only slow the fall).</summary>
     public bool WingClimbAvailable => GearWingFlightSeconds > 0f;
 

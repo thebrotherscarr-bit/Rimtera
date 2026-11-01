@@ -752,6 +752,8 @@ public static partial class GraphicalSandbox
                 if (_canvas.IsOverHud(e.Location))
                 {
                     _mouse.Press(button, PointerOwner.Interface);
+                    if (button == UiPointerButton.Right && _canvas.BuffAt(e.Location) is { } buffKey && _game.CancelBuff(buffKey))
+                        _audioDirector.Ui("click");
                     return;
                 }
                 _mouse.Press(button, PointerOwner.World);
@@ -1341,10 +1343,41 @@ public static partial class GraphicalSandbox
                 return;
             var game = _game;
             var credits = game.Player.Inventory.Count(ItemId.Credits);
-            var entries = game.GetShop(npc).Select(offer => new MenuEntry(
+            var entries = new List<MenuEntry> { new("— Buy —", Enabled: false) };
+            entries.AddRange(game.GetShop(npc).Select(offer => new MenuEntry(
                 $"{offer.Name}: {offer.Price} credits",
                 () => OpenShopScreen(npc, game.Buy(npc, offer.Item) ? $"Bought {offer.Name}." : "Not enough credits or no room."),
-                Enabled: credits >= offer.Price)).ToList();
+                Enabled: credits >= offer.Price)));
+            // Terraria's selling: any carried stack (favorites stay), at the price shown; then the buyback list.
+            var sellable = Enumerable.Range(0, game.Player.Inventory.SlotCount)
+                .Where(slot => !game.Player.Inventory.Slots[slot].IsEmpty && !game.Player.Inventory.IsFavorite(slot) &&
+                               game.GetSellPrice(npc, game.Player.Inventory.Slots[slot]) > 0)
+                .ToList();
+            if (sellable.Count > 0)
+                entries.Add(new MenuEntry("— Sell —", Enabled: false));
+            foreach (var slot in sellable)
+            {
+                var stack = game.Player.Inventory.Slots[slot];
+                var price = game.GetSellPrice(npc, stack) * stack.Count;
+                var name = stack.Count > 1 ? $"{game.Items[stack.ItemId].Name} ×{stack.Count}" : game.Items[stack.ItemId].Name;
+                var sellSlot = slot;
+                entries.Add(new MenuEntry($"{name}: sell for {price} credits", () =>
+                {
+                    var earned = game.Sell(npc, sellSlot);
+                    OpenShopScreen(npc, earned > 0 ? $"Sold {name} for {earned} credits." : "They won't buy that.");
+                }));
+            }
+            if (game.Buyback.Count > 0)
+                entries.Add(new MenuEntry("— Buy back —", Enabled: false));
+            for (var index = 0; index < game.Buyback.Count; index++)
+            {
+                var sold = game.Buyback[index];
+                var name = sold.Stack.Count > 1 ? $"{game.Items[sold.Stack.ItemId].Name} ×{sold.Stack.Count}" : game.Items[sold.Stack.ItemId].Name;
+                var buybackIndex = index;
+                entries.Add(new MenuEntry($"{name}: buy back for {sold.Price} credits",
+                    () => OpenShopScreen(npc, game.BuyBack(buybackIndex) ? $"Bought back {name}." : "Not enough credits, or no room."),
+                    Enabled: credits >= sold.Price));
+            }
             entries.Add(new MenuEntry("Back", () => OpenNpcScreen(npc, string.Empty)));
             var screen = new MenuScreen("npc-shop", $"{npc.Name}'s shop", entries,
                 $"You have {credits} credits      Enter  buy      Esc  leave",
@@ -3274,13 +3307,54 @@ public static partial class GraphicalSandbox
                 lines.Add(item.UseCooldownTicks <= 10 ? "Fast speed" : item.UseCooldownTicks <= 24 ? "Average speed" : "Slow speed");
             if (item.IsMaterial)
                 lines.Add("Material");
+            // Terraria's comparison: how this piece measures against what is worn in its slot or held in hand.
+            var comparison = Game is { } game ? CompareLine(game, item) : null;
+            if (comparison is not null)
+                lines.Add(comparison.Value.Text);
             var plain = lines.Count;
             lines.AddRange(GuideTooltipLines(item.Id));
             var width = lines.Max(line => g.MeasureString(line, _small).Width) + 20;
             var rect = new RectangleF(Math.Min(at.X + 16, Width - width - 4), Math.Max(4, at.Y - 18 - lines.Count * 16), width, lines.Count * 16 + 12);
             DrawRivetedPanel(g, rect);
             for (var i = 0; i < lines.Count; i++)
-                g.DrawString(lines[i], _small, i == 0 ? _amberBrush : i >= plain ? _guideTipBrush : _hudBrush, rect.X + 10, rect.Y + 6 + i * 16);
+            {
+                var brush = i == 0 ? _amberBrush
+                    : comparison is { } line && i == plain - 1 ? line.Better ? _betterBrush : line.Worse ? _healthBar : _dimTextBrush
+                    : i >= plain ? _guideTipBrush : _hudBrush;
+                g.DrawString(lines[i], _small, brush, rect.X + 10, rect.Y + 6 + i * 16);
+            }
+        }
+
+        private readonly Brush _betterBrush = new SolidBrush(Color.FromArgb(120, 220, 120));
+
+        /// <summary>
+        /// The comparison line for a tooltip: armor against the piece worn in its slot (defense), weapons and drills against
+        /// the item in hand (damage, drill power). Null when there is nothing to compare.
+        /// </summary>
+        private static (string Text, bool Better, bool Worse)? CompareLine(GameSimulation game, ItemDefinition item)
+        {
+            (string, bool, bool) Line(int difference, string what, string against) => difference == 0
+                ? ($"Same {what} as {against}", false, false)
+                : ($"{difference:+0;-0} {what} compared with {against}", difference > 0, difference < 0);
+
+            if (item.UseKind == ItemUseKind.Equipment && item.EquipmentSlot is EquipmentSlot.Head or EquipmentSlot.Body or EquipmentSlot.Legs)
+            {
+                var worn = game.Player.Equipment[item.EquipmentSlot.Value];
+                if (worn is null)
+                    return ($"+{item.Defense} defense (nothing worn there)", item.Defense > 0, false);
+                if (worn == item.Id)
+                    return null;
+                var wornItem = game.Items[worn.Value];
+                return Line(item.Defense - wornItem.Defense, "defense", wornItem.Name);
+            }
+            if (game.Player.Inventory.SelectedItem is not { } held || held.Id == item.Id)
+                return null;
+            if (item.UseKind is ItemUseKind.Melee or ItemUseKind.Ranged or ItemUseKind.Tech &&
+                held.UseKind is ItemUseKind.Melee or ItemUseKind.Ranged or ItemUseKind.Tech)
+                return Line((int)MathF.Round(item.Damage - held.Damage), "damage", held.Name);
+            if (item.UseKind == ItemUseKind.Pickaxe && held.UseKind == ItemUseKind.Pickaxe)
+                return Line(item.ToolPower - held.ToolPower, "% drill power", held.Name);
+            return null;
         }
 
         /// <summary>Top-right readout: biome, temperature/comfort, shelter, events, recent incidents.</summary>

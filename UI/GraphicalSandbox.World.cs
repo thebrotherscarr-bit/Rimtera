@@ -455,16 +455,23 @@ public static partial class GraphicalSandbox
         }
 
         /// <summary>Active buffs and debuffs in the top-left with remaining time; hovering shows the name.</summary>
+        private readonly List<(RectangleF Rect, string Key)> _buffHits = new();
+
+        /// <summary>The buff under <paramref name="point"/> on the buff bar, for right-click cancelling.</summary>
+        public string? BuffAt(Point point) => _buffHits.FirstOrDefault(hit => hit.Rect.Contains(point)).Key;
+
         private void DrawBuffBar(Graphics g, GameSimulation game)
         {
             const int icon = 30;
             var x = 10f;
             var y = HotbarTop + HotbarSlot + 10f;
             string? hover = null;
+            _buffHits.Clear();
             foreach (var buff in game.ActiveBuffs.Take(22))
             {
                 var rect = new RectangleF(x, y, icon, icon);
                 _hudRects.Add(rect);
+                _buffHits.Add((rect, buff.Key));
                 using (var back = new SolidBrush(buff.IsDebuff ? Color.FromArgb(170, 90, 24, 30) : Color.FromArgb(170, 20, 40, 60)))
                     g.FillRectangle(back, rect);
                 g.DrawRectangle(buff.IsDebuff ? Pens.IndianRed : Pens.SteelBlue, rect.X, rect.Y, rect.Width, rect.Height);
@@ -476,7 +483,7 @@ public static partial class GraphicalSandbox
                 if (buff.RemainingSeconds < 3600f)
                     g.DrawString(time, _small, _dimTextBrush, rect.X, rect.Bottom);
                 if (MousePosition is { } mouse && rect.Contains(mouse))
-                    hover = buff.Name;
+                    hover = buff.IsDebuff ? buff.Name : $"{buff.Name}   (right-click to cancel)";
                 x += icon + 6;
                 if (x > 10 + 11 * (icon + 6))
                 {
