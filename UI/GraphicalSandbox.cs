@@ -447,6 +447,16 @@ public static partial class GraphicalSandbox
                     _menu.Preferences.ShowFrameRate = !_menu.Preferences.ShowFrameRate;
                     _menu.SavePreferences();
                     break;
+                case "LightingMode":
+                    _menu.Preferences.Lighting = (LightingQuality)(((int)_menu.Preferences.Lighting + 1) % Enum.GetValues<LightingQuality>().Length);
+                    _menu.SavePreferences();
+                    _canvas.Notify($"Lighting: {_menu.Preferences.Lighting}.");
+                    break;
+                case "FrameSkipMode":
+                    _menu.Preferences.FrameSkip = (FrameSkipMode)(((int)_menu.Preferences.FrameSkip + 1) % Enum.GetValues<FrameSkipMode>().Length);
+                    _menu.SavePreferences();
+                    _canvas.Notify($"Frame skip: {_menu.Preferences.FrameSkip}.");
+                    break;
                 case "Craft": game.TryCraftNext(); break;
                 case "CraftPrevious": game.CycleCraftableRecipe(-1); break;
                 case "CraftNext": game.CycleCraftableRecipe(1); break;

@@ -297,8 +297,9 @@ public static class ControlsParitySelfTests
         check(Keys("Loadout1", "F1") && Keys("Loadout2", "F2") && Keys("Loadout3", "F3") && Keys("ZoomIn", "OemPlus") &&
               Keys("ZoomOut", "OemMinus") && Keys("MinimapZoomIn", "Add") && Keys("MinimapZoomOut", "Subtract") &&
               Keys("MapAlphaUp", "PageUp") && Keys("MapAlphaDown", "PageDown") && Keys("HideUi", "F11") && Keys("Creative", "C") &&
-              Keys("ThrowItem", "T") && ControlCatalog.Find("Guide") is null,
-            "default keys are Terraria 1.4.5.8's (PlayerInput.Reset): loadouts F1-F3, zoom on = and -, minimap zoom on the numpad, map opacity on PageUp/PageDown, F11 hides the UI, C creative; T throws; the recipe guide has no key");
+              Keys("ThrowItem", "T") && ControlCatalog.Find("Guide") is null && Keys("FrameSkipMode", "F8") && Keys("LightingMode", "F9") &&
+              Keys("FrameRate", "F10"),
+            "default keys are Terraria 1.4.5.8's (PlayerInput.Reset): loadouts F1-F3, zoom on = and -, minimap zoom on the numpad, map opacity on PageUp/PageDown, F8 frame skip, F9 lighting, F10 the frame rate, F11 hides the UI, C creative; T throws; the recipe guide has no key");
 
         var old = new InputProfile
         {

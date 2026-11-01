@@ -237,6 +237,8 @@ public static class ControlCatalog
         new("Bestiary", "Bestiary", ControlGroup.Panels, [], "Or the Bestiary tab in the inventory."),
         new("Achievements", "Feats", ControlGroup.Panels, [], "Or the Feats tab in the inventory."),
         new("ControlsHelp", "Show / hide key help", ControlGroup.Panels, ["Oem2"]),
+        new("FrameSkipMode", "Cycle frame skip", ControlGroup.Panels, ["F8"], "On, Subtle or Off (Settings > Video)."),
+        new("LightingMode", "Cycle lighting", ControlGroup.Panels, ["F9"], "Low, Standard, High or Off (Settings > Video), as Terraria's F9."),
         new("FrameRate", "Show / hide frame rate", ControlGroup.Panels, ["F10"], "Frames per second and drawing time, in the corner."),
         new("HideUi", "Hide the interface", ControlGroup.Panels, ["F11"], "Hides the whole HUD. Alt+Enter toggles fullscreen."),
         new("Creative", "Creative menu", ControlGroup.Panels, ["C"], "Creative worlds only."),

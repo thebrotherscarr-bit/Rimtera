@@ -374,6 +374,14 @@ public static class BatchBSelfTests
                       "chest-quick-stack", "chest-restock", "chest-sort", "crafting-guide", "tab-housing", "tab-crew", "tab-bestiary",
                       "tab-feats", "loadout-1", "inventory-settings" }.All(ids.Contains),
             "the inventory hub lays out Terraria's 10 × 5 grid (hotbar numbered 1-0) with trash, sort, quick stack, chest links, crafting help, tabs, loadouts and Settings");
+        // The emote menu (roadmap 0.2.0 PU-27): the Emotes tab lists every emote; clicking one shows its bubble.
+        Rimtera.UI.UiButtonElement? Button(string id) =>
+            hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
+        Button("tab-emotes")?.Command?.Invoke();
+        Button("emote-Wave")?.Command?.Invoke();
+        check(Button("emote-Music") is not null && keeper.Emotes.Any(bubble => bubble.Kind == EmoteKind.Wave),
+            "the inventory hub's Emotes tab lists every emote, and clicking one shows its bubble over the player");
+        Button("tab-gear")?.Command?.Invoke();
         keeper.Player.Inventory.PlaceIntoSlot(31, new ItemStack(ItemId.Berry, 2));
         hub.ClickPlayerSlot(31, alt: true);
         var favorited = keeper.Player.Inventory.IsFavorite(31);
