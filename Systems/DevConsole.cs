@@ -97,6 +97,7 @@ public sealed class DevConsole
         new("power", "power | power set <0-1000> | power tier <1-5> | power feed", "Shows the station AI's power, sets it or its tier, or feeds it from your bag.", true, Power),
         new("ai", "ai down | ai rebuild", "Takes the station AI down (machines go dark) or rebuilds it.", true, Ai),
         new("raid", "raid | raid warn [hours] | raid now", "Shows the raid on its way, or announces one (default 2 hours' warning), or sends one now.", true, Raid),
+        new("injure", "injure scar|eye|arm|leg", "Gives the resident nearest you a lasting injury.", true, Injure),
         new("outposts", "outposts", "Lists the outposts: where they are, who lives there and how many are armed.", false, _ => Outposts()),
         new("research", "research list | research done <tier>|all | research reset <tier>|all", "Lists the research tiers, finishes one or all, or puts them back.", true, Research),
     ];
@@ -173,6 +174,21 @@ public sealed class DevConsole
                 ? Math.Clamp(given, 0.01f, 24f) : GameSimulation.RaidWarningHours)
             : throw new ConsoleError("Use raid, raid warn [hours] or raid now.");
         return [_game.PlanRaid(200f, out var description, hours) > 0 ? description : "A raid is already on its way."];
+    }
+
+    private IEnumerable<string> Injure(string[] args)
+    {
+        var injury = Need(args, 0, "scar, eye, arm or leg").ToLowerInvariant() switch
+        {
+            "scar" => LastingInjury.Scar,
+            "eye" => LastingInjury.LostEye,
+            "arm" => LastingInjury.LostArm,
+            "leg" => LastingInjury.LostLeg,
+            _ => throw new ConsoleError("Use injure scar, eye, arm or leg.")
+        };
+        var near = _game.People.MinBy(npc => System.Numerics.Vector2.Distance(npc.Motion.Position, _game.Player.Motion.Position))
+                   ?? throw new ConsoleError("Nobody lives here yet.");
+        return [_game.Injure(near, injury) ? _game.LastMessage : $"{near.Name} cannot take another injury of that kind."];
     }
 
     private IEnumerable<string> Outposts()

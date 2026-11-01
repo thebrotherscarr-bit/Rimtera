@@ -36,6 +36,7 @@ Added in 0.3.6 (`docs/VISION.md` §6).
 | `where` | Your tile, biome, the time and your health |
 | `research list`, `research done <tier>\|all`, `research reset <tier>\|all` | Lists the research tiers, finishes them or puts them back (0.3.7) |
 | `outposts` | Lists the outposts: where they are, who lives there and how many are armed (0.4.2) |
+| `injure scar\|eye\|arm\|leg` | Gives the resident nearest you a lasting injury (0.5.3) |
 | `raid`, `raid warn [hours]`, `raid now` | Shows the raid on its way, announces one (default 2 hours' warning) or sends one at once (0.4.3) |
 | `power`, `power set <0-1000>`, `power tier <1-5>`, `power feed` | Shows the station AI's power, sets it or its tier, or feeds it from your bag (0.3.8) |
 | `ai down`, `ai rebuild` | Takes the station AI down (machines go dark) or rebuilds it (0.3.8) |
