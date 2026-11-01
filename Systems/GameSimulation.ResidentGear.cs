@@ -115,6 +115,8 @@ public sealed partial class GameSimulation
         var bonus = npc.Gear.Where(pair => pair.Key != ResidentGearSlot.Weapon).Sum(pair => Items[pair.Value].MaximumLifeBonus);
         var share = npc.MaximumHitPoints <= 0f ? 1f : npc.HitPoints / npc.MaximumHitPoints;
         npc.MaximumHitPoints = TownNpc.BaseHitPoints + bonus;
+        if (!npc.IsArmed)
+            npc.Post = null; // 0.4.1: no weapon, no post
         if (npc.IsAlive)
             npc.HitPoints = Math.Clamp(share * npc.MaximumHitPoints, 1f, npc.MaximumHitPoints);
         npc.RefreshWork();

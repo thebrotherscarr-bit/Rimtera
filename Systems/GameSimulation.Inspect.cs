@@ -61,6 +61,8 @@ public sealed partial class GameSimulation
             var (damage, reach, _) = ResidentAttack(npc);
             lines.Add($"Gear: {string.Join(", ", npc.Gear.OrderBy(pair => pair.Key).Select(pair => Items[pair.Value].Name))} · DEF {ResidentDefense(npc)}" +
                       (npc.IsArmed ? $" · hits {damage:0} at {reach:0.#} tiles" : ""));
+            if (npc.Post is { } post)
+                lines.Add($"Guard post at {post.X},{post.Y}");
         }
         var carrying = new List<string>();
         if (!npc.Carried.IsEmpty)

@@ -119,6 +119,12 @@ public sealed class TownNpc : IStationWorker
     public Dictionary<ResidentGearSlot, ItemId> Gear { get; } = new();
     /// <summary>Holding a weapon (it makes them a guard of their area).</summary>
     public bool IsArmed => Gear.ContainsKey(ResidentGearSlot.Weapon);
+    /// <summary>Where an armed guard stands watch (0.4.1), or null to guard around home.</summary>
+    public GridPoint? Post { get; internal set; }
+    /// <summary>The middle of the area they guard: their post, else home.</summary>
+    public Vector2 GuardCenter => Post is { } post ? new Vector2(post.X + 0.5f, post.Y + 0.5f) : HomePosition;
+    /// <summary>Badly hurt and heading home to heal (0.4.1); they guard again once they have healed enough.</summary>
+    public bool FallingBack { get; internal set; }
     public bool IsAlive => HitPoints > 0f;
     internal float HurtCooldown { get; set; }
 
@@ -233,7 +239,9 @@ public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, flo
     // 0.3.10: the person (skills, passions, background), a settler's look, and what Farm and Fish work carry.
     Rimtera.Characters.CharacterProfile? Person = null, int? Look = null, ItemStack[]? Pouch = null,
     // 0.4.0: their gear, by ResidentGearSlot.
-    ItemId?[]? Gear = null);
+    ItemId?[]? Gear = null,
+    // 0.4.1: an armed guard's post.
+    int? PostX = null, int? PostY = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 
