@@ -227,6 +227,7 @@ public static class MenuParitySelfTests
         check(far == 0f && disabled == Vector2.Zero && shake.Trauma == 0f,
             "PE-16: a distant explosion does not shake; with Screen shake off nothing moves and pending shake is dropped");
 
+        game.DebugSummonKeyEnabled = true; // the challenge key is a debug key since 0.2.2 (BO-18)
         var summoned = game.TrySummonSentinel();
         shake.Observe(game);
         check(summoned && shake.Trauma >= ScreenShake.BossRoar - 0.001f, "PE-16: a boss arriving (its roar) shakes the view");

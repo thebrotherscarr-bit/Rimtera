@@ -154,8 +154,6 @@ public static class CraftingAudit
     /// </summary>
     public static readonly IReadOnlyDictionary<EnemyKind, string> PreFractureBossReview = new Dictionary<EnemyKind, string>
     {
-        [EnemyKind.MoonEater] = "the Rust Moon finale and the Rusted lure (D-3, PC-1: stream C)",
-        [EnemyKind.ProtocolDragon] = "the Defense Protocol finale and the Protocol key; D-3 says it waits for the Vault Colossus (PC-2: stream C)",
         [EnemyKind.ScavengerWarlord] = "Scavenger Raid finale, dusk incursion (PC-4: stream C) and the Warlord banner; the 0.1.7 acceptance " +
                                        "counts it as pre-hardmode, so once PC-4 gates its nanite stim it can move to the intended list",
         [EnemyKind.VoidStalker] = "dusk incursion boss (D-3 option A, PC-4: stream C; its nanite marrow is tier 6) and the Void lure (owner's call)",
@@ -994,6 +992,12 @@ public static class CraftingAudit
             return false;
         if (boss == EnemyKind.AstroGod && !state.Flags.IsSet("obelisks.down"))
             return false;
+        // 0.2.2 lifecycle gates (PC-1, PC-2): the Moon Eater (lure and Rust Moon finale) waits for the Fracture, and the
+        // Protocol Dragon (key and Defense Protocol finale) for the Vault Colossus.
+        if (boss == EnemyKind.MoonEater && !state.Fracture)
+            return false;
+        if (boss == EnemyKind.ProtocolDragon && !state.Defeated.Contains(EnemyKind.VaultColossus))
+            return false;
         if (boss == GameSimulation.BulbBoss && !GameSimulation.HardTrio.All(state.Defeated.Contains))
             return false;
         if (boss == EnemyKind.VaultColossus && !state.Flags.IsSet("vault.opened"))
@@ -1017,7 +1021,7 @@ public static class CraftingAudit
         if (GameSimulation.HardTrio.Contains(boss))
             return state.Fracture; // undefeated hard-tier bosses come on their own at dusk
         if (EnemyArchetypes.EventBosses.Contains(boss))
-            return state.Defeated.Contains(EnemyKind.ScoutMech);
+            return state.Fracture && state.Defeated.Contains(EnemyKind.ScoutMech); // the dusk incursion waits for the Fracture (PC-4)
         if (boss == EnemyKind.PrismEmpress)
             return state.Fracture && state.Any(GameSimulation.CanSmashAltars);
         if (boss == EnemyKind.BloomMatriarch)
