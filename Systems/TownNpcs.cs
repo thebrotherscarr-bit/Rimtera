@@ -284,7 +284,7 @@ public static class TownTrades
     /// <summary>Each resident's trade stations.</summary>
     public static readonly IReadOnlyDictionary<TownNpcKind, CraftingStationId[]> Stations = new Dictionary<TownNpcKind, CraftingStationId[]>
     {
-        [TownNpcKind.StationAi] = [CraftingStationId.ResearchTerminal, CraftingStationId.ChargeReactor],
+        [TownNpcKind.StationAi] = [CraftingStationId.ResearchTerminal, CraftingStationId.ChargeReactor, CraftingStationId.FuelRefiner], // 0.7.5: the AI works the fuel refiner
         [TownNpcKind.Quartermaster] = [CraftingStationId.Sawmill, CraftingStationId.Kiln],
         [TownNpcKind.Medic] = [CraftingStationId.ChemLab, CraftingStationId.BioLab],
         [TownNpcKind.Armorer] = [CraftingStationId.AmmoPress, CraftingStationId.Anvil, CraftingStationId.PowerForgeMk2],

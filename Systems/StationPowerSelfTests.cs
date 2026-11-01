@@ -6,8 +6,9 @@ using Rimtera.World;
 namespace Rimtera.Systems;
 
 /// <summary>
-/// The station AI powers the base (0.3.8): machines draw its power and need its tier, fuel refills it and raises the
-/// tier, hand-built stations need nothing, and losing the AI darkens the machines until an AI core rebuilds it.
+/// The station AI powers the base (0.3.8; 0.7.5 the power grid): every station crafts unpowered; machines run powered when
+/// the AI's tier reaches theirs, drawing its power; fuel crystals refill it and raise the tier; hand-built stations need
+/// nothing; losing the AI leaves the machines unpowered until an AI core rebuilds it.
 /// </summary>
 public static class StationPowerSelfTests
 {
@@ -37,34 +38,43 @@ public static class StationPowerSelfTests
 
     public static void Run(Action<bool, string> check)
     {
-        // ---- a new world starts powered at tier 1; a machine's craft draws power, a hand-built one's does not ----
+        // ---- 0.7.5: a new world's AI runs on its landing charge at tier 0; every station crafts unpowered, drawing nothing ----
         var game = Site(9680);
         var startPower = game.StationPower;
         var circuit = game.Crafting.FindByOutput(ItemId.CircuitBoard).First();
         game.Player.Inventory.Add(ItemId.CopperBar, 4);
         game.Player.Inventory.Add(ItemId.EnergyCrystal, 2);
         var crafted = game.TryCraft(circuit.Id).Success;
-        var afterMachine = game.StationPower;
+        var afterUnpowered = game.StationPower;
         var core = game.Crafting.FindByOutput(ItemId.AiCore).First();
-        check(startPower == GameSimulation.StartPower && game.StationPowerTier == 1 && crafted && afterMachine == startPower - 1 &&
+        check(startPower == GameSimulation.StartPower && game.StationPowerTier == 0 && crafted && afterUnpowered == startPower &&
               GameSimulation.PowerCost(core) == 0 && GameSimulation.PowerTierOf(CraftingStationId.Sawmill) == 0 &&
               GameSimulation.PowerTierOf(CraftingStationId.AstralAssembler) == 5,
-            $"a new world starts with {GameSimulation.StartPower} power at tier 1; a craft at a machine draws its tier ({startPower} → {afterMachine}); " +
+            $"a new world's AI holds {GameSimulation.StartPower} power at tier 0; a machine crafts unpowered and draws nothing ({startPower} → {afterUnpowered}); " +
             "hand-built stations and the AI core need no power");
 
-        // ---- the tier gate and the fuel ladder ----
+        // ---- the fuel ladder: a tier's crystal raises the AI to it, and its machines run powered, drawing their tier ----
         var mk2Recipe = game.Crafting.FindByOutput(ItemId.OreRefineryMk2).First();
         var needsTier = game.PowerLock(mk2Recipe);
-        game.Player.Inventory.Add(ItemId.PowerCell, 1);
+        game.Player.Inventory.Add(ItemId.FuelCrystalT2, 1);
         var fed = game.FeedStationAi();
         var tierTwo = game.StationPowerTier == 2 && game.PowerLock(mk2Recipe) is null;
+        game.Player.Inventory.Add(ItemId.CopperBar, 4);
+        game.Player.Inventory.Add(ItemId.EnergyCrystal, 2);
+        var poweredBefore = game.StationPower;
+        game.TryCraft(circuit.Id);
+        var drew = poweredBefore - game.StationPower;
         new DevConsole(game).Execute("power set 0");
         var empty = game.PowerLock(circuit);
-        game.Player.Inventory.Add(ItemId.EnergyCrystal, 5);
+        game.Player.Inventory.Add(ItemId.CopperBar, 4);
+        game.Player.Inventory.Add(ItemId.EnergyCrystal, 2);
+        var stillCrafts = game.TryCraft(circuit.Id).Success;
+        game.Player.Inventory.Add(ItemId.CrudeFuelCrystal, 5);
         game.FeedStationAi();
-        check(needsTier is { } tierText && tierText.Contains("tier 2") && fed.Contains("Power tier 2") && tierTwo &&
-              empty is { } emptyText && emptyText.Contains("out of power") && game.StationPower == 5 * 20 && game.PowerLock(circuit) is null,
-            $"a machine needs the AI's tier (\"{needsTier}\"); a power cell raises it to tier 2; an empty reserve darkens the machines until it is fed");
+        check(needsTier is { } tierText && tierText.Contains("tier 2") && fed.Contains("Power tier 2") && tierTwo && drew == 1 &&
+              empty is { } emptyText && emptyText.Contains("out of power") && stillCrafts && game.StationPower == 5 * 10 &&
+              game.PowerLock(circuit) is null && game.StationPowerTier == 2,
+            $"a tier's fuel crystal raises the AI to it (\"{needsTier}\"), and a powered machine draws its tier ({drew}); out of power, machines still craft, unpowered; crude crystals recharge without raising the tier");
 
         // ---- losing the AI: no longer the end; machines dark, research stops, an AI core rebuilds it ----
         var colony = Site(9681);
@@ -77,12 +87,13 @@ public static class StationPowerSelfTests
             colony.Tick(new GameInput(new MovementInput(0f)));
         var stalled = Math.Abs(colony.ResearchProgress("overseer") - before) < 0.01f;
         var rebuilt = colony.RebuildStationAi() && colony.StationAiOnline && colony.StationPower >= GameSimulation.RebuiltPower &&
-                      colony.TownNpcs.Any(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound) && colony.PowerLock(circuit) is null;
+                      colony.TownNpcs.Any(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound) &&
+                      colony.PowerLock(circuit)?.Contains("AI core") != true;
         var explorer = Site(9682, CharacterDifficulty.Explorer);
         var explorerAi = explorer.AddTownNpc(TownNpcKind.StationAi, new Vector2(30f, Floor - 3f), bound: false);
         explorer.HurtTownNpc(explorerAi, 1e9f);
         check(down && stalled && rebuilt && explorer.StationAiOnline && !explorer.RunOver,
-            "losing the station AI no longer ends the run: the machines go dark and research stops until an AI core rebuilds it (on Explorer it simply comes back)");
+            "losing the station AI no longer ends the run: the machines run unpowered and research stops until an AI core rebuilds it (on Explorer it simply comes back)");
 
         // ---- saves keep power; a world saved before 0.3.8 starts full at the tier its progress uses ----
         var kept = Site(9683);

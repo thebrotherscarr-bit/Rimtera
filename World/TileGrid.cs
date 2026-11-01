@@ -317,6 +317,8 @@ public enum TileId : ushort
     CharSlag = 294,
     // ---- Hardmode progression: canopy bulbs (grow after the three hard bosses; breaking one wakes the bulb boss) ----
     CanopyBulb = 295,
+    // ---- 0.7.5: the power grid's fuel refiner ----
+    FuelRefiner = 296,
     // ---- Travel (Systems/GameSimulation.Travel.cs; band 300–319): glide-walks (moving walkways) and pylons ----
     GlideWalkLeft = 300,
     GlideWalkRight = 301,
@@ -550,6 +552,8 @@ public enum CraftingStationId : byte
     AmmoPress,
     ChargeReactor,
     ResearchTerminal,
+    // 0.7.5: the power grid (append-only).
+    FuelRefiner,
     // Player & combat systems pass (explicit, clear of sequential appends).
     DyeVat = 200
 }
@@ -580,6 +584,7 @@ public static class CraftingStationNames
         CraftingStationId.AmmoPress => "Ammo Press",
         CraftingStationId.ChargeReactor => "Charge Reactor",
         CraftingStationId.ResearchTerminal => "Research Terminal",
+        CraftingStationId.FuelRefiner => "Fuel Refiner",
         CraftingStationId.DyeVat => "Dye Vat",
         _ => "crafting station"
     };

@@ -378,6 +378,7 @@ internal static class SpriteCatalog
     private static readonly Dictionary<string, string> NamedProps = new(StringComparer.Ordinal)
     {
         ["ReactorCore"] = "hab_corrupted_a",
+        ["FuelRefiner"] = "station_fuel_refiner", // 0.7.5 (kitbashed placeholder)
         // Irradiated core props (the bottom band's reactor ruins and speleothems).
         ["SlagForge"] = "station_reactor_forge",
         ["SlagChest"] = "furn_reactor_chest",

@@ -1390,6 +1390,9 @@ public enum ItemId : ushort
     AiCore = 9602,
     // ---- Bionics (0.5.4): replacement limbs and an implant, fitted to residents ----
     BionicArm = 9603, BionicLeg = 9604, BionicEye = 9605, NeuralCoprocessor = 9606,
+    // 0.7.5: the power grid's fuel (crude, then one per tier) and the fuel refiner that makes it.
+    CrudeFuelCrystal = 9610, FuelCrystalT1 = 9611, FuelCrystalT2 = 9612, FuelCrystalT3 = 9613, FuelCrystalT4 = 9614, FuelCrystalT5 = 9615,
+    FuelRefiner = 9616,
 }
 
 public enum ItemUseKind : byte

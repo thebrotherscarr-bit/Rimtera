@@ -53,14 +53,14 @@ public sealed partial class GameSimulation
 
     /// <summary>
     /// The station AI is the colony's heart: while it is hurt the player is warned (not every hit). Since 0.3.8 its death
-    /// on a setting with stakes takes it down rather than ending the run: the machines go dark until an AI core rebuilds it
+    /// on a setting with stakes takes it down rather than ending the run: the machines run unpowered until an AI core rebuilds it
     /// (GameSimulation.Power.cs). On Explorer and Creative it comes back like any resident.
     /// </summary>
     private bool StationAiDefeat(TownNpc npc)
     {
         if (npc.Kind != TownNpcKind.StationAi || !PeopleDieForGood)
             return false;
-        TakeStationAiDown(npc); // 0.3.8: no longer the end of the run; the machines go dark until it is rebuilt
+        TakeStationAiDown(npc); // 0.3.8: no longer the end of the run; the machines run unpowered until it is rebuilt
         return true;
     }
 
