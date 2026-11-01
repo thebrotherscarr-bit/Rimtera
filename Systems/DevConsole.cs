@@ -94,6 +94,7 @@ public sealed class DevConsole
         new("weather", "weather clear|rain|storm|snow|dust|fog [0-1]", "Forces the weather.", true, Weather),
         new("spawnrate", "spawnrate <multiplier 0-10>", "Scales natural spawning (0 stops it, 1 is normal).", true, SpawnRate),
         new("where", "where", "Prints your tile, biome, depth layer and the time.", false, _ => Where()),
+        new("research", "research list | research done <tier>|all | research reset <tier>|all", "Lists the research tiers, finishes one or all, or puts them back.", true, Research),
     ];
 
     private IEnumerable<string> Help(string[] args)
@@ -314,6 +315,32 @@ public sealed class DevConsole
         var reading = BiomeScanner.Scan(_game.World, cell);
         return [$"Tile {cell.X},{cell.Y}; {reading.Zone}{(reading.Underground ? ", underground" : "")}; {_game.ClockHour:00.0} h; " +
                 $"health {_game.Player.HitPoints:0}/{_game.Player.MaximumHitPoints:0}; the Fracture {(_game.FractureActive ? "has" : "has not")} happened."];
+    }
+
+    private IEnumerable<string> Research(string[] args)
+    {
+        var verb = Need(args, 0, "list, done or reset").ToLowerInvariant();
+        if (verb == "list")
+            return GameSimulation.ResearchTiers.Select(tier =>
+                $"{tier.Id,-9} {tier.Name}: {(_game.ResearchDone(tier.Id) ? "done" : _game.ResearchOpen(tier) ? $"open, {(int)(100f * _game.ResearchProgress(tier.Id) / tier.Cost)}%" : "not opened")}" +
+                $" (bosses: {string.Join(", ", tier.Bosses)})");
+        var which = Rest(args, 1, "a tier id or all");
+        var tiers = which.Equals("all", StringComparison.OrdinalIgnoreCase)
+            ? GameSimulation.ResearchTiers.ToArray()
+            : [GameSimulation.FindTier(which) ?? throw new ConsoleError($"No research tier '{which}'. Try: {string.Join(", ", GameSimulation.ResearchTiers.Select(tier => tier.Id))}.")];
+        switch (verb)
+        {
+            case "done":
+                foreach (var tier in tiers)
+                    _game.FinishResearch(tier);
+                return [$"Finished: {string.Join(", ", tiers.Select(tier => tier.Name))}."];
+            case "reset":
+                foreach (var tier in tiers)
+                    _game.ResetResearch(tier);
+                return [$"Reset: {string.Join(", ", tiers.Select(tier => tier.Name))}."];
+            default:
+                throw new ConsoleError($"'{verb}' is not list, done or reset.");
+        }
     }
 
     // ------------------------------------------------------------------ parsing

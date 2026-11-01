@@ -216,7 +216,7 @@ public sealed partial class GameSimulation
         }
         move(center);
         agent.FarmProgress += deltaSeconds;
-        if (agent.FarmProgress < FarmSeconds(agent.ColonistStats) / ResearchFarmSpeed)
+        if (agent.FarmProgress < FarmSeconds(agent.ColonistStats))
             return true;
         agent.FarmProgress = 0f;
         agent.FarmTarget = null;

@@ -60,48 +60,72 @@ public static class ResearchSelfTests
         return done();
     }
 
+    private static ResearchTier Tier(string id) => GameSimulation.FindTier(id)!;
+
     public static void Run(Action<bool, string> check)
     {
-        // ---- research: studying at a bench adds points; prerequisites; finishing applies the effect ----
-        var lab = Site(9974);
+        // ---- a boss opens its tier; the station AI studies it on its own; the recipes stay locked until it is done ----
+        var game = Site(9974);
+        var forge = game.Crafting.FindByOutput(ItemId.PowerForgeMk2).First();
+        var trauma = game.Crafting.FindByOutput(ItemId.TraumaStim).First();
+        var lockedBefore = game.ResearchLock(forge);
+        var closed = !game.ResearchOpen(Tier("overseer")) && game.CurrentResearch is null;
+        new DevConsole(game).Execute("defeat StoneSentinel");
+        var opened = game.ResearchOpen(Tier("overseer")) && game.CurrentResearch?.Id == "overseer";
+        var lockedWhileStudying = game.ResearchLock(forge) is { } studying && studying.Contains("% done") && game.ResearchLock(trauma) is not null;
+        TickUntil(game, () => game.ResearchDone("overseer"), (int)(Tier("overseer").Cost * 60f) + 600);
+        check(lockedBefore is not null && closed && opened && lockedWhileStudying && game.ResearchDone("overseer") &&
+              game.ResearchLock(forge) is null && game.ResearchLock(trauma) is null && game.Flags.IsSet("research.overseer") &&
+              game.ResearchLock(game.Crafting.FindByOutput(ItemId.AlloyAnvil).First()) is not null,
+            $"defeating the Overseer opens its research tier; the station AI studies it in {Tier("overseer").Minutes:0} minutes; " +
+            "the Power Forge Mk2 and the Overseer-circuit recipes unlock only when it is done, and later tiers stay locked");
+
+        // ---- researchers speed it up: research crew at a terminal, and housed research residents ----
+        var lab = Site(9975);
         lab.World.SetTile(Bench, TileId.ResearchTerminal);
+        new DevConsole(lab).Execute("defeat ScoutMech");
+        var aiOnly = lab.StudyRate;
+        var resident = lab.AddTownNpc(TownNpcKind.HeadResearcher, new Vector2(64f, Floor - 3f), bound: false);
+        resident.HomeCell = new GridPoint(64, Floor - 2);
+        var withResident = lab.StudyRate;
         lab.Colonists[0].Work.Set(WorkType.Research, 1);
-        var chosen = lab.ChooseResearch(GameSimulation.FieldManuals);
+        var start = lab.ResearchProgress("scout");
         TickUntil(lab, () => false, 900);
-        var studied = lab.ResearchProgress(GameSimulation.FieldManuals);
-        var locked = !lab.CanResearch(GameSimulation.CobaltStudies) && !lab.ChooseResearch(GameSimulation.CobaltStudies);
-        lab.FinishResearch(GameSimulation.FindProject(GameSimulation.Metallurgy)!);
-        var copperRecipes = lab.Crafting.Recipes.Where(recipe => recipe.RequiresGuideUnlock && recipe.GuideUnlockMaterials?.Contains(ItemId.CopperBar) == true).ToArray();
-        var taught = copperRecipes.Length > 0 && copperRecipes.All(recipe => lab.Crafting.KnownGuideRecipes.Contains(recipe.Id));
-        lab.FinishResearch(GameSimulation.FindProject(GameSimulation.FieldManuals)!);
-        check(chosen && studied > 3f && locked && lab.CanResearch(GameSimulation.CobaltStudies) && taught &&
-              lab.ResearchBillSpeed > 1.1f && lab.CurrentResearch is null && lab.Flags.IsSet("research.metallurgy"),
-            $"a Research colonist studies the chosen project at a research terminal ({studied:0} points in 15 s); a project waits for its prerequisite; " +
-            "finishing teaches recipes or speeds work");
+        var gained = lab.ResearchProgress("scout") - start;
+        check(withResident > aiOnly && Math.Abs(aiOnly - GameSimulation.BaseStudyRate) < 1e-4f && gained > 15f * withResident + 3f,
+            $"research residents and research crew speed the study (AI {aiOnly:0.0}/s, with a resident {withResident:0.0}/s, {gained:0} points in 15 s with crew too)");
 
-        // ---- saves keep research, and re-teach researched recipes ----
-        var kept = Site(9975);
-        kept.FinishResearch(GameSimulation.FindProject(GameSimulation.Metallurgy)!);
-        kept.ChooseResearch(GameSimulation.CobaltStudies);
+        // ---- saves keep research; a save from before the tiers counts its defeated bosses' tiers as done ----
+        var kept = Site(9976);
+        new DevConsole(kept).Execute("defeat StoneSentinel");
+        TickUntil(kept, () => false, 300);
+        var progress = kept.ResearchProgress("overseer");
         var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
-        var relearned = reloaded.Crafting.Recipes.Where(recipe => recipe.RequiresGuideUnlock && recipe.GuideUnlockMaterials?.Contains(ItemId.CopperBar) == true)
-            .All(recipe => reloaded.Crafting.KnownGuideRecipes.Contains(recipe.Id));
-        check(reloaded.ResearchDone(GameSimulation.Metallurgy) &&
-              reloaded.CurrentResearch == GameSimulation.CobaltStudies && relearned,
-            "finished research and the chosen project are saved, and researched recipes are known again after loading");
+        var old = kept.CaptureSnapshot();
+        var legacy = GameSimulation.Restore(old with
+        {
+            Research = new ResearchSnapshot("field-manuals", new Dictionary<string, float> { ["metallurgy"] = 1000f }, ["metallurgy"]),
+            Content = old.Content! with
+            {
+                Flags = old.Content!.Flags?.Where(pair => !pair.Key.StartsWith("research.", StringComparison.Ordinal)).ToDictionary(pair => pair.Key, pair => pair.Value)
+            }
+        });
+        check(Math.Abs(reloaded.ResearchProgress("overseer") - progress) < 0.01f && !reloaded.ResearchDone("overseer") &&
+              legacy.ResearchDone("overseer") && !legacy.ResearchDone("fission"),
+            "research progress is saved; an older save keeps every recipe its defeated bosses already opened");
 
-        // ---- the Research tab, and the Work tab's columns (no Haul or Build since 0.2.9) ----
-        var ui = Site(9976);
+        // ---- the Research tab shows the tiers; the console finishes and resets them ----
+        var ui = Site(9977);
+        var console = new DevConsole(ui);
+        console.Execute("research done all");
+        var allDone = GameSimulation.ResearchTiers.All(tier => ui.ResearchDone(tier.Id));
+        console.Execute("research reset fission");
         var hub = new Rimtera.UI.InventoryUiState(ui.Player.Inventory, game: ui);
         Rimtera.UI.UiButtonElement? Button(string id) =>
             hub.DescendantsAndSelf().OfType<Rimtera.UI.UiButtonElement>().FirstOrDefault(button => button.Id == id);
-        var noBuildTab = Button("tab-build") is null;
         Button("tab-research")?.Command?.Invoke();
-        Button($"research-{GameSimulation.Herbalism}")?.Command?.Invoke();
-        Button("tab-work")?.Command?.Invoke();
-        var id = ui.Colonists[0].Id;
-        check(noBuildTab && ui.CurrentResearch == GameSimulation.Herbalism && Button($"work-{id}-{WorkType.Research}") is not null &&
-              Button($"work-{id}-{WorkType.Trade}") is not null && !Enum.GetNames<WorkType>().Contains("Haul") && !Enum.GetNames<WorkType>().Contains("Build"),
-            "the Research tab chooses a project; the Work tab has Research and Trade, and there is no Build tab, Haul or Build work");
+        var rows = GameSimulation.ResearchTiers.All(tier => hub.DescendantsAndSelf().OfType<Rimtera.UI.UiTextElement>().Any(text => text.Id == $"research-name-{tier.Id}"));
+        check(allDone && !ui.ResearchDone("fission") && rows && Button("tab-build") is null,
+            "the Research tab lists every tier, and the console finishes and resets tiers");
     }
 }

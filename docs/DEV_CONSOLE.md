@@ -34,6 +34,6 @@ Added in 0.3.6 (`docs/VISION.md` §6).
 | `weather clear\|rain\|storm\|snow\|dust\|fog [0-1]` | Forces the weather |
 | `spawnrate <0-10>` | Scales natural spawning (0 stops it) |
 | `where` | Your tile, biome, the time and your health |
+| `research list`, `research done <tier>\|all`, `research reset <tier>\|all` | Lists the research tiers, finishes them or puts them back (0.3.7) |
 
-Every new mechanic adds its own commands in the step that adds it: research in 0.3.7, the station AI's power in
-0.3.8, NPC skills and work in 0.3.9, and so on.
+Every new mechanic adds its own commands in the step that adds it: the station AI's power in 0.3.8, NPC skills and work in 0.3.9, and so on.
