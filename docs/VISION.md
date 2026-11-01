@@ -63,8 +63,8 @@ required. You can always do it yourself.
   - skills that make them better at that work;
   - a small outpost or home area they guard;
   - gear you equip them with.
-- **The colony works by default, by skill.** No bills or work orders to set: people do their trade's work on their
-  own, and a better cook or chemist does it faster and better.
+- **The colony works by default, by skill.** There is no Work tab and there are no bills. People orient toward their
+  preferred work from their background, and a better cook or chemist does it faster and better.
 - **Then the depth that makes them people:**
   - random backgrounds and traits;
   - things they can't or won't do;
@@ -113,7 +113,7 @@ line between game state and player commands, so 1.1 and 1.2 add players rather t
 |---|---|
 | 0.3.6 | **Research tiers by boss.** Each boss opens the next research tier. Studying it takes time, and finishing it unlocks the tier's recipes and stations. The 0.2.7 study-point projects fold in. Terraria's own ladder stays the base. |
 | 0.3.7 | **The station AI powers the base.** It boots on energy cells or ore. Its fuel is tied to progress, and higher-tier stations need more power. The stations go dark without it, and you rebuild it to carry on. |
-| 0.3.8 | **The colony by default.** People work their trade by skill with nothing to set. A chemist keeps healing in stock; a cook keeps food. |
+| 0.3.8 | **The colony by default.** The Work tab and bills are removed. People orient toward their preferred work from their background, and work it by skill: a chemist keeps healing in stock, a cook keeps food. |
 | 0.3.9 | **One kind of character.** The crew merge into the town NPCs. |
 | 0.3.10 | **Multiplayer groundwork.** Per-player input, camera, inventory and saves; game state separated from player commands. |
 | 0.4.0 | **The colony defends.** Guards and outposts, equipping people, purposeful storyteller raids with warnings, a balance pass. Split into 0.4.x steps when we get there. |
