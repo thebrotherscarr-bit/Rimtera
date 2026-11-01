@@ -143,7 +143,7 @@ public static partial class GraphicalSandbox
 
     private sealed partial class GameForm
     {
-        /// <summary>Creative powers: research, duplication, time, spawns, godmode and difficulty (pause menu entry).</summary>
+        /// <summary>Creative powers: research, duplication, time, spawns, godmode, weather, the spread freeze and difficulty (pause menu entry).</summary>
         private void OpenCreativeMenu()
         {
             if (_game is null || !_game.IsCreative)
@@ -165,6 +165,21 @@ public static partial class GraphicalSandbox
                     OpenCreativeMenu();
                 }, Description: "Left and right: from 0× (none) to 3×."),
                 new(game.CreativeGodmode ? "Godmode: On" : "Godmode: Off", () => { game.CreativeGodmode = !game.CreativeGodmode; OpenCreativeMenu(); }),
+                new(game.CreativeWeatherLocked ? "Weather: Held" : "Weather: Natural", () => { game.CreativeWeatherLocked = !game.CreativeWeatherLocked; OpenCreativeMenu(); },
+                    Description: "Hold the rain and wind below, or let the sky roll its own."),
+                new($"Rain: {game.CreativeRain:P0}", Adjust: amount =>
+                {
+                    game.CreativeRain = Math.Clamp(game.CreativeRain + amount * 0.1f, 0f, 1f);
+                    OpenCreativeMenu();
+                }, Description: "Left and right: from dry to a downpour (while the weather is held)."),
+                new($"Wind: {game.CreativeWind:+0.0;-0.0;0} tiles/s", Adjust: amount =>
+                {
+                    game.CreativeWind = Math.Clamp(game.CreativeWind + amount, -GameSimulation.CreativeMaximumWind, GameSimulation.CreativeMaximumWind);
+                    OpenCreativeMenu();
+                }, Description: "Left and right: wind to the left or right (while the weather is held)."),
+                new(game.CreativeSpreadFrozen ? "Blight and crystal spread: Frozen" : "Blight and crystal spread: On",
+                    () => { game.CreativeSpreadFrozen = !game.CreativeSpreadFrozen; OpenCreativeMenu(); },
+                    Description: "Stop blight and crystal from spreading in this world."),
                 new($"World difficulty: {WorldSettings.Name(game.Difficulty)}", Adjust: amount =>
                 {
                     var values = Enum.GetValues<WorldDifficulty>();

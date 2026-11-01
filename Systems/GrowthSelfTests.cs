@@ -165,13 +165,13 @@ public static class GrowthSelfTests
             var profile = CharacterDraft.CreateRandom(9108, "Planner").ToProfile(Guid.NewGuid(), DateTimeOffset.UtcNow) with
                 { Difficulty = CharacterDifficulty.Creative };
             var first = NewGame(9108, profile);
-            var granted = first.CreativeKitGranted && first.Player.Inventory.Count(ItemId.RecallCapsule) == 3 &&
+            var granted = first.CreativeKitGranted && first.Player.Inventory.Count(StarterKits.CreativeRecall) == 1 &&
                           first.Player.Inventory.Count(ItemId.CobaltDrill) == 1 && first.Player.Inventory.Count(ItemId.GlowSticks) == 100;
             first.SaveCharacterFile();
             var second = NewGame(9109, profile);
             var plain = NewGame(9110);
-            check(granted && second.CreativeKitGranted && second.Player.Inventory.Count(ItemId.RecallCapsule) == 3 &&
-                  !plain.CreativeKitGranted && plain.Player.Inventory.Count(ItemId.RecallCapsule) == 0,
+            check(granted && second.CreativeKitGranted && second.Player.Inventory.Count(StarterKits.CreativeRecall) == 1 &&
+                  !plain.CreativeKitGranted && plain.Player.Inventory.Count(StarterKits.CreativeRecall) == 0,
                 "a Creative character gets the colony supply drop once (not again in a second world); others never");
         }
         finally

@@ -101,7 +101,8 @@ public sealed class TownNpc
     internal float HurtCooldown { get; set; }
 }
 
-public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, float Y, int? HomeX, int? HomeY, bool Bound);
+/// <summary>A saved resident. <see cref="Hp"/> was appended in 0.2.2 (NC-20); older saves leave it null (full health).</summary>
+public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, float Y, int? HomeX, int? HomeY, bool Bound, float? Hp = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 

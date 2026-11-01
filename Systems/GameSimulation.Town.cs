@@ -38,12 +38,12 @@ public sealed partial class GameSimulation
     {
         RefreshUnlockFlags();
         UpdateContentFillTown(); // content fill: travelling merchant and town gels (Systems/Content/ContentFillTown.cs)
-        // The trade consul leaves at dusk; a miserable resident packs up and goes.
+        // The trade consul leaves at dusk (until D-53). Unhappy residents stay (NC-9): unhappiness only raises their prices.
         foreach (var npc in _townNpcs.ToArray())
         {
             if (npc.IsBound)
                 continue;
-            if ((npc.Kind == TownNpcKind.TradeConsul && IsNight) || (npc.HomeCell is not null && GetHappiness(npc) <= -5f))
+            if (npc.Kind == TownNpcKind.TradeConsul && IsNight)
             {
                 _townNpcs.Remove(npc);
                 PostMessage($"{npc.Name} the {npc.Definition.Role} has left the colony.");
@@ -504,7 +504,7 @@ public sealed partial class GameSimulation
     }
 
     private TownNpcSnapshot[] CaptureTownNpcs() => _townNpcs.Select(npc => new TownNpcSnapshot(npc.Kind, npc.Name,
-        npc.Motion.Position.X, npc.Motion.Position.Y, npc.HomeCell?.X, npc.HomeCell?.Y, npc.IsBound)).ToArray();
+        npc.Motion.Position.X, npc.Motion.Position.Y, npc.HomeCell?.X, npc.HomeCell?.Y, npc.IsBound, npc.HitPoints)).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -521,6 +521,10 @@ public sealed partial class GameSimulation
                 IsBound = saved.Bound,
                 HomeCell = saved.HomeX is { } hx && saved.HomeY is { } hy && World.Contains(hx, hy) ? new GridPoint(hx, hy) : null
             };
+            // NC-20: a hurt resident loads as hurt. Saves from before the field (or a bad value) load at full health; a
+            // living resident never loads dead.
+            if (saved.Hp is { } hp && float.IsFinite(hp))
+                npc.HitPoints = Math.Clamp(hp, 1f, npc.MaximumHitPoints);
             _townNpcs.Add(npc);
         }
     }

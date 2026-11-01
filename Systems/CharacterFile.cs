@@ -6,8 +6,8 @@ namespace Rimtera.Systems;
 
 /// <summary>
 /// The character's carried state, saved separately from any world (characters/&lt;id&gt;.rchar in the profile
-/// data directory) so inventory, gear, loadouts, max-HP and Charge upgrades, the Cargo Pod bank, pets and
-/// achievements travel between worlds. World snapshots also embed a copy as a fallback.
+/// data directory) so inventory, gear, loadouts, max-HP and Charge upgrades, the Cargo Pod bank, pets,
+/// achievements and Creative research travel between worlds. World snapshots also embed a copy as a fallback.
 /// </summary>
 public sealed record CharacterFileData(
     int FormatVersion,
@@ -31,7 +31,8 @@ public sealed record CharacterFileData(
     bool AuxSocketUsed = false,
     PermanentUpgrade PermanentUpgrades = PermanentUpgrade.None,
     bool CreativeKitGranted = false,
-    int StarterKitVersion = 0)
+    int StarterKitVersion = 0,
+    Dictionary<int, int>? Research = null)
 {
     public const int CurrentFormatVersion = 1;
 }
@@ -130,7 +131,7 @@ public sealed partial class GameSimulation
             _lightPet?.SourceItem,
             ActiveMount,
             Achievements.UnlockedIds.OrderBy(id => id).ToArray(),
-            LifebloomPodsUsed, AuxSocketUsed, PermanentUpgrades, CreativeKitGranted, StarterKits.Version);
+            LifebloomPodsUsed, AuxSocketUsed, PermanentUpgrades, CreativeKitGranted, StarterKits.Version, CaptureResearch());
     }
 
     /// <summary>Writes the character file to <paramref name="store"/> (default: <see cref="CharacterFileStore.Active"/>). False when there is no store.</summary>
@@ -230,6 +231,8 @@ public sealed partial class GameSimulation
         ActiveMount = TravelContent.Mounts.TryGetValue(data.Mount, out var savedMount)
             && Player.Inventory.Count(savedMount.Item) > 0 ? data.Mount : MountKind.None;
         Achievements.Load(data.Achievements);
+        RestoreResearch(data.Research); // Creative research travels with the character (PC-13)
+        MigrateWorldResearch(); // ...and an older world's research flags move into it (X-CR-10)
         TopUpStarterKit(data.StarterKitVersion);
         Player.RestorePersistentState(Player.HitPoints, Player.Needs.FoodReserve, Player.Needs.RestReserve,
             Player.Needs.JoyReserve, Player.Needs.ComfortReserve);
