@@ -852,6 +852,12 @@ public sealed class ColonistAgent : IColonyPawn
     public long? HaulTarget { get; set; }
     /// <summary>The work being done this tick; null while on the camp routine.</summary>
     public Rimtera.Systems.WorkType? CurrentWork { get; set; }
+    /// <summary>Ingredients fetched for a station bill (Operate work), held until the craft uses them.</summary>
+    public Dictionary<Rimtera.Systems.ItemId, int> Held { get; } = new();
+    /// <summary>The station whose bill this colonist is working (so two operators don't share one station).</summary>
+    public Rimtera.World.GridPoint? OperateStation { get; set; }
+    /// <summary>Seconds of work put into the current craft.</summary>
+    public float OperateProgress { get; set; }
     public PawnMotionState Motion { get; }
     public SurvivalNeeds Needs { get; }
     public HealthComponent Health { get; }

@@ -533,6 +533,22 @@ public sealed class CraftingSystem
         out Dictionary<ItemId, int> ingredientPlan)
     {
         ingredientPlan = new Dictionary<ItemId, int>();
+        var conditions = CheckConditions(recipe, environment, nearbyStations);
+        if (!conditions.Success)
+            return conditions;
+        if (PlanIngredients(recipe, inventory.Count) is not { } plan)
+            return new CraftingResult(false, "Missing one or more required ingredients.");
+        ingredientPlan = plan;
+        return new CraftingResult(true, "Ready to craft.");
+    }
+
+    /// <summary>Everything a recipe needs except its ingredients: the guide unlock, stations, biome and liquids.</summary>
+    public CraftingResult CheckConditions(RecipeDefinition recipe, CraftingEnvironment environment) =>
+        CheckConditions(recipe, environment, GetNearbyStations(environment));
+
+    private CraftingResult CheckConditions(RecipeDefinition recipe, CraftingEnvironment environment,
+        IReadOnlySet<CraftingStationId> nearbyStations)
+    {
         ValidateEnvironment(environment);
         if (recipe.RequiresGuideUnlock && !_knownGuideRecipes.Contains(recipe.Id))
             return new CraftingResult(false, "Consult the station AI guide with a reveal material to learn this recipe.");
@@ -553,22 +569,31 @@ public sealed class CraftingSystem
             if (!(environment.NearbyLiquids?.Contains(liquid) ?? false))
                 return new CraftingResult(false, $"Nearby {liquid} is required.");
         }
+        return new CraftingResult(true, "Ready to craft.");
+    }
 
+    /// <summary>
+    /// Which item of each ingredient group to use and how many, given how many of each item is <paramref name="available"/>
+    /// (the first alternative with enough wins); null when an ingredient is short.
+    /// </summary>
+    public static Dictionary<ItemId, int>? PlanIngredients(RecipeDefinition recipe, Func<ItemId, int> available)
+    {
+        var plan = new Dictionary<ItemId, int>();
         foreach (var group in recipe.Ingredients)
         {
             ItemId? selected = null;
             foreach (var itemId in group.Alternatives)
             {
-                if (inventory.Count(itemId) - ingredientPlan.GetValueOrDefault(itemId) < group.Quantity)
+                if (available(itemId) - plan.GetValueOrDefault(itemId) < group.Quantity)
                     continue;
                 selected = itemId;
                 break;
             }
             if (selected is not { } selectedItem)
-                return new CraftingResult(false, "Missing one or more required ingredients.");
-            ingredientPlan[selectedItem] = ingredientPlan.GetValueOrDefault(selectedItem) + group.Quantity;
+                return null;
+            plan[selectedItem] = plan.GetValueOrDefault(selectedItem) + group.Quantity;
         }
-        return new CraftingResult(true, "Ready to craft.");
+        return plan;
     }
 
     private static void ValidateEnvironment(CraftingEnvironment environment)

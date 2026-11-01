@@ -34,7 +34,7 @@ public static class WorkCatalog
         new(WorkType.Guard, "Guard", ColonistSkill.Melee, true, "Fight creatures that come near home."),
         new(WorkType.Tend, "Tend", ColonistSkill.Medical, true, "Treat hurt and downed crew and residents."),
         new(WorkType.Haul, "Haul", ColonistSkill.Mining, true, "Carry loose items near home into chests."),
-        new(WorkType.Operate, "Operate", ColonistSkill.Crafting, false, "Work station bills (coming with station bills)."),
+        new(WorkType.Operate, "Operate", ColonistSkill.Crafting, true, "Work station bills: fetch ingredients, craft, store the product."),
         new(WorkType.Farm, "Farm", ColonistSkill.Plants, false, "Plant and harvest grow zones (coming)."),
         new(WorkType.Brew, "Brew", ColonistSkill.Medical, false, "Brew potions from bills (coming)."),
         new(WorkType.Cook, "Cook", ColonistSkill.Cooking, false, "Cook meals from bills (coming)."),

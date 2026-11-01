@@ -173,7 +173,9 @@ public sealed class InventoryUiState : UiState
     private string? _housingReport;
     private UiTextElement? _guideCaption;
 
-    private enum Tab { Gear, Housing, Emotes, Work }
+    private enum Tab { Gear, Housing, Emotes, Work, Bills }
+    private int _billStation;
+    private int _billRecipe;
 
     public InventoryUiState(Inventory playerInventory, InventoryUiController? controller = null, Inventory? chest = null,
         GameSimulation? game = null, GridPoint? chestCell = null, string chestTitle = "Chest", GuideLookupState? guide = null,
@@ -522,6 +524,7 @@ public sealed class InventoryUiState : UiState
         Tab("tab-feats", "Feats", 4, () => FeatsRequested?.Invoke());
         Tab("tab-emotes", "Emotes", 5, () => SwitchTab(InventoryUiState.Tab.Emotes), _tab == InventoryUiState.Tab.Emotes);
         Tab("tab-work", "Work", 6, () => SwitchTab(InventoryUiState.Tab.Work), _tab == InventoryUiState.Tab.Work);
+        Tab("tab-bills", "Bills", 7, () => SwitchTab(InventoryUiState.Tab.Bills), _tab == InventoryUiState.Tab.Bills);
         for (var i = 0; i < GameSimulation.LoadoutCount; i++)
         {
             var index = i;
@@ -531,7 +534,7 @@ public sealed class InventoryUiState : UiState
                 Rebuild();
             }, $"loadout-{i + 1}", new UiStyle
             {
-                Left = FromRight(258f), Top = UiLength.Px(gearTop + (7 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
+                Left = FromRight(258f), Top = UiLength.Px(gearTop + (8 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
             }) { TextScale = 0.75f, Color = game.ActiveLoadout == i ? UiColor.ButtonActive : UiColor.ButtonDefault });
         }
 
@@ -541,6 +544,8 @@ public sealed class InventoryUiState : UiState
             AddEmotes(game, gearTop);
         else if (_tab == InventoryUiState.Tab.Work)
             AddWork(game, gearTop);
+        else if (_tab == InventoryUiState.Tab.Bills)
+            AddBills(game, gearTop);
         else
             AddEquipment(game, gearTop);
     }
@@ -635,7 +640,7 @@ public sealed class InventoryUiState : UiState
     /// <summary>Terraria's housing panel: check the room you stand in, and who lives with you.</summary>
     /// <summary>
     /// The Work tab (RimWorld's work priorities, in the hub): one row per crew member with the work that has jobs now
-    /// (Guard, Tend, Haul). Clicking a number cycles 1 → 2 → 3 → 4 → off; 1 is done first. The last button says whether they
+    /// (Guard, Tend, Haul, Operate). Clicking a number cycles 1 → 2 → 3 → 4 → off; 1 is done first. The last button says whether they
     /// stay home (and work there) or follow the player.
     /// </summary>
     private void AddWork(GameSimulation game, float top)
@@ -673,8 +678,8 @@ public sealed class InventoryUiState : UiState
                     Rebuild();
                 }, $"work-{agent.Id}-{info.Type}", new UiStyle
                 {
-                    Left = UiLength.Mixed(-250f + column * 62f, 1f), Top = UiLength.Px(y + 20f), Width = UiLength.Px(58f), Height = UiLength.Px(24f)
-                }) { TextScale = 0.6f, Color = priority == WorkCatalog.Off ? UiColor.ButtonDefault : UiColor.ButtonActive });
+                    Left = UiLength.Mixed(-250f + column * 50f, 1f), Top = UiLength.Px(y + 20f), Width = UiLength.Px(47f), Height = UiLength.Px(24f)
+                }) { TextScale = 0.5f, Color = priority == WorkCatalog.Off ? UiColor.ButtonDefault : UiColor.ButtonActive });
             }
             Add(new UiButtonElement(agent.FollowsPlayer ? "Follows you" : "Stays home", () =>
             {
@@ -682,14 +687,88 @@ public sealed class InventoryUiState : UiState
                 Rebuild();
             }, $"work-{agent.Id}-follow", new UiStyle
             {
-                Left = UiLength.Mixed(-250f + working.Length * 62f, 1f), Top = UiLength.Px(y + 20f), Width = UiLength.Px(58f), Height = UiLength.Px(24f)
-            }) { TextScale = 0.55f });
+                Left = UiLength.Mixed(-250f + working.Length * 50f, 1f), Top = UiLength.Px(y + 20f), Width = UiLength.Px(47f), Height = UiLength.Px(24f)
+            }) { TextScale = 0.45f });
         }
-        Add(new UiTextElement("Operate, farm, brew, cook, fish, build, research and trade arrive with bills, zones and research.",
+        Add(new UiTextElement("Operate works the bills set in the Bills tab. Farm, brew, cook, fish, build, research and trade come later.",
             "work-later", new UiStyle
             {
                 Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top + 32f + crew.Length * 50f), Width = UiLength.Px(240f), Height = UiLength.Px(32f)
             }) { Scale = 0.6f, Color = new UiColor(150, 160, 172) });
+    }
+
+    /// <summary>
+    /// The Bills tab (RimWorld's bills, 0.2.3): pick a crafting station in reach, then queue orders for it. Operate crew
+    /// fetch the ingredients from chests near the station, craft there and carry the product back to storage. Each bill
+    /// makes N, keeps N in storage, or runs forever; it can be paused, moved up the queue or deleted.
+    /// </summary>
+    private void AddBills(GameSimulation game, float top)
+    {
+        UiStyle At(float left, float y, float width, float height = 22f) => new()
+        {
+            Left = UiLength.Mixed(-250f + left, 1f), Top = UiLength.Px(y), Width = UiLength.Px(width), Height = UiLength.Px(height)
+        };
+        void Text(string text, string id, float left, float y, float width, float scale = 0.65f, UiColor? color = null) =>
+            Add(new UiTextElement(text, id, At(left, y, width, 18f)) { Scale = scale, Color = color ?? new UiColor(226, 230, 238) });
+        void Button(string text, string id, float left, float y, float width, Action command, bool active = false) =>
+            Add(new UiButtonElement(text, () => { command(); Rebuild(); }, id, At(left, y, width)) { TextScale = 0.5f, Color = active ? UiColor.ButtonActive : UiColor.ButtonDefault });
+
+        Text("Bills (Operate crew work them)", "bills-title", 0f, top, 240f, 0.8f, new UiColor(242, 176, 64));
+        var stations = game.StationsNearPlayer();
+        if (stations.Count == 0)
+        {
+            Text("Stand by a crafting station to give it bills.", "bills-empty", 0f, top + 28f, 240f, 0.7f, new UiColor(170, 178, 192));
+            return;
+        }
+        _billStation = Math.Clamp(_billStation, 0, stations.Count - 1);
+        var station = stations[_billStation];
+        Button("<", "bills-station-prev", 0f, top + 26f, 22f, () => _billStation = (_billStation + stations.Count - 1) % stations.Count);
+        Text($"{game.StationAt(station).DisplayName()} ({_billStation + 1} of {stations.Count})", "bills-station", 26f, top + 28f, 188f, 0.65f);
+        Button(">", "bills-station-next", 218f, top + 26f, 22f, () => _billStation = (_billStation + 1) % stations.Count);
+
+        var bills = game.BillsAt(station);
+        var y = top + 54f;
+        for (var i = 0; i < bills.Count; i++)
+        {
+            var bill = bills[i];
+            var index = i;
+            var name = game.Crafting.FindById(bill.RecipeId) is { } made ? game.Items[made.Output].Name : bill.RecipeId;
+            var stored = game.Crafting.FindById(bill.RecipeId) is { } recipe ? game.StoredNear(station, recipe.Output) : 0;
+            Text($"{i + 1}. {name} · {bill.Describe()} · {stored} stored", $"bill-{i}-text", 0f, y, 240f, 0.6f,
+                bill.Suspended ? new UiColor(150, 160, 172) : null);
+            var step = bill.Target < 10 ? 1 : 5;
+            Button(bill.Mode switch { BillMode.DoCount => "Make", BillMode.UntilHave => "Keep", _ => "Forever" }, $"bill-{i}-mode", 0f, y + 18f, 52f, bill.CycleMode);
+            Button("-", $"bill-{i}-less", 56f, y + 18f, 22f, () => bill.SetTarget(bill.Target - (bill.Target <= 10 ? 1 : 5)));
+            Button("+", $"bill-{i}-more", 82f, y + 18f, 22f, () => bill.SetTarget(bill.Target + step));
+            Button(bill.Suspended ? "Resume" : "Pause", $"bill-{i}-pause", 108f, y + 18f, 52f, () => bill.Suspended = !bill.Suspended, bill.Suspended);
+            Button("Up", $"bill-{i}-up", 164f, y + 18f, 34f, () => game.MoveBill(station, bill, -1));
+            Button("X", $"bill-{i}-delete", 202f, y + 18f, 38f, () => game.RemoveBill(station, bill));
+            y += 44f;
+        }
+
+        var choices = game.BillRecipesAt(station);
+        if (choices.Count == 0)
+        {
+            Text("Nothing here can be made on a bill.", "bills-none", 0f, y + 4f, 240f, 0.6f, new UiColor(170, 178, 192));
+            return;
+        }
+        if (bills.Count >= GameSimulation.MaxBillsPerStation)
+        {
+            Text($"This station's queue is full ({GameSimulation.MaxBillsPerStation} bills).", "bills-full", 0f, y + 4f, 240f, 0.6f, new UiColor(170, 178, 192));
+            return;
+        }
+        _billRecipe = Math.Clamp(_billRecipe, 0, choices.Count - 1);
+        var choice = choices[_billRecipe];
+        Button("<", "bills-recipe-prev", 0f, y + 4f, 22f, () => _billRecipe = (_billRecipe + choices.Count - 1) % choices.Count);
+        Text($"{game.Items[choice.Output].Name}{(choice.OutputCount > 1 ? $" x{choice.OutputCount}" : "")} ({_billRecipe + 1}/{choices.Count})",
+            "bills-recipe", 26f, y + 6f, 140f, 0.6f, game.StockCovers(station, choice) ? null : new UiColor(170, 178, 192));
+        Text("Bright: the chests near the station hold the ingredients now.", "bills-hint", 0f, y + 30f, 240f, 0.55f, new UiColor(150, 160, 172));
+        Button(">", "bills-recipe-next", 168f, y + 4f, 22f, () => _billRecipe = (_billRecipe + 1) % choices.Count);
+        Button("Add", "bills-add", 194f, y + 4f, 46f, () =>
+        {
+            if (game.AddBill(station, choice.Id) is not null)
+                Status($"Bill added: make 5 {game.Items[choice.Output].Name}.");
+        });
     }
 
     /// <summary>The emote palette (Terraria's emote menu): one button per emote; the backtick + 1-8 shortcut stays.</summary>
