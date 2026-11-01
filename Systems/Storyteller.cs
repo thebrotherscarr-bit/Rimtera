@@ -1,5 +1,12 @@
 namespace Rimtera.Systems;
 
+/// <summary>
+/// The storyteller's personality (0.6.1, docs/VISION.md §4.3), chosen when the world is made: Steady paces threats evenly
+/// (the storyteller every world had before), Chaotic fires more often with shorter breathers, more major threats and wildly
+/// varying strength, Builder leaves long quiet stretches, gentler threats and more boons.
+/// </summary>
+public enum StorytellerKind : byte { Steady, Chaotic, Builder }
+
 /// <summary>Incident families the storyteller chooses between before picking a concrete incident.</summary>
 public enum IncidentCategory : byte
 {
@@ -45,7 +52,10 @@ public sealed record StorytellerSnapshot(
     int WanderersJoined,
     int IncidentsFired,
     IncidentCooldownSnapshot[]? IncidentCooldowns = null,
-    StoryIncidentRecord[]? RecentIncidents = null);
+    StoryIncidentRecord[]? RecentIncidents = null,
+    // 0.6.1: the personality and threat dial picked at world creation (older saves: Steady, ×1).
+    StorytellerKind? Kind = null,
+    float? ThreatScale = null);
 
 /// <summary>The world-facing side of incidents; implemented by the simulation.</summary>
 public interface IStoryHost
@@ -124,6 +134,41 @@ public sealed class Storyteller
     public const float ArrivalChancePerNeed = 0.05f;
 
     public IReadOnlyList<IStoryIncident> Incidents => _incidents;
+
+    // ---- 0.6.1: personality and threat dial ----
+    public StorytellerKind Kind { get; private set; } = StorytellerKind.Steady;
+    /// <summary>The threat dial: every incident's strength is multiplied by it (0.5 to 2).</summary>
+    public float ThreatScale { get; private set; } = 1f;
+    public const float MinimumThreatScale = 0.5f, MaximumThreatScale = 2f;
+
+    /// <summary>Sets the personality and threat dial (world creation, the dev console).</summary>
+    public void Configure(StorytellerKind kind, float threatScale)
+    {
+        Kind = Enum.IsDefined(kind) ? kind : StorytellerKind.Steady;
+        ThreatScale = float.IsFinite(threatScale) ? Math.Clamp(threatScale, MinimumThreatScale, MaximumThreatScale) : 1f;
+    }
+
+    public static string Name(StorytellerKind kind) => kind switch
+    {
+        StorytellerKind.Chaotic => "Chaotic",
+        StorytellerKind.Builder => "Builder",
+        _ => "Steady"
+    };
+
+    public static string Describe(StorytellerKind kind) => kind switch
+    {
+        StorytellerKind.Chaotic => "Anything can happen: events come often, with short breathers, and their strength swings wildly.",
+        StorytellerKind.Builder => "Long quiet stretches to build in; gentler threats and more good fortune.",
+        _ => "Threats rise steadily with your progress, with time to recover between them."
+    };
+
+    /// <summary>The hourly chance of an incident after <paramref name="quietHours"/> without one.</summary>
+    private float IncidentChance(float quietHours) => Kind switch
+    {
+        StorytellerKind.Chaotic => Math.Min(0.75f, 0.18f + 0.04f * quietHours),
+        StorytellerKind.Builder => Math.Min(0.4f, 0.06f + 0.015f * quietHours),
+        _ => Math.Min(0.6f, 0.1f + 0.025f * quietHours)
+    };
     public IReadOnlyList<StoryIncidentRecord> RecentIncidents => _recent.ToArray();
     public long HoursElapsed { get; private set; }
     /// <summary>Hours left before the next incident roll is allowed.</summary>
@@ -171,8 +216,7 @@ public sealed class Storyteller
         }
 
         QuietHours++;
-        var chance = Math.Min(0.6f, 0.1f + 0.025f * QuietHours);
-        if (NextUnit() >= chance)
+        if (NextUnit() >= IncidentChance(QuietHours))
             return null;
 
         var category = PickCategory(context);
@@ -270,11 +314,12 @@ public sealed class Storyteller
     {
         // Early days lean toward boons; threats grow more common as the colony ages.
         var threatBias = Math.Min(1f, context.Day / 6f);
+        var (major, boon) = Kind switch { StorytellerKind.Chaotic => (1.5f, 0.8f), StorytellerKind.Builder => (0.6f, 1.3f), _ => (1f, 1f) };
         var weights = new (IncidentCategory Category, float Weight)[]
         {
-            (IncidentCategory.MajorThreat, 0.15f + 0.3f * threatBias),
+            (IncidentCategory.MajorThreat, (0.15f + 0.3f * threatBias) * major),
             (IncidentCategory.MinorThreat, 0.3f + 0.1f * threatBias),
-            (IncidentCategory.Boon, 0.55f - 0.25f * threatBias)
+            (IncidentCategory.Boon, (0.55f - 0.25f * threatBias) * boon)
         };
         var available = weights.Where(entry => _incidents.Any(incident =>
             incident.Category == entry.Category && Eligible(incident, context))).ToArray();
@@ -315,6 +360,9 @@ public sealed class Storyteller
 
     private StoryIncidentRecord? Execute(IStoryIncident incident, StoryContext context, IStoryHost host, bool forced)
     {
+        // 0.6.1: the threat dial, and a chaotic storyteller's swings (×0.6 to ×1.6); a steady one at ×1 changes nothing.
+        var swing = Kind == StorytellerKind.Chaotic ? 0.6f + NextUnit() : Kind == StorytellerKind.Builder ? 0.8f : 1f;
+        LastThreatPoints = Math.Clamp(LastThreatPoints * ThreatScale * swing, MinimumThreatPoints, MaximumThreatPoints * MaximumThreatScale);
         var summary = incident.TryExecute(new IncidentParms(LastThreatPoints, context.Biome, forced), this, host);
         if (summary is null)
             return null;
@@ -331,6 +379,7 @@ public sealed class Storyteller
         };
         if (incident.Category != IncidentCategory.Boon)
             rest += (1f - Math.Clamp(context.PlayerHealthFraction, 0f, 1f)) * 8f;
+        rest *= Kind switch { StorytellerKind.Chaotic => 0.6f, StorytellerKind.Builder => 1.5f, _ => 1f };
         CooldownHours = Math.Max(CooldownHours, rest);
 
         var record = new StoryIncidentRecord(context.Day, context.ClockHour, incident.Id, incident.DisplayName, summary, LastThreatPoints);
@@ -347,7 +396,9 @@ public sealed class Storyteller
         WanderersJoined, IncidentsFired,
         _lastFired.OrderBy(pair => pair.Key, StringComparer.Ordinal)
             .Select(pair => new IncidentCooldownSnapshot(pair.Key, pair.Value)).ToArray(),
-        _recent.ToArray());
+        _recent.ToArray(),
+        Kind == StorytellerKind.Steady ? null : Kind,
+        ThreatScale == 1f ? null : ThreatScale);
 
     public void Restore(StorytellerSnapshot snapshot)
     {
@@ -367,6 +418,7 @@ public sealed class Storyteller
         SolarFlareHoursRemaining = Math.Max(0f, snapshot.SolarFlareHoursRemaining);
         WanderersJoined = snapshot.WanderersJoined;
         IncidentsFired = snapshot.IncidentsFired;
+        Configure(snapshot.Kind ?? StorytellerKind.Steady, snapshot.ThreatScale ?? 1f);
         _lastFired.Clear();
         foreach (var entry in snapshot.IncidentCooldowns ?? Array.Empty<IncidentCooldownSnapshot>())
             if (!string.IsNullOrWhiteSpace(entry.IncidentId))

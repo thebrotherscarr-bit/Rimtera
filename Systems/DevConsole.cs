@@ -96,6 +96,7 @@ public sealed class DevConsole
         new("where", "where", "Prints your tile, biome, depth layer and the time.", false, _ => Where()),
         new("power", "power | power set <0-1000> | power tier <1-5> | power feed", "Shows the station AI's power, sets it or its tier, or feeds it from your bag.", true, Power),
         new("ai", "ai down | ai rebuild", "Takes the station AI down (machines go dark) or rebuilds it.", true, Ai),
+        new("storyteller", "storyteller [steady|chaotic|builder] [threat 0.5-2]", "Shows the storyteller, or changes its personality and threat dial.", true, Teller),
         new("raid", "raid | raid warn [hours] | raid now", "Shows the raid on its way, or announces one (default 2 hours' warning), or sends one now.", true, Raid),
         new("injure", "injure scar|eye|arm|leg", "Gives the resident nearest you a lasting injury.", true, Injure),
         new("outposts", "outposts", "Lists the outposts: where they are, who lives there and how many are armed.", false, _ => Outposts()),
@@ -160,6 +161,25 @@ public sealed class DevConsole
         // 0.3.10: a settler is a generated person, not the catalog's placeholder name.
         var npc = kind == TownNpcKind.Settler ? _game.AddSettlerAt(Beside(2f)) : _game.AddTownNpc(kind, Beside(2f), bound: false);
         return [$"{npc.Name} the {npc.Definition.Role} is here."];
+    }
+
+    private IEnumerable<string> Teller(string[] args)
+    {
+        var teller = _game.Storyteller;
+        if (args.Length > 0)
+        {
+            var kind = args[0].ToLowerInvariant() switch
+            {
+                "steady" => StorytellerKind.Steady,
+                "chaotic" => StorytellerKind.Chaotic,
+                "builder" => StorytellerKind.Builder,
+                _ => throw new ConsoleError("Use storyteller steady, chaotic or builder, then a threat from 0.5 to 2.")
+            };
+            var threat = args.Length > 1 && float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var given)
+                ? given : teller.ThreatScale;
+            teller.Configure(kind, threat);
+        }
+        return [$"Storyteller: {Storyteller.Name(teller.Kind)}, threat ×{teller.ThreatScale:0.##}. {Storyteller.Describe(teller.Kind)}"];
     }
 
     private IEnumerable<string> Raid(string[] args)

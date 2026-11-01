@@ -1268,8 +1268,12 @@ public static partial class GraphicalSandbox
         }
 
         /// <summary>Builds a fresh world from its profile; runs on a worker thread.</summary>
-        private static GameSimulation CreateSimulation(WorldProfile world, CharacterProfile character, IProgress<GenerationProgress> progress) =>
-            new(world.Seed, world.Width, world.Height, character, world.Hazard, progress, WorldSettings.Resolve(world.Blight, world.Seed));
+        private static GameSimulation CreateSimulation(WorldProfile world, CharacterProfile character, IProgress<GenerationProgress> progress)
+        {
+            var game = new GameSimulation(world.Seed, world.Width, world.Height, character, world.Hazard, progress, WorldSettings.Resolve(world.Blight, world.Seed));
+            game.Storyteller.Configure(world.Storyteller, world.StorytellerThreat); // 0.6.1: picked at creation
+            return game;
+        }
 
         private void OpenPauseMenu()
         {

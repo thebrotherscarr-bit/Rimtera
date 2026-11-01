@@ -1670,7 +1670,8 @@ public static class CoreSelfTests
         InjurySelfTests.Run(Check); // 0.5.3: lasting injuries
         BionicsSelfTests.Run(Check); // 0.5.4: bionics
         HungerSelfTests.Run(Check); // 0.5.5: food as the one need
-        PrisonerSelfTests.Run(Check); // 0.5.6: prisoners and conversion // 0.4.0: equipping people with Terraria's gear
+        PrisonerSelfTests.Run(Check); // 0.5.6: prisoners and conversion
+        StorytellerKindSelfTests.Run(Check); // 0.6.1: storytellers to pick // 0.4.0: equipping people with Terraria's gear
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab
