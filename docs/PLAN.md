@@ -4,7 +4,7 @@ Written 2026-10-31; re-based on `docs/VISION.md` (2026-11-01), which now holds t
 
 ## Where we are
 - Released: **0.3.5**. The Terraria foundations (world, contents, items, ore ladder, spawning, town NPCs) have been diffed against Terraria and matched.
-- Next: **0.3.6**, the first progress step on the road to 0.4.0 (`docs/VISION.md` §4.1).
+- Next: **0.3.6**, the first step on the road to 0.4.0 (`docs/VISION.md` §4.1).
 
 ## Direction (owner, 2026-11-01)
 - **Terraria first.** The foundations (world, chests, items, crafting, progression, enemies, town NPCs) should feel like Terraria and keep Terraria's progress loops. 0.3.x diffs each foundation against Terraria and fixes the gaps.
@@ -13,19 +13,16 @@ Written 2026-10-31; re-based on `docs/VISION.md` (2026-11-01), which now holds t
 - **Owner's calls:**
   - The 0.2.x colony systems (Work tab, bills, farm zones, chest filters and priority, research, crew cooking and fishing) stay as they are and are revisited when 0.4.0 is designed.
   - The crew merge into the town NPCs: one kind of character that moves in like Terraria's, runs its shop, and guards and helps its own area.
-  - **Research is tied to bosses** (decided at the 0.3.5 check-in). Defeating a boss opens the next research, and what it opens is the right to **upgrade crafting stations**, each upgrade built from materials, the way Terraria makes you craft a new anvil for hardmode ores or build the next pickaxe from boss parts. Refined with the vision (below): each boss opens a research tier, and studying it takes time before the tier's recipes and station upgrade unlock. Progression stays boss-driven.
-  - **The station-upgrade ladder** (approved): Overseer → Nano-Fabricator Mk2 (Overseer circuit + cobalt bars); Scout Mech → Ore Refinery Mk2 (scout parts + pyrocite); Fission Tyrant → Alloy Anvil (fission slag + viridium; hardmode ores, like the Mythril Anvil); any hard-trio boss → Void Forge (void essence + lumenite); Mutated Flora → Astral Assembler (flora core + voidsteel). Boss parts also make the next drill tier, as Terraria's boss-material pickaxes do. The Alloy Anvil and viridium drill can no longer be built before the Fracture.
-  - **Events fill the power gaps** (owner, after 0.3.5): invasions and other events sit between bosses and drop the gear that carries a player from one boss to the next, and they are where class-build gear comes from, so each class (melee, ranged, tech, command) has its own event drops to build around.
+  - **Progress is Terraria's ladder, with research on top** (refined 2026-11-01): ores, bars, gear, bosses and stations work as in Terraria. Beating a boss opens the next research tier; studying it takes time and unlocks the tier's recipes and stations.
   - **Build it your way, for the player and the NPCs**: as in Terraria, gear and items let a player build the character they want; unlike Terraria, the town NPCs can be equipped too, RimWorld-style (weapons, armour and accessories that change how they fight and guard their area).
 
 - **The long-term vision (owner, 2026-11-01; `docs/VISION.md`):**
   - A Terraria run with more chaos and calamity: 10–14 hours to launch, then you may **continue in the world** for a long-scale playthrough.
   - People start shallow (a trade, skills, an outpost to guard, gear), then gain RimWorld's depth: backgrounds, traits, incapabilities, lasting injuries, prisoners and conversion. Losing a skilled person matters.
   - **The colony works by default, by skill:** no bills or work orders to set. The 0.2.x Work tab and bills become optional, then are cut or hidden (0.3.9).
-  - **Bosses open research tiers; research takes time** and unlocks the tier's recipes and its station upgrade (built from materials).
-  - **The station AI powers the crafting stations** and runs on power. Losing it no longer ends the run: the stations go dark until it is rebuilt.
-  - **The storyteller runs every event, with advance warning:** a tower-defence feel at the base and the outposts.
-  - **Local split-screen co-op for up to four** is the multiplayer goal (1.1); per-player input, camera and inventory are kept in mind from 0.4.0.
+  - **The station AI powers the crafting stations.** It boots on energy cells or ore, and its fuel is tied to progress. Losing it no longer ends the run: the stations go dark until it is rebuilt.
+  - **The storyteller runs every event, with advance warning, and events are purposeful:** they push you through the run's story. A tower-defence feel at the base and the outposts.
+  - **Local split-screen co-op for up to four in 1.1, networked multiplayer in 1.2**, both pre-planned (groundwork in 0.3.10).
 
 ## How versions work
 - **Milestones** are minor versions: 0.2.0, 0.3.0 … 1.0.0. Each has a goal and a discussion point.
@@ -42,7 +39,8 @@ The milestones to 1.0 are in `docs/VISION.md` §4:
 - 0.8.0 the Fracture and the zealots;
 - 0.9.0 the escape (and continuing the world);
 - 1.0.0 release;
-- 1.1.0 local co-op.
+- 1.1.0 local co-op;
+- 1.2.0 online multiplayer.
 
 Each one is split into steps (0.4.1, 0.4.2 …) when it starts, and ends at a discussion point. The 2026-10-31 milestones (M1–M8) are replaced; their contents are folded into the list above.
 
@@ -80,10 +78,9 @@ From the design conversation; reopened only at a discussion point.
 | 0.3.3 Foundations: crafting and progression | Done | The ore ladder by depth now follows Terraria (docs/WORLDGEN_DIFF.md §6). Cobalt, the tier-2 ore, was only in the caverns; it now runs from just under the surface, a third or more of the ore near the top as Terraria's iron and lead are, so the first tier-2 gear comes at Terraria's pace. Copper and scrap iron thin to make room; the caverns hold more viridium and less copper. Every layer's tier mix is within 12 points of Terraria's, and its total ore stays in range. The recipe chain, stations, boss order and gates were re-checked by the crafting audit and gear-curve tests and are unchanged. |
 | 0.3.4 Foundations: enemies, spawning and events | Done | Natural spawning now runs on Terraria's model (docs/breakdown/03_enemies_critters.md C1–C9): the base rate is Terraria's 1-in-600 roll a tick and the base population five; night on the surface is ×1/0.6 rate and ×1.3 cap, underground ×1/0.45 and ×1.8, the Fracture (hardmode) ×1/0.9 and one more slot; and spawns come faster while the area is emptier, as Terraria's ramp does. New battle and calming stims (Chem Lab) raise and lower spawns as Terraria's potions do. Rimtera keeps its blight, town calming and "fewer spawns while a boss lives" rules. The family stream's guards (EN-7) and statue spawns giving no loot (EN-6) were already in place. SpawnRateSelfTests holds the model. |
 | 0.3.5 Foundations: town NPCs | Done | Town NPCs follow Terraria's rules where they differed (docs/breakdown/08_npcs_town_colony.md): happiness is now Terraria 1.4's product of price factors (love ×0.88, like ×0.94, dislike ×1.06, hate ×1.12 for the home biome and each neighbour within 25 tiles of home; ×1.05 for each neighbour past three; ×0.95 for solitude; the full ×1.5 when homeless or more than 120 tiles from home; clamped to 0.75–1.5), and town gels and travelling traders no longer count as neighbours. The medic moves in after one life core with the quartermaster in town, as the Nurse does, and also clears debuffs; the armorer needs a gun or bullets, as the Arms Dealer does. Residents keep to their trades at the crafting stations (`TownTrades`): every working resident can use the basic benches (Nano-Fabricator, Field Workbench) at a generalist's skill, and works only their own trade's stations beyond those, at a specialist's skill (the medic and astro-botanist at the Chem Lab and Bio Lab, the cook, tide-warden and party planner at the Cooking Station, the chief engineer at the refineries, forges and kiln, the armorer and demolitionist at the Ammo Press, the tailor and pigment trader at the Loom and Dye Vat, the mechanic, pilot and aeronaut at the Tinker Bench and Drone Bay, the researchers at the Research Terminal, and so on); travelling traders and gels work nothing. Every station has a resident skilled at it; the inspect card lists a resident's trade. Unhappy residents stay and town NPC health is saved (both already in place). TownParitySelfTests holds the rules. NPCs fighting back is left for 0.4.0's sentries. |
-| 0.3.6 Progress: research tiers by boss | Next | Each boss opens a research tier; studying it takes time (researchers' skill speeds it) and unlocks the tier's recipes and its station upgrade. The 0.2.7 study-point projects fold in. |
-| 0.3.7 Progress: the upgrade ladder and boss-part drills | Planned | Station upgrades built from materials (Overseer → Nano-Fabricator Mk2, Scout Mech → Ore Refinery Mk2, Fission Tyrant → Alloy Anvil, a hard-trio boss → Void Forge, Mutated Flora → Astral Assembler); the next drill tier from boss parts; the Alloy Anvil and viridium gear wait for the Fracture. |
-| 0.3.8 The station AI powers the base | Planned | The station AI powers the crafting stations and runs on power and fuel; without it the stations go dark; losing it means rebuilding it before progress resumes (no longer the end of the run). |
-| 0.3.9 The colony by default | Planned | People work their trade by skill with nothing to set: a chemist keeps healing in stock, a cook keeps food, and better skill means faster and better. Bills and the Work tab become optional, then are cut or hidden. |
-| 0.3.10 Events fill the power gaps | Planned | Every gap between bosses gets an event; each event drops class-build gear (melee, ranged, tech, command). |
-| 0.3.11 One kind of character | Planned | The crew merge into the town NPCs: they move in like Terraria's, keep their shops and trades, and carry their skills. |
-| 0.4.0 The colony defends | Planned | Guards and outposts, equipping people, storyteller raids with advance warning (a tower-defence feel), a balance pass; split into 0.4.x steps when it starts (`docs/VISION.md`). |
+| 0.3.6 Progress: research tiers by boss | Next | Each boss opens the next research tier; studying it takes time and unlocks the tier's recipes and stations. The 0.2.7 study-point projects fold in. Terraria's own ladder stays the base. |
+| 0.3.7 The station AI powers the base | Planned | It boots on energy cells or ore; its fuel is tied to progress and higher-tier stations need more power; without it the stations go dark, and losing it means rebuilding it before progress resumes. |
+| 0.3.8 The colony by default | Planned | People work their trade by skill with nothing to set: a chemist keeps healing in stock, a cook keeps food. |
+| 0.3.9 One kind of character | Planned | The crew merge into the town NPCs. |
+| 0.3.10 Multiplayer groundwork | Planned | Per-player input, camera, inventory and saves; game state separated from player commands (for 1.1 split-screen and 1.2 online). |
+| 0.4.0 The colony defends | Planned | Guards and outposts, equipping people, purposeful storyteller raids with advance warning, a balance pass; split into 0.4.x steps when it starts (`docs/VISION.md`). |
