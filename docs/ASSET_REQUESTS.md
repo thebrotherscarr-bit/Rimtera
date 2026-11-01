@@ -25,6 +25,13 @@ decides when ComfyUI runs. Each step that adds something to see or hear lists it
 | `item_bionic_leg` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §4.2, §3.1.) A replacement bionic leg: gunmetal thigh and shin plates over pistons, a cyan-lit knee and a sprung foot. | 0.5.4 | open (kitbashed from the sprint servos) |
 | `item_bionic_eye` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §4.2 add-ons: cybernetic eye.) A bionic eye: a round gunmetal lens housing with a bright cyan iris and a short cable tail. | 0.5.4 | open (kitbashed from the hunter lens) |
 | `item_neural_coprocessor` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §3.1 void and astral, §4.3.) A neural implant: a small curved chip with violet glowing traces and gold contacts, made to sit behind the ear. | 0.5.4 | open (kitbashed from the circuit board) |
+| `item_crude_fuel_crystal` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §3.1.) A crude fuel crystal: a rough, cloudy brown-grey crystal pressed from wood and gel, with a faint ember glow inside. | 0.7.5 | open (kitbashed from the energy crystals) |
+| `item_fuel_crystal_t1` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §3.1.) A tier 1 refined fuel crystal: a clean faceted crystal glowing warm orange, set in a small gunmetal cap. | 0.7.5 | open (kitbashed from the energy crystals) |
+| `item_fuel_crystal_t2` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §3.1.) A tier 2 refined fuel crystal: a clean faceted crystal glowing cobalt blue, set in a small gunmetal cap. | 0.7.5 | open (kitbashed from the energy crystals) |
+| `item_fuel_crystal_t3` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §3.1.) A tier 3 refined fuel crystal: a clean faceted crystal glowing toxic green, set in a small gunmetal cap. | 0.7.5 | open (kitbashed from the energy crystals) |
+| `item_fuel_crystal_t4` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §3.1.) A tier 4 refined fuel crystal: a clean faceted crystal glowing violet, set in a small gunmetal cap. | 0.7.5 | open (kitbashed from the energy crystals) |
+| `item_fuel_crystal_t5` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §3.1.) A tier 5 refined fuel crystal: a clean faceted crystal glowing pale astral gold, set in a small gunmetal cap. | 0.7.5 | open (kitbashed from the energy crystals) |
+| `station_fuel_refiner` | Station | 2×2 tiles | Rimtera Art - Redraw station | (Style guide §4.4 stations.) The fuel refiner: a squat gunmetal press with a hopper on top for junk and ore, a cyan-lit refining chamber and a tray where fuel crystals drop out. | 0.7.5 | open (kitbashed from the Ore Refinery Mk2) |
 
 ## Done
 

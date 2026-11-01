@@ -246,6 +246,7 @@ public static partial class ContentTiles
         Station(TileId.AmmoPress, "Ammo press", CraftingStationId.AmmoPress, 1);
         Station(TileId.ChargeReactor, "Charge reactor", CraftingStationId.ChargeReactor, 2);
         Station(TileId.ResearchTerminal, "Research terminal", CraftingStationId.ResearchTerminal, 2);
+        Station(TileId.FuelRefiner, "Fuel refiner", CraftingStationId.FuelRefiner, 1); // 0.7.5
 
         // ---- Doors: closed (solid) and open (passable) share one item ----
         foreach (var (closed, open, name, item) in new[]

@@ -127,6 +127,14 @@ public static class PlayerSystemsContent
         Add(new ItemDefinition(ItemId.BionicLeg, "Bionic leg", ItemUseKind.Utility, 5) { Tier = 2, Rarity = ItemRarity.Uncommon, Value = 300 });
         Add(new ItemDefinition(ItemId.BionicEye, "Bionic eye", ItemUseKind.Utility, 5) { Tier = 2, Rarity = ItemRarity.Uncommon, Value = 260 });
         Add(new ItemDefinition(ItemId.NeuralCoprocessor, "Neural coprocessor", ItemUseKind.Utility, 5) { Tier = 3, Rarity = ItemRarity.Rare, Value = 500 });
+        // 0.7.5: the power grid. Crude fuel crystals charge the station AI from day one; the fuel refiner turns tiered junk and
+        // ore into refined crystals, and a bench of a tier runs powered on crystals of that tier (GameSimulation.Power.cs).
+        Add(new ItemDefinition(ItemId.CrudeFuelCrystal, "Crude fuel crystal", ItemUseKind.Material, 999) { IsMaterial = true, Tier = 0, Value = 4 });
+        for (var tier = 1; tier <= 5; tier++)
+            Add(new ItemDefinition((ItemId)((int)ItemId.FuelCrystalT1 + tier - 1), $"Tier {tier} fuel crystal", ItemUseKind.Material, 999)
+                { IsMaterial = true, Tier = tier, Rarity = ContentItems.RarityFor(tier), Value = 8 * tier * tier });
+        Add(new ItemDefinition(ItemId.FuelRefiner, "Fuel refiner", ItemUseKind.PlaceTile, 99)
+            { PlacedTile = TileId.FuelRefiner, Tier = 1, Value = 120 });
         Add(Accessory(ItemId.CloverCircuit, "Clover circuit", 3) with { CritBonus = 2 });
         Add(Accessory(ItemId.BeaconHarness, "Beacon harness", 2) with { Defense = 3 });
         Add(Accessory(ItemId.ShroudCloak, "Shroud cloak", 2) with { MoveSpeedMultiplier = 1.04f });
@@ -171,6 +179,13 @@ public static class PlayerSystemsContent
         Add("dye-vat", ItemId.DyeVat, 1, CraftingStationId.Workbench, (ItemId.WoodBlock, 10), (ItemId.CopperBar, 2));
         Add("fortune-tonic", ItemId.FortuneTonic, 1, CraftingStationId.ChemLab, (ItemId.DyePetals, 1), (ItemId.EmeraldShard, 1), (ItemId.Berry, 2));
         Add("ai-core", ItemId.AiCore, 1, CraftingStationId.FieldWorkbench, (ItemId.EnergyCrystal, 8), (ItemId.CopperOre, 15), (ItemId.RockBlock, 20));
+        // 0.7.5: fuel. Crude crystals from junk at the Nano-Fabricator, unpowered; the fuel refiner (made there too) turns
+        // junk and ore into fuel of the ore's tier, more from better input (ore, then bars and crystals).
+        Add("crude-fuel-wood", ItemId.CrudeFuelCrystal, 1, CraftingStationId.Workbench, (ItemId.WoodBlock, 4));
+        Add("crude-fuel-gel", ItemId.CrudeFuelCrystal, 1, CraftingStationId.Workbench, (ItemId.BioGel, 2));
+        Add("fuel-refiner", ItemId.FuelRefiner, 1, CraftingStationId.Workbench, (ItemId.FerriteBar, 8), (ItemId.EnergyCrystal, 2), (ItemId.RockBlock, 10));
+        foreach (var (input, count, tier, made) in GameSimulation.RefinerInputs)
+            Add($"refine-{input}-{tier}", tier == 0 ? ItemId.CrudeFuelCrystal : (ItemId)((int)ItemId.FuelCrystalT1 + tier - 1), made, CraftingStationId.FuelRefiner, (input, count));
         Add("bionic-arm", ItemId.BionicArm, 1, CraftingStationId.Workbench, (ItemId.CobaltBar, 8), (ItemId.CircuitBoard, 3), (ItemId.EnergyCrystal, 4));
         Add("bionic-leg", ItemId.BionicLeg, 1, CraftingStationId.Workbench, (ItemId.CobaltBar, 10), (ItemId.CircuitBoard, 3), (ItemId.EnergyCrystal, 4));
         Add("bionic-eye", ItemId.BionicEye, 1, CraftingStationId.Workbench, (ItemId.CircuitBoard, 4), (ItemId.EnergyCrystal, 6), (ItemId.CobaltBar, 2));

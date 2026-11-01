@@ -95,7 +95,7 @@ public sealed class DevConsole
         new("spawnrate", "spawnrate <multiplier 0-10>", "Scales natural spawning (0 stops it, 1 is normal).", true, SpawnRate),
         new("where", "where", "Prints your tile, biome, depth layer and the time.", false, _ => Where()),
         new("power", "power | power set <0-1000> | power tier <1-5> | power feed", "Shows the station AI's power, sets it or its tier, or feeds it from your bag.", true, Power),
-        new("ai", "ai down | ai rebuild", "Takes the station AI down (machines go dark) or rebuilds it.", true, Ai),
+        new("ai", "ai down | ai rebuild", "Takes the station AI down (machines run unpowered) or rebuilds it.", true, Ai),
         new("act", "act", "Shows the run's act and what it asks of you.", false, _ => [$"Act {(int)_game.Act}: {GameSimulation.ActName(_game.Act)}. {GameSimulation.ActGoal(_game.Act)}"]),
         new("incident", "incident [id]", "Lists the storyteller's incidents, or fires one now if it can happen.", true, Incident),
         new("threat", "threat", "Shows the threat budget: what the next threat is built from, the dial and the ease after losses.", false, _ => Threat()),

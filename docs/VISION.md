@@ -158,13 +158,17 @@ launch you may continue the world, and the story from there is yours.
 | 0.7.1 | **Outposts.** A staffed home away from the base, guarded by the people who live there. *(Done.)* |
 | 0.7.2 | **Pylons need a staffed outpost.** Recall items take you home. *(Done.)* |
 | 0.7.3 | **Raids reach outposts.** Defences use Terraria's traps and sentries, manned by your people. *(Done.)* |
-| 0.7.4 | **The station AI's power reaches outposts,** so their stations work while the power holds. |
+| 0.7.4 | ~~The station AI's power reaches outposts.~~ *(Dropped for the power grid below.)* |
+| 0.7.5 | **Fuel and the refiner.** Every station crafts unpowered; crude cells charge the station AI; the refiner turns tiered junk and ore into refined fuel of that tier, which powers benches of that tier. *(Done.)* |
+| 0.7.6 | **Pylons are relays:** 2 residents protect each, each holds its own charge, and fuelled it gives powered bonuses and travel. Dry, it goes offline until you recharge it in person. Raiders can damage relays; a base can be lost. |
+| 0.7.7 | **Station affinity.** Powered stations work faster, and the worker's skills sometimes give higher rolls or more output. |
 
 ### 4.5 0.8.0: The Fracture and the zealots
 
 | Step | Contents |
 |---|---|
 | 0.8.1 | **The Fracture as Terraria's hardmode.** A shorter second ladder, checked against the 10–14 hour run. |
+| 0.8.x | **Performance pass:** late-game benches, profiling and fixes, then tighter budgets so the game stays efficient. |
 | 0.8.2 | **Hardmode research tiers and hardmode events,** scheduled by the storyteller. |
 | 0.8.3 | **The zealots.** Cultists raid the base and outposts. They do not convert your people. |
 | 0.8.4 | **The four fuel cores:** siege events at the obelisks. |

@@ -76,15 +76,12 @@ public static class StockingSelfTests
             $"with nothing set, the medic keeps the chem lab's healing in stock and the cook keeps food (med stims {stims}, meals {meals}; " +
             $"order: keep {order?.Target} {order?.RecipeId})");
 
-        // ---- the order follows research and power: an empty reserve pauses it ----
+        // ---- 0.7.5: every station crafts unpowered, so an empty reserve no longer pauses the order ----
         var (dark, _) = Kept(9692, TileId.ChemLab, TownNpcKind.Medic, ItemId.MedStim, 3);
         new DevConsole(dark).Execute("power set 0");
         Tick(dark, 6 * 60);
-        var paused = dark.BillsAt(Station).Count == 0;
-        new DevConsole(dark).Execute("power set 500");
-        Tick(dark, 6 * 60);
-        check(paused && dark.BillsAt(Station).Count == 1,
-            "a station's standing order only takes what the station AI can power: an empty reserve pauses it, feeding it brings it back");
+        check(dark.BillsAt(Station).Count == 1,
+            "a station's standing order keeps going when the station AI is out of power: the station simply works unpowered");
 
         // ---- a bill set another way (scripts, tests) is left alone ----
         var (manual, _) = Kept(9693, TileId.ChemLab, TownNpcKind.Medic, ItemId.MedStim, 3);

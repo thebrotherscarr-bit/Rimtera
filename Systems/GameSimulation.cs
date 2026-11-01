@@ -160,7 +160,7 @@ public sealed partial class GameSimulation : IStoryHost
         Items = new ItemCatalog();
         Crafting = new CraftingSystem(Items);
         // 0.3.7: recipes a boss's research tier still locks; 0.3.8: machines the station AI cannot power.
-        Crafting.ResearchGate = recipe => ResearchLock(recipe) ?? PowerLock(recipe);
+        Crafting.ResearchGate = recipe => ResearchLock(recipe); // 0.7.5: power no longer gates crafting (bonuses only)
         World = new TileGrid(width, height);
         _hazardChoice = hazard;
         var resolvedHazard = hazard is { } chosen ? WorldSettings.Resolve(chosen, seed) : (WorldHazard?)null;

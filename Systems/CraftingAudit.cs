@@ -90,7 +90,14 @@ public static class CraftingAudit
     {
         [ItemId.RustedCan] = "fishing junk, sold for credits (Terraria: tin can)",
         [ItemId.TangledWire] = "fishing junk, sold for credits (Terraria: fishing seaweed)",
-        [ItemId.SoggyDatapad] = "fishing junk, sold for credits (Terraria: old shoe)"
+        [ItemId.SoggyDatapad] = "fishing junk, sold for credits (Terraria: old shoe)",
+        // 0.7.5: fuel is burned, not built with: fed to the station AI (and, from 0.7.6, to relays).
+        [ItemId.CrudeFuelCrystal] = "fuel, fed to the station AI",
+        [ItemId.FuelCrystalT1] = "fuel, fed to the station AI",
+        [ItemId.FuelCrystalT2] = "fuel, fed to the station AI",
+        [ItemId.FuelCrystalT3] = "fuel, fed to the station AI",
+        [ItemId.FuelCrystalT4] = "fuel, fed to the station AI",
+        [ItemId.FuelCrystalT5] = "fuel, fed to the station AI"
     };
 
     /// <summary>

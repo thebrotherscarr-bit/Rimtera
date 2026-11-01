@@ -229,6 +229,8 @@ public sealed partial class GameSimulation
         // 0.3.5: a resident works at the skill of their trade (TownTrades); crew at their own skill for the work type.
         var stationSkill = agent.SkillAt(StationAt(job.Station));
         var speed = stationSkill is { } trained ? TownTrades.Speed(trained) : agent.SpeedFor(work ?? BillWork(job.Station));
+        if (StationPowered(StationAt(job.Station)))
+            speed *= PoweredWorkSpeed; // 0.7.5: a powered machine is worked faster
         if (agent.OperateProgress < OperateSeconds(speed))
             return true;
 

@@ -1678,6 +1678,7 @@ public static class CoreSelfTests
         PurposeSelfTests.Run(Check); // 0.6.5: purposeful events
         HistorySelfTests.Run(Check); // 0.6.6: the History tab
         OutpostLifeSelfTests.Run(Check); // 0.7.1: outposts founded and abandoned
+        FuelSelfTests.Run(Check); // 0.7.5: fuel and the refiner
         RecallSelfTests.Run(Check); // 0.7.2: pylons and recall
         DefenceSelfTests.Run(Check); // 0.7.3: outpost defences
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
