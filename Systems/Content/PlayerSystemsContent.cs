@@ -114,6 +114,11 @@ public static class PlayerSystemsContent
         Add(new ItemDefinition(ItemId.DyeVat, "Dye vat", ItemUseKind.PlaceTile, 99) { PlacedTile = TileId.DyeVat, Tier = 1, Value = 60 });
         Add(new ItemDefinition(ItemId.FortuneTonic, "Fortune tonic", ItemUseKind.Consumable, 30)
             { GrantsStatus = StatusId.Lucky, StatusDurationHours = 8f, Tier = 2, Rarity = ItemRarity.Uncommon, Value = 40 });
+        // 0.3.4 (EN-8): Terraria's battle potion (more spawns) and calming potion (fewer); BuffCurve sets their minutes.
+        Add(new ItemDefinition(ItemId.BattleStim, "Battle stim", ItemUseKind.Consumable, 30)
+            { GrantsStatus = StatusId.Battle, StatusDurationHours = 1f, Tier = 1, Rarity = ItemRarity.Common, Value = 20 });
+        Add(new ItemDefinition(ItemId.CalmingStim, "Calming stim", ItemUseKind.Consumable, 30)
+            { GrantsStatus = StatusId.Calm, StatusDurationHours = 1f, Tier = 1, Rarity = ItemRarity.Common, Value = 20 });
         Add(Accessory(ItemId.CloverCircuit, "Clover circuit", 3) with { CritBonus = 2 });
         Add(Accessory(ItemId.BeaconHarness, "Beacon harness", 2) with { Defense = 3 });
         Add(Accessory(ItemId.ShroudCloak, "Shroud cloak", 2) with { MoveSpeedMultiplier = 1.04f });
@@ -157,6 +162,8 @@ public static class PlayerSystemsContent
         Add("sifter", ItemId.Sifter, 1, CraftingStationId.Workbench, (ItemId.FerriteBar, 4), (ItemId.WoodBlock, 8));
         Add("dye-vat", ItemId.DyeVat, 1, CraftingStationId.Workbench, (ItemId.WoodBlock, 10), (ItemId.CopperBar, 2));
         Add("fortune-tonic", ItemId.FortuneTonic, 1, CraftingStationId.ChemLab, (ItemId.DyePetals, 1), (ItemId.EmeraldShard, 1), (ItemId.Berry, 2));
+        Add("battle-stim", ItemId.BattleStim, 1, CraftingStationId.ChemLab, (ItemId.BioGel, 1), (ItemId.EmberrootHerb, 1), (ItemId.GlowSpore, 1));
+        Add("calming-stim", ItemId.CalmingStim, 1, CraftingStationId.ChemLab, (ItemId.BioGel, 1), (ItemId.MoonglowHerb, 1), (ItemId.Berry, 2));
         Add("clover-circuit", ItemId.CloverCircuit, 1, CraftingStationId.TinkerBench, (ItemId.LuckyCharm, 1), (ItemId.EmeraldShard, 5));
         Add("beacon-harness", ItemId.BeaconHarness, 1, CraftingStationId.Anvil, (ItemId.FerriteBar, 8), (ItemId.EnergyCrystal, 4));
         Add("shroud-cloak", ItemId.ShroudCloak, 1, CraftingStationId.Loom, (ItemId.ClothRoll, 6), (ItemId.ObsidianShard, 2));

@@ -652,9 +652,6 @@ internal static partial class ArsenalItems
         new(ItemId.DangerSenseDrops, "Danger-sense drops", 2, StatusId.DangerSense, 5f, "BioGel*1+GlassBlock*1+SporecapHerb*1@ChemLab", 0.0f),
         new(ItemId.LifeforceSerum, "Lifeforce serum", 4, StatusId.Lifeforce, 4f, "BioGel*2+HeartFragment*1+SunpetalHerb*1@ChemLab", 0.0f),
         new(ItemId.InertiaStim, "Inertia stim", 2, StatusId.Inertia, 4f, "BioGel*1+RockBlock*10+FrostbellHerb*1@ChemLab", 0.0f),
-        // 0.3.4 (EN-8): Terraria's battle potion (more spawns) and calming potion (fewer), from early herbs.
-        new(ItemId.BattleStim, "Battle stim", 1, StatusId.Battle, 7f, "BioGel*1+EmberrootHerb*1+GlowSpore*1@ChemLab", 0.0f),
-        new(ItemId.CalmingStim, "Calming stim", 1, StatusId.Calm, 5f, "BioGel*1+MoonglowHerb*1+Berry*2@ChemLab", 0.0f),
         new(ItemId.EvasionSerum, "Evasion serum", 3, StatusId.Evasion, 4f, "BioGel*1+SilkThread*4+MoonglowHerb*1@ChemLab", 0.0f),
         new(ItemId.NightSightDrops, "Night-sight drops", 1, StatusId.NightSight, 6f, "BioGel*1+GlowSpore*1+MoonglowHerb*1@ChemLab", 0.0f),
         new(ItemId.GillDraught, "Gill draught", 2, StatusId.Gills, 6f, "BioGel*1+CoralShard*1+RainreedHerb*1@ChemLab", 0.0f),
