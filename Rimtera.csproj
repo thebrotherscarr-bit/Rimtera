@@ -6,13 +6,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <!-- Single source of truth for the release version; .github/workflows/version.yml validates it. -->
-    <Version>0.1.14</Version>
+    <Version>0.1.15</Version>
   </PropertyGroup>
   <ItemGroup>
     <!-- tools/ holds external repos and asset scripts, not game code. -->
     <Compile Remove="tools\**" />
     <None Remove="tools\**" />
     <Compile Remove="rea\**" />
+    <!-- Local agent worktrees (Claude Code) are full copies of the repo; never compile them into the game. -->
+    <Compile Remove=".claude\**" />
+    <None Remove=".claude\**" />
     <None Remove="rea\**" />
     <!-- Rimtera\ holds a local ComfyUI install (art generation), not game code. -->
     <Compile Remove="Rimtera\**" />

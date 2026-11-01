@@ -1,4 +1,5 @@
 using System.Numerics;
+using Rimtera.Systems;
 
 namespace Rimtera.Entities;
 
@@ -232,5 +233,175 @@ internal static class ContentCreatures
         // ---- Creature coverage: biome variants, event units, mini-bosses and bosses (Systems/Content/CreatureCoverageData.cs) ----
         foreach (var archetype in Rimtera.Systems.CreatureCoverage.Archetypes())
             yield return archetype;
+    }
+}
+
+/// <summary>
+/// Creature stat tables applied once, when the roster is built (EN-4, IC-10, EN-5): the defense tier table, the
+/// explicit affliction immunities and lava immunity. A value set in a roster (hand table, generator data) always wins.
+/// <para>Defense tiers (docs/roadmap/0.1.9.md, A1):</para>
+/// <list type="bullet">
+/// <item>Pre-boss 0-6 (gel 2, walker 6): pre-Fracture creatures under 100 hit points.</item>
+/// <item>Mid pre-Fracture 8-14: tougher pre-Fracture creatures, by hit points.</item>
+/// <item>Post-Fracture 16-30: creatures that only spawn after the Fracture, by hit points.</item>
+/// <item>Late 30-50: the post-Mutated-Flora dungeon, the Dark Sun, the two late moons and the obelisk sieges.</item>
+/// <item>Bosses: the defense band of the Terraria bosses each tier stands for (Eye of Cthulhu, Skeletron, Deerclops ~10;
+/// Wall of Flesh 12; mechanical bosses, Plantera, Golem, Queen Slime ~26; pre-hardmode event leaders ~16; Pumpking,
+/// Ice Queen, Martian Saucer, Mothron ~30; Moon Lord 50).</item>
+/// </list>
+/// </summary>
+public static class CreatureStatTable
+{
+    public static readonly IReadOnlySet<StatusId> NoImmunities = new HashSet<StatusId>();
+
+    /// <summary>
+    /// Kinds whose stats were authored for the Fracture: the post-Fracture rows of the generated content fill and of the
+    /// creature coverage pass. Their numbers are final; the hardmode rescale skips them (D-18).
+    /// </summary>
+    private static readonly HashSet<EnemyKind> FractureAuthoredKinds =
+        ContentFillData.Hostiles.Where(row => row.Hard).Select(row => row.Kind)
+            .Concat(CreatureCoverageData.Creatures.Where(row => row.Hard).Select(row => row.Kind)).ToHashSet();
+
+    /// <summary>
+    /// Hand-roster kinds that only spawn after the Fracture (hard biome rosters, the Fracture-gated Dark Sun, pirate
+    /// boarding and precursor probes, hardmode event upgrades). They take the post-Fracture defense tier; their hit
+    /// points were authored on the pre-Fracture scale, so they still take the hardmode rescale.
+    /// </summary>
+    private static readonly HashSet<EnemyKind> HandPostFractureKinds =
+    [
+        EnemyKind.NeoTerraReaver, EnemyKind.TerraformerDrone, EnemyKind.PearlGolem, EnemyKind.CacheMimic, EnemyKind.BasaltGolem,
+        EnemyKind.EventAbomination, EnemyKind.EventCorruptedSurvivor, EnemyKind.EventVoidSiphon,
+        EnemyKind.EventEclipseShade, EnemyKind.EventEclipseReaper, EnemyKind.EventEclipseMothMech,
+        EnemyKind.EventPirateDeckhand, EnemyKind.EventPirateGunner, EnemyKind.EventPirateParrotDrone, EnemyKind.EventPirateCannon,
+        EnemyKind.EventPrecursorProbe, EnemyKind.EventProbeGunner, EnemyKind.EventProbeTeslaWalker, EnemyKind.EventProbeBrainDrone
+    ];
+
+    /// <summary>Late-tier coverage slots: the post-Mutated-Flora dungeon, the Dark Sun, the late moons and the obelisk sieges.</summary>
+    private static readonly HashSet<string> LateSlots =
+    [
+        "dungeon-hard", "event:DarkSun", "event:HollowMoon", "event:RimeMoon",
+        "event:EmberObelisk", "event:GaleObelisk", "event:RiftObelisk", "event:ShardObelisk"
+    ];
+
+    private static readonly HashSet<EnemyKind> LateKinds =
+        CreatureCoverageData.Creatures.Where(row => LateSlots.Contains(row.Slot)).Select(row => row.Kind)
+            .Concat([EnemyKind.EmberObelisk, EnemyKind.RiftObelisk, EnemyKind.GaleObelisk, EnemyKind.ShardObelisk]).ToHashSet();
+
+    /// <summary>Defense written into the generated content-fill rows (tools/sprites/content_fill_gen.py).</summary>
+    private static readonly Dictionary<EnemyKind, int> GeneratedDefense =
+        ContentFillData.Hostiles.ToDictionary(row => row.Kind, row => row.Defense);
+
+    /// <summary>Hand-roster defense overrides: Terraria's zombie ("walker") sits at 6 even at low hit points.</summary>
+    private static readonly Dictionary<EnemyKind, int> HandDefense = new()
+    {
+        [EnemyKind.SporeZombie] = 6, [EnemyKind.EventHusk] = 6, [EnemyKind.SlickerHusk] = 6, [EnemyKind.TombHusk] = 6,
+        [EnemyKind.EventDustRaider] = 6, [EnemyKind.EventScavengerGrunt] = 6,
+        // Boss analog: the Fission Tyrant stands for the Wall of Flesh (12).
+        [EnemyKind.FissionTyrant] = 12
+    };
+
+    /// <summary>Leaders of Fracture-gated events (Dark Sun, pirate boarding, probes, the late moons): the ~30 band.</summary>
+    private static readonly HashSet<EnemyKind> LateEventBosses =
+        [EnemyKind.EclipseLord, EnemyKind.PirateDreadnought, EnemyKind.MothershipCore, EnemyKind.HollowRegent, EnemyKind.RimeSeraph];
+
+    /// <summary>The Irradiated Core's natives: liquid uranium is their home (lava-immune).</summary>
+    private static readonly HashSet<EnemyKind> CoreNatives =
+        new[]
+        {
+            EnemyKind.PyroSkitter, EnemyKind.MagmaTurtle, EnemyKind.LavaLeech, EnemyKind.EmberRat, EnemyKind.BasaltGolem,
+            EnemyKind.CoreHusk, EnemyKind.FissionWisp
+        }.Concat(ContentFillData.Hostiles.Where(row => row.Roster == "core").Select(row => row.Kind)).ToHashSet();
+
+    /// <summary>True when the kind's stats were authored for the Fracture (the hardmode rescale skips it, D-18).</summary>
+    public static bool IsFractureAuthored(EnemyKind kind) => FractureAuthoredKinds.Contains(kind);
+
+    /// <summary>True when the kind only spawns after the Fracture (authored for it, or a hand-roster hard-only kind).</summary>
+    public static bool IsPostFracture(EnemyKind kind) => FractureAuthoredKinds.Contains(kind) || HandPostFractureKinds.Contains(kind);
+
+    /// <summary>True for the late tier (post-Mutated-Flora dungeon, Dark Sun, late moons, obelisk sieges).</summary>
+    public static bool IsLate(EnemyKind kind) => LateKinds.Contains(kind);
+
+    /// <summary>The roster archetype with its defense, immunities and lava immunity filled in.</summary>
+    public static EnemyArchetype Apply(EnemyArchetype archetype)
+    {
+        ArgumentNullException.ThrowIfNull(archetype);
+        var defense = archetype.Defense > 0 ? archetype.Defense
+            : HandDefense.TryGetValue(archetype.Kind, out var hand) ? hand
+            : GeneratedDefense.TryGetValue(archetype.Kind, out var generated) && generated > 0 ? generated
+            : TierDefense(archetype);
+        var immune = new HashSet<StatusId>(archetype.Immune);
+        immune.UnionWith(DefaultImmunities(archetype));
+        return archetype with
+        {
+            Defense = defense,
+            Immune = immune.Count == 0 ? NoImmunities : immune,
+            LavaImmune = archetype.LavaImmune || DefaultLavaImmune(archetype)
+        };
+    }
+
+    /// <summary>The defense tier table (see the class summary). Wildlife has none.</summary>
+    public static int TierDefense(EnemyArchetype archetype)
+    {
+        ArgumentNullException.ThrowIfNull(archetype);
+        if (archetype.Passive)
+            return 0;
+        if (archetype.IsBoss)
+            return archetype.Tier switch
+            {
+                BossTier.Hard => 26,
+                BossTier.Event => LateEventBosses.Contains(archetype.Kind) ? 30 : 16,
+                BossTier.Final => 50,
+                _ => 10
+            };
+        var hp = archetype.HitPoints;
+        if (IsLate(archetype.Kind))
+            return hp switch { < 300f => 30, < 400f => 34, < 500f => 38, < 700f => 42, < 1200f => 46, _ => 50 };
+        if (IsPostFracture(archetype.Kind))
+            return hp switch { < 200f => 16, < 250f => 18, < 300f => 20, < 350f => 22, < 400f => 24, < 500f => 26, < 1000f => 28, _ => 30 };
+        return hp switch
+        {
+            < 45f => 2, < 60f => 4, < 100f => 6,              // pre-boss: gel 2 … walker 6
+            < 150f => 8, < 250f => 10, < 400f => 12, _ => 14 // mid pre-Fracture
+        };
+    }
+
+    // ---- immunities (EN-5): the old name keywords, with their oddities fixed ----
+    private static bool Has(string name, params string[] words) => words.Any(word => name.Contains(word, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Default immunities. Machines (droids, drones, mechs, golems, sentinels, turrets, cannons, tanks, obelisks) resist
+    /// poison; fire-born creatures burning; frost-born frostbite; bosses, obelisks and turrets confusion.
+    /// Decisions: the Glow firefly (and every other firefly) can burn: the old "fire" keyword caught it by accident.
+    /// The Pollen drone swarm is immune to Poison: it is a swarm of pollinator drones, machines like every other drone.
+    /// "Ice" alone no longer counts (it caught the Lattice weaver); icicle, glacier and blizzard creatures do.
+    /// </summary>
+    public static IEnumerable<StatusId> DefaultImmunities(EnemyArchetype archetype)
+    {
+        ArgumentNullException.ThrowIfNull(archetype);
+        var name = archetype.DisplayName + " " + archetype.Kind;
+        if (Has(name, "droid", "drone", "mech", "golem", "sentinel", "obelisk", "turret", "construct", "warship", "cannon", "tank"))
+            yield return StatusId.Poison;
+        if (FireBorn(name))
+            yield return StatusId.Burning;
+        if (Has(name, "frost", "glacial", "glacier", "icicle", "snow", "cryo", "rime", "blizzard", "flurry", "whiteout", "tundra"))
+            yield return StatusId.Frostbite;
+        if (archetype.IsBoss || Has(name, "obelisk", "turret"))
+            yield return StatusId.Confused;
+    }
+
+    private static bool FireBorn(string name) =>
+        Has(name, "ember", "magma", "pyro", "pyre", "flare", "solar", "lava", "molten", "cinder", "slag", "inferno", "blaze") ||
+        Has(name.Replace("firefly", "", StringComparison.OrdinalIgnoreCase), "fire");
+
+    /// <summary>
+    /// Lava immunity: fire-born creatures, the Irradiated Core's natives (the Irradiated husk lives in liquid uranium),
+    /// bosses, the obelisks and the Dungeon Guardian.
+    /// </summary>
+    public static bool DefaultLavaImmune(EnemyArchetype archetype)
+    {
+        ArgumentNullException.ThrowIfNull(archetype);
+        return archetype.IsBoss || archetype.Kind == EnemyKind.DungeonGuardian || CoreNatives.Contains(archetype.Kind) ||
+               archetype.Kind.ToString().Contains("Obelisk", StringComparison.Ordinal) ||
+               FireBorn(archetype.DisplayName + " " + archetype.Kind);
     }
 }

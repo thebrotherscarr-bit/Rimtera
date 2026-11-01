@@ -653,6 +653,7 @@ public sealed partial class GameSimulation : IStoryHost
         if (!float.IsFinite(deltaSeconds) || deltaSeconds <= 0f || deltaSeconds > 0.25f)
             throw new ArgumentOutOfRangeException(nameof(deltaSeconds), "Simulation steps must be in (0, 0.25] seconds.");
         Player.SyncHealthDeath();
+        ObserveFeedback(); // SoundEvents: death, double jump and splash transitions since the last tick (Systems/SoundEvents.cs)
         if (IsOver)
         {
             UpdateWhileDead(deltaSeconds);
@@ -679,7 +680,7 @@ public sealed partial class GameSimulation : IStoryHost
         var statusDamage = Player.Statuses.Advance(vitalHours);
         if (statusDamage > 0f)
             Player.TakeDamage(statusDamage, DamageKind.Toxin);
-        if (Player.Stats.LifeRegenerationPerHour > 0f)
+        if (Player.Stats.LifeRegenerationPerHour > 0f && !PlayerBleeding) // bleeding stops every kind of regeneration
             Player.Heal(Player.Stats.LifeRegenerationPerHour * vitalHours);
         Player.SyncHealthDeath();
         if (Player.IsDead)
@@ -696,8 +697,9 @@ public sealed partial class GameSimulation : IStoryHost
             : input.Movement with
             {
                 SpeedMultiplier = input.Movement.SpeedMultiplier * Player.Stats.MoveSpeedMultiplier * Player.MoveCapacityFactor *
-                                  ContentMoveFactor
+                                  ContentMoveFactor * DebuffMoveFactor // chilled / slow: the strongest applies
             };
+        movement = ApplyConfusion(movement); // confused: left and right swap
         movement = PreparePlayerMovement(movement, deltaSeconds);
         _playerMovement.Step(Player.Motion, movement, deltaSeconds, World, Tiles);
         CarryOnGlideWalk(deltaSeconds);
@@ -810,6 +812,7 @@ public sealed partial class GameSimulation : IStoryHost
     public CraftingResult TryCraft(string recipeId)
     {
         var result = Crafting.TryCraft(recipeId, Player.Inventory, CreateCraftingEnvironment(), RollCalibration);
+        if (result.Success) SoundEvents.Emit(SoundEventKind.Craft, SoundEventQueue.CraftVariant(Crafting.FindById(recipeId)), PlayerCenter, (int)(result.Output ?? 0));
         PostMessage(result.Message);
         return result;
     }
@@ -889,7 +892,8 @@ public sealed partial class GameSimulation : IStoryHost
                 Mine(target ?? GetFacingTile());
                 break;
             case PlayerAction.UseSelected:
-                UseSelected(target ?? GetFacingTile());
+                if (!SilenceBlocksUse()) // silenced: no Tech use
+                    UseSelected(target ?? GetFacingTile());
                 break;
             case PlayerAction.Eat:
                 EatSelectedOrBerry();
@@ -1234,37 +1238,30 @@ public sealed partial class GameSimulation : IStoryHost
         var ammoSave = CombatStats.AmmoSaveChance;
         if (ammoSave <= 0f || CombatRandom.NextDouble() >= ammoSave)
             Player.Inventory.TryConsume(ammo);
-        if (item.Class == DamageClass.Ranged && item.Tier > 0)
+        // Every gun, the tier-0 energy guns included (IC-21), fires through FireProjectiles: the ±15% spread, the crit roll,
+        // the class multiplier, multi-pellet, pierce, calibrations and ammo damage.
+        var calibration = SelectedCalibration;
+        var contentDamage = ComputeWeaponDamage(item, calibration, Items[ammo].AmmoDamage);
+        var before = _projectiles.Count;
+        FireProjectiles(item, target, contentDamage, item.Knockback * CalibrationCatalog.Get(calibration).KnockbackMultiplier,
+            item.ProjectileSpeed, item.ProjectileCount, item.ProjectileSpread, item.ProjectileLifetime, item.Pierce,
+            CritChanceFor(item, calibration), DamageClass.Ranged, item.PurifyRadius);
+        if (item.Tier <= 0)
         {
-            // Content guns: multi-pellet, pierce, crits, calibrations and ammo damage.
-            var calibration = SelectedCalibration;
-            var contentDamage = ComputeWeaponDamage(item, calibration, Items[ammo].AmmoDamage);
-            FireProjectiles(item, target, contentDamage, item.Knockback * CalibrationCatalog.Get(calibration).KnockbackMultiplier,
-                item.ProjectileSpeed, item.ProjectileCount, item.ProjectileSpread, item.ProjectileLifetime, item.Pierce,
-                CritChanceFor(item, calibration), DamageClass.Ranged, item.PurifyRadius);
-            TagLastProjectiles(Math.Max(1, item.ProjectileCount), ammo);
-            SetPlayerCooldown(ScaledCooldown(item, calibration));
-            PostMessage($"Fired the {DescribeStack(Player.Inventory.SelectedStack)}.");
-            return;
+            // The colony-era energy guns keep their aim wobble: damaged eyes widen it on top of the shooter's accuracy.
+            var sight = Player.Health.Sight;
+            var spread = (1f - Player.ColonistStats.ShootingAccuracy * sight) * 0.16f + (1f - sight) * 0.2f;
+            var angle = ((float)_random.NextDouble() * 2f - 1f) * spread;
+            var (cos, sin) = (MathF.Cos(angle), MathF.Sin(angle));
+            for (var i = before; i < _projectiles.Count; i++)
+            {
+                var velocity = _projectiles[i].Velocity;
+                _projectiles[i].Velocity = new Vector2(velocity.X * cos - velocity.Y * sin, velocity.X * sin + velocity.Y * cos);
+            }
         }
-
-        var origin = Player.Motion.Position + new Vector2(Player.Motion.Size.X / 2f, Player.Motion.Size.Y * 0.35f);
-        var aim = new Vector2(target.X + 0.5f, target.Y + 0.5f) - origin;
-        if (aim.LengthSquared() < 0.001f)
-            aim = new Vector2(Player.Motion.Facing, 0f);
-        // Damaged eyes widen the spread on top of the shooter's own accuracy.
-        var sight = Player.Health.Sight;
-        var spread = (1f - Player.ColonistStats.ShootingAccuracy * sight) * 0.16f + (1f - sight) * 0.2f;
-        var angle = ((float)_random.NextDouble() * 2f - 1f) * spread;
-        var cos = MathF.Cos(angle);
-        var sin = MathF.Sin(angle);
-        aim = new Vector2(aim.X * cos - aim.Y * sin, aim.X * sin + aim.Y * cos);
-        var velocity = Vector2.Normalize(aim) * item.ProjectileSpeed;
-        var damage = item.Damage * Player.ShootingDamageMultiplier;
-        _projectiles.Add(new ProjectileState(_nextEntityId++, origin, velocity, damage, item.Knockback, 3f, ProjectileTeam.Player,
-            purifyRadius: item.PurifyRadius) { Class = DamageClass.Ranged, CritChance = CritChanceFor(item, Calibration.None) });
-        SetPlayerCooldown(item.UseCooldownTicks);
-        PostMessage($"Fired {item.Name} ({Player.ColonistStats.ShootingAccuracy:P0} accuracy).");
+        TagLastProjectiles(Math.Max(1, item.ProjectileCount), ammo);
+        SetPlayerCooldown(ScaledCooldown(item, calibration));
+        PostMessage($"Fired the {DescribeStack(Player.Inventory.SelectedStack)}.");
     }
 
     private void EatSelectedOrBerry()
@@ -1277,6 +1274,8 @@ public sealed partial class GameSimulation : IStoryHost
             return;
         }
         Player.Needs.Restore(NeedKind.Food, food.FoodRestore);
+        SoundEvents.Emit(SoundEventKind.Eat, string.Empty, PlayerCenter, (int)food.Id);
+        if (food.FoodHeal > 0f) Player.Heal(food.FoodHeal); // cooked food heals a little (0.1.9 C1; a deliberate use)
         GearOnAte(food);
         if (food.Id == ItemId.Berry)
             Player.Mind.Thoughts.AddMemory(ThoughtId.AteNanoBanana);
@@ -1325,6 +1324,7 @@ public sealed partial class GameSimulation : IStoryHost
             return;
         }
         Player.Statuses.Apply(status, item.StatusDurationHours, Player.Stats.ImmunityTags);
+        SoundEvents.Emit(SoundEventKind.Drink, string.Empty, PlayerCenter, (int)item.Id);
         SetPlayerCooldown(6);
         PostMessage($"Used {item.Name}.");
     }
@@ -1640,6 +1640,9 @@ public sealed partial class GameSimulation : IStoryHost
                 continue;
 
             var archetype = enemy.Archetype;
+            TickCreatureLava(enemy, deltaSeconds); // lava burns creatures that are not lava-immune (EN-5)
+            if (!enemy.IsAlive)
+                continue;
             enemy.AttackCooldown = Math.Max(0f, enemy.AttackCooldown - deltaSeconds);
             enemy.StateTime += deltaSeconds;
             if (archetype.Passive)
@@ -1692,7 +1695,7 @@ public sealed partial class GameSimulation : IStoryHost
 
             center = enemy.Motion.Position + enemy.Motion.Size / 2f;
             distance = Vector2.Distance(center, playerCenter);
-            if (!enemy.IsBoss && distance < 1.15f && enemy.AttackCooldown <= 0f)
+            if (!enemy.IsBoss && enemy.AttackCooldown <= 0f && ContactTouchesPlayer(enemy)) // box overlap, 0.1-tile inset
             {
                 var damage = HitPlayerFromEnemy(enemy, ScaleIncoming(enemy.AttackDamage), ColonistAnatomy.ContactDamageKind(archetype));
                 ReportPartLoss(Player, Player.LastDamage);
@@ -1707,10 +1710,11 @@ public sealed partial class GameSimulation : IStoryHost
             else if (enemy.IsBoss && enemy.AttackCooldown <= 0f && !holding &&
                      DistanceToRect(playerCenter, enemy.Motion.Position, enemy.Motion.Size) < 0.6f)
             {
-                HitPlayerFromEnemy(enemy, ScaleIncoming(enemy.AttackDamage), DamageKind.Crush);
+                var struck = HitPlayerFromEnemy(enemy, ScaleIncoming(enemy.AttackDamage), DamageKind.Crush);
                 ReportPartLoss(Player, Player.LastDamage);
                 enemy.AttackCooldown = 1.4f;
-                PostMessage($"The {enemy.DisplayName} struck you.");
+                if (struck > 0f)
+                    PostMessage($"The {enemy.DisplayName} struck you for {struck:0}.");
             }
         }
 
@@ -1719,6 +1723,7 @@ public sealed partial class GameSimulation : IStoryHost
         {
             foreach (var drop in BossDropsOrBag(enemy))
                 DropLoot(enemy, drop.Item, drop.Quantity);
+            DropSustainLoot(enemy); // boss potions, hearts and charge orbs (0.1.9 C2/C3; GroundItems.cs)
             OnCreatureDefeated(enemy);
 
             if (enemy.IsBoss)
@@ -1828,7 +1833,7 @@ public sealed partial class GameSimulation : IStoryHost
                 _nextEntityId++, center, direction * speed,
                 CapBossHit(enemy, enemy.AttackDamage * DefenseBalance.EnemyHitScale(enemy.Archetype), preDifficulty: true), 3f, 4f,
                 ProjectileTeam.Enemy, enemy.DisplayName,
-                enemy.Kind == EnemyKind.SolarFlareEntity ? DamageKind.Burn : DamageKind.Shot));
+                enemy.Kind == EnemyKind.SolarFlareEntity ? DamageKind.Burn : DamageKind.Shot) { SourceKind = enemy.Kind });
         }
         PostMessage(count == 1
             ? $"The {enemy.DisplayName} fires a bolt!"
@@ -1914,15 +1919,18 @@ public sealed partial class GameSimulation : IStoryHost
                             remove = true;
                     }
                 }
-                else if (DistanceToRect(projectile.Position, Player.Motion.Position, Player.Motion.Size) <= 0.4f)
+                else if (!Player.IsImmune && !Player.IsDead &&
+                         DistanceToRect(projectile.Position, Player.Motion.Position, Player.Motion.Size) <= 0.4f)
                 {
-                    GearHitPlayer(null, ScaleIncoming(projectile.Damage), projectile.Kind);
+                    // An immune player lets hostile shots pass: not consumed, no push.
+                    var applied = HitPlayerFromProjectile(projectile);
                     ReportPartLoss(Player, Player.LastDamage);
                     Player.Motion.Velocity += GearKnockback(Vector2.Normalize(projectile.Velocity) * projectile.Knockback);
                     remove = true;
-                    PostMessage(projectile.SourceName is { } source
-                        ? $"The {source}'s bolt hit you for {projectile.Damage:0}."
-                        : $"An energy bolt hit you for {projectile.Damage:0}.");
+                    if (applied > 0f)
+                        PostMessage(projectile.SourceName is { } source
+                            ? $"The {source}'s bolt hit you for {applied:0}."
+                            : $"An energy bolt hit you for {applied:0}.");
                 }
             }
 

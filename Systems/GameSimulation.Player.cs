@@ -116,7 +116,8 @@ public sealed partial class GameSimulation
     public const float FallDamagePerTile = 10f;
     /// <summary>Upward speed (tiles/s) given when swimming up out of a liquid with jump held.</summary>
     public const float LiquidExitBoost = 11.5f * LiftScale;
-    public const float PotionSicknessSeconds = 45f;
+    /// <summary>Potion sickness after a healing item (Terraria: 60 s; 45 s with the Charm of Myths analog).</summary>
+    public const float PotionSicknessSeconds = 60f;
     public const float PhaseStrainSeconds = 6f;
     public const int LoadoutCount = 3;
     public const int BankSlots = 40;
@@ -130,9 +131,21 @@ public sealed partial class GameSimulation
     public const float BankStationReach = 6f;
     public const float QuickStackRadius = 10f;
     public const int KillsPerBanner = 50;
-    public const float BannerRadius = 30f;
-    public const float BannerDamageBonus = 1.25f;
-    public const float BannerDamageTakenFactor = 0.8f;
+    // Kill banners (D-21, EN-18). Numbers are Terraria 1.4.4's Player.GetBannerBuffEffect / NPCBannerBuff (the
+    // ItemID.BannerEffect struct at strength 1: dealt 1 + 0.5s, expert dealt 1 + s, expert received 1 / (1 + s), normal
+    // received 1 - (1 - expert received) / 2), from memory; not re-measured from the IL. The range is Terraria's
+    // SceneMetrics banner scan box, Main.buffScanAreaWidth/Height = (maxScreenW 1920 / maxScreenH 1200 + 800) / 16 - 1
+    // = 169 × 124 tiles centred on the player (also from memory, not re-measured).
+    /// <summary>Half-width (tiles) of the box around the player in which a hung banner is active.</summary>
+    public const float BannerRangeX = 84f;
+    /// <summary>Half-height (tiles) of the box around the player in which a hung banner is active.</summary>
+    public const float BannerRangeY = 62f;
+    /// <summary>Classic and Explorer: the player deals ×1.5 damage to a bannered kind…</summary>
+    public const float BannerDamageBonus = 1.5f;
+    /// <summary>…and takes ×0.75 damage from it.</summary>
+    public const float BannerDamageTakenFactor = 0.75f;
+    /// <summary>Brutal and Annihilation (Terraria's Expert and Master): ×2 damage dealt and ×0.5 damage taken.</summary>
+    public const float BannerHarshDamageBonus = 2f, BannerHarshDamageTakenFactor = 0.5f;
     /// <summary>Terraria's respawn timer: 10 seconds, half as long again on Brutal and Annihilation; 3 on Explorer.</summary>
     public const float BaseRespawnSeconds = 10f;
     public const float HarshRespawnFactor = 1.5f;
@@ -310,6 +323,9 @@ public sealed partial class GameSimulation
         StatusId.ChargeSurge => "Charge surge",
         StatusId.PotionSickness => "Stim fatigue",
         StatusId.PhaseStrain => "Phase strain",
+        StatusId.BrokenArmor => "Broken armor",
+        StatusId.CursedFire => "Cursed fire",
+        StatusId.SalvageMark => "Salvage mark",
         _ => id.ToString()
     };
 
@@ -702,23 +718,33 @@ public sealed partial class GameSimulation
             PostMessage(candidates.Length == 0 ? "No healing items." : "Already at full health.");
             return false;
         }
-        var pick = candidates.Where(item => item.HealAmount >= missing).OrderBy(item => item.HealAmount).FirstOrDefault()
-                   ?? candidates.OrderByDescending(item => item.HealAmount).First();
+        var pick = PickHealingItem(candidates, missing)!;
         if (!Player.Inventory.TryConsume(pick.Id))
             return false;
         Player.Heal(pick.HealAmount);
-        ApplyPotionSickness();
+        ApplyPotionSickness(pick);
         PostMessage($"Quick heal: {pick.Name} (+{pick.HealAmount:0}).");
         return true;
     }
 
-    /// <summary>Uses a charge item when Charge is not full.</summary>
+    /// <summary>Quick heal's choice: the smallest healing item that covers the missing hit points, otherwise the largest.</summary>
+    public static ItemDefinition? PickHealingItem(IEnumerable<ItemDefinition> candidates, float missing)
+    {
+        var healing = candidates.Where(item => item.HealAmount > 0f).ToArray();
+        return healing.Where(item => item.HealAmount >= missing).OrderBy(item => item.HealAmount).FirstOrDefault()
+               ?? healing.OrderByDescending(item => item.HealAmount).FirstOrDefault();
+    }
+
+    /// <summary>Uses the charge item that best covers the missing charge (the smallest that covers it, else the largest).</summary>
     public bool QuickCharge()
     {
         if (Player.IsDead || Charge >= MaximumCharge - 0.5f)
             return false;
-        var pick = Player.Inventory.Slots.Where(stack => !stack.IsEmpty && Items[stack.ItemId].ChargeRestore > 0f)
-            .Select(stack => Items[stack.ItemId]).OrderBy(item => item.ChargeRestore).FirstOrDefault();
+        var missing = MaximumCharge - Charge;
+        var candidates = Player.Inventory.Slots.Where(stack => !stack.IsEmpty && Items[stack.ItemId].ChargeRestore > 0f)
+            .Select(stack => Items[stack.ItemId]).DistinctBy(item => item.Id).ToArray();
+        var pick = candidates.Where(item => item.ChargeRestore >= missing).OrderBy(item => item.ChargeRestore).FirstOrDefault()
+                   ?? candidates.OrderByDescending(item => item.ChargeRestore).FirstOrDefault();
         if (pick is null || !Player.Inventory.TryConsume(pick.Id))
         {
             PostMessage("No charge items.");
@@ -749,8 +775,19 @@ public sealed partial class GameSimulation
         return used;
     }
 
-    private void ApplyPotionSickness() =>
-        Player.Statuses.Apply(StatusId.PotionSickness, PotionSicknessSeconds * VitalHoursPerRealSecond);
+    /// <summary>
+    /// Real seconds of potion sickness a healing item brings on: its own (the restoration stim's 45 s) or the standard 60 s,
+    /// scaled by a worn "potion-sickness:factor" tag (the Bio-weave's 0.75, Terraria's Charm of Myths).
+    /// </summary>
+    public float PotionSicknessFor(ItemDefinition item)
+    {
+        var seconds = item.PotionSicknessSeconds > 0f ? item.PotionSicknessSeconds : PotionSicknessSeconds;
+        var factor = GearTagValue(ContentItems.PotionSicknessTag);
+        return factor > 0f ? seconds * Math.Clamp(factor, 0.25f, 1f) : seconds;
+    }
+
+    private void ApplyPotionSickness(ItemDefinition item) =>
+        Player.Statuses.Apply(StatusId.PotionSickness, PotionSicknessFor(item) * VitalHoursPerRealSecond);
 
     /// <summary>Batch B consumables (charge crystals, healing items' sickness). True when fully handled.</summary>
     private bool ConsumeBatchBItem(ItemDefinition item)
@@ -777,7 +814,14 @@ public sealed partial class GameSimulation
                 PostMessage("Stim fatigue: you cannot use another healing item yet.");
                 return true;
             }
-            ApplyPotionSickness();
+            ApplyPotionSickness(item);
+        }
+        if (item.IsInstantPickup)
+        {
+            // A heart or charge orb that somehow reached a bag (creative spawn, old save) is used up on the spot.
+            if (Player.Inventory.TryConsume(item.Id))
+                ApplyInstantPickup(item);
+            return true;
         }
         return false;
     }
@@ -1182,10 +1226,19 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>Damage multiplier the player deals to a kind (banner nearby → bonus).</summary>
-    private float BannerDamageFactor(EnemyKind kind) => _activeBanners.Contains(kind) ? BannerDamageBonus : 1f;
+    private float BannerDamageFactor(EnemyKind kind) => !_activeBanners.Contains(kind) ? 1f
+        : Difficulty is WorldDifficulty.Brutal or WorldDifficulty.Annihilation ? BannerHarshDamageBonus : BannerDamageBonus;
 
     /// <summary>Damage multiplier the player takes from a kind (banner nearby → less).</summary>
-    private float BannerDefenseFactor(EnemyKind kind) => _activeBanners.Contains(kind) ? BannerDamageTakenFactor : 1f;
+    private float BannerDefenseFactor(EnemyKind kind) => !_activeBanners.Contains(kind) ? 1f
+        : Difficulty is WorldDifficulty.Brutal or WorldDifficulty.Annihilation ? BannerHarshDamageTakenFactor : BannerDamageTakenFactor;
+
+    /// <summary>Test probe: the banner multipliers on damage dealt to and taken from a kind.</summary>
+    internal (float Dealt, float Taken) ProbeBannerFactors(EnemyKind kind) => (BannerDamageFactor(kind), BannerDefenseFactor(kind));
+
+    /// <summary>True when a banner hung at <paramref name="cell"/> is inside the scan box around the player.</summary>
+    private bool BannerInRange(GridPoint cell) =>
+        MathF.Abs(cell.X + 0.5f - PlayerCenter.X) <= BannerRangeX && MathF.Abs(cell.Y + 0.5f - PlayerCenter.Y) <= BannerRangeY;
 
     private void RefreshBanners()
     {
@@ -1199,7 +1252,7 @@ public sealed partial class GameSimulation
                 SpawnGroundItem(PlayerItems.BannerFor(kind), 1, new Vector2(cell.X + 0.5f, cell.Y + 0.5f));
                 continue;
             }
-            if (Vector2.Distance(new Vector2(cell.X + 0.5f, cell.Y + 0.5f), PlayerCenter) <= BannerRadius)
+            if (BannerInRange(cell))
                 _activeBanners.Add(kind);
         }
         foreach (var cell in _signs.Keys.ToArray())
@@ -1241,9 +1294,18 @@ public sealed partial class GameSimulation
 
     // ------------------------------------------------------------------ hit helpers used by the shared combat code
 
-    /// <summary>A creature's contact hit on the player: banner reduction and immunity frames apply.</summary>
-    private float HitPlayerFromEnemy(EnemyAgent enemy, float amount, DamageKind kind) =>
-        GearHitPlayer(enemy, CapBossHit(enemy, amount * BannerDefenseFactor(enemy.Kind) * DefenseBalance.EnemyHitScale(enemy.Archetype)), kind);
+    /// <summary>
+    /// A creature's contact hit on the player: the ±15% spread (luck counts against it), banner reduction, the boss cap and
+    /// immunity frames apply; a hit that lands rolls the creature's debuffs. Returns the damage applied.
+    /// </summary>
+    private float HitPlayerFromEnemy(EnemyAgent enemy, float amount, DamageKind kind)
+    {
+        var applied = GearHitPlayer(enemy, CapBossHit(enemy,
+            RollHurtVariance(amount * BannerDefenseFactor(enemy.Kind) * DefenseBalance.EnemyHitScale(enemy.Archetype))), kind);
+        if (applied > 0f)
+            InflictOnPlayer(enemy.Archetype);
+        return applied;
+    }
 
     /// <summary>Distance from a point to the nearest part of a creature (worm segments count).</summary>
     private float EnemyHitDistance(EnemyAgent enemy, Vector2 point)

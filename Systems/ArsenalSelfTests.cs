@@ -193,7 +193,7 @@ public static class ArsenalSelfTests
         var ammo = arsenal.Select(id => catalog[id]).Where(item => item.UseKind == ItemUseKind.Ammunition).ToArray();
         check(ammo.Length >= 45 && new[] { AmmoClass.Arrow, AmmoClass.Bullet, AmmoClass.Rocket, AmmoClass.Dart, AmmoClass.Fuel }
                   .All(kind => ammo.Count(item => item.AmmoKind == kind) >= 5) &&
-              ammo.All(item => item.MaxStack == 999 && item.AmmoDamage > 0 && crafting.FindByOutput(item.Id).Any(recipe => recipe.OutputCount >= 15)) &&
+              ammo.All(item => item.MaxStack == ContentItems.StackSize && item.AmmoDamage > 0 && crafting.FindByOutput(item.Id).Any(recipe => recipe.OutputCount >= 15)) &&
               ammo.Any(item => item.Pierce > 0) && ammo.Any(item => item.AmmoHoming > 0f) && ammo.Any(item => item.ExplosionRadius > 0f) &&
               ammo.Any(item => item.GrantsStatus == StatusId.Burning),
             "ammo covers arrows, bullets, rockets, darts and fuel, crafts in stacks, and carries pierce/homing/explosive/burn flavour");

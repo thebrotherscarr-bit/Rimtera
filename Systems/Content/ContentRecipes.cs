@@ -206,6 +206,15 @@ internal static class ContentRecipes
         Add(Key(ItemId.ChargeCellSmall), ItemId.ChargeCellSmall, 2, At(reactor), (ItemId.EnergyCrystal, 1));
         Add(Key(ItemId.ChargeStim), ItemId.ChargeStim, 1, At(chem), (ItemId.EnergyCrystal, 2), (ItemId.BioGel, 1));
         Add(Key(ItemId.MedStim), ItemId.MedStim, 1, At(chem), (ItemId.BioGel, 2), (ItemId.RestorativeTonic, 1));
+        // The healing and charge ladders (0.1.9 C1). Gates: Chem Lab -> Bio Lab after the first boss (its overseer circuit)
+        // -> Bio Lab beside the Alloy Anvil with post-Fracture prism or flight essence -> Bio Lab beside the Void Forge.
+        Add(Key(ItemId.TraumaStim), ItemId.TraumaStim, 5, At(bio), (ItemId.MedStim, 5), (ItemId.BioGel, 5), (ItemId.OverseerCircuit, 1));
+        Add(Key(ItemId.RestorationStim), ItemId.RestorationStim, 2, At(bio), (ItemId.MedStim, 2), (ItemId.GlowSpore, 2), (ItemId.RestorativeTonic, 1));
+        Add(Key(ItemId.NaniteStim), ItemId.NaniteStim, 3, At(bio, alloy), (ItemId.TraumaStim, 3), (ItemId.PrismEssence, 1), (ItemId.BioGel, 1));
+        Add(Key(ItemId.PhoenixStim), ItemId.PhoenixStim, 3, At(bio, voidForge), (ItemId.NaniteStim, 3), (ItemId.VoidsteelBar, 1), (ItemId.VoidEssence, 1));
+        Add(Key(ItemId.ChargeCellMedium), ItemId.ChargeCellMedium, 5, At(bio), (ItemId.ChargeCellSmall, 5), (ItemId.EnergyCrystal, 2), (ItemId.OverseerCircuit, 1));
+        Add(Key(ItemId.ChargeCellLarge), ItemId.ChargeCellLarge, 3, At(bio, alloy), (ItemId.ChargeCellMedium, 3), (ItemId.FlightEssence, 1), (ItemId.EnergyCrystal, 1));
+        Add(Key(ItemId.ChargeCellPeak), ItemId.ChargeCellPeak, 3, At(bio, voidForge), (ItemId.ChargeCellLarge, 3), (ItemId.VoidsteelBar, 1), (ItemId.PowerCell, 1));
         Add(Key(ItemId.SpeedStim), ItemId.SpeedStim, 1, At(chem), (ItemId.BioGel, 1), (ItemId.Berry, 2));
         Add(Key(ItemId.ArmorStim), ItemId.ArmorStim, 1, At(chem), (ItemId.BioGel, 1), (ItemId.RockBlock, 5));
         Add(Key(ItemId.RegenPatch), ItemId.RegenPatch, 1, At(chem), (ItemId.BioGel, 2), (ItemId.ClothRoll, 1));

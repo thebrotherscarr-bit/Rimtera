@@ -265,6 +265,17 @@ public static partial class GraphicalSandbox
             }
             if (_transition.BlocksGameplay)
                 return;
+            if (_canvas.SpectateCenter is not null)
+            {
+                // Ironman spectate: WASD moves the ghost camera (read while held in Advance); Esc leaves for the title.
+                if (e.KeyCode == Keys.Escape)
+                    EndSpectate();
+                else
+                    _down.Add(e.KeyCode);
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                return;
+            }
             if (_canvas.FullscreenMapOpen)
             {
                 // The map takes over input (the player stands still, Player.Update zeroes the controls): WASD pans it and
@@ -404,13 +415,19 @@ public static partial class GraphicalSandbox
                 case "QuickHeal":
                     if (!game.QuickHeal())
                         _canvas.Notify(game.PotionSick ? "Still recovering from the last dose." : "No healing item to use.");
+                    else
+                        game.EmitQuickDrink();
                     break;
                 case "QuickCharge":
                     if (!game.QuickCharge())
                         _canvas.Notify("No charge item to use.");
+                    else
+                        game.EmitQuickDrink();
                     break;
                 case "QuickBuff":
                     var buffs = game.QuickBuff();
+                    if (buffs > 0)
+                        game.EmitQuickDrink();
                     _canvas.Notify(buffs > 0 ? $"Used {buffs} buff item{(buffs == 1 ? "" : "s")}." : "No buff items to use.");
                     break;
                 case "Inventory":
@@ -446,6 +463,16 @@ public static partial class GraphicalSandbox
                 case "FrameRate":
                     _menu.Preferences.ShowFrameRate = !_menu.Preferences.ShowFrameRate;
                     _menu.SavePreferences();
+                    break;
+                case "LightingMode":
+                    _menu.Preferences.Lighting = (LightingQuality)(((int)_menu.Preferences.Lighting + 1) % Enum.GetValues<LightingQuality>().Length);
+                    _menu.SavePreferences();
+                    _canvas.Notify($"Lighting: {_menu.Preferences.Lighting}.");
+                    break;
+                case "FrameSkipMode":
+                    _menu.Preferences.FrameSkip = (FrameSkipMode)(((int)_menu.Preferences.FrameSkip + 1) % Enum.GetValues<FrameSkipMode>().Length);
+                    _menu.SavePreferences();
+                    _canvas.Notify($"Frame skip: {_menu.Preferences.FrameSkip}.");
                     break;
                 case "Craft": game.TryCraftNext(); break;
                 case "CraftPrevious": game.CycleCraftableRecipe(-1); break;
@@ -901,6 +928,17 @@ public static partial class GraphicalSandbox
                 SyncCanvas();
                 return;
             }
+            if (_canvas.SpectateCenter is { } ghost && _game is not null)
+            {
+                // Ironman spectate: the world plays on without the fallen colonist; the camera drifts where WASD sends it.
+                const float speed = 30f / 60f;
+                var move = new Vector2((Held("MoveRight") ? speed : 0f) - (Held("MoveLeft") ? speed : 0f),
+                    (Held("MoveDown") ? speed : 0f) - (Held("MoveUp") ? speed : 0f));
+                _canvas.SpectateCenter = Vector2.Clamp(ghost + move, Vector2.Zero, new Vector2(_game.World.Width, _game.World.Height));
+                _game.Tick(new GameInput(new MovementInput(0f)));
+                SyncCanvas();
+                return;
+            }
             if (_game is not null)
             {
                 // Terraria's dropItemCheck: with the inventory gone, a stack still on the cursor goes back to the bag (or
@@ -953,7 +991,7 @@ public static partial class GraphicalSandbox
             var horizontal = mapOpen ? 0f : (Held("MoveRight") ? 1f : 0f) - (Held("MoveLeft") ? 1f : 0f);
             _worldUseHeld = !mapOpen && _mouse.WorldUseHeld(overInterface);
             // Items without auto-reuse are used once per press; the rest keep going while held (Item.autoReuse).
-            if (_useGate.Update(_worldUseHeld, ItemUseRules.AutoReuse(_game.Player.Inventory.SelectedItem)) && !_mine && !_use)
+            if (_useGate.Update(_worldUseHeld, _game.AutoReuseSelected) && !_mine && !_use) // auto-swing gear included
             {
                 if (_game.Player.Inventory.SelectedItem?.UseKind == ItemUseKind.Pickaxe)
                     _mine = true;
@@ -1095,15 +1133,35 @@ public static partial class GraphicalSandbox
             _down.Clear();
             if (character?.Difficulty == CharacterDifficulty.Ironman)
             {
+                // Terraria's hardcore ghost: the character is gone (its file moves to deleted/), but a ghost camera stays on
+                // the world until Esc, then the title.
                 TrySaveGame(out _);
                 _menu.Profiles.DeleteCharacter(character.Id);
                 _activeCharacter = null;
-                QuitToTitle($"{name} died. Ironman colonists cannot return.");
+                _spectateFarewell = $"{name} died. Ironman colonists cannot return.";
+                if (_game is not null)
+                {
+                    _canvas.SpectateCenter = _game.Player.Motion.Position + _game.Player.Motion.Size / 2f;
+                    _canvas.Notify($"{name} has fallen for good. WASD moves the camera; Esc returns to the title.");
+                }
+                else
+                    EndSpectate();
                 return;
             }
             // Terraria's timer: 10 s, 15 s on Brutal and Annihilation worlds, 3 s for an Explorer.
             var seconds = _game?.GetRespawnDelay(character?.Difficulty ?? default) ?? GameSimulation.BaseRespawnSeconds;
             _transition.BeginCountdown($"{name} was killed", _game?.LastMessage ?? string.Empty, seconds);
+        }
+
+        private string? _spectateFarewell;
+
+        /// <summary>Leaves Ironman spectate for the title screen.</summary>
+        private void EndSpectate()
+        {
+            _canvas.SpectateCenter = null;
+            _down.Clear();
+            QuitToTitle(_spectateFarewell ?? "Ironman colonists cannot return.");
+            _spectateFarewell = null;
         }
 
         /// <summary>Builds a fresh world from its profile; runs on a worker thread.</summary>
@@ -1231,6 +1289,7 @@ public static partial class GraphicalSandbox
 
         private void QuitToTitle(string? status = null)
         {
+            _canvas.SpectateCenter = null;
             _game = null;
             _activeWorld = null;
             _activeCharacter = null;
@@ -1341,6 +1400,7 @@ public static partial class GraphicalSandbox
             if (_game is null)
                 return;
             var game = _game;
+            _canvas.ShopNpc = npc; // tooltips show sell values while the player stays near this shop (IC-17)
             var credits = game.Player.Inventory.Count(ItemId.Credits);
             var entries = new List<MenuEntry> { new("— Buy —", Enabled: false) };
             entries.AddRange(game.GetShop(npc).Select(offer => new MenuEntry(
@@ -1678,6 +1738,43 @@ public static partial class GraphicalSandbox
             Cursor = HiddenCursor;
             foreach (var tile in Enum.GetValues<TileId>())
                 _tileBrushes[tile] = new SolidBrush(ColorFor(tile));
+            // PE-7: dust takes the tile's (or wall's) colour; death chunks are cut from the creature's idle frame.
+            _animator.TileColor = TileArtColor;
+            _animator.WallColor = wall => ArtColor(SpriteCatalog.ForWall(wall), Color.FromArgb(110, 105, 100));
+            _animator.CreatureFrame = kind => _sprites.Get(SpriteCatalog.ForEnemy(kind));
+        }
+
+        private readonly Dictionary<string, Color> _artColors = new();
+
+        /// <summary>A tile's dust colour: the average of its sprite (cached per sprite, like the panorama foot colour).</summary>
+        private Color TileArtColor(TileId tile) => ArtColor(SpriteCatalog.ForTile(tile), ColorFor(tile));
+
+        /// <summary>The alpha-weighted average colour of a sprite, worked out once per sprite; the fallback without art.</summary>
+        private Color ArtColor(string? sprite, Color fallback)
+        {
+            if (sprite is null)
+                return fallback;
+            if (_artColors.TryGetValue(sprite, out var cached))
+                return cached;
+            var color = fallback;
+            if (_sprites.Get(sprite) is { } art)
+            {
+                long r = 0, g = 0, b = 0, a = 0;
+                var stepX = Math.Max(1, art.Width / 12);
+                var stepY = Math.Max(1, art.Height / 12);
+                for (var y = 0; y < art.Height; y += stepY)
+                for (var x = 0; x < art.Width; x += stepX)
+                {
+                    var pixel = art.GetPixel(x, y);
+                    r += pixel.R * pixel.A;
+                    g += pixel.G * pixel.A;
+                    b += pixel.B * pixel.A;
+                    a += pixel.A;
+                }
+                if (a > 0)
+                    color = Color.FromArgb((int)(r / a), (int)(g / a), (int)(b / a));
+            }
+            return _artColors[sprite] = color;
         }
 
         protected override bool IsInputKey(Keys keyData)
@@ -1703,6 +1800,10 @@ public static partial class GraphicalSandbox
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool WorldRunsBehindMenu { get; set; }
+
+        /// <summary>Ironman spectate: the ghost camera's centre after the colonist's permanent death; null otherwise.</summary>
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+        public Vector2? SpectateCenter { get; set; }
 
         private int _frames;
         private long _fpsWindowStart = Environment.TickCount64;
@@ -1933,7 +2034,7 @@ public static partial class GraphicalSandbox
                     DrawCraftingPanel(g, running, inventoryScreen);
                 if (Game is { } inspecting && _hoveredSlotStack is { } hoveredStack && MousePosition is { } hoverAt &&
                     _menu.Ui.CurrentState is InventoryUiState { Controller.CursorStack.IsEmpty: true })
-                    DrawItemTooltip(g, inspecting.Items[hoveredStack.ItemId], hoveredStack.Count, hoverAt);
+                    DrawItemTooltip(g, inspecting, hoveredStack, hoverAt);
                 if (_menu.Ui.CurrentState?.Id != "main-menu")
                     DrawScreenFade(g, _menu.Ui.CurrentState?.Id);
             }
@@ -2213,7 +2314,7 @@ public static partial class GraphicalSandbox
             // The camera centres on the player every frame, as in Terraria, unless Camera smoothing is set: then the
             // centre eases toward the player (frame-rate independent). Either way the view scrolls by whole pixels inside
             // a tile rather than jumping a tile at a time. Teleports snap.
-            var target = motion.Position + motion.Size / 2f;
+            var target = SpectateCenter ?? motion.Position + motion.Size / 2f;
             var smoothing = _menu.Preferences.CameraSmoothing;
             if (!_cameraReady || smoothing <= 0f || Vector2.Distance(_camera, target) > 24f)
                 _camera = target;
@@ -2373,6 +2474,7 @@ public static partial class GraphicalSandbox
             var lighting = _menu.Preferences.Lighting;
             _lighting.Subdivision = lighting == LightingQuality.Low ? 1 : 4;
             _lighting.ColouredGlow = lighting == LightingQuality.High;
+            _lighting.Dimming = game.DarknessDimming; // the darkness debuff
             // Sky light follows the clock, moon phase and weather (cloud, rain, storms dim the surface).
             _lighting.Compute(game.World, game.Tiles, startX, startY, viewW, viewH, game.SkyLightLevel, lamps, present: lighting != LightingQuality.Off);
             _profiler.Mark("light calc");
@@ -3288,75 +3390,64 @@ public static partial class GraphicalSandbox
             var stack = game.Player.Inventory.Slots[slot];
             if (stack.IsEmpty)
                 return;
-            DrawItemTooltip(g, game.Items[stack.ItemId], stack.Count, mouse);
+            DrawItemTooltip(g, game, stack, mouse);
         }
 
-        private void DrawItemTooltip(Graphics g, ItemDefinition item, int count, Point at)
+        /// <summary>
+        /// The NPC whose shop was last opened. While the player stays near them the shop counts as open (as in Terraria,
+        /// where it stays open until you walk away), and tooltips show what an item sells for.
+        /// </summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public TownNpc? ShopNpc { get; set; }
+
+        private TownNpc? OpenShop(GameSimulation game)
         {
-            var lines = new List<string> { count > 1 ? $"{item.Name} ({count})" : item.Name };
-            switch (item.UseKind)
+            if (ShopNpc is not { } npc)
+                return null;
+            if (!game.TownNpcs.Contains(npc) || Vector2.Distance(npc.Motion.Position, game.Player.Motion.Position) > 12f)
             {
-                case ItemUseKind.Melee: lines.Add($"{item.Damage} melee damage"); break;
-                case ItemUseKind.Ranged: lines.Add($"{item.Damage} ranged damage · uses Energy cells"); break;
-                case ItemUseKind.Pickaxe: lines.Add($"{item.ToolPower}% drill power"); break;
-                case ItemUseKind.PlaceTile: lines.Add("Can be placed"); break;
-                case ItemUseKind.Food: lines.Add($"Restores {item.FoodRestore:P0} food"); break;
-                case ItemUseKind.Equipment: lines.Add($"{item.Defense} defense"); break;
-                case ItemUseKind.Consumable: lines.Add("Consumable"); break;
+                ShopNpc = null;
+                return null;
             }
-            if (item.UseCooldownTicks > 0 && item.UseKind is ItemUseKind.Melee or ItemUseKind.Ranged or ItemUseKind.Pickaxe)
-                lines.Add(item.UseCooldownTicks <= 10 ? "Fast speed" : item.UseCooldownTicks <= 24 ? "Average speed" : "Slow speed");
-            if (item.IsMaterial)
-                lines.Add("Material");
-            // Terraria's comparison: how this piece measures against what is worn in its slot or held in hand.
-            var comparison = Game is { } game ? CompareLine(game, item) : null;
-            if (comparison is not null)
-                lines.Add(comparison.Value.Text);
+            return npc;
+        }
+
+        /// <summary>
+        /// The item tooltip (IC-17): <see cref="ItemTooltip.Build"/> writes the lines (damage by class, ammunition, crit,
+        /// speed and knockback words, charge cost, calibration, defense, set bonus, accessory effects, the comparison with
+        /// what is worn or held, the sell value at an open shop); this only colours and draws them, then adds the
+        /// station AI's recipe tips.
+        /// </summary>
+        private void DrawItemTooltip(Graphics g, GameSimulation game, ItemStack stack, Point at)
+        {
+            if (stack.IsEmpty || !game.Items.Contains(stack.ItemId))
+                return;
+            var built = ItemTooltip.Build(stack, new TooltipContext(game, OpenShop(game)));
+            var lines = built.Select(line => line.Text).ToList();
             var plain = lines.Count;
-            lines.AddRange(GuideTooltipLines(item.Id));
+            lines.AddRange(GuideTooltipLines(stack.ItemId));
             var width = lines.Max(line => g.MeasureString(line, _small).Width) + 20;
             var rect = new RectangleF(Math.Min(at.X + 16, Width - width - 4), Math.Max(4, at.Y - 18 - lines.Count * 16), width, lines.Count * 16 + 12);
             DrawRivetedPanel(g, rect);
+            var (r, gr, b) = ItemTooltip.RarityColor(game.Items[stack.ItemId].Rarity);
+            using var nameBrush = new SolidBrush(Color.FromArgb(r, gr, b));
             for (var i = 0; i < lines.Count; i++)
             {
-                var brush = i == 0 ? _amberBrush
-                    : comparison is { } line && i == plain - 1 ? line.Better ? _betterBrush : line.Worse ? _healthBar : _dimTextBrush
-                    : i >= plain ? _guideTipBrush : _hudBrush;
+                var brush = i >= plain ? _guideTipBrush : built[i].Tone switch
+                {
+                    TooltipTone.Name => nameBrush,
+                    TooltipTone.Better => _betterBrush,
+                    TooltipTone.Worse => _healthBar,
+                    TooltipTone.Dim => _dimTextBrush,
+                    TooltipTone.Price => _amberBrush,
+                    _ => _hudBrush
+                };
                 g.DrawString(lines[i], _small, brush, rect.X + 10, rect.Y + 6 + i * 16);
             }
         }
 
         private readonly Brush _betterBrush = new SolidBrush(Color.FromArgb(120, 220, 120));
-
-        /// <summary>
-        /// The comparison line for a tooltip: armor against the piece worn in its slot (defense), weapons and drills against
-        /// the item in hand (damage, drill power). Null when there is nothing to compare.
-        /// </summary>
-        private static (string Text, bool Better, bool Worse)? CompareLine(GameSimulation game, ItemDefinition item)
-        {
-            (string, bool, bool) Line(int difference, string what, string against) => difference == 0
-                ? ($"Same {what} as {against}", false, false)
-                : ($"{difference:+0;-0} {what} compared with {against}", difference > 0, difference < 0);
-
-            if (item.UseKind == ItemUseKind.Equipment && item.EquipmentSlot is EquipmentSlot.Head or EquipmentSlot.Body or EquipmentSlot.Legs)
-            {
-                var worn = game.Player.Equipment[item.EquipmentSlot.Value];
-                if (worn is null)
-                    return ($"+{item.Defense} defense (nothing worn there)", item.Defense > 0, false);
-                if (worn == item.Id)
-                    return null;
-                var wornItem = game.Items[worn.Value];
-                return Line(item.Defense - wornItem.Defense, "defense", wornItem.Name);
-            }
-            if (game.Player.Inventory.SelectedItem is not { } held || held.Id == item.Id)
-                return null;
-            if (item.UseKind is ItemUseKind.Melee or ItemUseKind.Ranged or ItemUseKind.Tech &&
-                held.UseKind is ItemUseKind.Melee or ItemUseKind.Ranged or ItemUseKind.Tech)
-                return Line((int)MathF.Round(item.Damage - held.Damage), "damage", held.Name);
-            if (item.UseKind == ItemUseKind.Pickaxe && held.UseKind == ItemUseKind.Pickaxe)
-                return Line(item.ToolPower - held.ToolPower, "% drill power", held.Name);
-            return null;
-        }
 
         /// <summary>Top-right readout: biome, temperature/comfort, shelter, events, recent incidents.</summary>
         private void DrawStatusPanel(Graphics g, GameSimulation game)

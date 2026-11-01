@@ -23,7 +23,7 @@ public sealed record SoundCue(
 /// <summary>
 /// `--sound-cues`: the audio needs map for tools/audio (docs/AUDIO_FLOW.md). Every weapon style, tool, tile material,
 /// interaction, creature, boss, event, biome and UI action gets a cue, derived from the game's own data so new content
-/// gets sounds automatically. Each cue names a fallback, and the chain always ends at one of the 23 synthesised effects,
+/// gets sounds automatically. Each cue names a fallback, and the chain always ends at one of the 28 synthesised effects,
 /// so a cue plays something before its file exists. Music and ambience rows carry the style card (tempo, key, meter).
 /// </summary>
 public static class SoundCatalog
@@ -273,6 +273,8 @@ public static class SoundCatalog
         add(new("land_hard", "player", "a hard fall that hurts", 3, 0.5f, $"a heavy hard landing, crunch and grunt. {Style}", "land"));
         add(new("hurt", "player", "the player takes damage", 5, 0.5f, $"a male space-colonist pained grunt, short. {Style}", "", Lane: "record"));
         add(new("death", "player", "the player dies", 3, 1.5f, $"a dramatic death, fading groan and body fall. {Style}", "", Lane: "record"));
+        add(new("death_sting", "player", "the player dies (a short falling musical sting under the voice)", 1, 2.0f,
+            "a short sad falling three-note synth and strings sting, sci-fi frontier video game, clean", ""));
         add(new("respawn", "player", "the player respawns", 2, 1.5f, $"a teleporter respawn materialising, rising shimmer. {Style}", "teleport"));
         add(new("breath_out", "player", "breath runs out underwater", 2, 0.8f, $"underwater bubbles, gasping. {Style}", "hurt"));
         add(new("drown", "player", "drowning damage", 2, 0.8f, $"choking underwater bubbles. {Style}", "hurt"));
@@ -304,15 +306,19 @@ public static class SoundCatalog
             ("craft_forge", "crafting at a forge or anvil", 0.8f, "hammering metal on an anvil, ringing clang", "craft", 0f),
             ("craft_brew", "crafting at a lab", 0.8f, "bubbling chemistry glassware, liquid gurgle", "craft", 0f),
             ("craft_weave", "crafting at a loom", 0.8f, "a textile machine, rhythmic shuttle clatter", "craft", 0f),
-            ("potion", "drinking a medkit or stim", 0.8f, "drinking from a bottle, gulps and a fizz", "pickup", 0f),
-            ("eat", "eating food", 0.8f, "eating crunchy food, chewing bites", "pickup", 0f),
+            ("potion", "drinking a medkit or stim", 0.8f, "drinking from a bottle, gulps and a fizz", "drink", 0f),
+            ("drink", "any drink (the potion fallback)", 0.6f, "two quick gulps from a bottle", "", 0f),
+            ("eat", "eating food", 0.8f, "eating crunchy food, chewing bites", "", 0f),
             ("equip", "equipping armor or an accessory", 0.5f, "fastening armor plates, clicks and cloth", "click", -2f),
             ("critter_release", "releasing a caught critter", 0.4f, "a small creature released, soft poof", "pickup", -3f),
             ("door_open", "opening a door", 0.6f, "a sci-fi sliding door opening, pneumatic hiss", "door", 0f),
             ("door_close", "closing a door", 0.6f, "a sci-fi sliding door shutting, hiss and thunk", "door", 0f),
             ("door", "a door moves", 0.6f, "a metal door moving", "", 0f),
-            ("chest_open", "opening a storage container", 0.6f, "a metal storage crate lid opening, latch click and creak", "door", 0f),
-            ("chest_close", "closing a storage container", 0.5f, "a metal crate lid closing, thunk", "door", 0f),
+            ("chest_open", "opening a storage container", 0.6f, "a metal storage crate lid opening, latch click and creak", "chest", 0f),
+            ("chest_close", "closing a storage container", 0.5f, "a metal crate lid closing, thunk", "chest", 0f),
+            ("chest", "a container lid moves (the chest fallback)", 0.5f, "a metal crate latch and lid", "", 0f),
+            ("catch_critter", "a bug net catches a critter", 0.4f, "a soft net scoop and a tiny surprised chirp", "grab", -3f),
+            ("grab", "grabbing something small (the catch fallback)", 0.3f, "a soft quick grab, cloth and a light pop", "", -3f),
             ("splash", "entering or leaving liquid", 0.8f, "a body splashing into water", "", 0f),
             ("splash_water", "entering water", 0.8f, "splashing into water", "splash", 0f),
             ("splash_fuel", "entering the fuel sea", 0.8f, "splashing into thick oily liquid, gloopy", "splash", 0f),

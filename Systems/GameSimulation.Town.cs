@@ -416,6 +416,7 @@ public sealed partial class GameSimulation
             return false;
         }
         Player.Inventory.TryConsume(ItemId.Credits, total);
+        SoundEvents.Emit(SoundEventKind.Coin, "buy", PlayerCenter, (int)item);
         Player.Inventory.Add(item, quantity);
         PostMessage($"Bought {quantity} {Items[item].Name} for {total} credits.");
         return true;
@@ -440,6 +441,7 @@ public sealed partial class GameSimulation
         var taken = Player.Inventory.TakeFromSlot(slot, quantity);
         var earned = unit * taken.Count;
         Player.Inventory.Add(ItemId.Credits, earned);
+        SoundEvents.Emit(SoundEventKind.Coin, "sell", PlayerCenter, (int)taken.ItemId);
         _buyback.Insert(0, new BuybackEntry(taken, earned));
         if (_buyback.Count > BuybackCapacity)
             _buyback.RemoveAt(_buyback.Count - 1);
@@ -466,6 +468,7 @@ public sealed partial class GameSimulation
             return false;
         }
         Player.Inventory.TryConsume(ItemId.Credits, entry.Price);
+        SoundEvents.Emit(SoundEventKind.Coin, "buy", PlayerCenter, (int)entry.Stack.ItemId);
         Player.Inventory.Add(entry.Stack.ItemId, entry.Stack.Count, entry.Stack.Calibration);
         _buyback.RemoveAt(index);
         PostMessage($"Bought back {entry.Stack.Count} {Items[entry.Stack.ItemId].Name} for {entry.Price} credits.");

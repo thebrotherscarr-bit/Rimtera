@@ -126,7 +126,7 @@ public sealed partial class GameSimulation
         var all = GearTagValue("dmg") / 100f + calibrations.Sum(c => c.DamageMultiplier - 1f);
         if (HealthFraction > 0.9f)
             all += SpecialMagnitude(SetSpecial.Frenzy);
-        return stats with
+        return DebuffCombatStats(stats with // weak cuts close-quarters damage after every bonus
         {
             MeleeMultiplier = stats.MeleeMultiplier + all + GearTagValue("dmg-melee") / 100f,
             RangedMultiplier = stats.RangedMultiplier + all + GearTagValue("dmg-ranged") / 100f,
@@ -137,7 +137,7 @@ public sealed partial class GameSimulation
             SentrySlots = stats.SentrySlots + (int)GearTagValue("sentry"),
             AmmoSaveChance = Math.Clamp(stats.AmmoSaveChance + GearTagValue("ammosave") / 100f, 0f, 0.9f),
             Thorns = stats.Thorns + GearTagValue("thorns") / 100f + SpecialMagnitude(SetSpecial.Thorns)
-        };
+        });
     }
 
     /// <summary>
@@ -190,7 +190,7 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>Defense that reduces creature and projectile hits: the player's stats plus accessory calibrations.</summary>
-    public int TotalDefense => Player.Stats.Defense + AccessoryCalibrations().Sum(c => c.AccessoryDefense);
+    public int TotalDefense => DebuffDefense(Player.Stats.Defense + AccessoryCalibrations().Sum(c => c.AccessoryDefense)); // broken armour halves it
 
     /// <summary>On-hit effects for any class: lifesteal tags, heal-on-hit and charge-on-hit set specials.</summary>
     private void GearOnHitEnemy(EnemyAgent enemy, float damage, DamageClass damageClass)

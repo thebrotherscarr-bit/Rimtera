@@ -23,10 +23,11 @@ public static class CoreSelfTests
 
         var itemCatalog = new ItemCatalog();
         var inventory = new Inventory(itemCatalog, slotCount: 4);
-        Check(inventory.Add(ItemId.Arrow, 1000) == 1000, "inventory accepts and splits stacks");
-        Check(inventory.Count(ItemId.Arrow) == 1000 && inventory.Slots.Count(stack => stack.Count == 999) == 1,
+        // Stacks hold 9999 since 0.1.9 (IC-19).
+        Check(inventory.Add(ItemId.Arrow, 10000) == 10000, "inventory accepts and splits stacks");
+        Check(inventory.Count(ItemId.Arrow) == 10000 && inventory.Slots.Count(stack => stack.Count == 9999) == 1,
             "inventory stack limits");
-        Check(inventory.TryConsume(ItemId.Arrow, 7) && inventory.Count(ItemId.Arrow) == 993,
+        Check(inventory.TryConsume(ItemId.Arrow, 7) && inventory.Count(ItemId.Arrow) == 9993,
             "inventory consumes across stacks");
 
         var tiles = new TileCatalog();
@@ -397,6 +398,20 @@ public static class CoreSelfTests
         Check(MenuPauseRules.WorldRuns(shopScreen, autoPause: false) && !MenuPauseRules.WorldRuns(pauseScreen, autoPause: false) &&
               !MenuPauseRules.WorldRuns(shopScreen, autoPause: true),
             "Terraria's pause rules: with Autopause off a shop keeps the world running and the settings pause it; with it on, both pause");
+
+        // The art gate: clean against the sprites on disk; a sprite the game needs that git does not track is reported.
+        var assetRoot = AppContext.BaseDirectory;
+        var onDisk = Directory.Exists(ItemAudit.SpriteDirectory(assetRoot))
+            ? Directory.EnumerateFiles(ItemAudit.SpriteDirectory(assetRoot), "*.png").Select(Path.GetFileNameWithoutExtension).OfType<string>()
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var cleanAssets = AssetCheck.Problems(assetRoot, onDisk);
+        var dropped = SpriteCatalog.ForEnemy(EnemyKind.MossSlime);
+        var droppedResolved = SpriteAtlas.ResolveName(dropped, onDisk.Contains);
+        var withoutOne = AssetCheck.Problems(assetRoot, onDisk.Where(name => !string.Equals(name, droppedResolved, StringComparison.OrdinalIgnoreCase))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase));
+        Check(cleanAssets.Count == 0 && withoutOne.Any(problem => problem.Contains(droppedResolved, StringComparison.OrdinalIgnoreCase)),
+            $"the asset check is clean, and a needed sprite missing from git is reported ({string.Join("; ", cleanAssets.Take(3))})");
 
         var tempRoot = Path.Combine(Path.GetTempPath(), $"rimtera-ui-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempRoot);
@@ -1661,6 +1676,7 @@ public static class CoreSelfTests
         BatchASelfTests.Run(Check);
         ArsenalSelfTests.Run(Check);
         DefenseSelfTests.Run(Check);
+        CreatureDefenseSelfTests.Run(Check); // creature defense tiers, armor penetration, no double hardmode rescale, immunities, lava, banners (0.1.9 A)
         WeaponStyleSelfTests.Run(Check);
         WorldGenSelfTests.Run(Check);
         ThemeSelfTests.Run(Check);
@@ -1689,7 +1705,12 @@ public static class CoreSelfTests
         ItemAuditSelfTests.Run(Check); // every item has a function and a sprite of its own (docs/ITEM_AUDIT.md)
         CreatureCoverageSelfTests.Run(Check); // every biome, event and boss has its creatures, leaders and summons (docs/CREATURE_COVERAGE.md)
         CraftingGuideSelfTests.Run(Check); // crafting guidance: recipe guide lookups, "close to" recipes, tooltips, the station AI's next steps
+        PlayerDebuffSelfTests.Run(Check); // 0.1.9 combat core: creature debuffs, afflictions, contact boxes, hurt variance (stream B)
         CraftingAuditSelfTests.Run(Check); // crafting progression: a felled tree builds the first station; every station and item is reachable (docs/CRAFTING_PROGRESSION.md)
+        SoundEventSelfTests.Run(Check); // 0.1.9 feedback: simulation sound events, despawns are not kills, dust under the cap, crit records (PE-4/5/7/14)
+        TooltipSelfTests.Run(Check); // 0.1.9 IC-17: the truthful item tooltip (class damage, real ammo, calibration, sets, sell value)
+        HealingLadderSelfTests.Run(Check); // 0.1.9 C1: healing and charge ladders, their gates, potion sickness, quick heal, cooked food
+        DropRuleSelfTests.Run(Check); // 0.1.9 C2-C5: drop chances and conditions, event drops, hearts and orbs, boss potions, 9999 stacks
         Console.WriteLine($"{passed} checks passed.");
         return 0;
     }

@@ -33,7 +33,9 @@ public sealed partial class GameSimulation
     public const float SharedTargetRadius = 6f;
 
     public static readonly StatusId[] CreatureAfflictions =
-        [StatusId.Burning, StatusId.Poison, StatusId.Frostbite, StatusId.ArmorShred, StatusId.Confused, StatusId.Marked];
+        [StatusId.Burning, StatusId.Poison, StatusId.Frostbite, StatusId.ArmorShred, StatusId.Confused, StatusId.Marked,
+         // 0.1.9 EN-17 (GameSimulation.Debuffs.cs): stronger venom, corroded defense, the salvage mark, wet.
+         StatusId.Venom, StatusId.Corroded, StatusId.SalvageMark, StatusId.Wet];
 
     private Random? _playerSystemsRandomStream;
     private Random? _luckRandomStream;
@@ -65,39 +67,62 @@ public sealed partial class GameSimulation
     public static float AfflictionSeconds(StatusId id) => id switch
     {
         StatusId.Burning => 4f, StatusId.Poison => 6f, StatusId.Frostbite => 4f,
-        StatusId.ArmorShred => 6f, StatusId.Confused => 3f, StatusId.Marked => 8f, _ => 0f
+        StatusId.ArmorShred => 6f, StatusId.Confused => 3f, StatusId.Marked => 8f,
+        StatusId.Venom => 5f, StatusId.Corroded => 6f, StatusId.SalvageMark => 10f, StatusId.Wet => 6f, _ => 0f
     };
 
     /// <summary>Damage per second an affliction deals.</summary>
     public static float AfflictionDamagePerSecond(StatusId id) => id switch
     {
-        StatusId.Burning => 6f, StatusId.Poison => 4f, StatusId.Frostbite => 2f, _ => 0f
+        StatusId.Burning => 6f, StatusId.Poison => 4f, StatusId.Frostbite => 2f, StatusId.Venom => CreatureVenomDps, _ => 0f
     };
 
-    /// <summary>True when the creature shrugs the affliction off (bosses ignore confusion; machines, fire- and ice-born resist their own kind).</summary>
+    /// <summary>
+    /// True when the creature shrugs the affliction off: anything that is not a creature affliction, and whatever its
+    /// archetype lists as <see cref="EnemyArchetype.Immune"/> (bosses ignore confusion; machines, fire- and frost-born
+    /// creatures resist their own kind; see <see cref="CreatureStatTable.DefaultImmunities"/>).
+    /// </summary>
     public static bool ResistsAffliction(EnemyAgent enemy, StatusId id)
     {
-        if (Array.IndexOf(CreatureAfflictions, id) < 0)
-            return true;
-        if (enemy.IsBoss && id == StatusId.Confused)
-            return true;
-        var name = enemy.DisplayName + " " + enemy.Kind;
-        bool Has(params string[] words) => words.Any(word => name.Contains(word, StringComparison.OrdinalIgnoreCase));
-        return id switch
+        ArgumentNullException.ThrowIfNull(enemy);
+        return Array.IndexOf(CreatureAfflictions, id) < 0 || enemy.Archetype.Immune.Contains(id);
+    }
+
+    /// <summary>Lava (liquid uranium) damage to a creature that is not lava-immune: 15 every half second (≈30/s) plus Burning.</summary>
+    public const float CreatureLavaDamage = 15f;
+    public const float CreatureLavaInterval = 0.5f;
+
+    /// <summary>
+    /// The enemy tick's lava check: a creature whose body center sits in lava (at least 0.35 deep, as for the player)
+    /// takes <see cref="CreatureLavaDamage"/> every <see cref="CreatureLavaInterval"/> and catches fire, unless its
+    /// archetype is <see cref="EnemyArchetype.LavaImmune"/>.
+    /// </summary>
+    private void TickCreatureLava(EnemyAgent enemy, float deltaSeconds)
+    {
+        if (enemy.Archetype.LavaImmune || enemy.Shielded)
+            return;
+        var cell = ClampCell(RegionMap.CellAt(enemy.Motion.Position + enemy.Motion.Size / 2f));
+        var data = World.GetCell(cell);
+        if (data.LiquidKind != LiquidKind.Lava || data.LiquidDepth < 0.35f)
         {
-            StatusId.Poison => Has("droid", "drone", "mech", "golem", "sentinel", "obelisk", "turret", "construct", "warship"),
-            StatusId.Burning => Has("ember", "magma", "pyro", "flare", "solar", "fire", "lava", "molten"),
-            StatusId.Frostbite => Has("frost", "glacial", "ice", "snow", "cryo", "rime"),
-            StatusId.Confused => Has("obelisk", "turret"),
-            _ => false
-        };
+            enemy.LavaTimer = 0f;
+            return;
+        }
+        enemy.LavaTimer -= deltaSeconds;
+        if (enemy.LavaTimer > 0f)
+            return;
+        enemy.LavaTimer += CreatureLavaInterval;
+        if (enemy.LavaTimer <= 0f)
+            enemy.LavaTimer = CreatureLavaInterval;
+        enemy.TakeDamage(CreatureLavaDamage);
+        AfflictEnemy(enemy, StatusId.Burning);
     }
 
     /// <summary>Afflicts a creature (bosses keep afflictions half as long). False when it resists.</summary>
     public bool AfflictEnemy(EnemyAgent enemy, StatusId id, float? seconds = null)
     {
         ArgumentNullException.ThrowIfNull(enemy);
-        if (!enemy.IsAlive || ResistsAffliction(enemy, id))
+        if (!enemy.IsAlive || ResistsAffliction(enemy, id) || !WetAllowsAffliction(enemy, id)) // wet creatures do not burn
             return false;
         var duration = seconds ?? AfflictionSeconds(id);
         enemy.Afflict(id, enemy.IsBoss ? duration * 0.5f : duration);
@@ -119,6 +144,8 @@ public sealed partial class GameSimulation
     public static (StatusId Status, int Chance)? WeaponAffliction(ItemDefinition item)
     {
         ArgumentNullException.ThrowIfNull(item);
+        if (ArsenalItems.WeaponAfflictions.TryGetValue(item.Id, out var authored)) // authored data first (ArsenalItems.Data.cs)
+            return authored;
         if (item.GrantsStatus is { } granted && Array.IndexOf(CreatureAfflictions, granted) >= 0 &&
             item.UseKind is not (ItemUseKind.Consumable or ItemUseKind.Food))
             return (granted, 100);
@@ -199,6 +226,8 @@ public sealed partial class GameSimulation
     {
         foreach (var enemy in _enemies)
         {
+            if (enemy.IsAlive && enemy.HasAffliction(StatusId.Burning))
+                SoakEnemyInWater(enemy); // water puts burning out
             if (!enemy.IsAlive || enemy.Afflictions.Count == 0)
                 continue;
             enemy.AfflictionPulse -= deltaSeconds;
@@ -389,11 +418,18 @@ public sealed partial class GameSimulation
     public bool BagReplacesBossLoot(EnemyAgent enemy) =>
         enemy.IsBoss && Difficulty >= WorldDifficulty.Brutal && PlayerSystemsContent.BagFor(enemy.Kind) is not null;
 
-    /// <summary>The guaranteed drops of a defeated creature, or its salvage cache on Brutal.</summary>
+    /// <summary>
+    /// The drops of a defeated creature that pass their chance and conditions (Fracture, night, difficulty, event; 0.1.9 C4),
+    /// or its salvage cache on Brutal.
+    /// </summary>
     private IReadOnlyList<NpcDropDefinition> BossDropsOrBag(EnemyAgent enemy) =>
         BagReplacesBossLoot(enemy) && PlayerSystemsContent.BagFor(enemy.Kind) is { } bag
             ? [new NpcDropDefinition(enemy.Kind, bag, 1)]
-            : NpcDropRegistry.GetDrops(enemy.Kind);
+            : NpcDropRegistry.Roll(enemy.Kind, DropContext, DropRandom);
+
+    /// <summary>What drop conditions see right now.</summary>
+    public NpcDropContext DropContext => new(FractureActive, IsNight, Difficulty,
+        _worldEvents.Active.Select(state => state.Kind).ToHashSet());
 
     /// <summary>Lucky extra drops, trophies (any difficulty, a small luck-tilted chance) and relics (Annihilation only).</summary>
     private void OnCreatureDefeatedPlayerSystems(EnemyAgent enemy)
@@ -424,7 +460,7 @@ public sealed partial class GameSimulation
         if (PlayerSystemsContent.BagBoss(bag) is not { } boss || !Player.Inventory.TryConsume(bag))
             return false;
         var center = PlayerCenter;
-        foreach (var drop in NpcDropRegistry.GetDrops(boss))
+        foreach (var drop in NpcDropRegistry.Roll(boss, DropContext, DropRandom))
             CollectOrDrop(drop.Item, drop.Quantity > 1 ? (int)MathF.Ceiling(drop.Quantity * 1.25f) : drop.Quantity, center);
         if (ArsenalItems.BossPools.TryGetValue(boss, out var pool) && pool.Length > 0)
             CollectOrDrop(pool[PlayerSystemsRandom.Next(pool.Length)], 1, center);

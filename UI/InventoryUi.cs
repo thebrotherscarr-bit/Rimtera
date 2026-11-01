@@ -173,7 +173,7 @@ public sealed class InventoryUiState : UiState
     private string? _housingReport;
     private UiTextElement? _guideCaption;
 
-    private enum Tab { Gear, Housing }
+    private enum Tab { Gear, Housing, Emotes }
 
     public InventoryUiState(Inventory playerInventory, InventoryUiController? controller = null, Inventory? chest = null,
         GameSimulation? game = null, GridPoint? chestCell = null, string chestTitle = "Chest", GuideLookupState? guide = null,
@@ -520,6 +520,7 @@ public sealed class InventoryUiState : UiState
         Tab("tab-crew", "Crew", 2, () => CrewRequested?.Invoke());
         Tab("tab-bestiary", "Bestiary", 3, () => BestiaryRequested?.Invoke());
         Tab("tab-feats", "Feats", 4, () => FeatsRequested?.Invoke());
+        Tab("tab-emotes", "Emotes", 5, () => SwitchTab(InventoryUiState.Tab.Emotes), _tab == InventoryUiState.Tab.Emotes);
         for (var i = 0; i < GameSimulation.LoadoutCount; i++)
         {
             var index = i;
@@ -535,6 +536,8 @@ public sealed class InventoryUiState : UiState
 
         if (_tab == InventoryUiState.Tab.Housing)
             AddHousing(game, gearTop);
+        else if (_tab == InventoryUiState.Tab.Emotes)
+            AddEmotes(game, gearTop);
         else
             AddEquipment(game, gearTop);
     }
@@ -627,6 +630,25 @@ public sealed class InventoryUiState : UiState
     }
 
     /// <summary>Terraria's housing panel: check the room you stand in, and who lives with you.</summary>
+    /// <summary>The emote palette (Terraria's emote menu): one button per emote; the backtick + 1-8 shortcut stays.</summary>
+    private void AddEmotes(GameSimulation game, float top)
+    {
+        Add(new UiTextElement("Emotes", "emotes-title", new UiStyle
+        {
+            Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(top), Width = UiLength.Px(120f), Height = UiLength.Px(24f)
+        }) { Scale = 0.8f, Color = new UiColor(242, 176, 64) });
+        var kinds = Enum.GetValues<EmoteKind>();
+        for (var i = 0; i < kinds.Length; i++)
+        {
+            var kind = kinds[i];
+            Add(new UiButtonElement(kind.ToString(), () => { game.PlayerEmote(kind); Status($"Emote: {kind}."); }, $"emote-{kind}", new UiStyle
+            {
+                Left = UiLength.Mixed(i % 2 == 0 ? -250f : -124f, 1f), Top = UiLength.Px(top + 28f + i / 2 * 32f),
+                Width = UiLength.Px(116f), Height = UiLength.Px(28f)
+            }) { TextScale = 0.75f });
+        }
+    }
+
     private void AddHousing(GameSimulation game, float top)
     {
         var left = UiLength.Mixed(-130f, 1f);
