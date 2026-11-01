@@ -141,7 +141,7 @@ public static partial class GraphicalSandbox
                      })
             {
                 var name = $"bg_{theme}_{layer}";
-                if (_sprites.Get(name) is not { } source)
+                if (_sprites.SizeOf(name) is not { } source)
                     continue;
                 var drawH = (int)(height * scale);
                 var drawW = Math.Max(1, source.Width * drawH / Math.Max(1, source.Height));

@@ -72,6 +72,8 @@ public static partial class GraphicalSandbox
         private WorldProfile? _activeWorld;
         private CharacterProfile? _activeCharacter;
         private bool _menuOpen = true;
+        /// <summary>PU-15: the map opacity changed while PageUp/PageDown was held; saved once it is let go.</summary>
+        private bool _mapOpacityDirty;
         private readonly ScreenTransition _transition = new();
         private readonly AudioEngine _audio = new();
         private readonly AudioDirector _audioDirector;
@@ -99,6 +101,8 @@ public static partial class GraphicalSandbox
 
             var dataDirectory = Environment.GetEnvironmentVariable("RIMTERA_DATA_DIR");
             _menu = string.IsNullOrWhiteSpace(dataDirectory) ? new MenuFlow() : new MenuFlow(dataDirectory: dataDirectory);
+            // PU-24: every game session records feats into the machine-wide store (feats.json beside config.json).
+            FeatStore.Active = _menu.Feats;
             _menu.ExitRequested += Close;
             _menu.WorldLaunchRequested += StartWorld;
             _menu.DisplayPreferencesChanged += ApplyDisplayPreferences;
@@ -454,8 +458,8 @@ public static partial class GraphicalSandbox
                         OpenCreativeMenu();
                     break;
                 case "MapStyle":
-                    _canvas.MapView = (GameCanvas.MapStyle)(((int)_canvas.MapView + 1) % 3);
-                    _canvas.Notify($"Map: {_canvas.MapView}.");
+                    _canvas.Notify($"Map: {MapDisplay.CycleStyle(_menu.Preferences)}.");
+                    _menu.SavePreferences();
                     break;
                 case "MinimapZoomIn": _canvas.ZoomMinimap(1); break;
                 case "MinimapZoomOut": _canvas.ZoomMinimap(-1); break;
@@ -984,8 +988,15 @@ public static partial class GraphicalSandbox
                 if (Held("MinimapZoomIn")) _canvas.ZoomFullscreenMap(1.05f);
                 if (Held("MinimapZoomOut")) _canvas.ZoomFullscreenMap(0.95f);
             }
-            if (!mapOpen && Held("MapAlphaUp")) _canvas.AdjustMapOpacity(0.015f);
-            if (!mapOpen && Held("MapAlphaDown")) _canvas.AdjustMapOpacity(-0.015f);
+            // PU-15: opacity is a preference; it is written once the key is let go, not every tick it is held.
+            var opacityHeld = !mapOpen && (Held("MapAlphaUp") || Held("MapAlphaDown"));
+            if (!mapOpen && Held("MapAlphaUp")) _mapOpacityDirty |= MapDisplay.AdjustOpacity(_menu.Preferences, MapDisplay.OpacityStep);
+            if (!mapOpen && Held("MapAlphaDown")) _mapOpacityDirty |= MapDisplay.AdjustOpacity(_menu.Preferences, -MapDisplay.OpacityStep);
+            if (_mapOpacityDirty && !opacityHeld)
+            {
+                _mapOpacityDirty = false;
+                _menu.SavePreferences();
+            }
             UpdateSmartSelect(overInterface);
             // Holding left and right together cancels out (Player.Update @3583-3602).
             var horizontal = mapOpen ? 0f : (Held("MoveRight") ? 1f : 0f) - (Held("MoveLeft") ? 1f : 0f);
@@ -1875,6 +1886,7 @@ public static partial class GraphicalSandbox
         /// <summary>Smoothed camera centre (tiles) and how quickly it closes on the player per axis (1/s).</summary>
         private Vector2 _camera;
         private bool _cameraReady;
+        private readonly ScreenShake _screenShake = new();
         private const float CameraFollowX = 14f;
         private const float CameraFollowY = 9f;
         private readonly List<(RectangleF Rect, int Slot)> _hotbarHits = new();
@@ -1911,17 +1923,9 @@ public static partial class GraphicalSandbox
         public bool HideUi { get; set; }
 
         /// <summary>Minimap and overlay opacity (PageUp / PageDown, Terraria's MapAlphaUp / MapAlphaDown).</summary>
-        public float MinimapOpacity { get; private set; } = 1f;
-        public float OverlayOpacity { get; private set; } = 0.55f;
-
-        /// <summary>Changes the opacity of whichever map is showing by <paramref name="step"/> (Terraria: ±0.015 a tick held).</summary>
-        public void AdjustMapOpacity(float step)
-        {
-            if (MapView == MapStyle.Overlay)
-                OverlayOpacity = Math.Clamp(OverlayOpacity + step, 0.05f, 1f);
-            else if (MapView == MapStyle.Minimap)
-                MinimapOpacity = Math.Clamp(MinimapOpacity + step, 0.05f, 1f);
-        }
+        /// <remarks>PU-15: kept in <see cref="GamePreferences"/>, so they survive a restart (MapDisplay.AdjustOpacity changes them).</remarks>
+        public float MinimapOpacity => _menu.Preferences.MinimapOpacity;
+        public float OverlayOpacity => _menu.Preferences.OverlayOpacity;
 
         /// <summary>Pans the fullscreen map by screen pixels (WASD while the map is open, as in Terraria).</summary>
         public void PanFullscreenMap(float dx, float dy)
@@ -1983,6 +1987,8 @@ public static partial class GraphicalSandbox
         {
             var g = e.Graphics;
             _profiler.Begin();
+            // PE-2: sprites used last frame may now be evicted; anything fetched during this frame stays pinned.
+            _sprites.BeginFrame();
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.NearestNeighbor;
             g.Clear(Color.FromArgb(12, 14, 22));
@@ -2194,7 +2200,7 @@ public static partial class GraphicalSandbox
             var walkerColumn = (int)(width * 0.36f / tile);
             if (surfaces.TryGetValue(walkerColumn, out var walkerGround))
             {
-                var animated = _sprites.Get("anim_walk_1") is not null;
+                var animated = _sprites.Find("anim_walk_1") is not null;
                 var frame = animated ? $"anim_walk_{(int)(time * 9) % 8 + 1}"
                     : ((int)(time * 6) & 1) == 0 ? "colonist_side_a" : "colonist_side_b";
                 DrawPropOnGround(g, frame, width * 0.36f, walkerGround, 70, 96, flip: !animated);
@@ -2330,6 +2336,12 @@ public static partial class GraphicalSandbox
             var screenTilesH = (Height - HudHeight) / (float)TileSize;
             var cameraLeft = Math.Clamp(_camera.X - screenTilesW / 2f, 0f, Math.Max(0f, game.World.Width - screenTilesW));
             var cameraTop = Math.Clamp(_camera.Y - screenTilesH / 2f, 0f, Math.Max(0f, game.World.Height - screenTilesH));
+            // PE-16: boss roars, explosions and heavy landings shake the view briefly (Settings → Interface → Screen shake).
+            // Only a running world shakes; the frozen image under a paused menu stays still (pausing ends a shake).
+            _screenShake.Observe(game);
+            var shake = _screenShake.Offset(frameDelta, _menu.Preferences.ScreenShake && (WorldRunsBehindMenu || !MenuOpen));
+            cameraLeft = MathF.Max(0f, cameraLeft + shake.X / TileSize);
+            cameraTop = MathF.Max(0f, cameraTop + shake.Y / TileSize);
             var startX = (int)MathF.Floor(cameraLeft);
             var startY = (int)MathF.Floor(cameraTop);
             var offsetX = (int)MathF.Round((cameraLeft - startX) * TileSize);
@@ -2338,7 +2350,7 @@ public static partial class GraphicalSandbox
             var viewH = Math.Max(1, (Height - HudHeight) / TileSize + 2);
             _viewStartX = startX + offsetX / (float)TileSize;
             _viewStartY = startY + offsetY / (float)TileSize;
-            _animator.HasAnimationFrames = _sprites.Get("anim_walk_1") is not null;
+            _animator.HasAnimationFrames = _sprites.Find("anim_walk_1") is not null;
             _animator.ShowDamageNumbers = _menu.Preferences.DamageNumbers;
             _animator.ParticleScale = (int)_menu.Preferences.Particles;
             _animator.Update(game, now, frameDelta);
@@ -2525,9 +2537,10 @@ public static partial class GraphicalSandbox
             }
             DrawHud(g, game);
             DrawBuffBar(g, game);
-            if (MapView == MapStyle.Overlay)
+            // PU-15: Settings → Map enabled hides the overlay as well as the minimap.
+            if (MapDisplay.DrawsOverlay(_menu.Preferences))
                 DrawMapOverlay(g, game);
-            else if (MapView == MapStyle.Minimap && _menu.Preferences.MinimapEnabled)
+            else if (MapDisplay.DrawsMinimap(_menu.Preferences))
                 DrawMinimap(g, game);
             DrawStatusPanel(g, game);
             DrawBossBar(g, game);
@@ -2650,7 +2663,7 @@ public static partial class GraphicalSandbox
             var maxW = (int)MathF.Max(6f, boxW * scale * 1.6f);
             var maxH = (int)MathF.Max(6f, boxH * scale);
             Bitmap? bitmap;
-            if (reference is not null && _sprites.Get(reference) is { } model && _sprites.Get(sprite) is { } frame)
+            if (reference is not null && _sprites.SizeOf(reference) is { } model && _sprites.SizeOf(sprite) is { } frame)
             {
                 var fit = MathF.Min(maxW / (float)model.Width, maxH / (float)model.Height);
                 bitmap = _sprites.GetScaled(sprite, Math.Max(1, (int)MathF.Round(frame.Width * fit)), Math.Max(1, (int)MathF.Round(frame.Height * fit)), flip);
@@ -2858,19 +2871,17 @@ public static partial class GraphicalSandbox
         private const int MinimapWidth = 280;
         private const int MinimapHeight = 150;
         /// <summary>Map style, cycled with F9 like the reference's map-style key: minimap → overlay → off.</summary>
-        public enum MapStyle : byte { Minimap, Overlay, Off }
+        /// <summary>The map style (PU-15: a preference, so it survives a restart).</summary>
+        private MapOverlayStyle MapView => _menu.Preferences.MapView;
 
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public MapStyle MapView { get; set; } = MapStyle.Minimap;
-
-        /// <summary>Screen pixels per map tile on the minimap and overlay; '=' and '-' change it.</summary>
-        private int _minimapScale = 2;
-        private int MinimapScale => _minimapScale;
+        /// <summary>Screen pixels per map tile on the minimap and overlay; '=' and '-' change it (a preference).</summary>
+        private int MinimapScale => Math.Clamp(_menu.Preferences.MinimapScale, 1, 6);
 
         public void ZoomMinimap(int delta)
         {
-            _minimapScale = Math.Clamp(_minimapScale + delta, 1, 6);
+            if (!MapDisplay.ZoomMinimap(_menu.Preferences, delta))
+                return;
+            _menu.SavePreferences();
             _minimap?.Dispose();
             _minimap = null;
             _overlayMap?.Dispose();
@@ -3136,6 +3147,14 @@ public static partial class GraphicalSandbox
                 if (frame.Contains(cx, cy))
                     g.FillEllipse(_restBar, cx - 2, cy - 2, 4, 4);
             }
+            // PU-15: every housed resident's head (the NPC sprite until head art exists).
+            foreach (var head in MapDisplay.NpcHeads(game))
+            {
+                var hx = frame.X + frame.Width / 2 + (head.Position.X - center.X) * MinimapScale;
+                var hy = frame.Y + frame.Height / 2 + (head.Position.Y - center.Y) * MinimapScale;
+                if (frame.Contains(hx, hy) && _sprites.GetFitted(head.Sprite, 14, 14) is { } face)
+                    g.DrawImageUnscaled(face, (int)(hx - face.Width / 2f), (int)(hy - face.Height / 2f));
+            }
             foreach (var enemy in game.Enemies.Where(enemy => enemy.IsAlive && enemy.IsBoss))
             {
                 var ex = frame.X + frame.Width / 2 + (enemy.Motion.Position.X - center.X) * MinimapScale;
@@ -3249,10 +3268,10 @@ public static partial class GraphicalSandbox
                 Icon(CharacterLook.Face(_sprites, agent.Profile.AppearanceValue.Normalized()), agent.Motion.Position.X, agent.Motion.Position.Y, iconSize - 4);
             if (!game.GuideMovedIn)
                 Icon("station_ai", game.Guide.Position.X, game.Guide.Position.Y, iconSize - 4);
-            // Town NPCs and bound survivors once their spot has been seen; blight hearts that were found and still stand.
-            foreach (var npc in game.TownNpcs)
-                if (Map.IsRevealed((int)npc.Motion.Position.X, (int)npc.Motion.Position.Y))
-                    Icon(npc.SpriteName, npc.Motion.Position.X, npc.Motion.Position.Y, iconSize - 4);
+            // PU-15: every housed resident's head wherever it is; bound survivors and homeless arrivals once their spot has
+            // been seen. Blight hearts that were found and still stand.
+            foreach (var head in MapDisplay.NpcHeads(game, Map.IsRevealed))
+                Icon(head.Sprite, head.Position.X, head.Position.Y, iconSize - 4);
             if (game.Features is { } features)
                 foreach (var heart in features.Hearts)
                     if (Map.IsRevealed(heart.X, heart.Y) && game.World.Contains(heart.X, heart.Y) &&
@@ -3445,7 +3464,7 @@ public static partial class GraphicalSandbox
         {
             var incidents = game.IncidentLog.Reverse().Take(3).ToArray();
             var lines = 4 + incidents.Length;
-            var minimapShown = _menu.Preferences.MinimapEnabled && MapView == MapStyle.Minimap;
+            var minimapShown = MapDisplay.DrawsMinimap(_menu.Preferences);
             var panel = new RectangleF(Width - 290, minimapShown ? VitalsHeight + MinimapHeight + 12 : VitalsHeight + 4, 280, 22 + lines * 18);
             _hudRects.Add(panel);
             DrawRivetedPanel(g, panel);

@@ -4,9 +4,6 @@ using Rimtera.World;
 
 namespace Rimtera.UI;
 
-/// <summary>Icon for a generic list card; locked icons draw as a dark silhouette.</summary>
-internal sealed record CardIcon(string Sprite, bool Locked = false);
-
 public static partial class GraphicalSandbox
 {
     /// <summary>Game screens opened from the world: storage, signs, the bestiary and achievements.</summary>
@@ -118,16 +115,7 @@ public static partial class GraphicalSandbox
             if (_game is null)
                 return;
             var tracker = _game.Achievements;
-            var entries = AchievementCatalog.All
-                .OrderBy(definition => tracker.IsUnlocked(definition.Id) ? 0 : 1)
-                .Select(definition =>
-                {
-                    var unlocked = tracker.IsUnlocked(definition.Id);
-                    var when = unlocked && tracker.UnlockTimes.TryGetValue(definition.Id, out var time) ? $"Unlocked {time.LocalDateTime:d MMM yyyy}" : "Locked";
-                    return new MenuEntry($"{definition.Name}  •  {definition.Description}  •  {definition.Category}  •  {when}", () => { },
-                        Tag: new CardIcon(definition.IconName, Locked: !unlocked));
-                })
-                .ToList();
+            var entries = MenuFlow.FeatEntries(tracker.IsUnlocked, tracker.UnlockTimes).ToList();
             ShowGameList("achievements", "Feats", entries, $"{tracker.UnlockedCount} of {tracker.TotalCount} unlocked");
         }
 
