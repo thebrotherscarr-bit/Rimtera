@@ -848,6 +848,12 @@ public sealed partial class GameSimulation
             case ItemId.HoverBikeKey:
                 ToggleMount(MountKind.HoverBike);
                 break;
+            case ItemId.AiCore:
+                if (!StationAiOnline && Player.Inventory.TryConsume(item.Id))
+                    RebuildStationAi();
+                else if (StationAiOnline)
+                    PostMessage("The station AI is running. Keep the core for when it is not.");
+                break;
             case ItemId.RecallCapsule:
                 if (!Player.Inventory.TryConsume(item.Id))
                     return true;

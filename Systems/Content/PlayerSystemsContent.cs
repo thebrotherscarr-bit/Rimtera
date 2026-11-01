@@ -119,6 +119,9 @@ public static class PlayerSystemsContent
             { GrantsStatus = StatusId.Battle, StatusDurationHours = 1f, Tier = 1, Rarity = ItemRarity.Common, Value = 20 });
         Add(new ItemDefinition(ItemId.CalmingStim, "Calming stim", ItemUseKind.Consumable, 30)
             { GrantsStatus = StatusId.Calm, StatusDurationHours = 1f, Tier = 1, Rarity = ItemRarity.Common, Value = 20 });
+        // 0.3.8: rebuilds a destroyed station AI. Made from raw materials at an unpowered bench, so a dark base can always make one.
+        Add(new ItemDefinition(ItemId.AiCore, "AI core", ItemUseKind.Utility, 5)
+            { Tier = 1, Rarity = ItemRarity.Uncommon, Value = 120, UseCooldownTicks = 30 });
         Add(Accessory(ItemId.CloverCircuit, "Clover circuit", 3) with { CritBonus = 2 });
         Add(Accessory(ItemId.BeaconHarness, "Beacon harness", 2) with { Defense = 3 });
         Add(Accessory(ItemId.ShroudCloak, "Shroud cloak", 2) with { MoveSpeedMultiplier = 1.04f });
@@ -162,6 +165,7 @@ public static class PlayerSystemsContent
         Add("sifter", ItemId.Sifter, 1, CraftingStationId.Workbench, (ItemId.FerriteBar, 4), (ItemId.WoodBlock, 8));
         Add("dye-vat", ItemId.DyeVat, 1, CraftingStationId.Workbench, (ItemId.WoodBlock, 10), (ItemId.CopperBar, 2));
         Add("fortune-tonic", ItemId.FortuneTonic, 1, CraftingStationId.ChemLab, (ItemId.DyePetals, 1), (ItemId.EmeraldShard, 1), (ItemId.Berry, 2));
+        Add("ai-core", ItemId.AiCore, 1, CraftingStationId.FieldWorkbench, (ItemId.EnergyCrystal, 8), (ItemId.CopperOre, 15), (ItemId.RockBlock, 20));
         Add("battle-stim", ItemId.BattleStim, 1, CraftingStationId.ChemLab, (ItemId.BioGel, 1), (ItemId.EmberrootHerb, 1), (ItemId.GlowSpore, 1));
         Add("calming-stim", ItemId.CalmingStim, 1, CraftingStationId.ChemLab, (ItemId.BioGel, 1), (ItemId.MoonglowHerb, 1), (ItemId.Berry, 2));
         Add("clover-circuit", ItemId.CloverCircuit, 1, CraftingStationId.TinkerBench, (ItemId.LuckyCharm, 1), (ItemId.EmeraldShard, 5));

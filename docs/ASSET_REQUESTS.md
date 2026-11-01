@@ -20,6 +20,7 @@ decides when ComfyUI runs. Each step that adds something to see or hear lists it
 |---|---|---|---|---|---|---|
 | `item_battle_stim` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §4.3, consumables.) A sci-fi combat stim injector: a slim glass vial in a riveted gunmetal casing with a red, glowing serum and an amber-gold cap. Signals "draws enemies to you". | 0.3.4 | open (kitbashed from the endurance stim) |
 | `item_calming_stim` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §4.3, consumables.) A sci-fi sedative stim injector: a slim glass vial in a riveted gunmetal casing with a pale blue, softly glowing serum and an amber-gold cap. Signals "calms the area". | 0.3.4 | open (kitbashed from the endurance stim) |
+| `item_ai_core` | Item icon | 64 px | Rimtera Art - Redraw item | (Style guide §3.1 tech glow, §4.3.) A compact station-AI core: a riveted gunmetal casing around a glowing cyan crystal heart, with small amber-gold status lights. It rebuilds a destroyed station AI. | 0.3.8 | open (kitbashed from the power cell) |
 
 ## Done
 

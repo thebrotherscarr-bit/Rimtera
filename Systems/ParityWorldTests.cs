@@ -215,17 +215,18 @@ public static class ParityWorldTests
         stakes.HurtTownNpc(ai, 20f);
         var warned = stakes.LastMessage.Contains("under attack", StringComparison.Ordinal) && !stakes.RunOver;
         stakes.HurtTownNpc(ai, 1e6f);
-        var lost = stakes.Outcome == RunOutcome.Lost && stakes.OutcomeReason is { Length: > 0 } &&
-                   stakes.Chronicle.Any(entry => entry.Text.Contains("touched down", StringComparison.Ordinal)) &&
-                   stakes.Chronicle.Any(entry => entry.Text.Contains("Station AI was slain", StringComparison.Ordinal));
+        // 0.3.8: its death no longer ends the run; the machines go dark until an AI core rebuilds it (StationPowerSelfTests).
+        var downed = !stakes.RunOver && !stakes.StationAiOnline &&
+                     stakes.Chronicle.Any(entry => entry.Text.Contains("touched down", StringComparison.Ordinal)) &&
+                     stakes.Chronicle.Any(entry => entry.Text.Contains("Station AI was slain", StringComparison.Ordinal)) &&
+                     stakes.Chronicle.Any(entry => entry.Text.Contains("machines went dark", StringComparison.Ordinal));
         var restored = GameSimulation.Restore(stakes.CaptureSnapshot());
-        var keptOnLoad = restored.Outcome == RunOutcome.Lost && restored.Chronicle.Count == stakes.Chronicle.Count &&
-                         restored.OutcomeReason == stakes.OutcomeReason;
+        var keptOnLoad = !restored.StationAiOnline && !restored.RunOver && restored.Chronicle.Count == stakes.Chronicle.Count;
 
         var explorer = Housed(CharacterDifficulty.Explorer, 9431);
         explorer.HurtTownNpc(Ai(explorer), 1e6f);
-        check(warned && lost && keptOnLoad && !explorer.RunOver && !explorer.PeopleDieForGood,
-            "the station AI warns when hurt and its death ends the run (not on Explorer); the outcome and chronicle survive a save");
+        check(warned && downed && keptOnLoad && !explorer.RunOver && explorer.StationAiOnline && !explorer.PeopleDieForGood,
+            "the station AI warns when hurt; its death takes it down (machines dark) rather than ending the run, not on Explorer; this and the chronicle survive a save");
 
         // Terraria's housing assignment: a resident moves into the room the player names; a claimed room is refused.
         var town = Housed(CharacterDifficulty.Classic, 9432);

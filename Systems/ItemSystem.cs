@@ -1386,6 +1386,8 @@ public enum ItemId : ushort
     HeartPickup = 9507, ChargeOrb = 9508,
     // ---- Spawn controls (0.3.4, EN-8): Terraria's battle and calming potions ----
     BattleStim = 9600, CalmingStim = 9601,
+    // ---- The station AI's power (0.3.8): a new core rebuilds a destroyed AI ----
+    AiCore = 9602,
 }
 
 public enum ItemUseKind : byte

@@ -161,7 +161,8 @@ public sealed partial class GameSimulation : IStoryHost
         Tiles = new TileCatalog();
         Items = new ItemCatalog();
         Crafting = new CraftingSystem(Items);
-        Crafting.ResearchGate = ResearchLock; // 0.3.7: recipes a boss's research tier still locks
+        // 0.3.7: recipes a boss's research tier still locks; 0.3.8: machines the station AI cannot power.
+        Crafting.ResearchGate = recipe => ResearchLock(recipe) ?? PowerLock(recipe);
         World = new TileGrid(width, height);
         _hazardChoice = hazard;
         var resolvedHazard = hazard is { } chosen ? WorldSettings.Resolve(chosen, seed) : (WorldHazard?)null;
@@ -817,6 +818,8 @@ public sealed partial class GameSimulation : IStoryHost
     public CraftingResult TryCraft(string recipeId)
     {
         var result = Crafting.TryCraft(recipeId, Player.Inventory, CreateCraftingEnvironment(), RollCalibration);
+        if (result.Success && Crafting.FindById(recipeId) is { } crafted)
+            SpendCraftPower(crafted); // 0.3.8: a craft at a machine draws the station AI's power
         if (result.Success) SoundEvents.Emit(SoundEventKind.Craft, SoundEventQueue.CraftVariant(Crafting.FindById(recipeId)), PlayerCenter, (int)(result.Output ?? 0));
         PostMessage(result.Message);
         return result;

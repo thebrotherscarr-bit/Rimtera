@@ -701,6 +701,7 @@ _PLAYER_SYSTEMS = {
     "item_fortune_tonic": ("item_tech_tonic", [("hue", 0.33, 1.2)]),
     "item_battle_stim": ("item_endurance_stim", [("hue", 0.0, 1.3)]),
     "item_calming_stim": ("item_endurance_stim", [("hue", 0.58, 0.8)]),
+    "item_ai_core": ("item_power_cell", [("hue", 0.5, 1.2), ("glow", (90, 220, 255))]),
     "item_clover_circuit": ("item_lucky_charm", [("hue", 0.36, 1.3), ("glow", (120, 255, 140))]),
     "item_beacon_harness": ("item_gunners_harness", [("hue", 0.02, 1.3), ("glow", (255, 120, 80))]),
     "item_shroud_cloak": ("item_ghost_cloak", [("val", 0.6), ("tint", (40, 40, 70), 0.4)]),

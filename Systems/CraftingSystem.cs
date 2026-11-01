@@ -547,7 +547,7 @@ public sealed class CraftingSystem
     }
 
     /// <summary>Everything a recipe needs except its ingredients: the guide unlock, stations, biome and liquids.</summary>
-    /// <summary>Why a recipe is locked by research, or null when it is free (0.3.7; set by the game, null in the audit).</summary>
+    /// <summary>Why the game locks a recipe right now, or null when it is free: research (0.3.7) and the station AI's power (0.3.8). Set by the game; null in the audit.</summary>
     public Func<RecipeDefinition, string?>? ResearchGate { get; set; }
 
     public CraftingResult CheckConditions(RecipeDefinition recipe, CraftingEnvironment environment) =>

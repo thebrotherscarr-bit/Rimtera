@@ -94,6 +94,8 @@ public sealed class DevConsole
         new("weather", "weather clear|rain|storm|snow|dust|fog [0-1]", "Forces the weather.", true, Weather),
         new("spawnrate", "spawnrate <multiplier 0-10>", "Scales natural spawning (0 stops it, 1 is normal).", true, SpawnRate),
         new("where", "where", "Prints your tile, biome, depth layer and the time.", false, _ => Where()),
+        new("power", "power | power set <0-1000> | power tier <1-5> | power feed", "Shows the station AI's power, sets it or its tier, or feeds it from your bag.", true, Power),
+        new("ai", "ai down | ai rebuild", "Takes the station AI down (machines go dark) or rebuilds it.", true, Ai),
         new("research", "research list | research done <tier>|all | research reset <tier>|all", "Lists the research tiers, finishes one or all, or puts them back.", true, Research),
     ];
 
@@ -340,6 +342,45 @@ public sealed class DevConsole
                 return [$"Reset: {string.Join(", ", tiers.Select(tier => tier.Name))}."];
             default:
                 throw new ConsoleError($"'{verb}' is not list, done or reset.");
+        }
+    }
+
+    private IEnumerable<string> Power(string[] args)
+    {
+        var verb = args.Length == 0 ? "show" : args[0].ToLowerInvariant();
+        switch (verb)
+        {
+            case "show":
+                break;
+            case "set":
+                _game.SetStationPower(power: Int(Need(args, 1, "an amount"), 0, GameSimulation.MaxPower));
+                break;
+            case "tier":
+                _game.SetStationPower(tier: Int(Need(args, 1, "a tier"), 1, 5));
+                break;
+            case "feed":
+                return [_game.FeedStationAi()];
+            default:
+                throw new ConsoleError($"'{verb}' is not set, tier or feed.");
+        }
+        return [$"Station AI {(_game.StationAiOnline ? "online" : "DOWN")}: power {_game.StationPower}/{GameSimulation.MaxPower}, tier {_game.StationPowerTier}."];
+    }
+
+    private IEnumerable<string> Ai(string[] args)
+    {
+        var verb = Need(args, 0, "down or rebuild").ToLowerInvariant();
+        switch (verb)
+        {
+            case "down":
+                if (_game.TownNpcs.FirstOrDefault(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound) is { } ai)
+                    _game.HurtTownNpc(ai, 1e9f);
+                else
+                    _game.Flags.Set(GameSimulation.AiDownFlag);
+                return [_game.StationAiOnline ? "The station AI is still online (on this setting it comes back like any resident)." : "The station AI is down."];
+            case "rebuild":
+                return [_game.RebuildStationAi() ? "The station AI is rebuilt." : "The station AI is already online."];
+            default:
+                throw new ConsoleError($"'{verb}' is not down or rebuild.");
         }
     }
 
