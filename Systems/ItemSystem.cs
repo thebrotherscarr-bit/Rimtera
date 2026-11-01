@@ -1755,18 +1755,72 @@ public sealed class Inventory
     private readonly IReadOnlyList<ItemStack> _readOnlySlots;
     private readonly ItemCatalog _catalog;
 
-    public Inventory(ItemCatalog catalog, int slotCount = 24)
+    /// <summary>
+    /// A bag of <paramref name="slotCount"/> general slots, followed by <paramref name="coinSlots"/> slots that only take
+    /// credits and <paramref name="ammoSlots"/> that only take ammunition (Terraria's slots 50–53 and 54–57).
+    /// </summary>
+    public Inventory(ItemCatalog catalog, int slotCount = 24, int coinSlots = 0, int ammoSlots = 0)
     {
         ArgumentNullException.ThrowIfNull(catalog);
-        if (slotCount < 1)
+        if (slotCount < 1 || coinSlots < 0 || ammoSlots < 0)
             throw new ArgumentOutOfRangeException(nameof(slotCount));
         _catalog = catalog;
-        _slots = new ItemStack[slotCount];
+        BagSlots = slotCount;
+        CoinSlots = coinSlots;
+        AmmoSlots = ammoSlots;
+        _slots = new ItemStack[slotCount + coinSlots + ammoSlots];
         _readOnlySlots = Array.AsReadOnly(_slots);
     }
 
     public ItemCatalog Catalog => _catalog;
+    /// <summary>Every slot: the bag, then the coin slots, then the ammo slots.</summary>
     public int SlotCount => _slots.Length;
+    /// <summary>The general slots (the hotbar and the bag grid); sort, deposit and quick stack work only here.</summary>
+    public int BagSlots { get; }
+    public int CoinSlots { get; }
+    public int AmmoSlots { get; }
+    public int CoinSlotStart => BagSlots;
+    public int AmmoSlotStart => BagSlots + CoinSlots;
+
+    public bool IsCoinSlot(int slot) => slot >= CoinSlotStart && slot < AmmoSlotStart;
+    public bool IsAmmoSlot(int slot) => slot >= AmmoSlotStart && slot < _slots.Length;
+
+    public static bool IsCoin(ItemId item) => item == ItemId.Credits;
+
+    public bool IsAmmo(ItemId item) =>
+        _catalog.Contains(item) && _catalog[item] is var definition &&
+        (definition.UseKind == ItemUseKind.Ammunition || definition.AmmoKind != AmmoClass.None);
+
+    /// <summary>True when <paramref name="item"/> may sit in <paramref name="slot"/>: coin slots take credits, ammo slots ammunition.</summary>
+    public bool Accepts(int slot, ItemId item) =>
+        IsCoinSlot(slot) ? IsCoin(item) : !IsAmmoSlot(slot) || IsAmmo(item);
+
+    /// <summary>
+    /// The order slots fill in when <paramref name="item"/> is picked up: credits go to the coin slots first and ammunition
+    /// to the ammo slots first, as in Terraria; everything else goes only to the bag.
+    /// </summary>
+    private IEnumerable<int> FillOrder(ItemId item)
+    {
+        if (CoinSlots > 0 && IsCoin(item))
+            for (var i = CoinSlotStart; i < AmmoSlotStart; i++)
+                yield return i;
+        else if (AmmoSlots > 0 && IsAmmo(item))
+            for (var i = AmmoSlotStart; i < _slots.Length; i++)
+                yield return i;
+        for (var i = 0; i < BagSlots; i++)
+            yield return i;
+    }
+
+    /// <summary>
+    /// The order slots are spent in: the ammo slots first (Terraria fires from them before the bag), then the rest in order.
+    /// </summary>
+    public IEnumerable<int> UseOrder()
+    {
+        for (var i = AmmoSlotStart; i < _slots.Length; i++)
+            yield return i;
+        for (var i = 0; i < AmmoSlotStart; i++)
+            yield return i;
+    }
     public int SelectedSlot { get; private set; }
 
     /// <summary>
@@ -1823,8 +1877,11 @@ public sealed class Inventory
     {
         var maxStack = _catalog[stack.ItemId].MaxStack;
         var remaining = stack.Count;
-        for (var i = 0; i < slots.Length && remaining > 0; i++)
+        var order = FillOrder(stack.ItemId).ToArray();
+        foreach (var i in order)
         {
+            if (remaining <= 0)
+                break;
             var current = slots[i];
             if (current.IsEmpty || current.ItemId != stack.ItemId || current.Calibration != stack.Calibration || current.Count >= maxStack)
                 continue;
@@ -1832,8 +1889,10 @@ public sealed class Inventory
             slots[i] = current with { Count = current.Count + moved };
             remaining -= moved;
         }
-        for (var i = 0; i < slots.Length && remaining > 0; i++)
+        foreach (var i in order)
         {
+            if (remaining <= 0)
+                break;
             if (!slots[i].IsEmpty)
                 continue;
             var moved = Math.Min(remaining, maxStack);
@@ -1876,7 +1935,8 @@ public sealed class Inventory
 
         var maxStack = _catalog[offered.ItemId].MaxStack;
         var current = _slots[slot];
-        if (!current.IsEmpty && (current.ItemId != offered.ItemId || current.Calibration != offered.Calibration))
+        if (!Accepts(slot, offered.ItemId) ||
+            !current.IsEmpty && (current.ItemId != offered.ItemId || current.Calibration != offered.Calibration))
             return offered;
 
         var capacity = current.IsEmpty ? maxStack : Math.Max(0, maxStack - current.Count);
@@ -1890,10 +1950,12 @@ public sealed class Inventory
         return offered with { Count = offered.Count - moved };
     }
 
-    /// <summary>Swaps one inventory slot with a UI cursor stack.</summary>
+    /// <summary>Swaps one inventory slot with a UI cursor stack (refused when the slot does not take the cursor's item).</summary>
     public void SwapWithCursor(int slot, ref ItemStack cursorStack)
     {
         ValidateSlot(slot);
+        if (!cursorStack.IsEmpty && !Accepts(slot, cursorStack.ItemId))
+            return;
         (cursorStack, _slots[slot]) = (_slots[slot], cursorStack);
     }
 
@@ -1913,13 +1975,13 @@ public sealed class Inventory
             return 0;
 
         var source = _slots[sourceSlot];
-        if (source.IsEmpty)
+        if (source.IsEmpty || !destination.Accepts(destinationSlot, source.ItemId))
             return 0;
         var target = destination._slots[destinationSlot];
 
         if (!target.IsEmpty && (target.ItemId != source.ItemId || target.Calibration != source.Calibration))
         {
-            if (!allowSwap || quantity < source.Count)
+            if (!allowSwap || quantity < source.Count || !Accepts(sourceSlot, target.ItemId))
                 return 0;
             destination._slots[destinationSlot] = source;
             _slots[sourceSlot] = target;
@@ -1965,8 +2027,9 @@ public sealed class Inventory
     {
         var maxStack = _catalog[itemId].MaxStack;
         var capacity = 0;
-        foreach (var stack in _slots)
-            capacity += stack.IsEmpty ? maxStack
+        foreach (var slot in FillOrder(itemId))
+            if (_slots[slot] is var stack)
+                capacity += stack.IsEmpty ? maxStack
                 : stack.ItemId == itemId && stack.Calibration == calibration ? Math.Max(0, maxStack - stack.Count) : 0;
         return capacity;
     }
@@ -1975,7 +2038,7 @@ public sealed class Inventory
 
     public int FindSlot(ItemId itemId)
     {
-        for (var i = 0; i < _slots.Length; i++)
+        foreach (var i in UseOrder())
         {
             if (!_slots[i].IsEmpty && _slots[i].ItemId == itemId)
                 return i;
@@ -1990,29 +2053,7 @@ public sealed class Inventory
     {
         if (quantity <= 0)
             return 0;
-        var maxStack = _catalog[itemId].MaxStack;
-        var remaining = quantity;
-
-        for (var i = 0; i < _slots.Length && remaining > 0; i++)
-        {
-            var stack = _slots[i];
-            if (stack.IsEmpty || stack.ItemId != itemId || stack.Calibration != calibration || stack.Count >= maxStack)
-                continue;
-            var moved = Math.Min(remaining, maxStack - stack.Count);
-            _slots[i] = stack with { Count = stack.Count + moved };
-            remaining -= moved;
-        }
-
-        for (var i = 0; i < _slots.Length && remaining > 0; i++)
-        {
-            if (!_slots[i].IsEmpty)
-                continue;
-            var moved = Math.Min(remaining, maxStack);
-            _slots[i] = new ItemStack(itemId, moved, calibration);
-            remaining -= moved;
-        }
-
-        return quantity - remaining;
+        return quantity - AddInto(_slots, new ItemStack(itemId, quantity, calibration));
     }
 
     public bool TryConsume(ItemId itemId, int quantity = 1)
@@ -2029,8 +2070,10 @@ public sealed class Inventory
             Cursor = onCursor - spent > 0 ? Cursor with { Count = onCursor - spent } : default;
             remaining -= spent;
         }
-        for (var i = 0; i < _slots.Length && remaining > 0; i++)
+        foreach (var i in UseOrder())
         {
+            if (remaining <= 0)
+                break;
             var stack = _slots[i];
             if (stack.IsEmpty || stack.ItemId != itemId)
                 continue;
@@ -2063,24 +2106,8 @@ public sealed class Inventory
             Consume(working, itemId, quantity);
         }
 
-        var remaining = outputQuantity;
-        for (var i = 0; i < working.Length && remaining > 0; i++)
-        {
-            var stack = working[i];
-            if (stack.IsEmpty || stack.ItemId != outputItemId || stack.Calibration != calibration || stack.Count >= outputDefinition.MaxStack)
-                continue;
-            var moved = Math.Min(remaining, outputDefinition.MaxStack - stack.Count);
-            working[i] = stack with { Count = stack.Count + moved };
-            remaining -= moved;
-        }
-        for (var i = 0; i < working.Length && remaining > 0; i++)
-        {
-            if (!working[i].IsEmpty)
-                continue;
-            var moved = Math.Min(remaining, outputDefinition.MaxStack);
-            working[i] = new ItemStack(outputItemId, moved, calibration);
-            remaining -= moved;
-        }
+        _ = outputDefinition;
+        var remaining = AddInto(working, new ItemStack(outputItemId, outputQuantity, calibration));
         if (remaining > 0)
             return false;
 
@@ -2131,10 +2158,10 @@ public sealed class Inventory
     /// </summary>
     public void Sort(int firstSlot = HotbarSlots)
     {
-        firstSlot = Math.Clamp(firstSlot, 0, _slots.Length);
+        firstSlot = Math.Clamp(firstSlot, 0, BagSlots);
         var movable = new List<int>();
         var loose = new List<ItemStack>();
-        for (var i = firstSlot; i < _slots.Length; i++)
+        for (var i = firstSlot; i < BagSlots; i++)
         {
             if (_slots[i].IsEmpty)
             {
@@ -2186,7 +2213,7 @@ public sealed class Inventory
     };
 
     /// <summary>
-    /// Moves every stack from <paramref name="firstSlot"/> on (favorites skipped) into <paramref name="destination"/>,
+    /// Moves every bag stack from <paramref name="firstSlot"/> on (favorites, coin and ammo slots skipped) into <paramref name="destination"/>,
     /// merging into matching stacks first. With <paramref name="onlyMatching"/> only items the destination already
     /// holds move (quick stack). Returns the number of items moved.
     /// </summary>
@@ -2196,7 +2223,7 @@ public sealed class Inventory
         if (ReferenceEquals(destination, this))
             return 0;
         var moved = 0;
-        for (var i = Math.Max(0, firstSlot); i < _slots.Length; i++)
+        for (var i = Math.Max(0, firstSlot); i < BagSlots; i++)
         {
             var stack = _slots[i];
             if (stack.IsEmpty || stack.Favorite)

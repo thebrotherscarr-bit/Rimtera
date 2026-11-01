@@ -358,7 +358,8 @@ public static class BatchBSelfTests
         var hub = new Rimtera.UI.InventoryUiState(keeper.Player.Inventory, chest: chest, game: keeper, chestCell: chestCell);
         var ids = hub.DescendantsAndSelf().Select(element => element.Id).ToHashSet();
         var playerSlots = hub.Slots.Where(slot => ReferenceEquals(slot.Inventory, keeper.Player.Inventory)).ToArray();
-        check(keeper.Player.Inventory.SlotCount == GameSimulation.PlayerInventorySlots && playerSlots.Length == 50 &&
+        check(keeper.Player.Inventory.BagSlots == GameSimulation.PlayerInventorySlots &&
+              playerSlots.Length == GameSimulation.PlayerTotalSlots && ids.Contains("player-coins-label") && ids.Contains("player-ammo-label") &&
               playerSlots[0].Badge == "1" && playerSlots[9].Badge == "0" && playerSlots[10].Badge is null &&
               new[] { "inventory-sort", "inventory-quick-stack", "inventory-trash", "inventory-wires", "chest-loot-all", "chest-deposit-all",
                       "chest-quick-stack", "chest-restock", "chest-sort", "crafting-guide", "tab-housing", "tab-crew", "tab-bestiary",

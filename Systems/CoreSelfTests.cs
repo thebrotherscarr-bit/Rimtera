@@ -526,7 +526,8 @@ public static class CoreSelfTests
             "world save records the character used for Continue and Load");
         var legacyState = savedState with { Inventory = savedState.Inventory.Take(24).ToArray() };
         var legacyGame = GameSimulation.Restore(legacyState);
-        Check(legacyGame.Player.Inventory.SlotCount == GameSimulation.PlayerInventorySlots &&
+        Check(legacyGame.Player.Inventory.SlotCount == GameSimulation.PlayerTotalSlots &&
+              legacyGame.Player.Inventory.BagSlots == GameSimulation.PlayerInventorySlots &&
               legacyGame.Player.Inventory.Slots.Take(24).SequenceEqual(savedState.Inventory.Take(24)) &&
               legacyGame.Player.Inventory.Slots.Skip(24).All(stack => stack.IsEmpty),
             "saves from the old 24-slot inventory load into the 50-slot one, items in place and the new slots empty");

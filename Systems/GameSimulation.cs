@@ -201,7 +201,7 @@ public sealed partial class GameSimulation : IStoryHost
         _storyteller = new Storyteller(seed);
 
         // Starting kit (StarterKits): Creative characters get their supply drop on first entry instead.
-        var inventory = new Inventory(Items, PlayerInventorySlots);
+        var inventory = new Inventory(Items, PlayerInventorySlots, PlayerCoinSlots, PlayerAmmoSlots);
         var kitRandom = new Random(seed ^ 0x57A27E);
         if (PlayerProfile.Difficulty != CharacterDifficulty.Creative)
             foreach (var (item, count, calibrated) in StarterKits.Standard)
@@ -495,9 +495,10 @@ public sealed partial class GameSimulation : IStoryHost
             game._ticker.Fractured = true;
         }
 
-        // Saves from before the 50-slot (Terraria 10 × 5) inventory carry 24 slots; the new ones start empty.
-        var savedSlots = snapshot.Inventory.Length < PlayerInventorySlots
-            ? snapshot.Inventory.Concat(Enumerable.Repeat(default(ItemStack), PlayerInventorySlots - snapshot.Inventory.Length)).ToArray()
+        // Saves from before the 50-slot (Terraria 10 × 5) inventory carry 24 slots, and saves from before 0.1.10 have no
+        // coin or ammo slots; the new ones start empty.
+        var savedSlots = snapshot.Inventory.Length < PlayerTotalSlots
+            ? snapshot.Inventory.Concat(Enumerable.Repeat(default(ItemStack), PlayerTotalSlots - snapshot.Inventory.Length)).ToArray()
             : snapshot.Inventory;
         if (!game.Player.Inventory.RestoreState(savedSlots, snapshot.SelectedInventorySlot))
             throw new InvalidDataException("The saved inventory layout is invalid.");
@@ -774,7 +775,7 @@ public sealed partial class GameSimulation : IStoryHost
     {
         if (direction == 0)
             return false;
-        var slots = Player.Inventory.SlotCount;
+        var slots = Player.Inventory.BagSlots;
         var step = Math.Sign(direction);
         for (var offset = 1; offset <= slots; offset++)
         {
