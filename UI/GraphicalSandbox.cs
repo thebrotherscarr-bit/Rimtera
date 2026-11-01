@@ -1725,6 +1725,8 @@ public static partial class GraphicalSandbox
         private readonly LightMap _lighting = new();
         private readonly ActorAnimator _animator = new();
         private Bitmap? _pausedWorld;
+        /// <summary>The bitmap DrawWorld is drawing into, if any: High lighting multiplies its pixels directly.</summary>
+        private Bitmap? _worldTarget;
         private ItemStack? _hoveredSlotStack;
         private GameSimulation? _pausedGame;
         private double _lastWorldFrame;
@@ -2004,7 +2006,9 @@ public static partial class GraphicalSandbox
                     world.InterpolationMode = InterpolationMode.NearestNeighbor;
                     world.SmoothingMode = g.SmoothingMode;
                     world.Clear(Color.FromArgb(12, 14, 22));
+                    _worldTarget = _pausedWorld;
                     DrawWorld(world, game);
+                    _worldTarget = null;
                     // The dim is baked in so the screen draws one opaque image under the menu.
                     // Terraria doesn't dim the world behind the inventory, which is played through.
                     if (!light)
@@ -2479,7 +2483,7 @@ public static partial class GraphicalSandbox
             _lighting.Compute(game.World, game.Tiles, startX, startY, viewW, viewH, game.SkyLightLevel, lamps, present: lighting != LightingQuality.Off);
             _profiler.Mark("light calc");
             if (lighting != LightingQuality.Off)
-                _lighting.Draw(g, 0, 0, TileSize);
+                _lighting.Draw(g, 0, 0, TileSize, _worldTarget); // High multiplies the drawn scene per channel (LightMap.Draw)
             _profiler.Mark("light draw");
             // The map remembers whatever is lit around the player (the light map's padded window).
             Map?.RevealFromLight(game.World, _lighting, startX - LightMap.Padding, startY - LightMap.Padding,
