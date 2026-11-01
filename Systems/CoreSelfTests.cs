@@ -1683,6 +1683,7 @@ public static class CoreSelfTests
         DefenceSelfTests.Run(Check); // 0.7.3: outpost defences
         RelaySelfTests.Run(Check); // 0.7.6: pylons are relays
         AffinitySelfTests.Run(Check); // 0.7.7: station affinity
+        RelayRaidSelfTests.Run(Check); // 0.7.8: raiders hit relays
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab

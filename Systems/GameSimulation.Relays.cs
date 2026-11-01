@@ -19,6 +19,62 @@ public sealed partial class GameSimulation
 
     private static string RelayKey(GridPoint cell) => $"relay.{cell.X}.{cell.Y}";
 
+    // ---- 0.7.8: raiders hit relays ----
+    /// <summary>A relay's most integrity; how near a hostile must be to hit it (tiles), and how often it hits (seconds).</summary>
+    public const int RelayMaxIntegrity = 200;
+    public const float RelayHitReach = 2.5f, RelayHitInterval = 1f;
+    private float _relayHitTimer;
+
+    /// <summary>A relay's integrity (0 to <see cref="RelayMaxIntegrity"/>); full until something hits it.</summary>
+    public int RelayIntegrity(GridPoint cell) =>
+        Flags.IsSet(RelayKey(cell) + ".hp") ? (int)Flags.Get(RelayKey(cell) + ".hp") - 1 : RelayMaxIntegrity;
+
+    private void SetRelayIntegrity(GridPoint cell, int value) =>
+        SetFlagValue(RelayKey(cell) + ".hp", Math.Clamp(value, 0, RelayMaxIntegrity) + 1);
+
+    /// <summary>
+    /// Each tick (0.7.8): every hostile within <see cref="RelayHitReach"/> tiles of a relay hits it once a second for its
+    /// attack damage. A relay worn to nothing is destroyed: it falls, with a letter, and whatever it powered goes dark.
+    /// </summary>
+    private void UpdateRelayDamage(float deltaSeconds)
+    {
+        _relayHitTimer -= deltaSeconds;
+        if (_relayHitTimer > 0f)
+            return;
+        _relayHitTimer = RelayHitInterval;
+        if (!_enemies.Any(enemy => enemy.IsAlive && !enemy.IsPassive))
+            return;
+        foreach (var pylon in Pylons)
+        {
+            var at = new System.Numerics.Vector2(pylon.Cell.X + 0.5f, pylon.Cell.Y);
+            var hits = _enemies.Where(enemy => enemy.IsAlive && !enemy.IsPassive &&
+                    System.Numerics.Vector2.Distance(enemy.Motion.Position + enemy.Motion.Size / 2f, at) <= RelayHitReach)
+                .Sum(enemy => Math.Max(1f, enemy.AttackDamage));
+            if (hits <= 0f)
+                continue;
+            var left = RelayIntegrity(pylon.Cell) - (int)MathF.Ceiling(hits);
+            SetRelayIntegrity(pylon.Cell, left);
+            if (left > 0)
+                continue;
+            DestroyRelay(pylon);
+        }
+    }
+
+    private void DestroyRelay(PylonInfo pylon)
+    {
+        var place = PylonPlace(pylon);
+        World.SetTile(pylon.Cell, TileId.Air);
+        _pylons.Remove(pylon.Cell);
+        foreach (var part in new[] { ".charge", ".tier", ".hp" })
+            Flags.Clear(RelayKey(pylon.Cell) + part);
+        Flags.Increment("history.relays_lost");
+        SendLetter(LetterKind.Threat, $"Relay destroyed: {place}",
+            $"Raiders tore down the {pylon.Name.ToLowerInvariant()} at {place}. Its machines run unpowered and travel there is cut off. Build a new pylon to restore it.",
+            tag: RelayKey(pylon.Cell));
+        Record($"The relay at {place} was destroyed.");
+        PostMessage($"The relay at {place} was destroyed!");
+    }
+
     /// <summary>A relay's charge (0 to <see cref="RelayCapacity"/>); a relay seen for the first time starts with <see cref="RelayStartCharge"/>.</summary>
     public int RelayCharge(GridPoint cell)
     {
@@ -60,13 +116,18 @@ public sealed partial class GameSimulation
         var tierBefore = RelayTier(cell);
         foreach (var (fuel, energy, tier) in PowerFuels.OrderByDescending(entry => entry.Tier))
         {
-            var room = (RelayCapacity - RelayCharge(cell)) / energy;
+            var room = (RelayCapacity - RelayCharge(cell) + RelayMaxIntegrity - RelayIntegrity(cell)) / energy;
             var take = Math.Min(room, Player.Inventory.Count(fuel));
             if (take == 0 && tier > RelayTier(cell) && Player.Inventory.Count(fuel) > 0)
                 take = 1; // the best crystal raises the tier even into a full relay
             if (take <= 0 || !Player.Inventory.TryConsume(fuel, take))
                 continue;
-            SetRelayCharge(cell, RelayCharge(cell) + take * energy);
+            // 0.7.8: a damaged relay is repaired first, one point of integrity for each point of charge.
+            var energyIn = take * energy;
+            var repair = Math.Min(energyIn, RelayMaxIntegrity - RelayIntegrity(cell));
+            if (repair > 0)
+                SetRelayIntegrity(cell, RelayIntegrity(cell) + repair);
+            SetRelayCharge(cell, RelayCharge(cell) + energyIn - repair);
             if (tier > RelayTier(cell))
                 SetFlagValue(RelayKey(cell) + ".tier", tier);
             fed.Add($"{take} {Items[fuel].Name.ToLowerInvariant()}");
@@ -85,7 +146,8 @@ public sealed partial class GameSimulation
         var state = RelayOnline(cell) ? "online"
             : !RelayStaffed(cell) ? $"offline: it needs {PylonResidentsNeeded} people living around it"
             : "offline: out of charge";
-        return $"{name}: {state}, charge {RelayCharge(cell)}/{RelayCapacity}, tier {RelayTier(cell)}.";
+        var damage = RelayIntegrity(cell) < RelayMaxIntegrity ? $", integrity {RelayIntegrity(cell)}/{RelayMaxIntegrity}" : "";
+        return $"{name}: {state}, charge {RelayCharge(cell)}/{RelayCapacity}, tier {RelayTier(cell)}{damage}.";
     }
 
     /// <summary>Hourly: online relays burn their upkeep; one that runs dry goes offline, with a letter.</summary>

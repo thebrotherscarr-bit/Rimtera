@@ -86,6 +86,10 @@ public sealed partial class GameSimulation
                 }
             }
             (target, number) = (chosen.Where, chosen.Number);
+            // 0.7.8: a raid on an outpost goes for its relay.
+            if (number > 0 && Pylons.Where(pylon => Vector2.Distance(new Vector2(pylon.Cell.X + 0.5f, pylon.Cell.Y), target) <= OutpostSpread)
+                    .Select(pylon => (PylonInfo?)pylon).FirstOrDefault() is { } relay)
+                target = new Vector2(relay.Cell.X + 0.5f, relay.Cell.Y);
         }
         var side = _storyteller.NextUnit() < 0.5f ? -1 : 1;
         var biome = BiomeScanner.Scan(World, RegionMap.CellAt(target)).Zone;

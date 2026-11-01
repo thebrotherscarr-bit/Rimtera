@@ -51,9 +51,9 @@ public static class RecallSelfTests
 
         // ---- pylons: a staffed home around them; prisoners do not count; they name where they stand ----
         var travel = Flat(9983);
-        travel.World.SetTile(new GridPoint(100, Floor - 1), TileId.ColonyPylon);
-        travel.World.SetTile(new GridPoint(300, Floor - 1), TileId.FrostPylon);
-        travel.World.SetTile(new GridPoint(420, Floor - 1), TileId.ScrapPylon);
+        travel.PlaceTravelTileForTests(new GridPoint(100, Floor - 1), TileId.ColonyPylon);
+        travel.PlaceTravelTileForTests(new GridPoint(300, Floor - 1), TileId.FrostPylon);
+        travel.PlaceTravelTileForTests(new GridPoint(420, Floor - 1), TileId.ScrapPylon);
         Living(travel, TownNpcKind.StationAi, 96);
         Living(travel, TownNpcKind.Quartermaster, 104);
         Living(travel, TownNpcKind.Settler, 296);

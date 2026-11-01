@@ -490,6 +490,7 @@ public sealed partial class GameSimulation
         UpdateLifeRegen(deltaSeconds);
         UpdateMinions(deltaSeconds);
         UpdateDefences(deltaSeconds); // 0.7.3: colony sentries and manned traps
+        UpdateRelayDamage(deltaSeconds); // 0.7.8: hostiles wear relays down
         UpdateWeaponStyles(deltaSeconds);
         UpdateHazards(deltaSeconds);
         GearTick(deltaSeconds);
