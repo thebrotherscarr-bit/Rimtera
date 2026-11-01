@@ -830,11 +830,24 @@ public sealed class ColonistAgent : IColonyPawn
         HitPoints = MaximumHitPoints;
         HomePosition = position;
         WanderTarget = position;
+        Work = Rimtera.Systems.ColonyWorkSettings.For(ColonistStats);
     }
 
     public long Id { get; }
     public CharacterProfile Profile { get; }
     public ColonistStats ColonistStats { get; }
+    /// <summary>Work priorities (the Work tab): what this colonist does at home, in what order.</summary>
+    public Rimtera.Systems.ColonyWorkSettings Work { get; }
+    /// <summary>Follows the player instead of staying at home (the Work tab's toggle). Crew stay home by default.</summary>
+    public bool FollowsPlayer { get; set; }
+    /// <summary>A stack being hauled to storage.</summary>
+    public Rimtera.Systems.ItemStack Carried { get; set; }
+    /// <summary>Seconds until the next guard strike.</summary>
+    public float StrikeTimer { get; set; }
+    /// <summary>The loose item this colonist is walking to haul (so two haulers don't chase one item).</summary>
+    public long? HaulTarget { get; set; }
+    /// <summary>The work being done this tick; null while on the camp routine.</summary>
+    public Rimtera.Systems.WorkType? CurrentWork { get; set; }
     public PawnMotionState Motion { get; }
     public SurvivalNeeds Needs { get; }
     public HealthComponent Health { get; }
