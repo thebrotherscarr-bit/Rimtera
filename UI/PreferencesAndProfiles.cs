@@ -83,6 +83,9 @@ public sealed record GamePreferences
     public float UiScale { get; set; } = 1f;
     public float MapScale { get; set; } = 1f;
     public bool AutoSave { get; set; } = true;
+    /// <summary>Minutes between autosaves (2, 5, 10 or 15); the save itself runs off the game thread.</summary>
+    public int AutosaveMinutes { get; set; } = 10;
+    public static readonly int[] AutosaveChoices = [2, 5, 10, 15];
     public bool AutoPause { get; set; }
     /// <summary>A faint ghost of the block or wall where it would go, as Terraria's Placement Preview.</summary>
     public bool PlacementPreview { get; set; } = true;
@@ -131,6 +134,8 @@ public sealed record GamePreferences
         Fullscreen = ScreenMode == WindowMode.Fullscreen;
         WindowBorderless = ScreenMode == WindowMode.Borderless;
         BackgroundParallax = ClampFinite(BackgroundParallax, 1f, 0f, 2f);
+        if (!AutosaveChoices.Contains(AutosaveMinutes))
+            AutosaveMinutes = 10;
         Zoom = ClampFinite(Zoom, 1f, 0.5f, 2.5f);
         UiScale = ClampFinite(UiScale, 1f, 0.75f, 1.5f);
         MapScale = ClampFinite(MapScale, 1f, 0.5f, 2f);
@@ -586,7 +591,17 @@ public sealed record WorldProfile(
     WorldDifficulty Difficulty = WorldDifficulty.Classic,
     WorldHazard Hazard = WorldHazard.Random,
     bool Favorite = false,
-    WorldBlight Blight = WorldBlight.Random);
+    WorldBlight Blight = WorldBlight.Random,
+    bool CreatedByCreative = false)
+{
+    /// <summary>
+    /// Creative (Journey) characters and worlds stay apart, as in Terraria: a Creative character plays only worlds a
+    /// Creative character created, and the reverse. The character that saved a world may always return to it (worlds
+    /// from before the split carry no mark).
+    /// </summary>
+    public bool Admits(CharacterProfile character, Guid? savedBy = null) =>
+        CreatedByCreative == (character.Difficulty == CharacterDifficulty.Creative) || savedBy == character.Id;
+}
 public sealed record ProfileIndex(int FormatVersion, IReadOnlyList<WorldProfile> Worlds, IReadOnlyList<CharacterProfile> Characters)
 {
     public static ProfileIndex Empty => new(1, Array.Empty<WorldProfile>(), Array.Empty<CharacterProfile>());
@@ -615,7 +630,7 @@ public sealed class UserProfileStore
 
     public WorldProfile CreateWorld(string name, int seed, int width = 160, int height = 72,
         WorldDifficulty difficulty = WorldDifficulty.Classic, WorldHazard hazard = WorldHazard.Random,
-        WorldBlight blight = WorldBlight.Random)
+        WorldBlight blight = WorldBlight.Random, bool createdByCreative = false)
     {
         name = NormalizeName(name, "New World");
         width = Math.Clamp(width, 80, 8400);
@@ -625,7 +640,8 @@ public sealed class UserProfileStore
             if (_index.Worlds.Any(world => string.Equals(world.Name, name, StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidOperationException($"A world named '{name}' already exists.");
             var now = DateTimeOffset.UtcNow;
-            var world = new WorldProfile(Guid.NewGuid(), name, seed, now, now, width, height, difficulty, hazard, Blight: blight);
+            var world = new WorldProfile(Guid.NewGuid(), name, seed, now, now, width, height, difficulty, hazard, Blight: blight,
+                CreatedByCreative: createdByCreative);
             _index = _index with { Worlds = _index.Worlds.Append(world).ToArray() };
             SaveUnsafe();
             return world;

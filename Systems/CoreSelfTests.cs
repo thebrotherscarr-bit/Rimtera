@@ -385,6 +385,13 @@ public static class CoreSelfTests
               !savedBorderless.Fullscreen && savedBorderless.WindowBorderless,
             "display preferences start windowed and migrate legacy fullscreen flags");
 
+        var oddAutosave = new GamePreferences { AutosaveMinutes = 7 };
+        oddAutosave.Normalize();
+        var fiveMinutes = new GamePreferences { AutosaveMinutes = 5 };
+        fiveMinutes.Normalize();
+        Check(new GamePreferences().AutosaveMinutes == 10 && oddAutosave.AutosaveMinutes == 10 && fiveMinutes.AutosaveMinutes == 5,
+            "autosave runs every 10 minutes by default; 2, 5, 10 and 15 are the choices");
+
         var tempRoot = Path.Combine(Path.GetTempPath(), $"rimtera-ui-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempRoot);
         var profilesPath = Path.Combine(tempRoot, "profiles.json");
@@ -609,6 +616,14 @@ public static class CoreSelfTests
               menuFlow.SelectedCharacter?.Id == savedCharacter.Id,
             "Single Player's world list marks saved worlds, and a saved world launches with the character stored in it");
 
+        // Creative characters and worlds stay apart (Terraria's Journey split).
+        var journeyHero = savedCharacter with { Id = Guid.NewGuid(), Difficulty = CharacterDifficulty.Creative };
+        var journeyWorld = profileStore.CreateWorld("Journey World", 77, createdByCreative: true);
+        Check(journeyWorld.CreatedByCreative && new UserProfileStore(profilesPath).Worlds.Single(world => world.Id == journeyWorld.Id).CreatedByCreative &&
+              journeyWorld.Admits(journeyHero) && !journeyWorld.Admits(savedCharacter) &&
+              !savedWorld.Admits(journeyHero) && savedWorld.Admits(savedCharacter) && savedWorld.Admits(journeyHero, savedBy: journeyHero.Id),
+            "Creative characters play only Creative worlds and the reverse (a character may always return to a world it saved)");
+
         menuFlow.Open();
         Check(menuFlow.CurrentScreen.Entries.Select(entry => entry.Label).SequenceEqual(["Single Player", "Settings", "Exit Game"]),
             "the title menu follows Terraria: Single Player, Settings, Exit");
@@ -724,6 +739,12 @@ public static class CoreSelfTests
         creationFlow.Handle(new UiInputFrame(default, NavigationX: 1));
         var mediumSizeShown = creationFlow.CurrentScreen.Entries
             .Any(entry => entry.Label.Contains("Medium", StringComparison.Ordinal));
+        var hazardIndex = creationFlow.CurrentScreen.Entries
+            .Select((entry, index) => (entry, index))
+            .Single(item => item.entry.Label.StartsWith("Hazard:", StringComparison.Ordinal)).index;
+        creationFlow.CurrentScreen.SelectIndex(hazardIndex);
+        creationFlow.Handle(new UiInputFrame(default, NavigationX: 1));
+        var hazardPicked = creationFlow.WorldHazardDraft;
         var createWorldIndex = creationFlow.CurrentScreen.Entries
             .Select((entry, index) => (entry, index))
             .Single(item => item.entry.Label == "Create & Play").index;
@@ -732,8 +753,9 @@ public static class CoreSelfTests
         Check(mediumSizeShown && createdCharacter?.Name == "Menu Hero" &&
               (createdCharacter?.BackstoryName.Length ?? 0) > 0 &&
               (createdCharacter?.SkillLevels?.Length ?? 0) == 12 &&
-              createdWorld?.Name == "Menu World" && createdWorld.Width == 6400 && createdWorld.Height == 1800,
-            "menu creates a detailed named character and a sized world before launching it");
+              createdWorld?.Name == "Menu World" && createdWorld.Width == 6400 && createdWorld.Height == 1800 &&
+              hazardPicked != WorldHazard.Random && createdWorld.Hazard == hazardPicked,
+            "menu creates a detailed named character and a sized world (with the chosen hazard) before launching it");
 
         creationFlow.ShowColonistSheet(createdCharacter!);
         Check(creationFlow.Ui.CurrentState is ColonistSheetState &&

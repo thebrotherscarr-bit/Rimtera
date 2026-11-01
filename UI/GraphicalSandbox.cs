@@ -990,7 +990,7 @@ public static partial class GraphicalSandbox
             }
 
             _autosaveSeconds += 1f / 60f;
-            if (_menu.Preferences.AutoSave && _autosaveSeconds >= 90f)
+            if (_menu.Preferences.AutoSave && _autosaveSeconds >= _menu.Preferences.AutosaveMinutes * 60f)
             {
                 _autosaveSeconds = 0f;
                 SaveGame(showStatus: false);
