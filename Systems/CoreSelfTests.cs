@@ -1668,7 +1668,8 @@ public static class CoreSelfTests
         BackgroundSelfTests.Run(Check); // 0.5.1: childhoods and adulthoods: skills and what people won't do
         SkillGrowthSelfTests.Run(Check); // 0.5.2: skills grow by doing
         InjurySelfTests.Run(Check); // 0.5.3: lasting injuries
-        BionicsSelfTests.Run(Check); // 0.5.4: bionics // 0.4.0: equipping people with Terraria's gear
+        BionicsSelfTests.Run(Check); // 0.5.4: bionics
+        HungerSelfTests.Run(Check); // 0.5.5: food as the one need // 0.4.0: equipping people with Terraria's gear
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab

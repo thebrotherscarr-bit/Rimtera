@@ -48,6 +48,7 @@ public sealed partial class GameSimulation
             $"Health {npc.HitPoints:0}/{npc.MaximumHitPoints:0}",
             npc.HomeCell is { } home ? $"Lives at {home.X},{home.Y}{(OutpostOf(npc) is { } outpost ? $" ({outpost.Label})" : "")} · happiness {GetHappiness(npc):+0.0;-0.0;0}" : "Homeless",
             $"Doing: {npc.Activity}",
+            GameSimulation.Eats(npc) ? $"Food {(int)MathF.Round(npc.Food * 100f)}%{(npc.Food <= 0f ? " · starving" : npc.Food < GameSimulation.HungryBelow ? " · hungry" : "")}" : "Does not eat",
             $"Best at: {string.Join(", ", Enum.GetValues<ColonistSkill>().OrderByDescending(stats.Level).Take(3).Select(skill => $"{skill} {stats.Level(skill)}{(stats.Passion(skill) == PassionLevel.None ? "" : "+")}"))}",
             $"Grew up: {npc.Childhood?.Title ?? "unknown"} · then: {npc.Adulthood?.Title ?? "unknown"}" +
                 (npc.Refuses.Count > 0 ? $" · won't {string.Join(", ", npc.Refuses.Select(work => WorkCatalog.Get(work).Label.ToLowerInvariant()))}" : ""),
