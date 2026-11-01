@@ -52,7 +52,7 @@ public sealed partial class GameSimulation
         {
             if (!PlayerPhased)
                 PostMessage("The phase pool hums through you. Solid ground feels thin.");
-            Player.Statuses.Apply(StatusId.Phased, PhasedSeconds * GameHoursPerRealSecond);
+            Player.Statuses.Apply(StatusId.Phased, PhasedSeconds * VitalHoursPerRealSecond);
         }
         if (PlayerPhased && Player.Motion.Grounded)
         {

@@ -1102,8 +1102,8 @@ public static partial class GraphicalSandbox
                 QuitToTitle($"{name} died. Ironman colonists cannot return.");
                 return;
             }
-            // A living boss lengthens the wait, as do harder colonist difficulties.
-            var seconds = _game?.GetRespawnDelay(character?.Difficulty ?? default) ?? 5f;
+            // Terraria's timer: 10 s, 15 s on Brutal and Annihilation worlds, 3 s for an Explorer.
+            var seconds = _game?.GetRespawnDelay(character?.Difficulty ?? default) ?? GameSimulation.BaseRespawnSeconds;
             _transition.BeginCountdown($"{name} was killed", _game?.LastMessage ?? string.Empty, seconds);
         }
 

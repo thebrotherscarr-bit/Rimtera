@@ -39,7 +39,18 @@ public readonly record struct GameTickResult(
 /// </summary>
 public sealed partial class GameSimulation : IStoryHost
 {
-    public const float GameHoursPerRealSecond = 0.08f;
+    /// <summary>
+    /// The clock: a day (06:00–18:00) takes 900 real seconds and a night 540 (with <see cref="NightClockPace"/>), so a whole
+    /// cycle is Terraria's 24 real minutes. Only the time of day and what hangs on it (crops, arrivals, events, the
+    /// storyteller) run on this clock.
+    /// </summary>
+    public const float GameHoursPerRealSecond = 1f / 75f;
+
+    /// <summary>
+    /// Vital hours: the unit statuses, regeneration, health, colonist needs and exposure are measured in. One vital hour is
+    /// 12.5 real seconds, always (asleep or awake), so buffs and regen keep their real-time pace whatever the clock does.
+    /// </summary>
+    public const float VitalHoursPerRealSecond = 0.08f;
     /// <summary>Slow "story tick" cadence for rooms, temperature, comfort, and the biome reading.</summary>
     public const int EnvironmentIntervalTicks = 60;
     private const float PlayerReach = 5f;
@@ -652,19 +663,22 @@ public sealed partial class GameSimulation : IStoryHost
 
         if (_sleeping && (input.Action is not (PlayerAction.None or PlayerAction.Sleep) || MathF.Abs(input.Movement.Horizontal) > 0.01f))
             WakeUp();
-        var elapsedHours = deltaSeconds * GameHoursPerRealSecond * TimeRate;
+        var elapsedHours = deltaSeconds * ClockHoursPerRealSecond * TimeRate;
+        // Statuses, regen, health and needs run on real time (vital hours), never on the clock: sleeping speeds the clock,
+        // not the buffs, as in Terraria.
+        var vitalHours = deltaSeconds * VitalHoursPerRealSecond;
         AdvanceClock(elapsedHours * ClockPace); // nights pass faster than days (GameSimulation.World.cs)
         Player.Needs.Advance(
-            elapsedHours,
+            vitalHours,
             Player.ColonistStats.FoodConsumptionMultiplier,
             Player.ColonistStats.RestRateMultiplier);
         Player.Health.IsResting = Player.IsDowned;
-        Player.Health.Tick(elapsedHours);
-        var statusDamage = Player.Statuses.Advance(elapsedHours);
+        Player.Health.Tick(vitalHours);
+        var statusDamage = Player.Statuses.Advance(vitalHours);
         if (statusDamage > 0f)
             Player.TakeDamage(statusDamage, DamageKind.Toxin);
         if (Player.Stats.LifeRegenerationPerHour > 0f)
-            Player.Heal(Player.Stats.LifeRegenerationPerHour * elapsedHours);
+            Player.Heal(Player.Stats.LifeRegenerationPerHour * vitalHours);
         Player.SyncHealthDeath();
         if (Player.IsDead)
         {
@@ -695,7 +709,7 @@ public sealed partial class GameSimulation : IStoryHost
         if (input.Action != PlayerAction.None && !Player.IsDowned)
             PerformAction(input.Action, input.Target);
 
-        UpdateColonists(deltaSeconds, elapsedHours);
+        UpdateColonists(deltaSeconds, vitalHours);
         UpdateTownNpcs(deltaSeconds);
         UpdateEnemies(deltaSeconds);
         UpdatePlayerSystems(deltaSeconds);
@@ -709,7 +723,7 @@ public sealed partial class GameSimulation : IStoryHost
         UpdateAutonomousBehavior(elapsedHours);
         UpdateLeisure(deltaSeconds); // wind, kites, decks, pets, golf, wave moons, creative (GameSimulation.Leisure.cs)
         UpdateSpawning(deltaSeconds);
-        UpdateEnvironment(elapsedHours);
+        UpdateEnvironment(vitalHours);
         UpdateStory();
 
         _liquidTimer += deltaSeconds;

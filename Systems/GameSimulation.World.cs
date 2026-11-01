@@ -86,12 +86,21 @@ public sealed partial class GameSimulation : IWorldEventHost
     public bool IsNight => ClockHour >= 18f || ClockHour < 6f;
 
     /// <summary>
-    /// Night hours tick this much faster than day hours (real time), so a full cycle is about 60% day and 40% night
-    /// while every clock-hour rule (18:00 dusk, 06:00 dawn) stays put. Needs, statuses and regen still use game hours.
+    /// Night hours tick this much faster than day hours (real time), so a day lasts 15 real minutes and a night 9, as in
+    /// Terraria, while every clock-hour rule (18:00 dusk, 06:00 dawn) stays put. Needs, statuses and regen use vital hours.
     /// </summary>
-    public const float NightClockPace = 1.5f;
+    public const float NightClockPace = 900f / 540f;
     /// <summary>Clock-only multiplier on game hours for the current time of day.</summary>
-    public float ClockPace => IsNight ? NightClockPace : 1f;
+    public float ClockPace => IsNight ? FastClock ? 1.5f : NightClockPace : 1f;
+
+    /// <summary>
+    /// For tests and development only (<c>--fast-clock</c>): the old 250-second cycle (a 150 s day and a 100 s night), so
+    /// checks that wait out days stay quick. Vital hours are unaffected.
+    /// </summary>
+    public static bool FastClock { get; set; }
+
+    /// <summary>Game (clock) hours per real second while awake.</summary>
+    public static float ClockHoursPerRealSecond => FastClock ? VitalHoursPerRealSecond : GameHoursPerRealSecond;
     public const int MoonPhaseCount = 8;
 
     /// <summary>

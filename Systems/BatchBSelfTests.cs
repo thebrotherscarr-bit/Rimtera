@@ -273,7 +273,7 @@ public static class BatchBSelfTests
         mortal.Player.TakeDamage(1e6f);
         Tick(mortal, 2);
         var grave = mortal.Signs.FirstOrDefault(pair => mortal.World.GetCell(pair.Key).TileId == TileId.Tombstone);
-        check(mortal.IsOver && grave.Value?.Contains(mortal.Player.Name) == true && mortal.RespawnSecondsRemaining is > 4.9f and <= 5f,
+        check(mortal.IsOver && grave.Value?.Contains(mortal.Player.Name) == true && mortal.RespawnSecondsRemaining is > 9.9f and <= 10f,
             "death leaves a named tombstone tile and starts a respawn timer");
         var bossDeath = NewGame(9112);
         bossDeath.TrySummonNextBoss();
@@ -281,9 +281,13 @@ public static class BatchBSelfTests
         Tick(bossDeath, 2);
         bossDeath.RespawnPlayer(CharacterDifficulty.Classic);
         Tick(bossDeath, 2);
-        check(bossDeath.BossBlocksRespawn && bossDeath.GetRespawnDelay(CharacterDifficulty.Classic) == GameSimulation.BossRespawnSeconds &&
+        var classicDelay = bossDeath.GetRespawnDelay(CharacterDifficulty.Classic);
+        var explorerDelay = bossDeath.GetRespawnDelay(CharacterDifficulty.Explorer);
+        bossDeath.Difficulty = WorldDifficulty.Brutal;
+        var brutalDelay = bossDeath.GetRespawnDelay(CharacterDifficulty.Classic);
+        check(bossDeath.BossBlocksRespawn && classicDelay == 10f && explorerDelay == 3f && brutalDelay == 15f &&
               !bossDeath.IsOver && bossDeath.RespawnSecondsRemaining == 0f,
-            "a living boss lengthens the respawn timer");
+            "the respawn timer is Terraria's: 10 s, 15 s on Brutal, 3 s for an Explorer, and a living boss does not lengthen it");
 
         // ---- Loadouts ----
         var dresser = NewGame(9113);

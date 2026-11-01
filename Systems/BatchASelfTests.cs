@@ -10,6 +10,7 @@ public static class BatchASelfTests
     /// <summary>Runs only these checks (<c>dotnet run -- --batch-a-test</c>).</summary>
     public static int RunStandalone()
     {
+        GameSimulation.FastClock = true;
         var passed = 0;
         Run((condition, name) =>
         {

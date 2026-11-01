@@ -97,6 +97,23 @@ public sealed record WorldEventSpec(
 {
     public bool IsInvasion => Waves > 0;
     public string FlagName => "event." + WorldFlags.Key(Kind) + ".cleared";
+
+    /// <summary>
+    /// The boundary that ends the event whatever time it has left, as in Terraria: night events (the moons) end at dawn,
+    /// day events (the Dark Sun, Swarm Rain) at dusk. Null for the rest.
+    /// </summary>
+    public WorldEventMoment? EndsAt => Category switch
+    {
+        WorldEventCategory.Night => WorldEventMoment.Dawn,
+        WorldEventCategory.Day => WorldEventMoment.Dusk,
+        _ => null
+    };
+
+    /// <summary>
+    /// Whether running out of time counts as clearing it (weather, calm nights, festivals). Moons, the Dark Sun and
+    /// invasions are cleared only by beating them; outlasting them is not a clear.
+    /// </summary>
+    public bool ClearsOnTimeout => EndsAt is null && !IsInvasion && KillsPerWave == 0;
 }
 
 /// <summary>Live state of one running event (saved).</summary>
@@ -270,10 +287,12 @@ public sealed class WorldEventSystem
             var spec = _specs[state.Kind];
             var next = state with { HoursLeft = state.HoursLeft - hours };
             Replace(state, next);
-            // Invasions end by clearing waves, not by time (they give up after a long while).
-            var expired = next.HoursLeft <= 0f && (!spec.IsInvasion || next.HoursLeft <= -spec.DurationHours * 2f);
+            // Invasions end by clearing waves, not by time (they give up after a long while). Moons end at dawn and day
+            // events at dusk, whatever time they have left. Neither way counts as a clear unless the event clears on timeout.
+            var expired = next.HoursLeft <= 0f && (!spec.IsInvasion || next.HoursLeft <= -spec.DurationHours * 2f) ||
+                          boundary is { } passed && spec.EndsAt == passed;
             if (expired)
-                End(next, host, completed: !spec.IsInvasion && spec.KillsPerWave == 0);
+                End(next, host, completed: spec.ClearsOnTimeout);
         }
 
         SyncWeather(host);

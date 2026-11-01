@@ -1,6 +1,10 @@
 using Rimtera.Systems;
 using Rimtera.UI;
 
+// Developer flag: the old 250-second day, for testing clock-bound features quickly.
+if (args.Contains("--fast-clock", StringComparer.OrdinalIgnoreCase))
+    GameSimulation.FastClock = true;
+
 if (args.Contains("--demo", StringComparer.OrdinalIgnoreCase))
 {
     ConsoleSandbox.PrintDemo();
