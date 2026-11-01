@@ -229,7 +229,8 @@ public sealed partial class GameSimulation
         // 0.3.5: a resident works at the skill of their trade (TownTrades); crew at their own skill for the work type.
         var stationSkill = agent.SkillAt(StationAt(job.Station));
         var speed = stationSkill is { } trained ? TownTrades.Speed(trained) : agent.SpeedFor(work ?? BillWork(job.Station));
-        if (StationPoweredAt(StationAt(job.Station), stationAt))
+        var powered = StationPoweredAt(StationAt(job.Station), stationAt);
+        if (powered)
             speed *= PoweredWorkSpeed; // 0.7.5: a powered machine is worked faster (0.7.6: by the base's AI or a relay near it)
         if (agent.OperateProgress < OperateSeconds(speed))
             return true;
@@ -252,7 +253,11 @@ public sealed partial class GameSimulation
         var bonus = kind == WorkType.Cook && output.UseKind == ItemUseKind.Food ? CookServingChance(level) : ExtraBatchChance(level);
         if (output.MaxStack > 1 && CraftRandom.NextDouble() < bonus)
             made += job.Recipe.OutputCount;
-        var calibration = output.Calibratable || CalibrationCatalog.IsAccessory(output) ? RollCalibration(output) : Calibration.None;
+        var calibrates = output.Calibratable || CalibrationCatalog.IsAccessory(output);
+        var calibration = calibrates ? RollCalibration(output) : Calibration.None;
+        // 0.7.7: at a powered station a resident's affinity sometimes gives an extra batch, or a better roll.
+        if (powered && agent is TownNpc worker)
+            (made, calibration) = ApplyAffinity(worker.Stats, output, job.Recipe.OutputCount, made, calibration);
         agent.Carried = new ItemStack(job.Recipe.Output, made, calibration);
         SpendCraftPowerAt(job.Recipe, stationAt); // 0.3.8; 0.7.6: from the AI or a relay
         job.Bill.Done++;
