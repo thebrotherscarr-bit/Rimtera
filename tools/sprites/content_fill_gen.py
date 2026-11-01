@@ -99,15 +99,39 @@ EXISTING = {
     "SkyFlier": ("grass", .02, 0, None, 0, 0, 0, 0),
 }
 
-# ---- Hostiles: (Kind, Name, roster, hard, day, night, family, w, h, hp, dmg, fly, swim, credits, segments, drops, base, steps) ----
+# ---- Hostiles: (Kind, Name, roster, hard, day, night, family, w, h, hp, dmg, fly, swim, credits, segments, drops, base, steps,
+#      defense) ----
 # family: G ground, F flyer, H hopper, L leaping hopper, S skittering hopper, W worm, C caster, D diving flyer, M mimic, T stationary
 H = []
-def h(kind, name, roster, hard, day, night, fam, w, hh, hp, dmg, credits, drops, base, steps, segs=0, swim=0):
+
+# Defense tier table (docs/roadmap/0.1.9.md A1; the same table as CreatureStatTable.TierDefense in Entities/ContentCreatures.cs):
+# pre-boss 0-6 (gel 2, walker 6), mid pre-Fracture 8-14, post-Fracture 16-30, all by hit points.
+WALKERS = {"GraveHusk"}  # Terraria's zombie: 6 even at low hit points
+
+
+def tier_defense(kind, hard, hp):
     if hard:
-        # Hard versions sit in the existing hard band (the Fracture's difficulty multiplier scales them further).
+        for limit, value in ((200, 16), (250, 18), (300, 20), (350, 22), (400, 24), (500, 26), (1000, 28)):
+            if hp < limit:
+                return value
+        return 30
+    if kind in WALKERS:
+        return 6
+    for limit, value in ((45, 2), (60, 4), (100, 6), (150, 8), (250, 10), (400, 12)):
+        if hp < limit:
+            return value
+    return 14
+
+
+def h(kind, name, roster, hard, day, night, fam, w, hh, hp, dmg, credits, drops, base, steps, segs=0, swim=0, defense=None):
+    if hard:
+        # Hard versions sit in the existing hard band. These numbers are final: since 0.1.9 (D-18) the Fracture no
+        # longer rescales creatures authored for it.
         hp, dmg = int(round(hp * 0.55 / 5.0) * 5), int(round(dmg * 0.72))
     fly = fam in ("F", "D", "C") and fam != "C" or swim == 1
-    H.append((kind, name, roster, hard, day, night, fam, w, hh, hp, dmg, fly, swim, credits, segs, drops, base, steps))
+    if defense is None:
+        defense = tier_defense(kind, hard, hp)
+    H.append((kind, name, roster, hard, day, night, fam, w, hh, hp, dmg, fly, swim, credits, segs, drops, base, steps, defense))
 
 # Grassland surface.
 h("ThistleBoar", "Thistle boar", "grass", 0, .07, .03, "G", 1.3, .9, 55, 12, 3, "Berry:2", "astro_beast", '("hue", 0.1), ("scale", 0.8)')
@@ -291,10 +315,10 @@ w("using Rimtera.Entities;\n\nnamespace Rimtera.Systems;\n")
 w("/// <summary>One content-fill critter: size, motion, home roster and spawn weights, bait power, and its gold base (if a gold variant).</summary>")
 w("public sealed record FillCritter(EnemyKind Kind, string Name, float Width, float Height, bool Flying, bool Swims, string Roster,")
 w("    float DayWeight, float NightWeight, int BaitPower, EnemyKind? GoldOf);\n")
-w("/// <summary>One content-fill hostile: roster slot (hard = post-Fracture), behaviour family, body, stats and biome drops.</summary>")
+w("/// <summary>One content-fill hostile: roster slot (hard = post-Fracture), behaviour family, body, stats, biome drops and defense.</summary>")
 w("public sealed record FillHostile(EnemyKind Kind, string Name, string Roster, bool Hard, float DayWeight, float NightWeight,")
 w("    EnemyAiFamily Family, float Width, float Height, float HitPoints, float Damage, bool Flying, bool Swims, bool Stationary,")
-w("    int Credits, int Segments, (ItemId Item, int Count)[] Drops);\n")
+w("    int Credits, int Segments, (ItemId Item, int Count)[] Drops, int Defense);\n")
 w("/// <summary>Content-fill creature data (docs/TERRARIA_GAPS.md plan item 4). Original Rimtera names and tuning.</summary>")
 w("public static class ContentFillData\n{")
 w("    /// <summary>Spawn share of a gold variant relative to its base critter.</summary>")
@@ -318,10 +342,10 @@ w(",\n".join(f'        (EnemyKind.{k}, "{v[0]}", {v[1]}f, {v[2]}f)' for k, v in 
 w("    ];\n")
 w("    public static readonly FillHostile[] Hostiles =\n    [")
 rows = []
-for (k, n, roster, hard, d, nt, fam, hw, hh, hp, dmg, fly, swim, cr, segs, drops, base, steps) in H:
+for (k, n, roster, hard, d, nt, fam, hw, hh, hp, dmg, fly, swim, cr, segs, drops, base, steps, defense) in H:
     dr = ", ".join(f"(ItemId.{p.split(':')[0]}, {p.split(':')[1]})" for p in drops.split(","))
     rows.append(f'        new(EnemyKind.{k}, "{n}", "{roster}", {str(bool(hard)).lower()}, {d}f, {nt}f, EnemyAiFamily.{FAMILY[fam]}, {hw}f, {hh}f, '
-                f'{hp}f, {dmg}f, {str(bool(fly)).lower()}, {str(bool(swim)).lower()}, {str(fam == "T").lower()}, {cr}, {segs}, [{dr}])')
+                f'{hp}f, {dmg}f, {str(bool(fly)).lower()}, {str(bool(swim)).lower()}, {str(fam == "T").lower()}, {cr}, {segs}, [{dr}], {defense})')
 w(",\n".join(rows))
 w("    ];\n}")
 (PROJECT / "Systems" / "Content" / "ContentFillData.cs").write_text("\n".join(cs) + "\n", encoding="utf-8")

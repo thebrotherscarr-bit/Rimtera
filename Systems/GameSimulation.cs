@@ -1640,6 +1640,9 @@ public sealed partial class GameSimulation : IStoryHost
                 continue;
 
             var archetype = enemy.Archetype;
+            TickCreatureLava(enemy, deltaSeconds); // lava burns creatures that are not lava-immune (EN-5)
+            if (!enemy.IsAlive)
+                continue;
             enemy.AttackCooldown = Math.Max(0f, enemy.AttackCooldown - deltaSeconds);
             enemy.StateTime += deltaSeconds;
             if (archetype.Passive)

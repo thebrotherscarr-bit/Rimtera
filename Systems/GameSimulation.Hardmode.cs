@@ -50,6 +50,19 @@ public sealed partial class GameSimulation
         EnemyKind.EventAbomination, EnemyKind.EventCorruptedSurvivor, EnemyKind.EventVoidSiphon, EnemyKind.RadLeech, EnemyKind.GlowStalker
     ];
 
+    /// <summary>
+    /// True when the Fracture rescales a creature's health and damage: regular hostiles authored on the pre-Fracture
+    /// scale. Bosses, wildlife, the Dungeon Guardian and creatures authored for the Fracture keep their stats (D-18:
+    /// Terraria never rescales hardmode creatures; only the spawn pools swap).
+    /// </summary>
+    public static bool HardmodeRescales(EnemyArchetype archetype)
+    {
+        ArgumentNullException.ThrowIfNull(archetype);
+        return !archetype.IsBoss && !archetype.Passive && archetype.Kind != EnemyKind.DungeonGuardian &&
+               !CreatureStatTable.IsFractureAuthored(archetype.Kind) &&
+               Obelisks.All(entry => entry.Obelisk != archetype.Kind); // the siege spawns its obelisks unscaled
+    }
+
     /// <summary>Hardmode multipliers on regular creatures' (health, damage) per world difficulty.</summary>
     public static (float Health, float Damage) HardmodeScale(WorldDifficulty difficulty) => difficulty switch
     {
@@ -180,8 +193,9 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>
-    /// After the Fracture every regular creature gets the difficulty's hardmode health and damage once; bosses keep
-    /// their tuning but never exceed <see cref="BossDamageCap"/>.
+    /// After the Fracture every regular creature authored on the pre-Fracture scale gets the difficulty's hardmode health
+    /// and damage once; creatures authored for the Fracture keep their stats (D-18, <see cref="HardmodeRescales"/>);
+    /// bosses keep their tuning but never exceed <see cref="BossDamageCap"/>.
     /// </summary>
     private void ApplyHardmodeScaling()
     {
@@ -193,7 +207,7 @@ public sealed partial class GameSimulation
             enemy.StatsScaled = true;
             if (enemy.IsBoss)
                 enemy.CapDamage(BossDamageCap);
-            else if (FractureActive && !enemy.IsPassive && enemy.Kind != EnemyKind.DungeonGuardian)
+            else if (FractureActive && HardmodeRescales(enemy.Archetype))
                 enemy.ScaleStats(health, damage);
         }
     }

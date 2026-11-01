@@ -110,8 +110,11 @@ public static class ParityCombatTests
         Tick(pierce, 40);
         var marked = NewGame(9706).SpawnCreatureAt(EnemyKind.MossSlime, new Vector2(10f, 5f));
         marked.MarkHitBy(-1, 0.4f);
-        check(before - target.HitPoints is >= 8f - 0.01f and <= 12f + 0.01f && !marked.CanBeHitBy(-1) && marked.CanBeHitBy(7),
-            $"C3 a piercing shot hits a creature once ({before - target.HitPoints:0.#} of 10, +-15%) and immunity is per hit source");
+        // The ±15% roll lands before the creature's defense comes off (0.1.9: creatures have defense).
+        var pierceLow = CombatTuning.CreatureDamageTaken(8f, target.Archetype.Defense, 0, false);
+        var pierceHigh = CombatTuning.CreatureDamageTaken(12f, target.Archetype.Defense, 0, false);
+        check(before - target.HitPoints >= pierceLow - 0.01f && before - target.HitPoints <= pierceHigh + 0.01f && !marked.CanBeHitBy(-1) && marked.CanBeHitBy(7),
+            $"C3 a piercing shot hits a creature once ({before - target.HitPoints:0.#} of 10 +-15% less defense {target.Archetype.Defense}) and immunity is per hit source");
 
         // ---- C4 defense (verified; DefenseSelfTests holds the detail) ----
         var guard = NewGame(9707);

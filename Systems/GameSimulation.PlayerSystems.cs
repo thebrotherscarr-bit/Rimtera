@@ -74,23 +74,45 @@ public sealed partial class GameSimulation
         StatusId.Burning => 6f, StatusId.Poison => 4f, StatusId.Frostbite => 2f, _ => 0f
     };
 
-    /// <summary>True when the creature shrugs the affliction off (bosses ignore confusion; machines, fire- and ice-born resist their own kind).</summary>
+    /// <summary>
+    /// True when the creature shrugs the affliction off: anything that is not a creature affliction, and whatever its
+    /// archetype lists as <see cref="EnemyArchetype.Immune"/> (bosses ignore confusion; machines, fire- and frost-born
+    /// creatures resist their own kind; see <see cref="CreatureStatTable.DefaultImmunities"/>).
+    /// </summary>
     public static bool ResistsAffliction(EnemyAgent enemy, StatusId id)
     {
-        if (Array.IndexOf(CreatureAfflictions, id) < 0)
-            return true;
-        if (enemy.IsBoss && id == StatusId.Confused)
-            return true;
-        var name = enemy.DisplayName + " " + enemy.Kind;
-        bool Has(params string[] words) => words.Any(word => name.Contains(word, StringComparison.OrdinalIgnoreCase));
-        return id switch
+        ArgumentNullException.ThrowIfNull(enemy);
+        return Array.IndexOf(CreatureAfflictions, id) < 0 || enemy.Archetype.Immune.Contains(id);
+    }
+
+    /// <summary>Lava (liquid uranium) damage to a creature that is not lava-immune: 15 every half second (≈30/s) plus Burning.</summary>
+    public const float CreatureLavaDamage = 15f;
+    public const float CreatureLavaInterval = 0.5f;
+
+    /// <summary>
+    /// The enemy tick's lava check: a creature whose body center sits in lava (at least 0.35 deep, as for the player)
+    /// takes <see cref="CreatureLavaDamage"/> every <see cref="CreatureLavaInterval"/> and catches fire, unless its
+    /// archetype is <see cref="EnemyArchetype.LavaImmune"/>.
+    /// </summary>
+    private void TickCreatureLava(EnemyAgent enemy, float deltaSeconds)
+    {
+        if (enemy.Archetype.LavaImmune || enemy.Shielded)
+            return;
+        var cell = ClampCell(RegionMap.CellAt(enemy.Motion.Position + enemy.Motion.Size / 2f));
+        var data = World.GetCell(cell);
+        if (data.LiquidKind != LiquidKind.Lava || data.LiquidDepth < 0.35f)
         {
-            StatusId.Poison => Has("droid", "drone", "mech", "golem", "sentinel", "obelisk", "turret", "construct", "warship"),
-            StatusId.Burning => Has("ember", "magma", "pyro", "flare", "solar", "fire", "lava", "molten"),
-            StatusId.Frostbite => Has("frost", "glacial", "ice", "snow", "cryo", "rime"),
-            StatusId.Confused => Has("obelisk", "turret"),
-            _ => false
-        };
+            enemy.LavaTimer = 0f;
+            return;
+        }
+        enemy.LavaTimer -= deltaSeconds;
+        if (enemy.LavaTimer > 0f)
+            return;
+        enemy.LavaTimer += CreatureLavaInterval;
+        if (enemy.LavaTimer <= 0f)
+            enemy.LavaTimer = CreatureLavaInterval;
+        enemy.TakeDamage(CreatureLavaDamage);
+        AfflictEnemy(enemy, StatusId.Burning);
     }
 
     /// <summary>Afflicts a creature (bosses keep afflictions half as long). False when it resists.</summary>
