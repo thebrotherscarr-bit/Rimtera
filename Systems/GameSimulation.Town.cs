@@ -270,6 +270,15 @@ public sealed partial class GameSimulation
         DropResidentGear(npc);
         _townNpcs.Remove(npc);
         Record($"{npc.Name} the {npc.Definition.Role} was slain.");
+        // 0.6.3: a death is a letter, and the storyteller eases off while the colony recovers.
+        if (!npc.IsPrisoner)
+            _storyteller.NoteLoss();
+        if (!npc.IsPrisoner)
+            SendLetter(LetterKind.BadNews, $"Death: {npc.Name}", npc.Kind == TownNpcKind.Settler
+            ? $"{npc.Name} was slain. They will not come back."
+            : PeopleDieForGood
+                ? $"{npc.Name} the {npc.Definition.Role} was slain. Someone new may take up the trade in time."
+                : $"{npc.Name} the {npc.Definition.Role} was slain, and will come back in time.");
         if (StationAiDefeat(npc))
             return true;
         if (npc.Kind == TownNpcKind.Settler)

@@ -1673,6 +1673,7 @@ public static class CoreSelfTests
         PrisonerSelfTests.Run(Check); // 0.5.6: prisoners and conversion
         StorytellerKindSelfTests.Run(Check); // 0.6.1: storytellers to pick
         ActSelfTests.Run(Check); // 0.6.2: acts follow Terraria's progress // 0.4.0: equipping people with Terraria's gear
+        LetterSelfTests.Run(Check); // 0.6.3: the threat budget and warnings
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab

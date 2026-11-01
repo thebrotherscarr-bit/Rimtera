@@ -37,7 +37,81 @@ public static partial class GraphicalSandbox
         {
             DrawColonistBar(g, game);
             DrawInspectCard(g, game);
+            DrawLetters(g, game); // 0.6.3
         }
+
+        // ---- 0.6.3: letters stack on the right edge; click one to read it, click it again (or the page) to put it away ----
+        private readonly List<(RectangleF Rect, long Id)> _letterHits = new();
+        private RectangleF _letterPageRect;
+
+        /// <summary>The letter being read, or null.</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public long? ReadingLetter { get; set; }
+
+        /// <summary>The letter whose tab is under <paramref name="point"/>.</summary>
+        public long? LetterAt(Point point) =>
+            _letterHits.FirstOrDefault(hit => hit.Rect.Contains(point)) is { Rect.Width: > 0 } hit ? hit.Id : null;
+
+        public bool LetterPageAt(Point point) => ReadingLetter is not null && _letterPageRect.Contains(point);
+
+        private void DrawLetters(Graphics g, GameSimulation game)
+        {
+            _letterHits.Clear();
+            _letterPageRect = RectangleF.Empty;
+            var letters = game.Letters;
+            if (ReadingLetter is { } reading && letters.All(letter => letter.Id != reading))
+                ReadingLetter = null;
+            if (letters.Count == 0)
+                return;
+            const float width = 230f, height = 26f;
+            var x = Width - width - 10f;
+            var y = Height - 96f - height;
+            using var format = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
+            // Newest at the bottom, nearest the eye; older ones climb.
+            for (var i = letters.Count - 1; i >= 0; i--)
+            {
+                var letter = letters[i];
+                var rect = new RectangleF(x, y, width, height);
+                _letterHits.Add((rect, letter.Id));
+                _hudRects.Add(rect);
+                var open = ReadingLetter == letter.Id;
+                using (var back = new SolidBrush(open ? Color.FromArgb(230, 40, 46, 58) : Color.FromArgb(210, 22, 26, 34)))
+                    g.FillRectangle(back, rect);
+                using (var stripe = new SolidBrush(LetterColor(letter.Kind)))
+                    g.FillRectangle(stripe, rect.X, rect.Y, 5f, rect.Height);
+                var countdown = letter.DueHour is null ? null : GameSimulation.Countdown(game.LetterHoursLeft(letter));
+                var titleWidth = width - 14f - (countdown is null ? 0f : 44f);
+                g.DrawString(letter.Title, _small, _hudBrush, new RectangleF(rect.X + 10f, rect.Y + 6f, titleWidth, 16f), format);
+                if (countdown is not null)
+                    using (var due = new SolidBrush(LetterColor(letter.Kind)))
+                        g.DrawString(countdown, _small, due, rect.Right - 42f, rect.Y + 6f);
+                y -= height + 4f;
+            }
+            if (ReadingLetter is not { } id || letters.FirstOrDefault(letter => letter.Id == id) is not { } page)
+                return;
+            // The page opens to the left of the stack, beside its tab.
+            var tab = _letterHits.First(hit => hit.Id == id).Rect;
+            const float pageWidth = 300f;
+            var body = page.DueHour is null ? page.Body : $"{page.Body}\n\nDue in {GameSimulation.Countdown(game.LetterHoursLeft(page))}.";
+            var bodySize = g.MeasureString(body, _small, (int)(pageWidth - 20f));
+            var pageHeight = 34f + bodySize.Height + 22f;
+            _letterPageRect = new RectangleF(tab.X - pageWidth - 8f, Math.Max(8f, tab.Bottom - pageHeight), pageWidth, pageHeight);
+            _hudRects.Add(_letterPageRect);
+            DrawRivetedPanel(g, _letterPageRect);
+            using (var title = new SolidBrush(LetterColor(page.Kind)))
+                g.DrawString(page.Title, _hud, title, new RectangleF(_letterPageRect.X + 10f, _letterPageRect.Y + 8f, pageWidth - 20f, 18f), format);
+            g.DrawString(body, _small, _hudBrush, new RectangleF(_letterPageRect.X + 10f, _letterPageRect.Y + 30f, pageWidth - 20f, bodySize.Height + 2f));
+            g.DrawString($"Day {page.Day} · click to put away", _small, _dimTextBrush, _letterPageRect.X + 10f, _letterPageRect.Bottom - 20f);
+        }
+
+        private static Color LetterColor(LetterKind kind) => kind switch
+        {
+            LetterKind.Threat => Color.FromArgb(230, 70, 64),
+            LetterKind.BadNews => Color.FromArgb(236, 170, 60),
+            LetterKind.Good => Color.FromArgb(96, 200, 110),
+            _ => Color.FromArgb(160, 168, 182)
+        };
 
         private void DrawColonistBar(Graphics g, GameSimulation game)
         {

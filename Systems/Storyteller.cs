@@ -57,7 +57,9 @@ public sealed record StorytellerSnapshot(
     StoryIncidentRecord[]? RecentIncidents = null,
     // 0.6.1: the personality and threat dial picked at world creation (older saves: Steady, ×1).
     StorytellerKind? Kind = null,
-    float? ThreatScale = null);
+    float? ThreatScale = null,
+    // 0.6.3: how far threats are eased after losses (older saves: none).
+    float? Adaptation = null);
 
 /// <summary>The world-facing side of incidents; implemented by the simulation.</summary>
 public interface IStoryHost
@@ -74,6 +76,8 @@ public interface IStoryHost
     /// </summary>
     bool TryWelcomeArrival(out string summary, out bool joinedCrew);
     void Announce(string message);
+    /// <summary>0.6.3: an incident as a letter (the host decides which deserve one); by default just announced.</summary>
+    void Report(string incidentId, IncidentCategory category, string title, string summary) => Announce(summary);
 }
 
 /// <summary>
@@ -150,6 +154,41 @@ public sealed class Storyteller
         ThreatScale = float.IsFinite(threatScale) ? Math.Clamp(threatScale, MinimumThreatScale, MaximumThreatScale) : 1f;
     }
 
+    // ---- 0.6.3: adaptation after losses ----
+    /// <summary>The most a storyteller eases threats after losses (half strength).</summary>
+    public const float MaximumAdaptation = 0.5f;
+    /// <summary>Adaptation added by one death (a settler or resident).</summary>
+    public const float AdaptationPerDeath = 0.15f;
+    /// <summary>Adaptation lost per hour: a full ease fades over about four days.</summary>
+    public const float AdaptationDecayPerHour = MaximumAdaptation / 96f;
+
+    /// <summary>
+    /// How much the next threats are eased after losses (0 to <see cref="MaximumAdaptation"/>): a colony that just lost
+    /// people gets weaker threats while it recovers, and the ease fades over a few days. A builder eases more, a chaotic
+    /// storyteller less.
+    /// </summary>
+    public float Adaptation { get; private set; }
+
+    /// <summary>Notes a loss (<paramref name="weight"/> 1 is one death): the next threats are eased.</summary>
+    public void NoteLoss(float weight = 1f)
+    {
+        if (!float.IsFinite(weight) || weight <= 0f)
+            return;
+        var factor = Kind switch { StorytellerKind.Builder => 1.5f, StorytellerKind.Chaotic => 0.5f, _ => 1f };
+        Adaptation = Math.Clamp(Adaptation + AdaptationPerDeath * weight * factor, 0f, MaximumAdaptation);
+    }
+
+    /// <summary>The parts of the threat budget, for the dev console and the History tab.</summary>
+    public static IReadOnlyList<(string Part, float Points)> ThreatBreakdown(int day, float wealth, int colonists, int defeatedBosses, int act) =>
+    [
+        ("base", 30f),
+        ("wealth", 2.4f * MathF.Sqrt(Math.Max(0f, wealth))),
+        ("people", colonists * 16f),
+        ("days", Math.Max(0, day - 1) * 7f),
+        ("bosses", defeatedBosses * 32f),
+        ("act", Math.Max(0, act - 1) * 20f)
+    ];
+
     public static string Name(StorytellerKind kind) => kind switch
     {
         StorytellerKind.Chaotic => "Chaotic",
@@ -196,9 +235,8 @@ public sealed class Storyteller
     /// <summary>Wealth follows a square-root curve so hoarding raises threats with diminishing returns.</summary>
     public static float ComputeThreatPoints(int day, float wealth, int colonists, int defeatedBosses, int act = 1)
     {
-        var wealthPoints = 2.4f * MathF.Sqrt(Math.Max(0f, wealth));
-        // 0.6.2: each act past Landfall raises the floor.
-        var points = 30f + wealthPoints + colonists * 16f + Math.Max(0, day - 1) * 7f + defeatedBosses * 32f + Math.Max(0, act - 1) * 20f;
+        // 0.6.2: each act past Landfall raises the floor; 0.6.3: the parts are named (ThreatBreakdown).
+        var points = ThreatBreakdown(day, wealth, colonists, defeatedBosses, act).Sum(part => part.Points);
         return Math.Clamp(points, MinimumThreatPoints, MaximumThreatPoints);
     }
 
@@ -207,6 +245,7 @@ public sealed class Storyteller
     {
         ArgumentNullException.ThrowIfNull(host);
         HoursElapsed++;
+        Adaptation = Math.Max(0f, Adaptation - AdaptationDecayPerHour);
         AdvanceTimers(host, 1f);
         var context = host.CaptureStoryContext();
         LastThreatPoints = ComputeThreatPoints(context.Day, context.ColonyWealth, context.ColonistCount, context.DefeatedBosses, context.Act);
@@ -265,7 +304,7 @@ public sealed class Storyteller
         _recent.Enqueue(record);
         while (_recent.Count > RecentLogSize)
             _recent.Dequeue();
-        host.Announce(summary);
+        host.Report(ArrivalId, IncidentCategory.Boon, "Arrival", summary);
         return record;
     }
 
@@ -366,7 +405,9 @@ public sealed class Storyteller
     {
         // 0.6.1: the threat dial, and a chaotic storyteller's swings (×0.6 to ×1.6); a steady one at ×1 changes nothing.
         var swing = Kind == StorytellerKind.Chaotic ? 0.6f + NextUnit() : Kind == StorytellerKind.Builder ? 0.8f : 1f;
-        LastThreatPoints = Math.Clamp(LastThreatPoints * ThreatScale * swing, MinimumThreatPoints, MaximumThreatPoints * MaximumThreatScale);
+        // 0.6.3: threats are eased while the colony recovers from losses.
+        var ease = incident.Category == IncidentCategory.Boon ? 1f : 1f - Adaptation;
+        LastThreatPoints = Math.Clamp(LastThreatPoints * ThreatScale * swing * ease, MinimumThreatPoints, MaximumThreatPoints * MaximumThreatScale);
         var summary = incident.TryExecute(new IncidentParms(LastThreatPoints, context.Biome, forced), this, host);
         if (summary is null)
             return null;
@@ -390,7 +431,7 @@ public sealed class Storyteller
         _recent.Enqueue(record);
         while (_recent.Count > RecentLogSize)
             _recent.Dequeue();
-        host.Announce(summary);
+        host.Report(incident.Id, incident.Category, incident.DisplayName, summary);
         return record;
     }
 
@@ -402,7 +443,8 @@ public sealed class Storyteller
             .Select(pair => new IncidentCooldownSnapshot(pair.Key, pair.Value)).ToArray(),
         _recent.ToArray(),
         Kind == StorytellerKind.Steady ? null : Kind,
-        ThreatScale == 1f ? null : ThreatScale);
+        ThreatScale == 1f ? null : ThreatScale,
+        Adaptation == 0f ? null : Adaptation);
 
     public void Restore(StorytellerSnapshot snapshot)
     {
@@ -423,6 +465,7 @@ public sealed class Storyteller
         WanderersJoined = snapshot.WanderersJoined;
         IncidentsFired = snapshot.IncidentsFired;
         Configure(snapshot.Kind ?? StorytellerKind.Steady, snapshot.ThreatScale ?? 1f);
+        Adaptation = snapshot.Adaptation is { } adaptation && float.IsFinite(adaptation) ? Math.Clamp(adaptation, 0f, MaximumAdaptation) : 0f;
         _lastFired.Clear();
         foreach (var entry in snapshot.IncidentCooldowns ?? Array.Empty<IncidentCooldownSnapshot>())
             if (!string.IsNullOrWhiteSpace(entry.IncidentId))

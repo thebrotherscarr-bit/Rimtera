@@ -835,6 +835,27 @@ public static partial class GraphicalSandbox
                     _canvas.Inspecting = new InspectTarget(InspectKind.Colonist, crewId);
                     return;
                 }
+                // 0.6.3: letters: a click reads one, a second click (or a click on the page, or a right click) puts it away.
+                if (_canvas.LetterAt(e.Location) is { } letterId)
+                {
+                    _mouse.Press(button, PointerOwner.Interface);
+                    if (button == UiPointerButton.Right || _canvas.ReadingLetter == letterId)
+                    {
+                        _game.DismissLetter(letterId);
+                        _canvas.ReadingLetter = null;
+                    }
+                    else if (button == UiPointerButton.Left)
+                        _canvas.ReadingLetter = letterId;
+                    return;
+                }
+                if (button == UiPointerButton.Left && _canvas.LetterPageAt(e.Location))
+                {
+                    _mouse.Press(button, PointerOwner.Interface);
+                    if (_canvas.ReadingLetter is { } read)
+                        _game.DismissLetter(read);
+                    _canvas.ReadingLetter = null;
+                    return;
+                }
                 if (button == UiPointerButton.Left && _canvas.InspectCardAt(e.Location))
                 {
                     _mouse.Press(button, PointerOwner.Interface);

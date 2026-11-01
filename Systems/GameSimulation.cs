@@ -664,6 +664,7 @@ public sealed partial class GameSimulation : IStoryHost
 
         UpdateTownNpcs(deltaSeconds, vitalHours); // 0.3.10: one kind of character (the crew are residents now)
         UpdateRaids(); // 0.4.3: a raid announced earlier arrives at its target
+        UpdateLetters(); // 0.6.3: warnings go once due, other letters fade
         UpdateSurrenders(); // 0.5.6: human raiders brought low surrender
         UpdateResearch(deltaSeconds); // 0.3.7: the station AI studies the open research tier
         UpdateStocking(deltaSeconds); // 0.3.9: labs and cooking stations keep healing and food in stock by themselves
