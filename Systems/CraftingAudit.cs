@@ -42,7 +42,7 @@ public static class CraftingAudit
         public required IReadOnlyList<string> BlockedMilestones { get; init; }
         public required IReadOnlyList<string> Cycles { get; init; }
         public required IReadOnlyList<LateRecipe> LateRecipes { get; init; }
-        /// <summary>Tier 4+ gear (not materials) obtainable before the Fracture: a skipped gate (informational).</summary>
+        /// <summary>Tier 4+ gear (not materials) obtainable before the Fracture; must stay inside <see cref="EarlyGearWhitelist"/>.</summary>
         public required IReadOnlyList<ItemId> EarlyGear { get; init; }
         public required IReadOnlyList<string> Notes { get; init; }
         public required ItemCatalog Catalog { get; init; }
@@ -70,6 +70,58 @@ public static class CraftingAudit
         [ItemId.TangledWire] = "fishing junk, sold for credits (Terraria: fishing seaweed)",
         [ItemId.SoggyDatapad] = "fishing junk, sold for credits (Terraria: old shoe)"
     };
+
+    /// <summary>
+    /// Tier 4+ gear a Classic character may obtain before the Fracture, each with its reason (X-CR-1,
+    /// docs/CRAFTING_PROGRESSION.md §6). <see cref="Result.EarlyGear"/> must stay inside this list (CraftingAuditSelfTests).
+    /// Entries marked "until PC-6" or "until PC-16" wait for the parity steps that re-gate them.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<ItemId, string> EarlyGearWhitelist = BuildWhitelist(
+        ("Tinker Bench combination of pre-Fracture parts; until PC-16 gives it a tier-matched input", [
+            ItemId.ArcanistsCirclet, ItemId.ArchitectsFrame, ItemId.BallisticsEmblemMkII, ItemId.BallisticsModule, ItemId.BerserkerRig,
+            ItemId.BioWeave, ItemId.BulwarkCore, ItemId.CloseQuartersEmblemMkII, ItemId.CommandEmblemMkII, ItemId.CommandModule,
+            ItemId.DroneController, ItemId.DuelistHarness, ItemId.EnergyShieldEmitter, ItemId.EnvironmentalSuit, ItemId.ExcavationSuite,
+            ItemId.ExcavatorRig, ItemId.FortuneMatrix, ItemId.GunnersHarness, ItemId.HeartPump, ItemId.InfernoTreads, ItemId.MagmaSkin,
+            ItemId.MasterTackleKit, ItemId.MeleeModule, ItemId.ReinforcedArmorSuit, ItemId.RetributionMesh, ItemId.RocketPack,
+            ItemId.SanguineReactor, ItemId.ServoGrip, ItemId.SpikeLattice, ItemId.TargetingLensMkII, ItemId.TechEmblemMkII,
+            ItemId.TechModule, ItemId.TelescopicArm, ItemId.VitalCore, ItemId.WardensUplink]),
+        ("ammunition pressed from pre-Fracture materials (viridium bars, hab-pod void essence); until PC-6 re-tiers or re-gates it", [
+            ItemId.CryoRocket, ItemId.CrystalDarts, ItemId.FlechetteRounds, ItemId.IncendiaryRocket, ItemId.OverchargedCell,
+            ItemId.PlasmaFuel, ItemId.PrismCell, ItemId.SeekerBolts, ItemId.ShardBolts, ItemId.ViridiumBolts, ItemId.ViridiumRounds,
+            ItemId.VoidDarts, ItemId.VoidFuel]),
+        ("tonic or food brewed from pre-Fracture ingredients (a consumable buff); until PC-6 re-tiers or re-gates it", [
+            ItemId.GreaterBallisticsTonic, ItemId.GreaterCloseQuartersTonic, ItemId.GreaterCommandTonic, ItemId.GreaterTechTonic,
+            ItemId.HeavyFortifyStim, ItemId.HuntersFocus, ItemId.LifeforceSerum, ItemId.WrathDraught, ItemId.AstroBurger,
+            ItemId.ColonyFeast, ItemId.KoiFlambe, ItemId.PrismSorbet, ItemId.VoidNoodles]),
+        ("summon for an optional boss that has no Fracture gate; fighting it early is the player's risk (gate review with the boss framework)", [
+            ItemId.BountyNotice, ItemId.ClaimMarker, ItemId.DreadnoughtFlag, ItemId.MoonEaterLure, ItemId.ProtocolKey,
+            ItemId.SunspotLens, ItemId.VoidLure]),
+        ("summon whose boss refuses before its gate (HardmodeSummonRefusal: the Fracture, the trio or the opened vault)", [
+            ItemId.MutagenBloom, ItemId.TaintedTissue, ItemId.VaultCore]),
+        ("Defense Protocol starter and drop: a pre-Fracture event (Terraria: the Old One's Army, tier 1)", [
+            ItemId.SummonSignalCore, ItemId.ProtocolShard]),
+        ("the viridium refinery: a pre-Fracture station (Terraria: the Hellforge); its recipes keep their own tiers", [
+            ItemId.OreRefineryMk2]),
+        ("fishing find, crate or quest reward (Terraria: fishing gives some hardmode-tier gear before hardmode; crates hold " +
+         "hardmode ores only after the Fracture)", [
+            ItemId.AstralCrate, ItemId.AstralFishingRod, ItemId.HiveFamiliar, ItemId.HiveStingerRapier, ItemId.MoltenCrate,
+            ItemId.LavaWaderBoots, ItemId.MagmaFishingRod, ItemId.LavaLure, ItemId.RoyalNectar]),
+        ("rare creature or event drop (Terraria: rare pre-hardmode drops such as the dungeon's)", [
+            ItemId.AuroraRing, ItemId.CanopyLongbow, ItemId.CodexTidalSurge, ItemId.HiveLash, ItemId.SpliceNeedle, ItemId.SkyrayWings,
+            ItemId.StormRepeater, ItemId.PhaseDirk, ItemId.WispStaff]),
+        ("rare drop of a Crystal Spires creature that also spawns before the Fracture; until PC-6 moves it to the post-Fracture roster", [
+            ItemId.CodexShardStorm, ItemId.CrystalCrate, ItemId.HaloGyre, ItemId.PrismRibbon]),
+        ("sold by a town NPC behind its own unlock (Demolitionist; the Mechanic after the hearts)", [
+            ItemId.MiniRocket, ItemId.TurretMortar]));
+
+    private static Dictionary<ItemId, string> BuildWhitelist(params (string Reason, ItemId[] Items)[] groups)
+    {
+        var map = new Dictionary<ItemId, string>();
+        foreach (var (reason, ids) in groups)
+            foreach (var id in ids)
+                map.Add(id, reason);
+        return map;
+    }
 
     /// <summary>Why a whole family of items is excluded (difficulty-only boss rewards, debug items).</summary>
     public static string? ExceptionFor(ItemId item, ItemCatalog catalog)
@@ -1135,8 +1187,12 @@ public static class CraftingAudit
         Print("Circular chains among unreached items", result.Cycles);
         Print("Recipes later than their tier implies", result.LateRecipes.Select(late =>
             $"{late.RecipeId} -> {late.Output} (T{late.Tier}) at '{late.Stage}', held back by {late.Cause}"));
-        Print("Tier 4+ gear before the Fracture (informational)", result.EarlyGear.Select(id =>
+        Print("Tier 4+ gear before the Fracture, outside the whitelist", result.EarlyGear.Where(id => !EarlyGearWhitelist.ContainsKey(id)).Select(id =>
             $"{id} (T{items[id].Tier}) at '{result.StageOf(id)}' via {result.Items[id].Via}"));
+        Print("Tier 4+ gear before the Fracture, whitelisted", result.EarlyGear.Where(EarlyGearWhitelist.ContainsKey).Select(id =>
+            $"{id} (T{items[id].Tier}) at '{result.StageOf(id)}' via {result.Items[id].Via}: {EarlyGearWhitelist[id]}"));
+        Print("Whitelist entries no longer early (remove them)", EarlyGearWhitelist.Keys.Where(id => !result.EarlyGear.Contains(id)).Select(id => id.ToString()));
+        Print("Tier 6+ gear before the Fracture", result.EarlyGear.Where(id => items[id].Tier >= 6).Select(id => $"{id} (T{items[id].Tier})"));
         Print("Deliberate dead ends", DeliberateDeadEnds.Select(entry => $"{entry.Key}: {entry.Value}"));
         var excepted = items.All.Where(item => ExceptionFor(item.Id, items) is not null).ToArray();
         Console.WriteLine($"Deliberate exceptions: {excepted.Length} items " +
