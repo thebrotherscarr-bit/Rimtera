@@ -113,7 +113,7 @@ public static class FeatureNames
 {
     public const string ScrapDunes = "scrap-dunes", BuriedLanders = "buried-landers", CoolantSprings = "coolant-springs";
     public const string ScrapHive = "scrap-hive", BurrowerNests = "burrower-nests", TideGrottos = "tide-grottos";
-    public const string PhasePool = "phase-pool", MountainCaves = "mountain-caves", SurfacePockets = "surface-pockets";
+    public const string PhasePool = "phase-pool", MountainCaves = "mountain-caves", SurfacePockets = "surface-pockets", FloodedPockets = "flooded-pockets";
     public const string UndergroundLakes = "underground-lakes", SiltPockets = "silt-pockets", SlushPockets = "slush-pockets";
     public const string GemVeins = "gem-veins", ExposedGems = "exposed-gems", MossCaves = "moss-caves", LongMoss = "long-moss";
     public const string Speleothems = "speleothems", CrystalShrubs = "crystal-shrubs", RubblePiles = "rubble-piles";
@@ -248,6 +248,7 @@ public sealed partial class LargeWorldGenerator
         Add("Sealing the sea floor", 0.1, SealSeaFloor);
         Add("Settling loose sand", 0.5, SettleLooseSand);
         Add("Clearing sky-exposed walls", 0.3, ClearSkyWalls);
+        Add("Flooding cave pockets", 0.4, FloodCavePockets);
         Add("Settling liquids", 1.5, SettleLiquids);
         Add("Draining surface uranium", 0.2, CoolSurfaceLava);
         Add("Cutting seeps", 0.3, Seeps);
@@ -351,6 +352,44 @@ public sealed partial class LargeWorldGenerator
 
     private static TileId? CarveAir(TileId tile) => tile == TileId.Air ? null : TileId.Air;
 
+    /// <summary>
+    /// The long cave carver (0.3.0): walks <paramref name="steps"/> steps on a drifting heading, clearing a diamond whose
+    /// size shrinks from <paramref name="width"/> to nothing, so one call cuts a long, tapering, winding cave that meets
+    /// others. A given heading (<paramref name="vx"/>, <paramref name="vy"/>) sends it that way, e.g. down from the surface;
+    /// <paramref name="level"/> keeps it from drifting up or down. Protected tiles are never cut.
+    /// </summary>
+    private void Runner(TileGrid grid, Random random, double x, double y, double width, int steps,
+        double? vx = null, double? vy = null, bool level = false, int minY = 1)
+    {
+        // Worlds shorter than Tiny (900 rows; only test worlds) get proportionally smaller caves, so a 72-row world isn't
+        // carved hollow. Every real world size uses the full numbers.
+        var scale = Math.Clamp(_height / 900.0, 0.2, 1.0);
+        width *= scale;
+        steps = Math.Max(1, (int)(steps * scale));
+        var dx = vx ?? random.Next(-10, 11) * 0.1;
+        var dy = vy ?? random.Next(-10, 11) * 0.1;
+        for (var left = steps; left > 0; left--)
+        {
+            var size = width * left / (double)steps;
+            var half = size * 0.5;
+            int x0 = (int)(x - half), x1 = (int)(x + half), y0 = (int)(y - half), y1 = (int)(y + half);
+            for (var cx = Math.Max(1, x0); cx < Math.Min(grid.Width - 1, x1); cx++)
+            for (var cy = Math.Max(minY, y0); cy < Math.Min(grid.Height - 2, y1); cy++)
+            {
+                if (Math.Abs(cx - x) + Math.Abs(cy - y) >= width * 0.5 * (1 + random.Next(-10, 11) * 0.015))
+                    continue;
+                var tile = grid.TileAt(cx, cy);
+                if (tile != TileId.Air && !IsProtected(tile))
+                    grid.SetTile(new GridPoint(cx, cy), TileId.Air);
+            }
+            x += dx;
+            y += dy;
+            dx = Math.Clamp(dx + random.Next(-10, 11) * 0.05, -1, 1);
+            if (!level)
+                dy = Math.Clamp(dy + random.Next(-10, 11) * 0.05, -1, 1);
+        }
+    }
+
     private static void Fill(TileGrid grid, int left, int top, int right, int bottom, TileId tile, bool force = false)
     {
         for (var y = Math.Max(0, top); y <= Math.Min(grid.Height - 2, bottom); y++)
@@ -392,15 +431,53 @@ public sealed partial class LargeWorldGenerator
 
     // ---------------------------------------------------------------- terrain
 
+    /// <summary>
+    /// The surface line (0.3.0, matched to the Terraria-style reference in docs/WORLDGEN_DIFF.md §4): a walk across the
+    /// world in runs of 5–40 columns. Each run is a plateau, a rise, a dip, a steep climb or a steep drop, and nudges the
+    /// line a tile at a time, so the ground rolls in readable hills and valleys instead of jittering.
+    /// </summary>
     private void SketchHorizon(TileGrid grid, TileCatalog catalog, Random random, CancellationToken token)
     {
-        var broad = Noise(random, _width, Math.Max(24, _width / 9.0));
-        var mid = Noise(random, _width, Math.Max(10, _width / 40.0));
-        var fine = Noise(random, _width, 5);
-        var baseLine = _height * 0.23;
         _profile = new double[_width];
+        var y = _height * 0.23 * (0.9 + random.NextDouble() * 0.2);
+        var top = _height * 0.15;
+        var bottom = _height * 0.30;
+        int left = 0, kind = 0;
         for (var x = 0; x < _width; x++)
-            _profile[x] = baseLine + broad[x] * _height * 0.045 + mid[x] * _height * 0.02 + fine[x] * Math.Max(1, _height * 0.006);
+        {
+            if (left <= 0)
+            {
+                kind = random.Next(5);
+                left = random.Next(5, 40);
+                if (kind == 0)
+                    left = (int)(left * random.Next(5, 30) * 0.2); // plateaus run longer
+            }
+            left--;
+            switch (kind)
+            {
+                case 0: // plateau: an occasional step either way
+                    while (random.Next(7) == 0) y += random.Next(-1, 2);
+                    break;
+                case 1: // rise
+                    while (random.Next(4) == 0) y--;
+                    while (random.Next(10) == 0) y++;
+                    break;
+                case 2: // dip
+                    while (random.Next(4) == 0) y++;
+                    while (random.Next(10) == 0) y--;
+                    break;
+                case 3: // climb
+                    while (random.Next(2) == 0) y--;
+                    while (random.Next(6) == 0) y++;
+                    break;
+                default: // drop
+                    while (random.Next(2) == 0) y++;
+                    while (random.Next(5) == 0) y--;
+                    break;
+            }
+            y = Math.Clamp(y, top, bottom);
+            _profile[x] = y;
+        }
     }
 
     /// <summary>Columns of fuel sea at each edge, and the coastal shelf inland of it (both scale with width).</summary>
@@ -420,16 +497,16 @@ public sealed partial class LargeWorldGenerator
             var center = random.Next(inlandLeft, inlandRight);
             if (NearSpawn(center, 0.08))
                 continue;
-            var halfWidth = 14 + random.NextDouble() * 46 + _width * 0.002;
-            var height = _height * (0.05 + random.NextDouble() * 0.06);
+            var halfWidth = 30 + random.NextDouble() * 50 + _width * 0.002;
+            var height = _height * (0.015 + random.NextDouble() * 0.02);
             _mountains.Add((center, halfWidth, height));
             for (var x = (int)(center - halfWidth * 2.2); x <= center + halfWidth * 2.2; x++)
             {
                 if ((uint)x >= (uint)_width)
                     continue;
                 var d = (x - center) / halfWidth;
-                // A peaked ridge: gaussian body with a sharper crest.
-                var lift = Math.Exp(-d * d) * height * (0.8 + 0.2 * Math.Cos(d * 3.1));
+                // A rounded ridge rising out of the rolling land (0.3.0: lower, without the sharp crest).
+                var lift = Math.Exp(-d * d) * height;
                 _profile[x] -= lift;
             }
         }
@@ -440,8 +517,8 @@ public sealed partial class LargeWorldGenerator
             var center = random.Next(inlandLeft, inlandRight);
             if (NearSpawn(center, 0.08))
                 continue;
-            var halfWidth = 10 + random.NextDouble() * 32;
-            var depth = _height * (0.025 + random.NextDouble() * 0.03);
+            var halfWidth = 25 + random.NextDouble() * 40;
+            var depth = _height * (0.012 + random.NextDouble() * 0.018);
             for (var x = (int)(center - halfWidth * 2); x <= center + halfWidth * 2; x++)
             {
                 if ((uint)x >= (uint)_width)
@@ -451,9 +528,9 @@ public sealed partial class LargeWorldGenerator
             }
         }
 
-        // The landing site is a gentle plateau.
+        // The landing site is a small level pad (0.3.0: no longer a 400-column plateau; the land rolls right up to it).
         var mid = _width / 2;
-        var flat = Math.Max(6, _width / 40);
+        var flat = 8;
         var level = _profile[mid];
         for (var x = mid - flat * 2; x <= mid + flat * 2; x++)
         {
@@ -578,15 +655,22 @@ public sealed partial class LargeWorldGenerator
         }
     }
 
+    /// <summary>Pocks (0.3.0): a small cut in the surface band and a larger one below it, many times over.</summary>
     private void SmallHoles(TileGrid grid, TileCatalog catalog, Random random, CancellationToken token)
     {
         var count = N(WorldGenDensity.SmallHoles);
+        var highest = _surface.Min();
+        var lowest = _surface.Max();
         for (var i = 0; i < count; i++)
         {
+            if ((i & 255) == 0)
+                token.ThrowIfCancellationRequested();
             var x = random.Next(_width);
-            var y = RandomRow(random, _surface[x] + 4, _moltenTop[x] - 2);
-            Blob(grid, random, x, y, 1 + random.NextDouble() * 1.4, random.Next(2, 6),
-                random.NextDouble() - 0.5, random.NextDouble() - 0.5, CarveAir);
+            Runner(grid, random, x, random.Next(highest, lowest + 1), random.Next(2, 5), random.Next(2, 20),
+                minY: Math.Max(1, _surface[x] - 2));
+            x = random.Next(_width);
+            Runner(grid, random, x, random.Next(lowest, Math.Max(lowest + 1, _moltenTop[x] - 2)), random.Next(8, 15), random.Next(7, 30),
+                minY: _surface[x] + 6);
         }
     }
 
@@ -597,11 +681,8 @@ public sealed partial class LargeWorldGenerator
         {
             token.ThrowIfCancellationRequested();
             var x = random.Next(_width);
-            if (NearSpawn(x, 0.03))
-                continue;
-            var y = RandomRow(random, _surface[x] + 6, _cavernRow);
-            Blob(grid, random, x, y, 2 + random.NextDouble() * 2.5, random.Next(8, 22),
-                random.NextDouble() * 2 - 1, random.NextDouble() * 0.6 - 0.3, CarveAir, minY: _surface[x] + 4);
+            var y = RandomRow(random, _surface.Max(), _rockLine.Max());
+            Runner(grid, random, x, y, random.Next(5, 15), random.Next(30, 200), minY: _surface[x] + 6);
         }
     }
 
@@ -612,9 +693,8 @@ public sealed partial class LargeWorldGenerator
         {
             token.ThrowIfCancellationRequested();
             var x = random.Next(_width);
-            var y = RandomRow(random, _cavernRow, _moltenTop[x] - 4);
-            Blob(grid, random, x, y, 3 + random.NextDouble() * 4.5, random.Next(10, 30),
-                random.NextDouble() * 2 - 1, random.NextDouble() * 0.8 - 0.4, CarveAir, wander: 0.7);
+            var y = RandomRow(random, _rockLine.Max(), _moltenTop[x] - 4);
+            Runner(grid, random, x, y, random.Next(6, 20), random.Next(50, 300), minY: _surface[x] + 8);
         }
     }
 
@@ -668,30 +748,31 @@ public sealed partial class LargeWorldGenerator
         }
     }
 
+    /// <summary>
+    /// Surface caves (0.3.0): runners started on the ground and sent downward, so the land has natural openings into the
+    /// caves below — narrow chutes, wide sloping mouths, a few long descents and some level galleries just under the ground.
+    /// Only the landing pad itself is spared.
+    /// </summary>
     private void CaveMouths(TileGrid grid, TileCatalog catalog, Random random, CancellationToken token)
     {
-        var count = N(WorldGenDensity.CaveMouths);
-        for (var i = 0; i < count; i++)
+        int Column() => random.Next(_width / 20, _width - _width / 20);
+        bool Pad(int x) => Math.Abs(x - _width / 2) < 20;
+        void Mouth(double width, int steps, double vx, double vy, bool level = false)
         {
-            var x = random.Next(_width / 20, _width - _width / 20);
-            if (NearSpawn(x, 0.05))
-                continue;
-            double cx = x;
-            double cy = _surface[x];
-            var drift = random.Next(2) == 0 ? -0.45 : 0.45;
-            var phase = random.NextDouble() * Math.PI * 2;
-            var reach = _cavernRow - _surface[x];
-            var depth = random.Next(Math.Max(6, reach / 4), Math.Max(8, reach * 3 / 4 + 10));
-            for (var step = 0; step < depth * 1.4; step++)
-            {
-                // A winding descent rather than a straight chute.
-                cx += drift + Math.Sin(phase + step * 0.09) * 0.75 + (random.NextDouble() - 0.5) * 0.8;
-                cy += 0.7 + random.NextDouble() * 0.3;
-                if (cx < 2 || cx >= _width - 2 || cy >= _cavernRow + 6)
-                    break;
-                Stamp(grid, (int)cx, (int)cy, 1.6 + random.NextDouble() * 0.8, CarveAir);
-            }
+            var x = Column();
+            if (Pad(x))
+                return;
+            Runner(grid, random, x, _surface[x], width, steps, vx, vy, level);
+            Features.AddCount(FeatureNames.SurfacePockets);
         }
+        for (var i = N(WorldGenDensity.CaveMouths); i > 0; i--)
+            Mouth(random.Next(3, 6), random.Next(5, 50), random.Next(-10, 11) * 0.1, 1.0);
+        for (var i = N(WorldGenDensity.WideCaveMouths); i > 0; i--)
+            Mouth(random.Next(10, 15), random.Next(50, 130), 0, 2.0);
+        for (var i = N(WorldGenDensity.DeepCaveMouths); i > 0; i--)
+            Mouth(random.Next(12, 25), random.Next(150, 500), random.Next(-10, 11) * 0.1, 4.0);
+        for (var i = N(WorldGenDensity.ShallowGalleries); i > 0; i--)
+            Mouth(random.Next(7, 12), random.Next(150, 250), 0, 1.0, level: true);
     }
 
     // ---------------------------------------------------------------- biomes
@@ -1612,6 +1693,72 @@ public sealed partial class LargeWorldGenerator
                 }
             }
         }
+    }
+
+    /// <summary>Caves larger than this stay dry when pockets are flooded; a share of the smaller ones fill with water.</summary>
+    private const int FloodMaxRegion = 2500;
+    private const double FloodChance = 0.35;
+
+    /// <summary>
+    /// Water-filled caves (0.3.0): about a third of the enclosed pockets and small caves underground fill with water, as a
+    /// share of Terraria's small holes and soil caves do; big caverns stay dry. Pockets touching anything built (furniture,
+    /// a chest, a structure, a survivor's spot) or holding liquid already are left alone, and the seas are out of reach.
+    /// </summary>
+    private void FloodCavePockets(TileGrid grid, TileCatalog catalog, Random random, CancellationToken token)
+    {
+        var seen = new bool[_width * _height];
+        var queue = new Queue<int>();
+        var cells = new List<int>();
+        var survivors = Features.SurvivorSpots.ToHashSet();
+        int left = CoastReach, right = _width - CoastReach;
+        for (var x = left; x < right; x++)
+        {
+            if ((x & 63) == 0)
+                token.ThrowIfCancellationRequested();
+            for (var y = _surface[x] + 12; y < _moltenTop[x] - 10; y++)
+            {
+                var start = y * _width + x;
+                if (seen[start] || !Open(x, y))
+                    continue;
+                cells.Clear();
+                var usable = true;
+                int minX = x, maxX = x, minY = y, maxY = y;
+                seen[start] = true;
+                queue.Enqueue(start);
+                while (queue.Count > 0)
+                {
+                    var cell = queue.Dequeue();
+                    int cx = cell % _width, cy = cell / _width;
+                    cells.Add(cell);
+                    var here = grid.GetCell(cx, cy);
+                    if (here.TileId != TileId.Air || here.LiquidUnits > 0 || survivors.Contains(new GridPoint(cx, cy)) ||
+                        TilePhysics.Falls(grid.TileAt(cx, cy - 1)))
+                        usable = false; // built, wet, a survivor's spot, or sand overhead that would sink into the water
+                    minX = Math.Min(minX, cx); maxX = Math.Max(maxX, cx); minY = Math.Min(minY, cy); maxY = Math.Max(maxY, cy);
+                    foreach (var (nx, ny) in new[] { (cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1) })
+                    {
+                        if (nx < left || nx >= right || ny < _surface[nx] + 12 || ny >= _moltenTop[nx] - 10)
+                        {
+                            usable = false; // reaches the surface band, the seas or the core: not an enclosed pocket
+                            continue;
+                        }
+                        var index = ny * _width + nx;
+                        if (seen[index] || !Open(nx, ny))
+                            continue;
+                        seen[index] = true;
+                        queue.Enqueue(index);
+                    }
+                }
+                if (!usable || cells.Count < 6 || cells.Count > FloodMaxRegion || InStructure(minX, minY, maxX, maxY, 4) ||
+                    random.NextDouble() >= FloodChance)
+                    continue;
+                foreach (var cell in cells)
+                    grid.TryAddLiquid(new GridPoint(cell % _width, cell / _width), LiquidKind.Water, 1f, catalog);
+                Features.AddCount(FeatureNames.FloodedPockets);
+            }
+        }
+
+        bool Open(int x, int y) => !catalog[grid.TileAt(x, y)].IsSolid;
     }
 
     private void SettleLiquids(TileGrid grid, TileCatalog catalog, Random random, CancellationToken token)

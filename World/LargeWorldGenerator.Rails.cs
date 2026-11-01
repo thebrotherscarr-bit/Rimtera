@@ -27,13 +27,18 @@ public sealed partial class LargeWorldGenerator
     /// <summary>Carves a level three-high tunnel and floors it with glide-walk running one way (express on long lines).</summary>
     private bool TryLayWalkway(TileGrid grid, TileCatalog catalog, Random random, int startX, int row, int length)
     {
-        // Survey first: refuse lines through protected structures, liquids or the world edge.
+        // Survey first: refuse lines through protected structures, liquids or the world edge, and lines whose roof holds
+        // sand or another falling block (it would be left hanging over the tunnel).
         for (var i = 0; i < length; i++)
-        for (var y = row - 3; y <= row + 1; y++)
         {
-            var x = startX + i;
-            if (!grid.Contains(x, y) || IsProtected(grid.TileAt(x, y)) || grid.GetCell(x, y).LiquidDepth > 0f)
+            if (grid.Contains(startX + i, row - 4) && TilePhysics.Falls(grid.TileAt(startX + i, row - 4)))
                 return false;
+            for (var y = row - 3; y <= row + 1; y++)
+            {
+                var x = startX + i;
+                if (!grid.Contains(x, y) || IsProtected(grid.TileAt(x, y)) || grid.GetCell(x, y).LiquidDepth > 0f)
+                    return false;
+            }
         }
         var rightward = random.Next(2) == 0;
         var tile = length >= 70

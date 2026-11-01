@@ -1485,7 +1485,9 @@ public static class CoreSelfTests
             blighted.Ticker.UpdateCell(43, 5);
         }
         Check(GameSimulation.LastEasyBoss == EnemyKind.ScoutMech && blighted.FractureActive && blighted.Ticker.Fractured &&
-              blighted.FractureCellsConverted > 50 &&
+              // 0.3.0: worlds have far more caves now, so the scar meets more open air on this 160×72 test world
+              // (it converted 51 cells before, 39 after); 25 still proves the scar was carved.
+              blighted.FractureCellsConverted > 25 &&
               CountTiles(blighted, TileId.CrimsonSoil, TileId.CorruptRock, TileId.RadiatedSand, TileId.RadiatedIce) > stripedBefore + 50 &&
               ColumnIs(71, TileId.CrimsonSoil) && ColumnIs(72, TileId.CorruptRock) && ColumnIs(73, TileId.RadiatedSand) &&
               ColumnIs(74, TileId.RadiatedIce) && ColumnIs(75, TileId.CrimsonSoil) && ColumnIs(45, TileId.Grass) && ColumnIs(42, TileId.Rock) &&

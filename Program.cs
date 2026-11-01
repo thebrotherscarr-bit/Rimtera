@@ -75,6 +75,9 @@ if (args.Contains("--boss-balance", StringComparer.OrdinalIgnoreCase))
 if (args.Contains("--asset-check", StringComparer.OrdinalIgnoreCase))
     return AssetCheck.Report(args);
 
+if (args.Contains("--worldgen-diff", StringComparer.OrdinalIgnoreCase))
+    return WorldShapeDiff.Report(args);
+
 if (args.Contains("--engine-bench", StringComparer.OrdinalIgnoreCase))
     return EngineBenchmark.Run(args);
 
@@ -94,6 +97,7 @@ if (args.Contains("--help", StringComparer.OrdinalIgnoreCase) || args.Contains("
     Console.WriteLine("  dotnet run -- --menu       Main menu, profile selection, options, and controls");
     Console.WriteLine("  dotnet run -- --demo       Headless simulation summary");
     Console.WriteLine("  dotnet run -- --self-test  Run deterministic core checks");
+    Console.WriteLine("  dotnet run -- --worldgen-diff [--size Small|Medium|Large] [--seed N]  World shape against the Terraria-style reference");
     return 0;
 }
 

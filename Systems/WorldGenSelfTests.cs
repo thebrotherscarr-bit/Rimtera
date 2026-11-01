@@ -34,6 +34,25 @@ public static class WorldGenSelfTests
         }
         int Tiles(params TileId[] ids) => ids.Sum(id => counts[(int)id]);
 
+        // ---- 0. World shape matches the Terraria-style reference (0.3.0, docs/WORLDGEN_DIFF.md §4) ----
+        var shape = WorldShape.Measure(small);
+        var reference = WorldShapeReference.Measure(4200, 1200, 31337);
+        var depthsMatch = Enumerable.Range(3, shape.OpenByDepth.Length - 3)
+            .All(i => Math.Abs(shape.OpenByDepth[i] - reference.OpenByDepth[i]) <= 0.08);
+        check(shape.MeanStep <= 0.8 && shape.SteepShare <= 0.12 && shape.InlandRange is >= 100 and <= 300 && shape.HillsPer1000 is >= 6 and <= 14 &&
+              shape.SpawnRange >= 30,
+            $"the surface rolls in hills like the reference and spawn is no longer a plateau (mean step {shape.MeanStep:0.00}/{reference.MeanStep:0.00}, " +
+            $"steep {shape.SteepShare:P0}/{reference.SteepShare:P0}, range {shape.InlandRange}/{reference.InlandRange}, hills {shape.HillsPer1000:0.0}/{reference.HillsPer1000:0.0}, spawn range {shape.SpawnRange}/{reference.SpawnRange})");
+        check(depthsMatch && shape.OpenByDepth[0] is >= 0.06 and <= 0.16 && shape.OpenByDepth[3] >= 0.22,
+            $"the ground is as open as the reference at every depth from 120 tiles down, within 8 points ({string.Join(", ", shape.OpenByDepth.Select((open, i) => $"{open:P0}/{reference.OpenByDepth[i]:P0}"))})");
+        check(shape.BigCaveShare >= 0.45 && Math.Abs(shape.BigCaveShare - reference.BigCaveShare) <= 0.12 && shape.PocketShare <= 0.22 &&
+              shape.UndergroundWaterShare is >= 0.07 and <= 0.16,
+            $"caves join up into large systems and some are water-filled, as in the reference (large {shape.BigCaveShare:P0}/{reference.BigCaveShare:P0}, " +
+            $"pockets {shape.PocketShare:P0}/{reference.PocketShare:P0}, water {shape.UndergroundWaterShare:P0}/{reference.UndergroundWaterShare:P0})");
+        check(shape.OpeningsPer1000 > reference.OpeningsPer1000 && shape.OpeningsPer1000 is >= 2 and <= 9 && shape.WideOpeningsPer1000 >= 1.5,
+            $"the surface has a few more natural openings into the caves than the reference ({shape.OpeningsPer1000:0.0} per 1000 columns, " +
+            $"{shape.WideOpeningsPer1000:0.0} wide; reference {reference.OpeningsPer1000:0.0})");
+
         // ---- 1. Every new pass leaves its mark ----
         string[] sites =
         [

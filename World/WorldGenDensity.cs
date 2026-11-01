@@ -36,11 +36,16 @@ public static class WorldGenDensity
     private static Density W(double per, int min = 0, int max = int.MaxValue) => new(per, DensityBasis.Width, min, max);
 
     // ---- Terrain shaping (surface) ----
-    public static readonly Density Mountains = W(2.4, 1);
-    public static readonly Density Valleys = W(1.4, 1);
+    public static readonly Density Mountains = W(0.9, 1);
+    public static readonly Density Valleys = W(0.8, 1);
     public static readonly Density MountainCaves = W(2.0, 1);
-    public static readonly Density CaveMouths = W(6.5, 2);
-    public static readonly Density SurfacePockets = W(14, 2);
+    /// <summary>Surface caves (0.3.0), per thousand columns: narrow chutes, wide mouths, long descents, level galleries.
+    /// A little above the Terraria-style reference, for more natural openings.</summary>
+    public static readonly Density CaveMouths = W(4.5, 2);
+    public static readonly Density WideCaveMouths = W(1.5, 1);
+    public static readonly Density DeepCaveMouths = W(0.45, 1);
+    public static readonly Density ShallowGalleries = W(0.5, 1);
+    public static readonly Density SurfacePockets = W(6, 2);
     public static readonly Density ScrapDunes = W(4, 1);
     /// <summary>Fuel-sea width at each world edge in columns per thousand columns (Medium ≈ 350, Large ≈ 460).</summary>
     public static readonly Density CoastWidth = W(55, 24);
@@ -52,10 +57,13 @@ public static class WorldGenDensity
     public static readonly Density SoilInRock = A(625, 6);
     public static readonly Density ClayGravelSlate = A(212, 4);
     public static readonly Density SandAndScrap = A(222, 3);
-    public static readonly Density SmallHoles = A(1111, 8);
-    public static readonly Density ShallowCaves = A(312, 4);
-    public static readonly Density Caverns = A(385, 5);
-    public static readonly Density Tunnels = A(14, 3);
+    /// <summary>Pairs of pocks (0.3.0): one in the surface band, one larger below it.</summary>
+    public static readonly Density SmallHoles = A(1000, 8);
+    /// <summary>Long caves through the soil layer (0.3.0 runners: 5–15 wide, 30–200 steps).</summary>
+    public static readonly Density ShallowCaves = A(14, 4);
+    /// <summary>Long caverns through the rock (0.3.0 runners: 6–20 wide, 50–300 steps).</summary>
+    public static readonly Density Caverns = A(80, 5);
+    public static readonly Density Tunnels = A(4, 2);
     public static readonly Density SiltPockets = A(45, 2);
     public static readonly Density SlushPockets = A(40, 2);
     public static readonly Density FrozenPockets = A(2000, 3);
