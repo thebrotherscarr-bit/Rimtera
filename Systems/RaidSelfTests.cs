@@ -92,6 +92,24 @@ public static class RaidSelfTests
         check(alone.PendingRaid is { TargetName: "you" } && aloneWarning.Contains("you"),
             $"with nobody housed yet, a raid comes for you ('{aloneWarning}')");
 
+        // ---- 0.4.4 balance: residents are Terraria's town NPCs (250 life, 15 defense); raids answer the colony's guards ----
+        int RaidSize(int guards)
+        {
+            var world = Flat(9885);
+            Living(world, TownNpcKind.StationAi, 60);
+            for (var i = 0; i < guards; i++)
+            {
+                var guard = Living(world, TownNpcKind.Settler, 70 + i * 3);
+                world.Player.Inventory.Add(ItemId.ScrapPistol, 1);
+                world.EquipResident(guard, ItemId.ScrapPistol);
+            }
+            return world.PlanRaid(135f, out _);
+        }
+        var resident = Flat(9886).AddTownNpc(TownNpcKind.Medic, new Vector2(30f, Floor - 3f), bound: false);
+        var (unguarded, guarded) = (RaidSize(0), RaidSize(6));
+        check(resident.MaximumHitPoints == 250f && TownNpc.BaseDefense == 15 && guarded == unguarded + 3 && RaidSize(40) == GameSimulation.MaxRaiders,
+            $"residents have Terraria's town-NPC 250 life and 15 defense; a raid brings one more for every two armed residents, up to {GameSimulation.MaxRaiders} ({unguarded} → {guarded} with six guards)");
+
         // ---- the console shows and sends raids ----
         var console = new DevConsole(Flat(9884));
         var none = console.Execute("raid")[1];

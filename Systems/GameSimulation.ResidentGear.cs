@@ -95,10 +95,13 @@ public sealed partial class GameSimulation
             SpawnGroundItem(item, 1, npc.Motion.Position + npc.Motion.Size / 2f);
     }
 
-    /// <summary>A resident's defense: the armour and accessories they wear (plus a set bonus when all three pieces match).</summary>
+    /// <summary>
+    /// A resident's defense: Terraria's town-NPC base (<see cref="TownNpc.BaseDefense"/>, 0.4.4) plus the armour and
+    /// accessories they wear, and a set bonus when all three pieces match.
+    /// </summary>
     public int ResidentDefense(TownNpc npc)
     {
-        var defense = npc.Gear.Where(pair => pair.Key != ResidentGearSlot.Weapon).Sum(pair => Items[pair.Value].Defense);
+        var defense = TownNpc.BaseDefense + npc.Gear.Where(pair => pair.Key != ResidentGearSlot.Weapon).Sum(pair => Items[pair.Value].Defense);
         var armour = new[] { ResidentGearSlot.Head, ResidentGearSlot.Body, ResidentGearSlot.Legs }
             .Select(slot => npc.Gear.TryGetValue(slot, out var piece) ? Items[piece] : null).ToArray();
         if (armour.All(piece => piece?.ArmorSetId is { } set && set == armour[0]!.ArmorSetId))

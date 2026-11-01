@@ -20,6 +20,8 @@ public sealed partial class GameSimulation
 {
     /// <summary>Hours of warning before a raid arrives (on the clock: two in-game hours, about two and a half minutes).</summary>
     public const float RaidWarningHours = 2f;
+    /// <summary>The most raiders one raid brings.</summary>
+    public const int MaxRaiders = 10;
 
     private const string RaidDueFlag = "raid.due", RaidXFlag = "raid.x", RaidYFlag = "raid.y", RaidSideFlag = "raid.side",
         RaidCountFlag = "raid.count", RaidBiomeFlag = "raid.biome", RaidTargetFlag = "raid.target";
@@ -52,7 +54,9 @@ public sealed partial class GameSimulation
         description = string.Empty;
         if (PendingRaid is not null)
             return 0;
-        var count = Math.Clamp((int)MathF.Round(threatPoints / 45f), 2, 8);
+        // 0.4.4 balance: the storyteller answers the colony's guards: one more raider for every two armed residents (up to 10).
+        var armed = _townNpcs.Count(npc => npc.IsArmed && !npc.IsBound && npc.HomeCell is not null);
+        var count = Math.Clamp((int)MathF.Round(threatPoints / 45f) + armed / 2, 2, MaxRaiders);
         var housed = _townNpcs.Any(npc => !npc.IsBound && npc.HomeCell is not null);
         Vector2 target;
         int number;

@@ -62,13 +62,13 @@ public static class ResidentGearSelfTests
 
         // ---- defense and life: Terraria's half-defense rule; armour life; a full set's bonus ----
         var defense = game.ResidentDefense(armorer);
-        var expected = 1 + 2 + 1 + 2 /* trail set */ + game.Items[accessories[0]].Defense + game.Items[accessories[1]].Defense;
+        var expected = TownNpc.BaseDefense + 1 + 2 + 1 + 2 /* trail set */ + game.Items[accessories[0]].Defense + game.Items[accessories[1]].Defense;
         var before = armorer.HitPoints;
         game.HurtTownNpc(armorer, 20f);
         var lost = before - armorer.HitPoints;
         check(defense == expected && MathF.Abs(lost - (20f - defense / 2f)) < 0.01f && armorer.MaximumHitPoints == TownNpc.BaseHitPoints + 8f &&
               MathF.Abs(game.ResidentDamageTaken(armorer, 1f) - 1f) < 0.001f,
-            $"armour and accessories give defense (DEF {defense}, with the trail set's bonus) and life (max {armorer.MaximumHitPoints:0}); a hit loses half the defense ({lost:0.0} of 20), at least 1 gets through");
+            $"residents have Terraria's town-NPC 250 life and 15 defense, and armour and accessories add to it (DEF {defense}, with the trail set's bonus) and life (max {armorer.MaximumHitPoints:0}); a hit loses half the defense ({lost:0.0} of 20), at least 1 gets through");
 
         // ---- a weapon makes them a guard, and they fight with it ----
         var unarmed = Flat(9852);

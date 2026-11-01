@@ -179,7 +179,7 @@ public static class ColonyRulingSelfTests
     {
         var game = Arena(9750);
         var resident = game.AddTownNpc(TownNpcKind.Medic, new Vector2(50f, Floor - 2f), bound: false);
-        game.HurtTownNpc(resident, resident.MaximumHitPoints - 40f);
+        game.HurtTownNpc(resident, resident.MaximumHitPoints - 40f + game.ResidentDefense(resident) / 2f); // through their defense
         var hurt = resident.HitPoints;
         var snapshot = game.CaptureSnapshot();
         var loaded = GameSimulation.Restore(JsonSerializer.Deserialize<GameSnapshot>(JsonSerializer.Serialize(snapshot, Json), Json)!);
