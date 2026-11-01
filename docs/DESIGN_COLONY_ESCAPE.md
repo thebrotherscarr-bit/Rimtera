@@ -254,7 +254,8 @@ To go into `design/cards/` in the StewBones Mixer format once this direction is 
 | After the ending (2026-11-01) | The world can be continued after launch for a long-scale playthrough, as Terraria's can after the Moon Lord (`docs/VISION.md`) |
 | The station AI (2026-11-01) | It powers the crafting stations and runs on power. Losing it no longer loses the run: the stations go dark until it is rebuilt. This replaces §3.4's "its loss ends the run" |
 | The colony's work (2026-11-01) | Default and skill-based: no bills or work orders to set |
-| Multiplayer (2026-11-01) | Local split-screen co-op for up to four players, after 1.0 |
+| Multiplayer (2026-11-01) | Local split-screen co-op for up to four players in 1.1, networked multiplayer in 1.2, both pre-planned |
+| People (2026-11-01) | Shallow first; bionics for lasting injuries; food is the only need; mood, rest and mental breaks are left out for now (this replaces §3.3's mood and breaks) |
 
 ### 7.2 Still open
-1. **Zealots:** whether a converted colonist can be won back, and how conversion works, when act 5 is designed.
+1. ~~**Zealots:** whether a converted colonist can be won back~~ Settled 2026-11-01: zealots do not convert your people (`docs/VISION.md` §4.5).

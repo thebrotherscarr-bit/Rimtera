@@ -67,9 +67,12 @@ required. You can always do it yourself.
   preferred work from their background, and a better cook or chemist does it faster and better.
 - **Then the depth that makes them people:**
   - random backgrounds and traits;
+  - skills that grow with use;
   - things they can't or won't do;
   - lasting injuries: someone shot in a raid loses an arm and can only cook from then on;
-  - people you would rather not keep, and enemies you can capture and convert.
+  - **bionics** as the sci-fi twist: a lost arm can be replaced;
+  - people you would rather not keep, and raiders you can capture and convert.
+- **Needs stay simple: food only.** Mood and rest are left out for now and can come later.
 - **Losing someone matters.** A dead master chemist slows your potions until you find another.
 
 ### 3.4 Pressure: the storyteller runs every event, and events have a purpose
@@ -91,35 +94,128 @@ required. You can always do it yourself.
 
 ## 4. The road to 1.0
 
-| Milestone | Theme | Contents |
-|---|---|---|
-| 0.3.x | Foundations (done to 0.3.5), then progress | 0.3.6–0.3.11, below |
-| **0.4.0** | The colony defends | One kind of character; guards and outposts; equipping people; storyteller raids with warnings (tower defence) |
-| **0.5.0** | People with stories | Backgrounds and traits; incapabilities; lasting injuries; light mood; prisoners and conversion; sending people away |
-| **0.6.0** | The storyteller | Run acts; storytellers to pick from; the incident catalogue; difficulty dials; letters and the History tab |
-| **0.7.0** | Outposts and travel | Staffed outposts as pylon anchors; raids on outposts; recall |
-| **0.8.0** | The Fracture and the zealots | A shorter hardmode ladder; zealot incidents; the four fuel cores |
-| **0.9.0** | The escape | The Astro-God, the ship and its fuel-up siege, launch, the escape screen, and **continue the world** afterwards |
-| **1.0.0** | Release | Run length 10–14 h tuned on medium worlds; balance; polish; onboarding |
-| **1.1.0** | Local co-op | Split-screen for up to four players |
-| **1.2.0** | Online | Networked multiplayer |
+**1.0 has every part in.** The whole base game has to be working and tested: every mechanic, the full run from
+landfall to launch, and its assets.
+
+| Milestone | Theme |
+|---|---|
+| 0.3.x | Foundations (done to 0.3.5), then the dev console and the steps below |
+| **0.4.0** | The colony defends |
+| **0.5.0** | People with stories |
+| **0.6.0** | The storyteller |
+| **0.7.0** | Outposts and travel |
+| **0.8.0** | The Fracture and the zealots |
+| **0.9.0** | The escape |
+| **1.0.0** | Release: everything in, working and tested |
+| **1.1.0** | Local co-op: split-screen for up to four players |
+| **1.2.0** | Online: networked multiplayer |
 
 **Multiplayer is designed for early** (§3.5): per-player input, camera, inventory and saves from 0.4.0 on, and a clean
 line between game state and player commands, so 1.1 and 1.2 add players rather than rewrite the game.
+
+**Later talks, not planned yet:** alternate endings and other win conditions. There is no post-game content: after
+launch you may continue the world, and the story from there is yours.
 
 ### 4.1 Steps to 0.4.0
 
 | Step | Contents |
 |---|---|
-| 0.3.6 | **Research tiers by boss.** Each boss opens the next research tier. Studying it takes time, and finishing it unlocks the tier's recipes and stations. The 0.2.7 study-point projects fold in. Terraria's own ladder stays the base. |
-| 0.3.7 | **The station AI powers the base.** It boots on energy cells or ore. Its fuel is tied to progress, and higher-tier stations need more power. The stations go dark without it, and you rebuild it to carry on. |
-| 0.3.8 | **The colony by default.** The Work tab and bills are removed. People orient toward their preferred work from their background, and work it by skill: a chemist keeps healing in stock, a cook keeps food. |
-| 0.3.9 | **One kind of character.** The crew merge into the town NPCs. |
-| 0.3.10 | **Multiplayer groundwork.** Per-player input, camera, inventory and saves; game state separated from player commands. |
-| 0.4.0 | **The colony defends.** Guards and outposts, equipping people, purposeful storyteller raids with warnings, a balance pass. Split into 0.4.x steps when we get there. |
+| 0.3.6 | **The dev console.** Trigger any game state, start any event, spawn any item or creature, and test anything in the game (§6). |
+| 0.3.7 | **Research tiers by boss.** Each boss opens the next research tier. Studying it takes time, and finishing it unlocks the tier's recipes and stations. The 0.2.7 study-point projects fold in. Terraria's own ladder stays the base. |
+| 0.3.8 | **The station AI powers the base.** It boots on energy cells or ore. Its fuel is tied to progress, and higher-tier stations need more power. The stations go dark without it, and you rebuild it to carry on. |
+| 0.3.9 | **The colony by default.** The Work tab and bills are removed. People orient toward their preferred work from their background, and work it by skill: a chemist keeps healing in stock, a cook keeps food. |
+| 0.3.10 | **One kind of character.** The crew merge into the town NPCs. |
+| 0.3.11 | **Multiplayer groundwork.** Per-player input, camera, inventory and saves; game state separated from player commands. |
+| 0.4.0 | **The colony defends.** Guards and outposts, equipping people (with Terraria's gear), purposeful storyteller raids with warnings, a balance pass. Split into 0.4.x steps when we get there. |
+
+### 4.2 0.5.0: People with stories
+
+| Step | Contents |
+|---|---|
+| 0.5.1 | **Backgrounds and traits.** A random childhood and adulthood set each person's skill spread, their preferred work, and what they won't or can't do. |
+| 0.5.2 | **Skills grow by doing.** A chemist gets better the more they brew. |
+| 0.5.3 | **Health and lasting injuries.** Wounds land on body parts. A lost arm limits someone to one-handed work. |
+| 0.5.4 | **Bionics.** Replacement limbs and implants, crafted and fitted. |
+| 0.5.5 | **Food as the one need.** People eat from storage; going hungry slows them, then hurts them. |
+| 0.5.6 | **Prisoners and conversion.** Down a raider, hold them in a cell, and recruit them. Send away anyone you'd rather not keep. |
+
+### 4.3 0.6.0: The storyteller
+
+| Step | Contents |
+|---|---|
+| 0.6.1 | **Storytellers to pick** at world creation: three personalities (steady, chaotic, builder-friendly) and difficulty dials. |
+| 0.6.2 | **Acts follow Terraria's progress:** landfall, descent, the core, the Fracture, the zealots, the collapse, launch. Each act opens new events. |
+| 0.6.3 | **The threat budget and warnings.** Strength scales with progress and wealth. Warnings come as letters with a countdown. |
+| 0.6.4 | **The event catalogue.** Terraria's events and invasions under the storyteller, plus arrivals, sickness, power outages for the station AI, supply drops and traders. |
+| 0.6.5 | **Purposeful events.** Each act's key events push you toward the next step of progress. |
+| 0.6.6 | **The History tab:** the run's story so far. |
+
+### 4.4 0.7.0: Outposts and travel
+
+| Step | Contents |
+|---|---|
+| 0.7.1 | **Outposts.** A staffed home away from the base, guarded by the people who live there. |
+| 0.7.2 | **Pylons need a staffed outpost.** Recall items take you home. |
+| 0.7.3 | **Raids reach outposts.** Defences use Terraria's traps and sentries, manned by your people. |
+| 0.7.4 | **The station AI's power reaches outposts,** so their stations work while the power holds. |
+
+### 4.5 0.8.0: The Fracture and the zealots
+
+| Step | Contents |
+|---|---|
+| 0.8.1 | **The Fracture as Terraria's hardmode.** A shorter second ladder, checked against the 10–14 hour run. |
+| 0.8.2 | **Hardmode research tiers and hardmode events,** scheduled by the storyteller. |
+| 0.8.3 | **The zealots.** Cultists raid the base and outposts. They do not convert your people. |
+| 0.8.4 | **The four fuel cores:** siege events at the obelisks. |
+
+### 4.6 0.9.0: The escape
+
+| Step | Contents |
+|---|---|
+| 0.9.1 | **The collapse.** The fuel cores collapse into the core and call the Astro-God. |
+| 0.9.2 | **The ship,** researched and built from parts and fuelled by the Astro-God's core. |
+| 0.9.3 | **The fuel-up siege:** the storyteller's climax while the ship fuels. |
+| 0.9.4 | **Boarding and the escape screen:** who made it out, and the run's chronicle. |
+| 0.9.5 | **Continue the world** after launch, if you want to. |
+
+### 4.7 1.0.0: Release
+- Every part in, working and tested: all mechanics, the whole run, all assets.
+- Run length tuned to 10–14 hours on medium worlds, plus a balance pass across the whole run.
+- Onboarding, save stability and polish.
 
 ## 5. Rules for every system
 1. Terraria's simplicity first. A system that needs a manual to use is too complicated.
 2. People help and never take the game out of your hands. Their work is a bonus: faster and better, never required.
 3. Every system feeds the challenge or the run's story, or it needs a reason to exist.
 4. Every run should differ: the storyteller and the people are the variety.
+
+## 6. Testing: the dev console
+- **A dev console from 0.3.6 on.** It can trigger any game state:
+  - set the time, progress flags, defeated bosses and the Fracture;
+  - start or stop any event or raid;
+  - spawn any item, creature, boss or NPC;
+  - give or take health and statuses;
+  - edit any NPC's skills, background and injuries;
+  - fill or empty the station AI's power;
+  - teleport.
+- It is how the owner and the automated tests reach any situation fast.
+- Every new mechanic adds its console commands in the same step that adds the mechanic.
+- The self-tests (core, Batch A, the deterministic demo, the asset check, the bench) keep running on every step.
+
+## 7. Assets: art and audio through ComfyUI
+- **The pipeline:**
+  - Art and audio are made locally in ComfyUI, with the flows in `docs/COMFYUI.md`.
+  - The owner decides when ComfyUI runs.
+  - Claude asks for assets to be generated or refined, and integrates what comes back.
+- **The style:**
+  - Assets follow the Rimtera style in the docs (`docs/ART_PROMPTS.md`, `docs/BIOME_THEMES.md`) and the original art
+    sheets in `art/sheets/`.
+  - The **boss sheet (`sheet_00c_bosses`)** is the preferred reference for style choices: riveted gunmetal, amber-gold
+    accents.
+- **How it fits each step:**
+  1. A step that adds things to see or hear lists them in `docs/ASSET_REQUESTS.md`. Each entry gives the sprite or
+     sound name, its size or length, the flow to use, a prompt and the style reference.
+  2. Until the real asset arrives, a kitbashed placeholder keeps the asset check clean.
+  3. When the owner's ComfyUI run delivers the asset, it replaces the placeholder in a later step.
+- **1.0 ships with every placeholder replaced.**
+
