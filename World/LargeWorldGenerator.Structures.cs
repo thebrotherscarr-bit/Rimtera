@@ -445,4 +445,65 @@ public sealed partial class LargeWorldGenerator
         }
         Features.Pots += placed;
     }
+
+    /// <summary>
+    /// Single chests on cave floors (0.3.1): cabin chests through the underground and caverns, slag chests in the
+    /// Irradiated Core and extra strongboxes along the precursor dungeon's halls, each kept clear of other containers.
+    /// </summary>
+    private void CaveChests(TileGrid grid, TileCatalog catalog, Random random, CancellationToken token)
+    {
+        bool Clear(int x, int y, int radius)
+        {
+            for (var dy = -radius; dy <= radius; dy++)
+            for (var dx = -radius; dx <= radius; dx++)
+                if (grid.Contains(x + dx, y + dy) && ContentTiles.Has(grid.TileAt(x + dx, y + dy), TileTraits.Container))
+                    return false;
+            return true;
+        }
+
+        int Scatter(int target, int attempts, Func<int> pickX, Func<int, int> pickY, Func<int, int, bool> fits, TileId chest, int radius)
+        {
+            var placed = 0;
+            for (var attempt = 0; attempt < attempts && placed < target; attempt++)
+            {
+                if ((attempt & 255) == 0)
+                    token.ThrowIfCancellationRequested();
+                var x = pickX();
+                var y = pickY(x);
+                if (!IsCaveFloor(grid, catalog, x, y) || !fits(x, y) || !Clear(x, y, radius))
+                    continue;
+                grid.SetTile(new GridPoint(x, y), chest);
+                placed++;
+            }
+            return placed;
+        }
+
+        var caves = N(WorldGenDensity.CaveChests);
+        var placedCaves = Scatter(caves, caves * 60, () => random.Next(4, _width - 4),
+            x => RandomRow(random, _surface[x] + 30, Math.Max(_surface[x] + 31, _moltenTop[x] - 4)),
+            (x, y) => grid.GetCell(x, y).WallId != WallIds.Dungeon && !IsProtected(grid.TileAt(x, y + 1)), TileId.CabinChest, 12);
+
+        var core = N(WorldGenDensity.CoreChests);
+        var placedCore = Scatter(core, core * 200, () => random.Next(4, _width - 4),
+            x => RandomRow(random, _moltenTop[x], _height - 3), (_, _) => true, TileId.SlagChest, 20);
+
+        var placedDungeon = 0;
+        var dungeon = N(WorldGenDensity.DungeonChests);
+        var halls = new List<GridPoint>();
+        for (var y = 2; y < _height - 2; y++)
+        for (var x = 2; x < _width - 2; x++)
+            if (grid.GetCell(x, y).WallId == WallIds.Dungeon && grid.TileAt(x, y) == TileId.Air && grid.TileAt(x, y - 1) == TileId.Air &&
+                catalog[grid.TileAt(x, y + 1)].IsSolid && grid.GetCell(x, y).LiquidDepth <= 0f)
+                halls.Add(new GridPoint(x, y));
+        for (var attempt = 0; attempt < dungeon * 40 && placedDungeon < dungeon && halls.Count > 0; attempt++)
+        {
+            var cell = halls[random.Next(halls.Count)];
+            if (grid.TileAt(cell.X, cell.Y) != TileId.Air || !Clear(cell.X, cell.Y, 6))
+                continue;
+            grid.SetTile(cell, TileId.DungeonChest);
+            placedDungeon++;
+        }
+
+        Features.AddCount(FeatureNames.CaveChests, placedCaves + placedCore + placedDungeon);
+    }
 }

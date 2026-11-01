@@ -179,6 +179,27 @@ public static class WorldGenSelfTests
             $"a pulsed statue wakes a creature ({spawned}), rubble drops stone ({rubbleLoot}), a brood pod releases guards but no matriarch before the Fracture " +
             $"({matriarch}) and a sunken chest holds topped-up loot ({chestLoot})");
 
+        // ---- 4b. World contents match the Terraria-style reference ranges (0.3.1, docs/WORLDGEN_DIFF.md §5) ----
+        var census = WorldCensus.Take(small);
+        var off = WorldCensusReference.Compare(census, 4200, 1200).Where(entry => !entry.InRange).Select(entry => entry.Line).ToArray();
+        check(off.Length == 0 && census.ChestsByLayer.GetValueOrDefault("caverns") > census.ChestsByLayer.GetValueOrDefault("surface"),
+            $"chests, pots, life cores, altars and ore per layer are within the reference ranges, with most chests in the caves " +
+            $"({census.Chests} chests; {(off.Length == 0 ? "all in range" : string.Join("; ", off))})");
+        var families = new HashSet<GameSimulation.ChestFamily>();
+        var missing = new List<string>();
+        foreach (var (cell, tier) in features.Chests.Where((_, index) => index % 3 == 0))
+        {
+            var tile = small.World.TileAt(cell.X, cell.Y);
+            if (GameSimulation.FamilyOf(tile, tier, BiomeScanner.Scan(small.World, cell).Zone) is not { } family)
+                continue;
+            families.Add(family);
+            if (small.GetContainer(cell) is not { } opened || !GameSimulation.ChestPrimaries[family].Any(item => opened.Count(item) > 0))
+                missing.Add($"{tile} at {cell}");
+        }
+        check(missing.Count == 0 && families.Count >= 5,
+            $"every generated chest holds a primary find of its family, as Terraria's chests do ({families.Count} families seen" +
+            $"{(missing.Count == 0 ? "" : "; missing in " + string.Join(", ", missing.Take(4)))})");
+
         // ---- 5. New feature data survives a save without regeneration ----
         var restored = GameSimulation.Restore(small.CaptureSnapshot()).Features!;
         check(restored.Sites.Count == features.Sites.Count && restored.Counts.Count == features.Counts.Count &&

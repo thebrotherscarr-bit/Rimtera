@@ -85,7 +85,7 @@ public static class WorldGenDensity
     public static readonly Density TideGrottosPerCoast = W(0.5, 1);
 
     // ---- Resources ----
-    public static readonly Density CopperVeins = A(1176, 6);
+    public static readonly Density CopperVeins = A(1290, 6);
     public static readonly Density CobaltVeins = A(667, 3);
     public static readonly Density ViridiumVeins = A(385, 2);
     public static readonly Density FrozenOreBlobs = A(625, 3);
@@ -144,6 +144,15 @@ public static class WorldGenDensity
     public static readonly Density Herbs = A(6250, 60);
     public static readonly Density Vines = A(3750, 30);
     public static readonly Density Pots = A(450, 20);
+    /// <summary>
+    /// Loose chests on cave floors (0.3.1): Terraria's underground and cavern layers hold far more chests than its
+    /// cabins alone, most of them single chests sitting in the caves.
+    /// </summary>
+    public static readonly Density CaveChests = A(12, 6);
+    /// <summary>Extra chests in the Irradiated Core (0.3.1; Terraria's underworld ruins hold several).</summary>
+    public static readonly Density CoreChests = A(1.0, 3);
+    /// <summary>Extra chests along the precursor dungeon's halls (0.3.1; Terraria's dungeon holds a couple of dozen).</summary>
+    public static readonly Density DungeonChests = W(3.0, 4);
     public static readonly Density Speleothems = A(5200, 40);
     public static readonly Density CrystalShrubs = A(22, 1);
     public static readonly Density RubblePiles = A(300, 8);

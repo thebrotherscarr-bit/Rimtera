@@ -179,30 +179,104 @@ public sealed partial class GameSimulation
         _ => []
     };
 
-    /// <summary>Useful finds per depth tier: a generated chest that rolled none of its tier's gets one.</summary>
-    private static readonly ItemId[][] ChestDepthFinds =
+    /// <summary>
+    /// The primary finds of each chest family (0.3.1): like Terraria's chests, every generated chest holds one of its
+    /// family's pool — a movement or utility accessory, a tool or an early weapon — on top of its supplies.
+    /// </summary>
+    internal enum ChestFamily { Surface, Underground, Frozen, Canopy, Sunken, Sky, Underworld, Dungeon }
+
+    internal static readonly IReadOnlyDictionary<ChestFamily, ItemId[]> ChestPrimaries = new Dictionary<ChestFamily, ItemId[]>
+    {
+        [ChestFamily.Surface] =
+        [
+            ItemId.ReturnBoomerang, ItemId.DartBlower, ItemId.SprintServosMkI, ItemId.Headlamp, ItemId.CompassChip, ItemId.DepthMeter,
+            ItemId.LifeMonitor, ItemId.MinersGauntlet, ItemId.ScrapTether, ItemId.SparkEmitter
+        ],
+        [ChestFamily.Underground] =
+        [
+            ItemId.DoubleJumpCanister, ItemId.ClimbingClaws, ItemId.GrappleHook, ItemId.MagnetRing, ItemId.SprintServosMkI,
+            ItemId.ScrapChakram, ItemId.LuckyCharm, ItemId.NightVisionGoggles
+        ],
+        [ChestFamily.Frozen] = [ItemId.ThermalSleeve, ItemId.FrostGripGloves, ItemId.GravDamper],
+        [ChestFamily.Canopy] = [ItemId.PowerGlove, ItemId.SprintServosMkI, ItemId.BarbMesh, ItemId.ClimbingClaws],
+        [ChestFamily.Sunken] = [ItemId.CoralPendant, ItemId.OxygenTank, ItemId.HydroSkimmers, ItemId.FishingLine],
+        [ChestFamily.Sky] = [ItemId.GliderWings, ItemId.LuckyCharm, ItemId.TractorCoil, ItemId.DoubleJumpCanister],
+        [ChestFamily.Underworld] = [ItemId.RegenImplant, ItemId.ThermalRegulator, ItemId.BlinkModule, ItemId.LeechCoil],
+        [ChestFamily.Dungeon] = [ItemId.GravAnchor, ItemId.BlinkModule, ItemId.ReflexChip, ItemId.TargetingLensMkI]
+    };
+
+    /// <summary>The family a generated chest belongs to, from its tile, depth tier and biome; null for chests with fixed loot.</summary>
+    internal static ChestFamily? FamilyOf(TileId tile, int tier, BiomeZone zone) => tile switch
+    {
+        TileId.LockedVaultChest => null,
+        TileId.DungeonChest => ChestFamily.Dungeon,
+        TileId.SlagChest => ChestFamily.Underworld,
+        TileId.SkyChest => ChestFamily.Sky,
+        TileId.SunkenChest or TileId.CoastalHabPod => ChestFamily.Sunken,
+        TileId.ShrineChest => ChestFamily.Canopy,
+        _ when tier >= 3 => ChestFamily.Underworld,
+        _ when zone == BiomeZone.FrozenWasteland => ChestFamily.Frozen,
+        _ when zone is BiomeZone.VerdantCanopy or BiomeZone.BloomHives => ChestFamily.Canopy,
+        _ when zone == BiomeZone.AcidCoast => ChestFamily.Sunken,
+        _ => tier == 0 ? ChestFamily.Surface : ChestFamily.Underground
+    };
+
+    /// <summary>
+    /// Supplies by depth tier (0.3.1), each rolled on its own as Terraria rolls a chest's secondaries: light, rope, bars of
+    /// the depth's metal, throwables or ammo, healing and buff stims, recall capsules and credits. A roll is skipped when the
+    /// chest's own table already put that kind of thing in.
+    /// </summary>
+    private static readonly (double Chance, ItemId[] Items, int Min, int Max)[][] ChestSupplies =
     [
-        [ItemId.ClimbingClaws, ItemId.RestorativeTonic, ItemId.ShapingHammer],
-        [ItemId.GrappleHook, ItemId.ClimbingClaws, ItemId.Bomb],
-        [ItemId.GrappleHook, ItemId.Dynamite, ItemId.TeleporterPad],
-        [ItemId.Dynamite, ItemId.AncientPowerCell, ItemId.VoidEssence]
+        [
+            (0.6, [ItemId.WallTorch], 6, 14), (0.33, [ItemId.ClimbingRope], 20, 50), (0.5, [ItemId.CopperBar, ItemId.FerriteBar], 3, 9),
+            (0.33, [ItemId.FerriteThrowingKnife, ItemId.Arrow], 15, 40), (0.5, [ItemId.MedStim], 1, 3),
+            (0.33, [ItemId.SpeedStim, ItemId.GlowDraught], 1, 2), (0.25, [ItemId.RecallCapsule], 1, 2), (0.8, [ItemId.Credits], 10, 50)
+        ],
+        [
+            (0.6, [ItemId.WallTorch, ItemId.GlowSticks], 8, 18), (0.4, [ItemId.ClimbingRope], 25, 60),
+            (0.5, [ItemId.FerriteBar, ItemId.CobaltBar], 4, 10), (0.33, [ItemId.FerriteThrowingKnife, ItemId.Bomb, ItemId.Arrow], 3, 25),
+            (0.5, [ItemId.MedStim], 2, 4), (0.4, [ItemId.SpeedStim, ItemId.ArmorStim, ItemId.GlowDraught], 1, 2),
+            (0.33, [ItemId.RecallCapsule], 1, 2), (0.8, [ItemId.Credits], 30, 120)
+        ],
+        [
+            (0.6, [ItemId.GlowSticks], 10, 25), (0.33, [ItemId.ClimbingRope], 30, 70),
+            (0.5, [ItemId.CobaltBar, ItemId.GlacialBar, ItemId.ViridiumBar], 4, 10), (0.4, [ItemId.FragGrenade, ItemId.Dynamite, ItemId.Bomb], 2, 6),
+            (0.5, [ItemId.MedStim], 2, 5), (0.5, [ItemId.SpeedStim, ItemId.ArmorStim, ItemId.GlowDraught], 1, 3),
+            (0.4, [ItemId.RecallCapsule], 1, 3), (0.8, [ItemId.Credits], 60, 220)
+        ],
+        [
+            (0.5, [ItemId.GlowSticks], 10, 25), (0.6, [ItemId.PyrociteBar], 4, 10), (0.4, [ItemId.Dynamite, ItemId.FragGrenade], 2, 6),
+            (0.5, [ItemId.MedStim], 3, 6), (0.5, [ItemId.ArmorStim, ItemId.SpeedStim], 1, 3), (0.4, [ItemId.RecallCapsule], 1, 3),
+            (0.8, [ItemId.Credits], 120, 400)
+        ]
     ];
 
-    /// <summary>Everything a generated chest may gain on top of its table: the depth finds and the rare thruster fins (crafting audit).</summary>
-    internal static IEnumerable<ItemId> ChestExtraFinds => ChestDepthFinds.SelectMany(finds => finds).Append(ItemId.SalvagedThrusterFins);
+    /// <summary>Everything a generated chest may gain on top of its table: primaries, supplies and the rare thruster fins (crafting audit).</summary>
+    internal static IEnumerable<ItemId> ChestExtraFinds =>
+        ChestPrimaries.Values.SelectMany(pool => pool).Concat(ChestSupplies.SelectMany(tier => tier.SelectMany(roll => roll.Items)))
+            .Append(ItemId.SalvagedThrusterFins).Distinct();
 
     private void ImproveChestLoot(GridPoint cell, Inventory inventory)
     {
         var tier = Features?.ChestTier(cell) ?? -1;
         if (tier is < 0 or > 3)
             return;
+        var zone = BiomeScanner.Scan(World, cell).Zone;
         // Every generated chest also carries a material of the biome it sits in (frost in the ice, uranium in the core...).
-        if (BiomeChestMaterial(BiomeScanner.Scan(World, cell).Zone) is { } material && inventory.Count(material.Item) == 0)
+        if (BiomeChestMaterial(zone) is { } material && inventory.Count(material.Item) == 0)
             inventory.Add(material.Item, material.Min + _lootRandom.Next(material.Max - material.Min + 1));
-        var finds = ChestDepthFinds[tier];
-        if (finds.Any(item => inventory.Count(item) > 0))
+        if (FamilyOf(World.GetCell(cell).TileId, tier, zone) is not { } family)
             return;
-        inventory.Add(finds[_lootRandom.Next(finds.Length)], 1);
+        var pool = ChestPrimaries[family];
+        if (!pool.Any(item => inventory.Count(item) > 0))
+            inventory.Add(pool[_lootRandom.Next(pool.Length)], 1);
+        foreach (var (chance, items, min, max) in ChestSupplies[tier])
+        {
+            if (_lootRandom.NextDouble() >= chance || items.Any(item => inventory.Count(item) > 0))
+                continue;
+            inventory.Add(items[_lootRandom.Next(items.Length)], min + _lootRandom.Next(max - min + 1));
+        }
     }
 
     /// <summary>The themed material a generated chest gains from its biome (BIOME_THEMES.md), or null for plain ground.</summary>
