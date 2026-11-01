@@ -272,7 +272,10 @@ public sealed partial class GameSimulation
         Record($"{npc.Name} the {npc.Definition.Role} was slain.");
         // 0.6.3: a death is a letter, and the storyteller eases off while the colony recovers.
         if (!npc.IsPrisoner)
+        {
             _storyteller.NoteLoss();
+            Flags.Increment(DeathsFlag); // 0.6.6: the History tab counts the dead
+        }
         if (!npc.IsPrisoner)
             SendLetter(LetterKind.BadNews, $"Death: {npc.Name}", npc.Kind == TownNpcKind.Settler
             ? $"{npc.Name} was slain. They will not come back."

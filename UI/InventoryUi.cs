@@ -267,6 +267,8 @@ public sealed class InventoryUiState : UiState
     public event Action? CrewRequested;
     public event Action? BestiaryRequested;
     public event Action? FeatsRequested;
+    /// <summary>0.6.6: the History tab (the run's story so far).</summary>
+    public event Action? HistoryRequested;
 
     /// <summary>Which modifier keys are down, read at each click (the host supplies it; none without one).</summary>
     public Func<(bool Shift, bool Ctrl, bool Alt)> Modifiers { get; set; } = () => default;
@@ -525,6 +527,7 @@ public sealed class InventoryUiState : UiState
         // 0.3.9: no Work or Bills tab; people choose their work from their skills and stations keep stock by themselves.
         // 0.3.11: no Farm tab; farmers tend the planters near home by themselves.
         Tab("tab-research", "Research", 6, () => SwitchTab(InventoryUiState.Tab.Research), _tab == InventoryUiState.Tab.Research);
+        Tab("tab-history", "History", 7, () => HistoryRequested?.Invoke()); // 0.6.6
         for (var i = 0; i < GameSimulation.LoadoutCount; i++)
         {
             var index = i;
@@ -534,7 +537,7 @@ public sealed class InventoryUiState : UiState
                 Rebuild();
             }, $"loadout-{i + 1}", new UiStyle
             {
-                Left = FromRight(258f), Top = UiLength.Px(gearTop + (7 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
+                Left = FromRight(258f), Top = UiLength.Px(gearTop + (8 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
             }) { TextScale = 0.75f, Color = game.ActiveLoadout == i ? UiColor.ButtonActive : UiColor.ButtonDefault });
         }
 

@@ -73,6 +73,7 @@ public sealed partial class GameSimulation
         if (first && act == RunAct.Landfall)
             return; // the run begins in Landfall without a fanfare (its clock starts at hour 0)
         SetFlagValue(ActHourFlag, (long)MathF.Floor(ElapsedGameHours)); // 0.6.5: when the act began
+        SetFlagValue(ActDayFlag(act), Day); // 0.6.6: the History tab's act timeline
         PostMessage($"Act {(int)act}: {ActName(act)}. {ActGoal(act)}");
         Record($"Act {(int)act} began: {ActName(act)}.");
     }

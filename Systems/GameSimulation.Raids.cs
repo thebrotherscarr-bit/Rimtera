@@ -120,8 +120,11 @@ public sealed partial class GameSimulation
         if (arrived == 0)
             _letters.RemoveAll(letter => letter.Tag == RaidLetterTag);
         else
+        {
+            Flags.Increment(RaidsFlag); // 0.6.6
             SendLetter(LetterKind.Threat, $"Raid! {raid.TargetName}", $"{arrived} hostiles are hitting {raid.TargetName} from the {raid.SideName}.",
                 tag: RaidLetterTag);
+        }
     }
 
     /// <summary>Spawns a raid just beyond view of its target, on its side; returns how many arrived.</summary>
