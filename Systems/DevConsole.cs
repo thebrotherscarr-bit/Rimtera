@@ -97,6 +97,8 @@ public sealed class DevConsole
         new("power", "power | power set <0-1000> | power tier <1-5> | power feed", "Shows the station AI's power, sets it or its tier, or feeds it from your bag.", true, Power),
         new("ai", "ai down | ai rebuild", "Takes the station AI down (machines go dark) or rebuilds it.", true, Ai),
         new("act", "act", "Shows the run's act and what it asks of you.", false, _ => [$"Act {(int)_game.Act}: {GameSimulation.ActName(_game.Act)}. {GameSimulation.ActGoal(_game.Act)}"]),
+        new("threat", "threat", "Shows the threat budget: what the next threat is built from, the dial and the ease after losses.", false, _ => Threat()),
+        new("letters", "letters | letters clear | letters send <text>", "Lists the letters waiting, puts them all away, or sends one.", true, Letters),
         new("storyteller", "storyteller [steady|chaotic|builder] [threat 0.5-2]", "Shows the storyteller, or changes its personality and threat dial.", true, Teller),
         new("raid", "raid | raid warn [hours] | raid now", "Shows the raid on its way, or announces one (default 2 hours' warning), or sends one now.", true, Raid),
         new("injure", "injure scar|eye|arm|leg", "Gives the resident nearest you a lasting injury.", true, Injure),
@@ -521,5 +523,36 @@ public sealed class DevConsole
         var close = EnemyArchetypes.All.Where(archetype => Normal(archetype.Kind.ToString()).Contains(normal) || Normal(archetype.DisplayName).Contains(normal))
             .Select(archetype => archetype.Kind.ToString()).Take(6).ToArray();
         throw new ConsoleError(close.Length == 0 ? $"No creature called '{text}'." : $"No creature called '{text}'. Did you mean: {string.Join(", ", close)}?");
+    }
+
+    private IEnumerable<string> Threat()
+    {
+        var game = _game;
+        var teller = game.Storyteller;
+        var parts = Storyteller.ThreatBreakdown(game.Day, game.ColonyWealth, game.SettlerCount, game.DefeatedBosses.Count, (int)game.Act);
+        var total = Storyteller.ComputeThreatPoints(game.Day, game.ColonyWealth, game.SettlerCount, game.DefeatedBosses.Count, (int)game.Act);
+        yield return $"Threat budget {total:0}: " + string.Join(", ", parts.Select(part => $"{part.Part} {part.Points:0}"));
+        yield return $"Dial ×{teller.ThreatScale:0.##} ({Storyteller.Name(teller.Kind)}); eased {teller.Adaptation:P0} after losses.";
+    }
+
+    private IEnumerable<string> Letters(string[] args)
+    {
+        if (args.Length > 0 && args[0].Equals("clear", StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (var letter in _game.Letters.ToArray())
+                _game.DismissLetter(letter.Id);
+            return ["Letters put away."];
+        }
+        if (args.Length > 1 && args[0].Equals("send", StringComparison.OrdinalIgnoreCase))
+        {
+            var text = string.Join(' ', args.Skip(1));
+            _game.SendLetter(LetterKind.Neutral, text, text);
+            return [$"Sent: {text}"];
+        }
+        return _game.Letters.Count == 0
+            ? ["No letters."]
+            : _game.Letters.Select(letter => letter.DueHour is null
+                ? $"{letter.Title}: {letter.Body}"
+                : $"{letter.Title} (in {GameSimulation.Countdown(_game.LetterHoursLeft(letter))}): {letter.Body}").ToArray();
     }
 }

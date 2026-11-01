@@ -24,7 +24,7 @@ public sealed partial class GameSimulation
     public const int MaxRaiders = 10;
 
     private const string RaidDueFlag = "raid.due", RaidXFlag = "raid.x", RaidYFlag = "raid.y", RaidSideFlag = "raid.side",
-        RaidCountFlag = "raid.count", RaidBiomeFlag = "raid.biome", RaidTargetFlag = "raid.target";
+        RaidCountFlag = "raid.count", RaidBiomeFlag = "raid.biome", RaidTargetFlag = "raid.target", RaidLetterTag = "raid";
 
     /// <summary>The raid on its way, or null.</summary>
     public PendingRaid? PendingRaid
@@ -99,6 +99,10 @@ public sealed partial class GameSimulation
         var raid = PendingRaid!.Value;
         description = $"About {count} hostiles are coming for {raid.TargetName} from the {raid.SideName}, in about {warningHours:0.#} hours.";
         Record($"A raid of about {count} was sighted, heading for {raid.TargetName}.");
+        // 0.6.3: the warning comes as a letter that counts down to the raid.
+        SendLetter(LetterKind.Threat, $"Raid coming: {raid.TargetName}",
+            $"About {count} hostiles are coming for {raid.TargetName} from the {raid.SideName}. Arm your people, set their posts and get home.",
+            raid.DueHour, RaidLetterTag);
         return count;
     }
 
@@ -113,6 +117,11 @@ public sealed partial class GameSimulation
         PostMessage(arrived == 0
             ? $"The raid heading for {raid.TargetName} never came."
             : $"Raid! {arrived} hostiles are hitting {raid.TargetName} from the {raid.SideName}!");
+        if (arrived == 0)
+            _letters.RemoveAll(letter => letter.Tag == RaidLetterTag);
+        else
+            SendLetter(LetterKind.Threat, $"Raid! {raid.TargetName}", $"{arrived} hostiles are hitting {raid.TargetName} from the {raid.SideName}.",
+                tag: RaidLetterTag);
     }
 
     /// <summary>Spawns a raid just beyond view of its target, on its side; returns how many arrived.</summary>

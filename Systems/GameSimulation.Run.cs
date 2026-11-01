@@ -7,7 +7,7 @@ public enum RunOutcome : byte { Ongoing, Lost, Won }
 public sealed record ChronicleEntry(int Day, float Hour, string Text);
 
 /// <summary>The run's outcome and its chronicle, saved with the world.</summary>
-public sealed record RunStateSnapshot(RunOutcome Outcome, string? Reason, ChronicleEntry[]? Chronicle);
+public sealed record RunStateSnapshot(RunOutcome Outcome, string? Reason, ChronicleEntry[]? Chronicle, Letter[]? Letters = null);
 
 /// <summary>
 /// The run as a story (docs/DESIGN_COLONY_ESCAPE.md §3): a chronicle of the moments that matter (landing, arrivals,
@@ -72,11 +72,12 @@ public sealed partial class GameSimulation
         PostMessage($"The station AI is under attack! ({npc.HitPoints:0} / {npc.MaximumHitPoints:0})");
     }
 
-    private RunStateSnapshot CaptureRun() => new(Outcome, OutcomeReason, _chronicle.ToArray());
+    private RunStateSnapshot CaptureRun() => new(Outcome, OutcomeReason, _chronicle.ToArray(), CaptureLetters());
 
     private void RestoreRun(RunStateSnapshot? run)
     {
         _chronicle.Clear();
+        RestoreLetters(run?.Letters); // 0.6.3
         if (run is null)
             return;
         Outcome = Enum.IsDefined(run.Outcome) ? run.Outcome : RunOutcome.Ongoing;
