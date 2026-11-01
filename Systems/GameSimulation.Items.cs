@@ -552,7 +552,7 @@ public sealed partial class GameSimulation
                 Player.Inventory.TryConsume(item.Id);
                 break;
             case ItemId.TeleportBeacon:
-                RespawnPlayerAtLanding();
+                RecallHome(); // 0.7.2: home is your bed, else the base
                 break;
             case ItemId.CompanionPermit:
                 // Filing happens on its own while carried; using it files it now or says why it cannot.
@@ -575,6 +575,31 @@ public sealed partial class GameSimulation
     {
         UnhandledUses++;
         PostMessage("That item has no direct use.");
+    }
+
+    /// <summary>
+    /// 0.7.2: recall items take you home: beside your bed when you have one, else to the base (the station AI's home), else
+    /// to the landing site. Returns where you arrived.
+    /// </summary>
+    public string RecallHome()
+    {
+        Player.Motion.Velocity = Vector2.Zero;
+        if (BedSpawnPosition() is { } bed)
+        {
+            Player.Motion.Position = bed;
+            PostMessage("Space folds and you step out beside your bed.");
+            return "your bed";
+        }
+        if (_townNpcs.FirstOrDefault(npc => npc.Kind == TownNpcKind.StationAi && !npc.IsBound && npc.HomeCell is not null) is { } ai)
+        {
+            var column = Math.Clamp((int)ai.HomePosition.X, 2, World.Width - 3);
+            Player.Motion.Position = StandingAt(new GridPoint(column, ai.HomeCell!.Value.Y));
+            LiftClear(Player.Motion);
+            PostMessage("Space folds and you step out at the base.");
+            return "the base";
+        }
+        RespawnPlayerAtLanding();
+        return "the landing site";
     }
 
     private void RespawnPlayerAtLanding()

@@ -156,7 +156,7 @@ launch you may continue the world, and the story from there is yours.
 | Step | Contents |
 |---|---|
 | 0.7.1 | **Outposts.** A staffed home away from the base, guarded by the people who live there. *(Done.)* |
-| 0.7.2 | **Pylons need a staffed outpost.** Recall items take you home. |
+| 0.7.2 | **Pylons need a staffed outpost.** Recall items take you home. *(Done.)* |
 | 0.7.3 | **Raids reach outposts.** Defences use Terraria's traps and sentries, manned by your people. |
 | 0.7.4 | **The station AI's power reaches outposts,** so their stations work while the power holds. |
 
