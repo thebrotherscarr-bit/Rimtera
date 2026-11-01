@@ -1070,11 +1070,20 @@ public sealed class MenuFlow
         var entries = _profiles.Worlds
             .OrderByDescending(world => world.Favorite)
             .ThenByDescending(world => world.LastPlayed)
-            .Select(world => new MenuEntry(
-                $"{world.Name}  •  {world.Width}×{world.Height}  •  {WorldSettings.Name(world.Difficulty)}  •  " +
-                $"{WorldSettings.Name(WorldSettings.Resolve(world.Blight, world.Seed))}  •  {(_saves.Exists(world.Id) ? "Saved" : "New")}",
-                () => Launch(world), SnapLabel: world.Name, Tag: world,
-                RowActions: WorldRowActions(world, CreateWorldSelectMenu))).ToList();
+            .Select(world =>
+            {
+                // Reading a save is slow, so the saved-by exception is checked only when the Creative marks disagree.
+                var admitted = _selectedCharacter is not { } chosen || world.Admits(chosen) || world.Admits(chosen, SavedBy(world));
+                return new MenuEntry(
+                    $"{world.Name}  •  {world.Width}×{world.Height}  •  {WorldSettings.Name(world.Difficulty)}  •  " +
+                    $"{WorldSettings.Name(WorldSettings.Resolve(world.Blight, world.Seed))}  •  {(_saves.Exists(world.Id) ? "Saved" : "New")}" +
+                    (world.CreatedByCreative ? "  •  Creative" : string.Empty),
+                    () => Launch(world), Enabled: admitted, SnapLabel: world.Name, Tag: world,
+                    RowActions: WorldRowActions(world, CreateWorldSelectMenu),
+                    Description: admitted ? null
+                        : world.CreatedByCreative ? "A Creative world: only Creative characters can play it."
+                        : "Creative characters play only Creative worlds. Create one for this character.");
+            }).ToList();
         entries.Add(new MenuEntry("Create World", () => Navigate(BeginWorldCreation()), SnapLabel: "New"));
         entries.Add(new MenuEntry("Back", GoBack, SnapLabel: "Back"));
         return new MenuScreen("world-select", "Select World", entries,
@@ -1112,6 +1121,13 @@ public sealed class MenuFlow
                 ReplaceCurrent(CreateWorldCreationMenu());
             },
             Description: WorldSettings.Describe(_worldDifficulty)),
+        new MenuEntry($"Hazard: {WorldSettings.Name(_worldHazard)}",
+            Adjust: amount =>
+            {
+                _worldHazard = Cycle(_worldHazard, amount);
+                ReplaceCurrent(CreateWorldCreationMenu());
+            },
+            Description: WorldSettings.Describe(_worldHazard)),
         new MenuEntry($"Blight: {WorldSettings.Name(_worldBlight)}",
             Adjust: amount =>
             {
@@ -1138,7 +1154,8 @@ public sealed class MenuFlow
             try
             {
                 var size = WorldSizes[_worldSizeIndex];
-                Launch(_profiles.CreateWorld(_worldDraft, _worldSeed, size.Width, size.Height, _worldDifficulty, _worldHazard, _worldBlight));
+                Launch(_profiles.CreateWorld(_worldDraft, _worldSeed, size.Width, size.Height, _worldDifficulty, _worldHazard, _worldBlight,
+                    createdByCreative: _selectedCharacter?.Difficulty == CharacterDifficulty.Creative));
             }
             catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
             { ReplaceCurrentWithStatus(CreateWorldCreationMenu(), ex.Message); }
@@ -1202,11 +1219,25 @@ public sealed class MenuFlow
             ReplaceCurrent(CreateOptionsMenu(category));
         }
 
+        // Off, 2, 5, 10, 15 minutes, in a ring.
+        void StepAutosave(int amount)
+        {
+            var ring = new[] { 0 }.Concat(GamePreferences.AutosaveChoices).ToArray();
+            var current = Preferences.AutoSave ? Array.IndexOf(ring, Preferences.AutosaveMinutes) : 0;
+            var next = ring[(Math.Max(0, current) + Math.Sign(amount) + ring.Length) % ring.Length];
+            Preferences.AutoSave = next > 0;
+            if (next > 0)
+                Preferences.AutosaveMinutes = next;
+        }
+
         var entries = new List<MenuEntry>();
         switch (category)
         {
             case OptionsCategory.General:
-                entries.Add(Toggle("Autosave", () => Preferences.AutoSave, value => Preferences.AutoSave = value, "Save the world every 90 seconds and on exit."));
+                entries.Add(new MenuEntry($"Autosave: {(Preferences.AutoSave ? $"every {Preferences.AutosaveMinutes} min" : "Off")}",
+                    () => { StepAutosave(1); ApplyPreference(); },
+                    amount => { StepAutosave(amount); ApplyPreference(); },
+                    Description: "How often the world saves itself while you play and when you quit. Off: only Save & Exit in the pause menu saves."));
                 entries.Add(Toggle("Autopause", () => Preferences.AutoPause, value => Preferences.AutoPause = value, "Pause the world while the inventory or colonist sheet is open."));
                 entries.Add(Toggle("Map enabled", () => Preferences.MinimapEnabled, value => Preferences.MinimapEnabled = value, "The minimap and map overlay. The full map (M) is always there."));
                 entries.Add(Toggle("Placement preview", () => Preferences.PlacementPreview, value => Preferences.PlacementPreview = value, "A faint ghost of the block or wall where it will go."));
@@ -1292,6 +1323,10 @@ public sealed class MenuFlow
             screen.SelectIndex(index);
         return screen;
     }
+
+    /// <summary>The character that saved <paramref name="world"/>, if it has a save.</summary>
+    private Guid? SavedBy(WorldProfile world) =>
+        _saves.TryReadFile(world.Id, out var file) && file is not null ? file.CharacterId : null;
 
     private void Launch(WorldProfile world)
     {
