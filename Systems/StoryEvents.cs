@@ -50,3 +50,20 @@ public sealed class TraderIncident : IStoryIncident
     public float ChanceWeight(StoryContext context) => 0.8f;
     public string? TryExecute(IncidentParms parms, Storyteller teller, IStoryHost host) => host.CallTrader();
 }
+
+/// <summary>
+/// The act's key event (0.6.5): once an act has gone on a while, the storyteller sends something that pushes toward the
+/// next step of progress (supplies to build, a signal from the core, the next boss's summon, the way to the ritual).
+/// Once per act.
+/// </summary>
+public sealed class PurposeIncident : IStoryIncident
+{
+    public string Id => "purpose";
+    public string DisplayName => "A way forward";
+    public IncidentCategory Category => IncidentCategory.Boon;
+    public float RefireHours => 12f;
+    public bool CanFire(StoryContext context, Storyteller teller) => context.PurposeDue;
+    // Weighted above the other boons: a stalled act should not wait long for its push.
+    public float ChanceWeight(StoryContext context) => 3f;
+    public string? TryExecute(IncidentParms parms, Storyteller teller, IStoryHost host) => host.SendPurpose();
+}

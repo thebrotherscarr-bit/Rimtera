@@ -12,7 +12,10 @@ public enum RunAct : byte { Landfall = 1, Descent, Core, Fracture, Zealots, Coll
 /// </summary>
 public sealed partial class GameSimulation
 {
-    private const string ActFlag = "story.act", CoreReachedFlag = "core.reached";
+    private const string ActFlag = "story.act", CoreReachedFlag = "core.reached", ActHourFlag = "story.act.hour";
+
+    /// <summary>Game hours since the current act began (0.6.5).</summary>
+    public float HoursInAct => Math.Max(0f, ElapsedGameHours - Flags.Get(ActHourFlag));
 
     /// <summary>The act the run has reached.</summary>
     public RunAct Act => (RunAct)Math.Max((int)RunAct.Landfall, Math.Max((int)Flags.Get(ActFlag), (int)ActFromProgress()));
@@ -68,7 +71,8 @@ public sealed partial class GameSimulation
         Flags.Clear(ActFlag);
         Flags.Increment(ActFlag, (int)act);
         if (first && act == RunAct.Landfall)
-            return; // the run begins in Landfall without a fanfare
+            return; // the run begins in Landfall without a fanfare (its clock starts at hour 0)
+        SetFlagValue(ActHourFlag, (long)MathF.Floor(ElapsedGameHours)); // 0.6.5: when the act began
         PostMessage($"Act {(int)act}: {ActName(act)}. {ActGoal(act)}");
         Record($"Act {(int)act} began: {ActName(act)}.");
     }

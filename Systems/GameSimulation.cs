@@ -2029,7 +2029,8 @@ public sealed partial class GameSimulation : IStoryHost
         Act: (int)Act,
         InvasionReady: InvasionReady,
         PowerOnline: PowerCanFail,
-        TraderCanCome: TraderCanCome);
+        TraderCanCome: TraderCanCome,
+        PurposeDue: PurposeDue);
 
     int IStoryHost.SpawnRaidWave(BiomeZone biome, float threatPoints, out string description) =>
         PlanRaid(threatPoints, out description); // 0.4.3: a raid is announced first and arrives later (GameSimulation.Raids.cs)
