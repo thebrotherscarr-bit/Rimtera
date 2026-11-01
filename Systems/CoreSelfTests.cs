@@ -1681,6 +1681,7 @@ public static class CoreSelfTests
         FuelSelfTests.Run(Check); // 0.7.5: fuel and the refiner
         RecallSelfTests.Run(Check); // 0.7.2: pylons and recall
         DefenceSelfTests.Run(Check); // 0.7.3: outpost defences
+        RelaySelfTests.Run(Check); // 0.7.6: pylons are relays
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab

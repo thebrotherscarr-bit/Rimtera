@@ -123,7 +123,7 @@ public static partial class GraphicalSandbox
                 else
                     g.FillEllipse(_pylonFallbackBrush, at.X - size / 4f, at.Y - size / 4f, size / 2f, size / 2f);
                 // 0.7.2: an active pylon names where it stands (the base, or its outpost).
-                g.DrawString(pylon.Active ? game.PylonPlace(pylon) : "dormant", _small, pylon.Active ? _amberBrush : _dimTextBrush,
+                g.DrawString(pylon.Active ? $"{game.PylonPlace(pylon)} · {game.RelayCharge(pylon.Cell)}" : "offline", _small, pylon.Active ? _amberBrush : _dimTextBrush,
                     at.X - size / 2f, at.Y + size / 2f);
             }
             if (canTravel)
