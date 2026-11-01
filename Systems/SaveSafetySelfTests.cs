@@ -419,14 +419,10 @@ public static class SaveSafetySelfTests
         check(aliveAtSliver && dying.Player.IsDead && dying.Player.HitPoints == 0f,
             "IC-4: the player dies exactly when hit points reach 0");
 
-        var colony = NewGame(9303);
-        var addWanderer = typeof(GameSimulation).GetMethod("AddWanderer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
-        var crew = (ColonistAgent)addWanderer.Invoke(colony, [0, colony.Player.Motion.Position])!;
-        crew.TakeDamage(25f, DamageKind.Cut);
         var brain = new HealthComponent(ColonistAnatomy.CreateTorso(), seed: 9);
         brain.ApplyDamageToPart(brain.FindPart("brain")!, 50f, DamageKind.Shot);
-        check(crew.Health.Injuries.Count > 0 && crew.Health.IsBleeding && brain.IsDead,
-            "IC-4: colonists keep the full body model: wounds, bleeding and organ death");
+        check(brain.IsDead,
+            "IC-4: the full body model still kills on organ loss (it returns for the colony's people in 0.5.3)");
 
         // Melee never misses: a character whose backstory gives a poor hit chance still connects every swing.
         CharacterProfile? clumsy = null;

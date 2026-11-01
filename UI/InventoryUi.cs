@@ -155,7 +155,7 @@ public static class InventoryLayout
 /// <summary>
 /// The inventory screen, the hub Escape opens as in Terraria: inventory and hotbar, sort / quick stack / trash,
 /// an open chest with Loot all, Deposit all, Quick stack, Restock and Sort, crafting (drawn by the canvas), worn
-/// gear with loadouts, tabs for housing, crew, bestiary and feats, and the Settings button. Clicks follow
+/// gear with loadouts, tabs for housing, people, bestiary and feats, and the Settings button. Clicks follow
 /// Terraria (ItemSlot): left picks up, places or swaps on the press; right takes one onto the cursor and keeps taking
 /// while held (or equips); Shift moves to or from the open chest and otherwise does nothing; Ctrl trashes; Alt marks a
 /// favorite. The cursor stack lives on the player's inventory (Terraria's mouse item), usable in the world.
@@ -518,7 +518,7 @@ public sealed class InventoryUiState : UiState
 
         Tab("tab-gear", "Gear", 0, () => SwitchTab(InventoryUiState.Tab.Gear), _tab == InventoryUiState.Tab.Gear);
         Tab("tab-housing", "Housing", 1, () => SwitchTab(InventoryUiState.Tab.Housing), _tab == InventoryUiState.Tab.Housing);
-        Tab("tab-crew", "Crew", 2, () => CrewRequested?.Invoke());
+        Tab("tab-crew", "People", 2, () => CrewRequested?.Invoke());
         Tab("tab-bestiary", "Bestiary", 3, () => BestiaryRequested?.Invoke());
         Tab("tab-feats", "Feats", 4, () => FeatsRequested?.Invoke());
         Tab("tab-emotes", "Emotes", 5, () => SwitchTab(InventoryUiState.Tab.Emotes), _tab == InventoryUiState.Tab.Emotes);
@@ -704,7 +704,7 @@ public sealed class InventoryUiState : UiState
             }) { Scale = 0.45f, Color = new UiColor(150, 160, 172) });
             y += 34f;
         }
-        Add(new UiTextElement("The station AI studies on its own. Research crew at a terminal and research residents speed it up.", "research-help", new UiStyle
+        Add(new UiTextElement("The station AI studies on its own. Researchers at a terminal near home speed it up.", "research-help", new UiStyle
         {
             Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y + 4f), Width = UiLength.Px(240f), Height = UiLength.Px(28f)
         }) { Scale = 0.5f, Color = new UiColor(150, 160, 172) });
@@ -726,7 +726,7 @@ public sealed class InventoryUiState : UiState
         void Button(string text, string id, float left, float y, float width, Action command) =>
             Add(new UiButtonElement(text, () => { command(); Rebuild(); }, id, At(left, y, width)) { TextScale = 0.5f });
 
-        Text("Grow zones (Farm crew work them)", "farm-title", 0f, top, 240f, 0.8f, new UiColor(242, 176, 64));
+        Text("Grow zones (farmers work them)", "farm-title", 0f, top, 240f, 0.8f, new UiColor(242, 176, 64));
         Button("Mark a zone here (8 wide)", "farm-add", 0f, top + 26f, 160f, () =>
             Status(game.AddGrowZoneAtPlayer() is { } zone
                 ? $"Grow zone marked for {game.Items[TilePhysics.HerbFor(zone.Herb)!.Herb].Name}."
@@ -814,10 +814,6 @@ public sealed class InventoryUiState : UiState
             }) { TextScale = 0.6f });
             Line($"{npc.Name} · {npc.Definition.Role} · {home}", $"housing-npc-{npc.Id}", new UiColor(226, 230, 238));
         }
-        var crew = game.Colonists.Where(colonist => colonist.IsAlive).Take(6).ToList();
-        Line(crew.Count == 0 ? "No crew yet." : "Crew", "housing-crew", new UiColor(242, 176, 64));
-        foreach (var colonist in crew)
-            Line($"{colonist.Profile.Name} · {colonist.Activity}", $"housing-crew-{colonist.Id}", new UiColor(226, 230, 238));
         foreach (var lost in game.LostResidentKinds().Take(4))
             Line($"Vacant: {TownNpcCatalog.Get(lost).Role} (lost)", $"housing-lost-{lost}", new UiColor(150, 160, 172));
     }

@@ -20,7 +20,7 @@ Added in 0.3.6 (`docs/VISION.md` §6).
 | `give <item> [count]` | Puts items in your inventory (`give credits 500`) |
 | `spawn <creature> [count]` | Spawns creatures a few tiles away |
 | `defeat <boss>` | Spawns a boss and defeats it at once: its drops, flags and unlocks all happen |
-| `npc <kind>` | A town NPC moves in beside you |
+| `npc <kind>` | A town NPC moves in beside you (`npc settler` brings a generated settler) |
 | `killall` | Removes every creature, bosses too |
 | `fracture` | Starts the Fracture (hardmode) |
 | `event start\|stop <kind>`, `event list` | Starts or stops a world event, or lists the running ones |

@@ -138,7 +138,7 @@ public sealed partial class GameSimulation
     /// The Farm job giver: store a full load, else harvest a blooming herb in a zone near home, else plant an empty zone
     /// cell with seeds from the pouch (fetched from a chest near home when the pouch has none).
     /// </summary>
-    private bool TryFarm(ColonistAgent agent, Vector2 center, float deltaSeconds)
+    private bool TryFarm(TownNpc agent, Vector2 center, float deltaSeconds)
     {
         void Move(Vector2 to) => StepColonistToward(agent, center, to, deltaSeconds, 1f);
         if (!agent.Carried.IsEmpty)
@@ -150,7 +150,7 @@ public sealed partial class GameSimulation
         }
 
         var zones = _growZones.Where(zone => Vector2.Distance(new Vector2(zone.X + zone.Width / 2f, zone.Y + 0.5f), agent.HomePosition) <= OperateRadius).ToArray();
-        var claimed = _colonists.Where(other => !ReferenceEquals(other, agent) && other.IsAlive && other.FarmTarget is not null)
+        var claimed = _townNpcs.Where(other => !ReferenceEquals(other, agent) && other.IsAlive && other.FarmTarget is not null)
             .Select(other => other.FarmTarget!.Value).ToHashSet();
         var harvest = zones.SelectMany(zone => zone.Cells)
             .Where(cell => !claimed.Contains(cell) && TilePhysics.IsHerb(World.TileAt(cell.X, cell.Y)) && IsHerbBlooming(cell))
@@ -203,7 +203,7 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>Walks to a zone cell and works it for <see cref="FarmSeconds"/>, then does <paramref name="finish"/>.</summary>
-    private bool WorkCell(ColonistAgent agent, Vector2 center, float deltaSeconds, GridPoint cell, string activity, Action<Vector2> move, Action finish)
+    private bool WorkCell(TownNpc agent, Vector2 center, float deltaSeconds, GridPoint cell, string activity, Action<Vector2> move, Action finish)
     {
         if (agent.FarmTarget != cell)
             agent.FarmProgress = 0f;
@@ -216,7 +216,7 @@ public sealed partial class GameSimulation
         }
         move(center);
         agent.FarmProgress += deltaSeconds;
-        if (agent.FarmProgress < FarmSeconds(agent.ColonistStats))
+        if (agent.FarmProgress < FarmSeconds(agent.Stats))
             return true;
         agent.FarmProgress = 0f;
         agent.FarmTarget = null;
@@ -225,18 +225,18 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>A farmer's harvest: the herb (a second one sometimes, with Plants skill) and 1–3 seeds into the pouch.</summary>
-    private void Harvest(ColonistAgent agent, GridPoint cell)
+    private void Harvest(TownNpc agent, GridPoint cell)
     {
         if (TilePhysics.HerbFor(World.TileAt(cell.X, cell.Y)) is not { } herb || !IsHerbBlooming(cell))
             return;
         World.SetTile(cell, TileId.Air);
-        var herbs = 1 + (FarmRandom.NextDouble() < ExtraHerbChance(agent.ColonistStats) ? 1 : 0);
+        var herbs = 1 + (FarmRandom.NextDouble() < ExtraHerbChance(agent.Stats) ? 1 : 0);
         agent.Pouch[herb.Herb] = agent.Pouch.GetValueOrDefault(herb.Herb) + herbs;
         agent.Pouch[herb.Seeds] = agent.Pouch.GetValueOrDefault(herb.Seeds) + FarmRandom.Next(1, 4);
         Flags.Increment("colony.harvested", herbs);
     }
 
-    private static void Unpouch(ColonistAgent agent, ItemId item, int count)
+    private static void Unpouch(TownNpc agent, ItemId item, int count)
     {
         var left = agent.Pouch.GetValueOrDefault(item) - count;
         if (left > 0)
@@ -246,14 +246,14 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>The nearest chest near home holding <paramref name="item"/>.</summary>
-    private GridPoint? NearestHolding(ColonistAgent agent, ItemId item) =>
+    private GridPoint? NearestHolding(TownNpc agent, ItemId item) =>
         StorageCellsNear(agent.HomePosition)
             .Where(cell => GetContainer(cell)?.Count(item) > 0)
             .OrderBy(cell => Vector2.DistanceSquared(new Vector2(cell.X + 0.5f, cell.Y + 0.5f), agent.Motion.Position))
             .Cast<GridPoint?>().FirstOrDefault();
 
     /// <summary>Sets a farmer's seeds and herbs down for the haulers (taken off Farm, or dead).</summary>
-    private void DropPouch(ColonistAgent agent, Vector2 at)
+    private void DropPouch(TownNpc agent, Vector2 at)
     {
         foreach (var (item, count) in agent.Pouch)
             SpawnGroundItem(item, count, at);

@@ -86,11 +86,10 @@ public static class TownParitySelfTests
         var unstaffed = stations.Where(station => !TownTrades.BasicBenches.Contains(station) &&
                                                   !TownTrades.Stations.Values.Any(trade => trade.Contains(station))).ToArray();
         var untraded = TownNpcCatalog.All.Select(definition => definition.Kind)
-            .Where(kind => !TownTrades.Idle(kind) && TownTrades.TradeOf(kind).Count == 0).ToArray();
+            .Where(kind => !TownTrades.Idle(kind) && kind != TownNpcKind.Settler && TownTrades.TradeOf(kind).Count == 0).ToArray(); // settlers work any station
         check(unstaffed.Length == 0 && untraded.Length == 0 &&
-              TownTrades.Skill(TownNpcKind.Medic, CraftingStationId.ChemLab) == TownTrades.TradeSkill &&
-              TownTrades.Skill(TownNpcKind.Medic, CraftingStationId.Workbench) == TownTrades.GeneralSkill &&
-              TownTrades.Skill(TownNpcKind.Cook, CraftingStationId.ChemLab) is null &&
+              TownTrades.CanWork(TownNpcKind.Medic, CraftingStationId.ChemLab) && TownTrades.CanWork(TownNpcKind.Medic, CraftingStationId.Workbench) &&
+              !TownTrades.CanWork(TownNpcKind.Cook, CraftingStationId.ChemLab) &&
               !TownTrades.CanWork(TownNpcKind.TradeConsul, CraftingStationId.Workbench) &&
               TownTrades.Speed(TownTrades.TradeSkill) > TownTrades.Speed(TownTrades.GeneralSkill),
             $"every crafting station has a resident skilled at it and every working resident has a trade " +

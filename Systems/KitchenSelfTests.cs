@@ -5,7 +5,7 @@ using Rimtera.World;
 
 namespace Rimtera.Systems;
 
-/// <summary>Cooking and fishing (0.2.6): Cook bills, crew eating from storage, crew fishing, and the Work tab columns.</summary>
+/// <summary>Cooking and fishing (0.2.6): Cook bills, fishing, and the work people choose (eating from storage returns in 0.5.5).</summary>
 public static class KitchenSelfTests
 {
     private const int Floor = 40;
@@ -30,9 +30,9 @@ public static class KitchenSelfTests
         game.Player.Motion.Velocity = Vector2.Zero;
         game.SetTimeOfDay(9f);
         game.AddStartingCrewForChecks();
-        for (var i = 0; i < game.Colonists.Count; i++)
+        for (var i = 0; i < game.Settlers.Count; i++)
         {
-            var agent = game.Colonists[i];
+            var agent = game.Settlers[i];
             agent.Motion.Position = new Vector2(62f + i * 2f, Floor - agent.Motion.Size.Y - 0.01f);
             agent.Motion.Velocity = Vector2.Zero;
             agent.HomePosition = agent.Motion.Position;
@@ -62,12 +62,6 @@ public static class KitchenSelfTests
         return done();
     }
 
-    private static void Starve(ColonistAgent agent, float below)
-    {
-        for (var i = 0; i < 400 && agent.Needs.FoodReserve >= below; i++)
-            agent.Needs.Advance(0.25f);
-    }
-
     public static void Run(Action<bool, string> check)
     {
         // ---- Cook bills: a cooking station's bills are Cook work, not Operate ----
@@ -78,9 +72,9 @@ public static class KitchenSelfTests
             var recipe = game.BillRecipesAt(Stove).First(candidate => candidate.Output == ItemId.ProteinRation);
             foreach (var group in recipe.Ingredients)
                 game.GetContainer(Chest)!.Add(group.Alternatives[0], group.Quantity * 2);
-            game.Colonists[0].Work.Set(work, 1);
+            game.Settlers[0].Work.Set(work, 1);
             var bill = game.AddBill(Stove, recipe.Id, BillMode.DoCount, 2)!;
-            TickUntil(game, () => bill.Done >= 2 && game.Colonists[0].Carried.IsEmpty, 5400);
+            TickUntil(game, () => bill.Done >= 2 && game.Settlers[0].Carried.IsEmpty, 5400);
             return game.GetContainer(Chest)!.Count(ItemId.ProteinRation);
         }
         var byCook = Cooked(WorkType.Cook);
@@ -90,32 +84,20 @@ public static class KitchenSelfTests
         check(byCook >= 2 && byOperator == 0 && stoveGame.BillWork(Stove) == WorkType.Cook && WorkCatalog.Get(WorkType.Cook).HasJobs,
             $"bills at a cooking station are worked by Cook crew, not Operate crew (rations: cook {byCook}, operator {byOperator})");
 
-        // ---- eating: a hungry colonist eats from a chest near home, the most filling food first ----
-        var meal = Camp(9953);
-        var hungry = meal.Colonists[0];
-        Starve(hungry, 0.3f);
-        meal.GetContainer(Chest)!.Add(ItemId.Berry, 5);
-        meal.GetContainer(Chest)!.Add(ItemId.ProteinRation, 1);
-        var before = hungry.Needs.FoodReserve;
-        var fed = TickUntil(meal, () => hungry.Needs.FoodReserve >= GameSimulation.EatBelow, 3600);
-        check(fed && before < 0.3f && meal.GetContainer(Chest)!.Count(ItemId.ProteinRation) == 0 && meal.Flags.Get("colony.meals") >= 1,
-            $"a hungry colonist eats from a chest near home, the most filling food first (food {before:0.00} → {hungry.Needs.FoodReserve:0.00}, " +
-            $"rations left {meal.GetContainer(Chest)!.Count(ItemId.ProteinRation)}, berries left {meal.GetContainer(Chest)!.Count(ItemId.Berry)})");
-
         // ---- fishing: a Fish colonist fishes the pond near home and carries the catch to storage ----
         var pond = Camp(9954, pond: true);
-        var fisher = pond.Colonists[0];
+        var fisher = pond.Settlers[0];
         fisher.Work.Set(WorkType.Fish, 1);
         var spot = pond.FishingSpotNear(fisher.HomePosition);
         var landed = TickUntil(pond, () => pond.GetContainer(Chest)!.Slots.Count(stack => !stack.IsEmpty) > 0 && pond.Flags.Get("colony.fish") >= GameSimulation.CatchLoad, 9000);
         var dry = Camp(9955);
-        dry.Colonists[0].Work.Set(WorkType.Fish, 1);
+        dry.Settlers[0].Work.Set(WorkType.Fish, 1);
         TickUntil(dry, () => false, 600);
-        check(spot is { Y: Floor } && landed && dry.FishingSpotNear(dry.Colonists[0].HomePosition) is null && dry.Flags.Get("colony.fish") == 0,
+        check(spot is { Y: Floor } && landed && dry.FishingSpotNear(dry.Settlers[0].HomePosition) is null && dry.Flags.Get("colony.fish") == 0,
             $"a Fish colonist fishes open water near home and stores the catch; with no water near home there is no fishing (catches {pond.Flags.Get("colony.fish")}, {fisher.Activity})");
 
         // ---- skill: Animals speeds fishing and raises fishing power ----
-        var stats = Camp(9956).Colonists[0].ColonistStats;
+        var stats = Camp(9956).Settlers[0].Stats;
         ColonistStats WithAnimals(int level)
         {
             var levels = stats.SkillLevels.ToArray();
@@ -145,8 +127,8 @@ public static class KitchenSelfTests
         gearChest.Add(ItemId.FishingRod, 1);
         gearChest.Add(ItemId.CobaltFishingRod, 1);
         gearChest.Add(ItemId.Worm, 40);
-        var gear = geared.CrewFishingGear(geared.Colonists[0].HomePosition);
-        geared.Colonists[0].Work.Set(WorkType.Fish, 1);
+        var gear = geared.CrewFishingGear(geared.Settlers[0].HomePosition);
+        geared.Settlers[0].Work.Set(WorkType.Fish, 1);
         TickUntil(geared, () => geared.Flags.Get("colony.fish") >= 4, 9000);
         check(gear.Rod == ItemId.CobaltFishingRod && gear.Bait == ItemId.Worm && gearChest.Count(ItemId.Worm) < 40 &&
               gearChest.Count(ItemId.CobaltFishingRod) == 1 && geared.Flags.Get("colony.fish") >= 4,

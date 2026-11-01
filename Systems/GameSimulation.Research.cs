@@ -159,14 +159,14 @@ public sealed partial class GameSimulation
     }
 
     /// <summary>The Research job giver: study the current tier at the nearest free bench near home.</summary>
-    private bool TryResearch(ColonistAgent agent, Vector2 center, float deltaSeconds)
+    private bool TryResearch(TownNpc agent, Vector2 center, float deltaSeconds)
     {
         if (CurrentResearch is not { } tier)
         {
             agent.FarmTarget = null;
             return false;
         }
-        var claimed = _colonists.Where(other => !ReferenceEquals(other, agent) && other.IsAlive && other.FarmTarget is not null)
+        var claimed = _townNpcs.Where(other => !ReferenceEquals(other, agent) && other.IsAlive && other.FarmTarget is not null)
             .Select(other => other.FarmTarget!.Value).ToHashSet();
         GridPoint? bench = null;
         var nearest = float.MaxValue;
@@ -199,7 +199,7 @@ public sealed partial class GameSimulation
         }
         agent.Activity = $"Studying {tier.Name.ToLowerInvariant()}";
         StepColonistToward(agent, center, center, deltaSeconds, 1f);
-        AddStudy(deltaSeconds * CrewStudyRate(agent.ColonistStats));
+        AddStudy(deltaSeconds * CrewStudyRate(agent.Stats));
         return true;
     }
 

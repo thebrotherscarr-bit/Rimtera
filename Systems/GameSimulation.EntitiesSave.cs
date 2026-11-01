@@ -30,8 +30,6 @@ public sealed partial class GameSimulation
             throw new InvalidDataException("The saved entity list is too large.");
 
         var used = new HashSet<long>();
-        foreach (var colonist in _colonists)
-            used.Add(colonist.Id);
         foreach (var npc in _townNpcs)
             used.Add(npc.Id);
 

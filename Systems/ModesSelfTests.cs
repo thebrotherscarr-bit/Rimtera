@@ -109,17 +109,14 @@ public static class ModesSelfTests
 
         var noPlanner = !town.StartColonyParty();
         town.AddTownNpc(TownNpcKind.PartyPlanner, town.Player.Motion.Position, bound: false);
-        foreach (var agent in town.Colonists)
-            agent.Needs.Drain(Rimtera.AI.NeedKind.Joy, 1f);
         town.Player.Needs.Drain(Rimtera.AI.NeedKind.Joy, 1f);
         var started = town.StartColonyParty();
-        var joyful = town.Colonists.Where(agent => agent.IsAlive).All(agent => agent.Needs.JoyReserve >= 0.99f) &&
-                     town.Player.Needs.JoyReserve >= 0.99f;
+        var joyful = town.Player.Needs.JoyReserve >= 0.99f && town.TownNpcs.Where(npc => !npc.IsBound).All(npc => npc.Activity == "Partying");
         var buffed = town.Player.Statuses.Active.Any(status => status.Id == StatusId.Regeneration);
         var noRepeat = !town.StartColonyParty();
         check(noPlanner && started && town.IsColonyPartyActive && joyful && buffed && noRepeat &&
               town.ColonyPartyHoursLeft is > 0f and <= TownContent.PartyHours + 0.01f,
-            $"the Party Planner throws a colony party: joy fills for every colonist, the player regenerates, and it cannot be repeated at once ({town.ColonyPartyHoursLeft:0.0} h left)");
+            $"the Party Planner throws a colony party: everyone parties, the player's joy fills and they regenerate, and it cannot be repeated at once ({town.ColonyPartyHoursLeft:0.0} h left)");
 
         // ---- G13: companion permit (Quartermaster) brings a town pet ----
         var pets = NewGame(9304);

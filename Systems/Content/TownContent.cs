@@ -106,8 +106,6 @@ public sealed partial class GameSimulation
         SetFlagValue(TownContent.PartyUntilFlag, now + (long)(TownContent.PartyHours * 100f));
         SetFlagValue(TownContent.PartyNextFlag, now + (long)(TownContent.PartyCooldownHours * 100f));
         Flags.Increment("party.thrown");
-        foreach (var agent in _colonists.Where(agent => agent.IsAlive))
-            agent.Needs.Restore(NeedKind.Joy, TownContent.PartyJoyBurst);
         Player.Needs.Restore(NeedKind.Joy, TownContent.PartyJoyBurst);
         Player.Statuses.Apply(StatusId.Regeneration, TownContent.PartyHours, Player.Stats.ImmunityTags);
         foreach (var npc in _townNpcs.Where(npc => !npc.IsBound))
@@ -155,8 +153,6 @@ public sealed partial class GameSimulation
             FileCompanionPermit();
         if (!IsColonyPartyActive)
             return;
-        foreach (var agent in _colonists.Where(agent => agent.IsAlive))
-            agent.Needs.Restore(NeedKind.Joy, TownContent.PartyJoyPerTick);
         Player.Needs.Restore(NeedKind.Joy, TownContent.PartyJoyPerTick);
     }
 }

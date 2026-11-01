@@ -12,13 +12,13 @@ public sealed partial class GameSimulation
 {
     public const float TradeDiscountPerLevel = 0.0075f, MaxTradeDiscount = 0.15f;
 
-    /// <summary>The crew member who bargains: on Trade work, alive and not downed, with the best Social.</summary>
-    public ColonistAgent? Negotiator => _colonists
-        .Where(agent => agent.IsAlive && !agent.IsDowned && agent.Work.Priority(WorkType.Trade) != WorkCatalog.Off)
-        .MaxBy(agent => agent.ColonistStats.Level(ColonistSkill.Social));
+    /// <summary>The resident who bargains for you: housed, on Trade work, with the best Social (0.3.10: residents, not crew).</summary>
+    public TownNpc? Negotiator => _townNpcs
+        .Where(npc => npc.IsAlive && !npc.IsBound && npc.HomeCell is not null && npc.Work.Priority(WorkType.Trade) != WorkCatalog.Off)
+        .MaxBy(npc => npc.Stats.Level(ColonistSkill.Social));
 
     /// <summary>The share off shop prices (and onto what shops pay) the negotiator wins.</summary>
     public float TradeDiscount => Negotiator is { } negotiator
-        ? Math.Min(MaxTradeDiscount, negotiator.ColonistStats.Level(ColonistSkill.Social) * TradeDiscountPerLevel)
+        ? Math.Min(MaxTradeDiscount, negotiator.Stats.Level(ColonistSkill.Social) * TradeDiscountPerLevel)
         : 0f;
 }

@@ -28,7 +28,7 @@ public static class PlayerDebuffSelfTests
         }
         game.Player.Motion.Position = new Vector2(30f, 20f - game.Player.Motion.Size.Y - 0.01f);
         game.Player.Motion.Velocity = Vector2.Zero;
-        foreach (var agent in game.Colonists)
+        foreach (var agent in game.Settlers)
             agent.Motion.Position = new Vector2(10f, 20f - agent.Motion.Size.Y - 0.01f);
         // Bare body: no worn armour or accessories, so defense and immunities come only from what a test puts on.
         foreach (var slot in Enum.GetValues<EquipmentSlot>())

@@ -247,7 +247,7 @@ public static class BatchASelfTests
             game.World.SetTile(new GridPoint(doorX, row - dy), TileId.PlankDoor);
         for (var x = lampCell.X; x <= doorX; x++)
             game.PlaceWire(new GridPoint(x, row));
-        foreach (var agent in game.Colonists)
+        foreach (var agent in game.Settlers)
             agent.Motion.Position = new Vector2(3f, agent.Motion.Position.Y);
         game.Interact(switchCell);
         var opened = game.World.TileAt(doorX, row) == TileId.PlankDoorOpen && game.World.TileAt(doorX, row - 2) == TileId.PlankDoorOpen &&

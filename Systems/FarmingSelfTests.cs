@@ -29,9 +29,9 @@ public static class FarmingSelfTests
         game.Player.Motion.Velocity = Vector2.Zero;
         game.SetTimeOfDay(9f);
         game.AddStartingCrewForChecks();
-        for (var i = 0; i < game.Colonists.Count; i++)
+        for (var i = 0; i < game.Settlers.Count; i++)
         {
-            var agent = game.Colonists[i];
+            var agent = game.Settlers[i];
             agent.Motion.Position = new Vector2(60f + i * 3f, Floor - agent.Motion.Size.Y - 0.01f);
             agent.Motion.Velocity = Vector2.Zero;
             agent.HomePosition = agent.Motion.Position;
@@ -86,7 +86,7 @@ public static class FarmingSelfTests
 
         // ---- planting: a farmer fetches seeds from a chest and plants every cell that takes the herb ----
         var plant = Field(9902);
-        var farmer = plant.Colonists[0];
+        var farmer = plant.Settlers[0];
         farmer.Work.Set(WorkType.Farm, 1);
         plant.GetContainer(Chest)!.Add(ItemId.SunpetalSeeds, 10);
         var field = plant.AddGrowZone(new GridPoint(63, Floor - 1), 6, TileId.HerbSunpetal)!;
@@ -98,7 +98,7 @@ public static class FarmingSelfTests
 
         // ---- harvesting: blooming herbs are harvested, the herbs stored and the cells replanted from the seeds ----
         var crop = Field(9903);
-        var grower = crop.Colonists[0];
+        var grower = crop.Settlers[0];
         grower.Work.Set(WorkType.Farm, 1);
         var bed = crop.AddGrowZone(new GridPoint(63, Floor - 1), 5, TileId.HerbSunpetal)!;
         foreach (var cell in bed.Cells)
@@ -114,7 +114,7 @@ public static class FarmingSelfTests
 
         // ---- a herb out of bloom waits; taken off Farm, a farmer sets down what they carry ----
         var dusk = Field(9904);
-        dusk.Colonists[0].Work.Set(WorkType.Farm, 1);
+        dusk.Settlers[0].Work.Set(WorkType.Farm, 1);
         var moon = dusk.AddGrowZone(new GridPoint(63, Floor - 1), 2, TileId.HerbMoonglow)!;
         foreach (var cell in moon.Cells)
         {
@@ -124,16 +124,16 @@ public static class FarmingSelfTests
             data.State = TilePhysics.HerbMatureBit;
             dusk.World.SetCell(cell, data);
         }
-        dusk.Colonists[0].Pouch[ItemId.SunpetalSeeds] = 3;
+        dusk.Settlers[0].Pouch[ItemId.SunpetalSeeds] = 3;
         TickUntil(dusk, () => false, 300);
         var waited = Growing(dusk, moon) == 2;
-        dusk.Colonists[0].Work.Set(WorkType.Farm, WorkCatalog.Off);
+        dusk.Settlers[0].Work.Set(WorkType.Farm, WorkCatalog.Off);
         TickUntil(dusk, () => false, 30);
-        check(waited && dusk.Colonists[0].Pouch.Count == 0 && dusk.GroundItems.Any(item => item.ItemId == ItemId.SunpetalSeeds),
+        check(waited && dusk.Settlers[0].Pouch.Count == 0 && dusk.GroundItems.Any(item => item.ItemId == ItemId.SunpetalSeeds),
             "a mature herb out of bloom (moonglow by day) is left to bloom, and a farmer taken off Farm sets their seeds down");
 
         // ---- skill: Plants speeds farm work and gives extra herbs above 10 ----
-        var stats = Field(9905).Colonists[0].ColonistStats;
+        var stats = Field(9905).Settlers[0].Stats;
         ColonistStats WithPlants(int level)
         {
             var levels = stats.SkillLevels.ToArray();
@@ -151,11 +151,11 @@ public static class FarmingSelfTests
             game.World.SetTile(Lab, TileId.ChemLab);
             game.GetContainer(Chest)!.Add(ItemId.SunpetalHerb, 4);
             game.GetContainer(Chest)!.Add(ItemId.Berry, 4);
-            game.Colonists[0].Work.Set(work, 1);
+            game.Settlers[0].Work.Set(work, 1);
             var bill = game.AddBill(Lab, "phys-sunpetal-stim", BillMode.DoCount, 2);
             if (bill is null)
                 return -1;
-            TickUntil(game, () => bill.Done >= 2 && game.Colonists[0].Carried.IsEmpty, 5400);
+            TickUntil(game, () => bill.Done >= 2 && game.Settlers[0].Carried.IsEmpty, 5400);
             return game.GetContainer(Chest)!.Count(ItemId.MedStim);
         }
         var byBrewer = Brewed(WorkType.Brew);
@@ -169,10 +169,10 @@ public static class FarmingSelfTests
         // ---- saves keep zones and a farmer's pouch ----
         var kept = Field(9908);
         kept.AddGrowZone(new GridPoint(63, Floor - 1), 5, TileId.HerbFrostbell);
-        kept.Colonists[0].Pouch[ItemId.FrostbellSeeds] = 4;
+        kept.Settlers[0].Pouch[ItemId.FrostbellSeeds] = 4;
         var reloaded = GameSimulation.Restore(kept.CaptureSnapshot());
         check(reloaded.GrowZones.Count == 1 && reloaded.GrowZones[0] is { X: 63, Y: Floor - 1, Width: 5, Herb: TileId.HerbFrostbell } &&
-              reloaded.Colonists[0].Pouch.GetValueOrDefault(ItemId.FrostbellSeeds) == 4,
+              reloaded.Settlers[0].Pouch.GetValueOrDefault(ItemId.FrostbellSeeds) == 4,
             "grow zones and a farmer's seeds are saved with the world");
 
         // ---- the Farm tab, and Farm and Brew in the Work tab ----

@@ -101,7 +101,6 @@ public sealed partial class GameSimulation : IStoryHost
         CollisionSubstep = 0.18f
     });
     private readonly List<EnemyAgent> _enemies = new();
-    private readonly List<ColonistAgent> _colonists = new();
     private readonly List<ProjectileState> _projectiles = new();
     private readonly Queue<string> _recentMessages = new();
     private long _nextEntityId = 1;
@@ -123,7 +122,6 @@ public sealed partial class GameSimulation : IStoryHost
     private readonly ColonySocialSystem _social;
     // Separate stream for minds (breaks, tending, tantrums) so it never shifts spawns or combat rolls.
     private readonly Random _mindRandom;
-    private readonly HashSet<int> _deathsHandled = new();
     private readonly HashSet<long> _raidEnemyIds = new();
     private bool _playerDownedWarned;
 
@@ -265,7 +263,6 @@ public sealed partial class GameSimulation : IStoryHost
     public CharacterProfile PlayerProfile { get; }
     public PlayerCharacter Player { get; }
     public GuideNpc Guide { get; }
-    public IReadOnlyList<ColonistAgent> Colonists => _colonists;
     public IReadOnlyList<EnemyAgent> Enemies => _enemies;
     public IReadOnlyList<ProjectileState> Projectiles => _projectiles;
     /// <summary>Every running world event (EV-2: the one event system, <see cref="WorldEventSystem"/>).</summary>
@@ -283,8 +280,8 @@ public sealed partial class GameSimulation : IStoryHost
     public bool IsOver => Player.IsDead;
     public IReadOnlyCollection<EnemyKind> DefeatedBosses => _defeatedBosses;
 
-    /// <summary>The player character followed by every colonist (alive or dead), in social-key order.</summary>
-    public IReadOnlyList<IColonyPawn> ColonyPawns => new IColonyPawn[] { Player }.Concat(_colonists).ToArray();
+    /// <summary>The pawns with a mind: the player (0.3.10: the crew became residents, who have no mood or relations yet).</summary>
+    public IReadOnlyList<IColonyPawn> ColonyPawns => new IColonyPawn[] { Player };
     /// <summary>Interaction driver (forced interactions for tools and tests).</summary>
     public ColonySocialSystem Social => _social;
     /// <summary>In-game hours since landing; the clock relations and social memories use.</summary>
@@ -355,20 +352,6 @@ public sealed partial class GameSimulation : IStoryHost
         var cellData = binaryCells && !deferCellCompression ? CellCodec.EncodeBytes(World.Cells) : null;
 
         var motion = Player.Motion;
-        var colonistSnapshots = _colonists.Select((agent, index) => new ColonistSnapshot(
-            index,
-            agent.Motion.Position.X,
-            agent.Motion.Position.Y,
-            agent.HitPoints,
-            agent.Needs.FoodReserve,
-            agent.Needs.RestReserve,
-            agent.Needs.JoyReserve,
-            agent.Needs.ComfortReserve,
-            agent.Work.Capture(),
-            agent.FollowsPlayer,
-            agent.Carried,
-            agent.Held.Count == 0 ? null : agent.Held.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
-            agent.Pouch.Count == 0 ? null : agent.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray())).ToArray();
         return new GameSnapshot(
             GameSnapshot.CurrentFormatVersion, Seed, World.Width, World.Height, null,
             TickNumber, Day, ClockHour, motion.Position.X, motion.Position.Y,
@@ -376,11 +359,11 @@ public sealed partial class GameSimulation : IStoryHost
             Player.HitPoints, Player.Needs.FoodReserve, Player.Needs.RestReserve,
             Player.Inventory.SlotsWithCursorReturned(), Player.Inventory.SelectedSlot,
             CaptureEquipmentWithCalibrations(), Player.Statuses.Active.ToArray(),
-            Player.Needs.JoyReserve, Player.Needs.ComfortReserve, colonistSnapshots,
+            Player.Needs.JoyReserve, Player.Needs.ComfortReserve, null,
             _defeatedBosses.OrderBy(kind => kind).ToArray(),
             _storyteller.Capture(),
             CapturePawn(Player, -1),
-            _colonists.Select((agent, index) => CapturePawn(agent, index)).ToArray(),
+            null,
             CompressedCells: compressed,
             WorldMeta: WorldMetaCodec.Capture(BiomeLayout, Features),
             Blight: Blight,
@@ -546,76 +529,14 @@ public sealed partial class GameSimulation : IStoryHost
                 snapshot.JoyReserve ?? 0.70f,
                 snapshot.ComfortReserve ?? 0.70f);
         }
-        // Saves from before crew arrived through housing carry the two crew members a world used to start with.
-        var savedCrew = snapshot.Colonists?.Length ?? 0;
-        var joined = snapshot.Storyteller?.WanderersJoined ?? 0;
-        if (savedCrew > joined)
-            game.AddLegacyStartingCrew(savedCrew - joined);
         if (snapshot.Storyteller is { } story)
         {
-            // Crew arrivals are no longer capped over a run (the dead are replaced), only by what housing supports at once.
             if (story.WanderersJoined is < 0 or > 1024)
                 throw new InvalidDataException("The saved storyteller state is invalid.");
-            for (var wanderer = 0; wanderer < story.WanderersJoined; wanderer++)
-                game.AddWanderer(wanderer, game.PlayerCenter);
             game._storyteller.Restore(story);
-        }
-        if (snapshot.Colonists is not null)
-        {
-            var seen = new HashSet<int>();
-            foreach (var colonistSnapshot in snapshot.Colonists)
-            {
-                if (colonistSnapshot.Index < 0 || colonistSnapshot.Index >= game._colonists.Count ||
-                    !seen.Add(colonistSnapshot.Index) ||
-                    !float.IsFinite(colonistSnapshot.X) || !float.IsFinite(colonistSnapshot.Y) ||
-                    !float.IsFinite(colonistSnapshot.HitPoints) ||
-                    !float.IsFinite(colonistSnapshot.FoodReserve) || !float.IsFinite(colonistSnapshot.RestReserve) ||
-                    !float.IsFinite(colonistSnapshot.JoyReserve) || !float.IsFinite(colonistSnapshot.ComfortReserve))
-                    throw new InvalidDataException("The saved colonist roster is invalid.");
-                var agent = game._colonists[colonistSnapshot.Index];
-                var position = new Vector2(
-                    Math.Clamp(colonistSnapshot.X, 0f, game.World.Width - agent.Motion.Size.X),
-                    Math.Clamp(colonistSnapshot.Y, 0f, game.World.Height - agent.Motion.Size.Y));
-                agent.RestorePersistentState(
-                    position,
-                    colonistSnapshot.HitPoints,
-                    colonistSnapshot.FoodReserve,
-                    colonistSnapshot.RestReserve,
-                    colonistSnapshot.JoyReserve,
-                    colonistSnapshot.ComfortReserve);
-                // 0.3.9: no Work tab; people choose their work from their skills, so saved priorities are not restored.
-                agent.FollowsPlayer = colonistSnapshot.FollowsPlayer;
-                if (!colonistSnapshot.Carried.IsEmpty && game.Items.Contains(colonistSnapshot.Carried.ItemId))
-                    agent.Carried = colonistSnapshot.Carried;
-                foreach (var held in colonistSnapshot.Held ?? [])
-                    if (!held.IsEmpty && game.Items.Contains(held.ItemId))
-                        agent.Held[held.ItemId] = agent.Held.GetValueOrDefault(held.ItemId) + held.Count;
-                foreach (var pouched in colonistSnapshot.Pouch ?? [])
-                    if (!pouched.IsEmpty && game.Items.Contains(pouched.ItemId))
-                        agent.Pouch[pouched.ItemId] = agent.Pouch.GetValueOrDefault(pouched.ItemId) + pouched.Count;
-            }
         }
         if (!arriving && snapshot.PlayerState is { } playerState)
             RestorePawn(game.Player, playerState);
-        if (snapshot.ColonistStates is not null)
-        {
-            var seenStates = new HashSet<int>();
-            foreach (var state in snapshot.ColonistStates)
-            {
-                // States for crew the snapshot no longer rebuilds (e.g. wanderers without storyteller data) are skipped.
-                if (state is null || state.Index < 0 || state.Index >= game._colonists.Count)
-                    continue;
-                if (!seenStates.Add(state.Index))
-                    throw new InvalidDataException("The saved colonist state is invalid.");
-                RestorePawn(game._colonists[state.Index], state);
-            }
-        }
-        foreach (var agent in game._colonists)
-        {
-            agent.SyncHealthDeath();
-            if (!agent.IsAlive)
-                game._deathsHandled.Add(agent.SocialKey);
-        }
         game.Player.SyncHealthDeath();
         if (snapshot.DefeatedBosses is not null)
         {
@@ -639,9 +560,10 @@ public sealed partial class GameSimulation : IStoryHost
         if (arriving)
             game.PlaceArrivingCharacter();
         // People grew to Terraria's body size (HumanoidBody); an older save can leave feet in the ground, so lift them clear.
-        foreach (var body in game.TownNpcs.Select(npc => npc.Motion).Concat(game._colonists.Select(agent => agent.Motion)).Prepend(game.Player.Motion))
+        foreach (var body in game.TownNpcs.Select(npc => npc.Motion).Prepend(game.Player.Motion))
             game.LiftClear(body);
         game.RestoreColonyResearch(snapshot.Research); // 0.3.7: after the flags and the defeated bosses it reads
+        game.SettleLegacyCrew(snapshot); // 0.3.10: crew saved before the merge come back as settlers
         return game;
     }
 
@@ -731,8 +653,7 @@ public sealed partial class GameSimulation : IStoryHost
         if (input.Action != PlayerAction.None && !Player.IsDowned)
             PerformAction(input.Action, input.Target);
 
-        UpdateColonists(deltaSeconds, vitalHours);
-        UpdateTownNpcs(deltaSeconds);
+        UpdateTownNpcs(deltaSeconds, vitalHours); // 0.3.10: one kind of character (the crew are residents now)
         UpdateResearch(deltaSeconds); // 0.3.7: the station AI studies the open research tier
         UpdateStocking(deltaSeconds); // 0.3.9: labs and cooking stations keep healing and food in stock by themselves
         UpdateEnemies(deltaSeconds);
@@ -1350,143 +1271,6 @@ public sealed partial class GameSimulation : IStoryHost
         return true;
     }
 
-    private void UpdateColonists(float deltaSeconds, float elapsedHours)
-    {
-        var playerCenter = Player.Motion.Position + Player.Motion.Size / 2f;
-        foreach (var agent in _colonists)
-        {
-            agent.SyncHealthDeath();
-            if (!agent.IsAlive)
-            {
-                HandleColonistDeath(agent);
-                continue;
-            }
-
-            agent.Needs.Advance(
-                elapsedHours,
-                agent.ColonistStats.FoodConsumptionMultiplier,
-                agent.ColonistStats.RestRateMultiplier);
-            agent.Health.IsResting = agent.IsDowned || agent.Activity == "Resting at camp";
-            agent.Health.Tick(elapsedHours);
-            agent.SyncHealthDeath();
-            if (!agent.IsAlive)
-            {
-                HandleColonistDeath(agent);
-                continue;
-            }
-
-            var center = agent.Motion.Position + agent.Motion.Size / 2f;
-            if (agent.IsDowned)
-            {
-                // Downed: lies where they fell until wounds ease (or they bleed out).
-                agent.Mind.Breaker.End();
-                agent.Activity = $"Downed ({agent.Health.DownedReason})";
-                _colonistMovement.Step(agent.Motion, new MovementInput(0f), deltaSeconds, World, Tiles);
-                continue;
-            }
-            if (agent.Mind.Breaker.IsBreaking)
-            {
-                UpdateBreakBehavior(agent, center, deltaSeconds, elapsedHours);
-                continue;
-            }
-
-            var toPlayer = playerCenter - center;
-            var distance = toPlayer.Length();
-            var safe = !_enemies.Any(enemy => enemy.IsAlive && !enemy.IsPassive &&
-                Vector2.Distance(enemy.Motion.Position, agent.Motion.Position) < 8f);
-            var atCamp = Vector2.Distance(agent.Motion.Position, agent.HomePosition) < 5.5f;
-            agent.WanderTimer -= deltaSeconds;
-
-            // Work (the Work tab's priorities) comes before the camp routine, unless a need is pressing. Crew stay home
-            // unless told to follow the player; a follower works only while near the player.
-            var urgentNeed = agent.Needs.RestReserve < 0.35f || agent.Needs.FoodReserve < 0.35f;
-            if (!urgentNeed && (!agent.FollowsPlayer || distance <= 9f) && TryColonyWork(agent, center, deltaSeconds, elapsedHours))
-                continue;
-            // 0.2.6: a hungry colonist at home eats from the chests near home (meals first) before foraging.
-            if ((!agent.FollowsPlayer || distance <= 9f) && TryEatFromStorage(agent, center, deltaSeconds))
-                continue;
-
-            if (agent.FollowsPlayer && distance > 9f)
-            {
-                agent.Activity = "Following";
-            }
-            else if (!safe)
-            {
-                agent.Activity = "Alert";
-            }
-            else if (atCamp)
-            {
-                if (agent.Needs.RestReserve < 0.55f)
-                {
-                    agent.Activity = "Resting at camp";
-                    var restBefore = agent.Needs.RestReserve;
-                    agent.Needs.Restore(NeedKind.Rest, elapsedHours * 0.16f);
-                    agent.Needs.Restore(NeedKind.Comfort, elapsedHours * 0.05f);
-                    agent.Heal(elapsedHours * 2f);
-                    if (restBefore < 0.54f && agent.Needs.RestReserve >= 0.54f)
-                        agent.Mind.Thoughts.AddMemory(ThoughtId.RestedWell);
-                }
-                else if (agent.Needs.FoodReserve < 0.60f)
-                {
-                    agent.Activity = "Foraging";
-                    agent.Needs.Restore(
-                        NeedKind.Food,
-                        elapsedHours * (0.075f + agent.ColonistStats.Level(ColonistSkill.Plants) * 0.005f));
-                }
-                else
-                {
-                    agent.Activity = "Working around camp";
-                    agent.Needs.Restore(NeedKind.Joy, elapsedHours * 0.06f);
-                    agent.Needs.Restore(NeedKind.Comfort, elapsedHours * 0.05f);
-                }
-            }
-            else
-            {
-                agent.Activity = "Wandering";
-            }
-
-            Vector2 target;
-            if (agent.FollowsPlayer && distance > 9f)
-            {
-                target = playerCenter;
-            }
-            else if (agent.Activity == "Resting at camp")
-            {
-                target = center;
-            }
-            else
-            {
-                if (agent.FollowsPlayer && distance < 4f)
-                    agent.HomePosition = agent.Motion.Position;
-                if (agent.WanderTimer <= 0f)
-                {
-                    agent.WanderTimer = 2.5f + (float)_random.NextDouble() * 3.5f;
-                    var offset = ((float)_random.NextDouble() * 2f - 1f) * 4.5f;
-                    agent.WanderTarget = new Vector2(
-                        Math.Clamp(agent.HomePosition.X + offset, 1f, World.Width - 2f),
-                        agent.HomePosition.Y);
-                }
-                target = agent.WanderTarget;
-            }
-
-            StepColonistToward(agent, center, target, deltaSeconds, 1f);
-        }
-    }
-
-    private void StepColonistToward(ColonistAgent agent, Vector2 center, Vector2 target, float deltaSeconds, float speed)
-    {
-        var dx = target.X - center.X;
-        var horizontal = MathF.Abs(dx) > 0.75f ? MathF.Sign(dx) : 0f;
-        var jump = horizontal != 0f && agent.Motion.Grounded && IsBlockedAhead(agent, horizontal);
-        _colonistMovement.Step(
-            agent.Motion,
-            new MovementInput(horizontal, JumpPressed: jump,
-                SpeedMultiplier: agent.ColonistStats.MoveSpeedMultiplier * agent.MoveCapacityFactor * speed),
-            deltaSeconds,
-            World,
-            Tiles);
-    }
-
     /// <summary>The needs the player's mood reads (D-48): fixed at the starting reserves, so needs never move the player's mood.</summary>
     internal static SurvivalNeeds PlayerNeedsBaseline() => new(0.82f, 0.9f, 0.72f, 0.70f);
     private readonly SurvivalNeeds PlayerNeutralNeeds = PlayerNeedsBaseline();
@@ -1495,151 +1279,11 @@ public sealed partial class GameSimulation : IStoryHost
     /// <summary>A binge forages, so there is always food to binge on (NC-7); the player's pack is never read.</summary>
     private static bool ColonyHasFoodToBinge => true;
 
-    /// <summary>Furniture a tantrum kicks at (harmlessly, NC-7).</summary>
-    private static readonly TileId[] FurnitureTiles =
-    [
-        TileId.Workbench, TileId.Furnace, TileId.Anvil, TileId.MiniTurret, TileId.HydroponicsTray,
-        TileId.SolarPanel, TileId.OxygenUnit
-    ];
-
-    /// <summary>What a breaking colonist does instead of their normal routine.</summary>
-    private void UpdateBreakBehavior(ColonistAgent agent, Vector2 center, float deltaSeconds, float elapsedHours)
-    {
-        var target = center;
-        var speed = 0.8f;
-        agent.BreakTimer -= elapsedHours;
-        switch (agent.Mind.Breaker.ActiveKind)
-        {
-            case MentalBreakKind.SadWander:
-                agent.Activity = "Wandering sadly";
-                agent.WanderTimer -= deltaSeconds;
-                if (agent.WanderTimer <= 0f)
-                {
-                    agent.WanderTimer = 3f + (float)_mindRandom.NextDouble() * 3f;
-                    var offset = ((float)_mindRandom.NextDouble() * 2f - 1f) * 10f;
-                    agent.WanderTarget = new Vector2(
-                        Math.Clamp(agent.HomePosition.X + offset, 1f, World.Width - 2f), agent.HomePosition.Y);
-                }
-                target = agent.WanderTarget;
-                speed = 0.6f;
-                break;
-            case MentalBreakKind.HideInRoom:
-                var room = NearestRoom(center);
-                agent.Activity = room is null ? "Hiding (no room nearby)" : "Hiding in a room";
-                target = room?.Centroid ?? agent.HomePosition;
-                break;
-            case MentalBreakKind.FoodBinge:
-                // NC-7: a binge forages around home and gorges on what it finds. It never touches the player's pack.
-                agent.Activity = "Food binge (foraging)";
-                agent.WanderTimer -= deltaSeconds;
-                if (agent.WanderTimer <= 0f)
-                {
-                    agent.WanderTimer = 2f + (float)_mindRandom.NextDouble() * 2f;
-                    var offset = ((float)_mindRandom.NextDouble() * 2f - 1f) * 6f;
-                    agent.WanderTarget = new Vector2(
-                        Math.Clamp(agent.HomePosition.X + offset, 1f, World.Width - 2f), agent.HomePosition.Y);
-                }
-                target = agent.WanderTarget;
-                if (agent.BreakTimer <= 0f)
-                {
-                    agent.BreakTimer = 0.4f;
-                    agent.Needs.Restore(NeedKind.Food, BingeForageFood);
-                }
-                break;
-            case MentalBreakKind.Tantrum:
-                // NC-7: a tantrum shouts and kicks at the furniture harmlessly. It never damages a station, turret,
-                // hydroponics tray, solar panel or oxygen unit (or any other tile).
-                agent.Activity = "Tantrum";
-                if (FindNearbyFurniture(center, 8) is { } spot)
-                {
-                    target = new Vector2(spot.X + 0.5f, spot.Y + 0.5f);
-                    if (agent.BreakTimer <= 0f && Vector2.Distance(center, target) <= 2.5f)
-                    {
-                        agent.BreakTimer = 2f;
-                        PostMessage($"{agent.Name} is shouting and kicking at the {Tiles[World.GetCell(spot).TileId].Name}.");
-                    }
-                }
-                break;
-            default:
-                agent.Activity = "Dazed";
-                speed = 0f;
-                break;
-        }
-
-        if (speed <= 0f)
-            _colonistMovement.Step(agent.Motion, new MovementInput(0f), deltaSeconds, World, Tiles);
-        else
-            StepColonistToward(agent, center, target, deltaSeconds, speed);
-    }
-
-    private RoomInfo? NearestRoom(Vector2 position)
-    {
-        RoomInfo? best = null;
-        var bestDistance = 40f;
-        foreach (var room in _regions.Rooms)
-        {
-            var distance = Vector2.Distance(position, room.Centroid);
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                best = room;
-            }
-        }
-        return best;
-    }
-
-    private GridPoint? FindNearbyFurniture(Vector2 center, int radius)
-    {
-        GridPoint? best = null;
-        var bestDistance = float.MaxValue;
-        var cx = (int)MathF.Floor(center.X);
-        var cy = (int)MathF.Floor(center.Y);
-        for (var y = Math.Max(0, cy - radius); y <= Math.Min(World.Height - 1, cy + radius); y++)
-        for (var x = Math.Max(0, cx - radius); x <= Math.Min(World.Width - 1, cx + radius); x++)
-        {
-            var point = new GridPoint(x, y);
-            if (Array.IndexOf(FurnitureTiles, World.GetCell(point).TileId) < 0)
-                continue;
-            var distance = Vector2.Distance(center, new Vector2(x + 0.5f, y + 0.5f));
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                best = point;
-            }
-        }
-        return best;
-    }
-
-    private void HandleColonistDeath(ColonistAgent agent)
-    {
-        if (!_deathsHandled.Add(agent.SocialKey))
-            return;
-        agent.Mind.Breaker.End();
-        agent.Activity = "Dead";
-        DropColonistLoad(agent);
-        DropPouch(agent, agent.Motion.Position + agent.Motion.Size / 2f);
-        PostMessage(agent.Health.DeathCause is { } cause
-            ? $"{agent.Name} has died ({cause})."
-            : $"{agent.Name} has died.");
-        Record(agent.Health.DeathCause is { } died ? $"{agent.Name} died ({died})." : $"{agent.Name} died.");
-        ColonySocialSystem.NotifyDeath(agent, ColonyPawns);
-    }
-
     /// <summary>Raises a body a quarter tile at a time (up to two tiles) until it no longer overlaps solid ground.</summary>
     private void LiftClear(PawnMotionState motion)
     {
         for (var step = 0; step < 8 && PawnMovementSystem.OverlapsSolid(motion.Position, motion.Size, World, Tiles); step++)
             motion.Position -= new Vector2(0f, 0.25f);
-    }
-
-    private bool IsBlockedAhead(ColonistAgent agent, float horizontal)
-    {
-        var motion = agent.Motion;
-        var x = (int)MathF.Floor(motion.Position.X + motion.Size.X / 2f + MathF.Sign(horizontal) * motion.Size.X);
-        var y = (int)MathF.Floor(motion.Position.Y + motion.Size.Y - 0.30f);
-        if (x < 0 || y < 0 || x >= World.Width || y >= World.Height)
-            return true;
-        return Tiles[World.GetCell(new GridPoint(x, y)).TileId].IsSolid;
     }
 
     /// <summary>True when a step of terrain sits at foot level just ahead of a ground actor's box.</summary>
@@ -2040,17 +1684,6 @@ public sealed partial class GameSimulation : IStoryHost
                 Player.Health.AddWholeBody(ConditionKind.RadiationSickness, hours * 0.03f);
         }
 
-        foreach (var agent in _colonists)
-        {
-            if (!agent.IsAlive)
-                continue;
-            var center = agent.Motion.Position + agent.Motion.Size / 2f;
-            var comfort = TemperatureModel.Evaluate(AmbientAt(center, CurrentBiome), null);
-            ApplyThermalComfort(comfort, agent.Needs, hours, (amount, cause) => agent.TakeExposureDamage(amount, cause));
-            if (_storyteller.FalloutActive && _regions.GetRoomAt(center) is null)
-                agent.TakeExposureDamage(hours * 1.2f, "radiation-sickness");
-        }
-
         UpdateMinds(hours);
     }
 
@@ -2102,8 +1735,6 @@ public sealed partial class GameSimulation : IStoryHost
                                 $"mental break: {MentalBreaker.Describe(started)}.");
             }
         }
-
-        UpdateTending(living);
 
         foreach (var result in _social.Update(living, _elapsedGameHours))
         {
@@ -2176,40 +1807,6 @@ public sealed partial class GameSimulation : IStoryHost
         }
         if (loverNearby)
             yield return (ThoughtId.LoverNearby, 1f, null);
-    }
-
-    /// <summary>
-    /// Colonists with medical skill tend the nearest wounded crew member. Never the player: Terraria's player gets no free
-    /// healing, so the player's wounds are tended only by the player (TendSelf) or healed by what the player uses.
-    /// </summary>
-    private void UpdateTending(IReadOnlyList<IColonyPawn> living)
-    {
-        foreach (var medic in _colonists)
-        {
-            if (!medic.IsAlive || medic.IsDowned || medic.Mind.Breaker.IsBreaking ||
-                medic.ColonistStats.Level(ColonistSkill.Medical) < 1 || medic.Health.Manipulation < 0.2f)
-                continue;
-            var center = medic.Motion.Position + medic.Motion.Size / 2f;
-            var patient = living
-                .Where(pawn => !ReferenceEquals(pawn, Player) && pawn.Health.NeedsTending &&
-                               Vector2.Distance(center, pawn.Motion.Position + pawn.Motion.Size / 2f) <= 6f)
-                .OrderBy(pawn => ReferenceEquals(pawn, medic) ? 1 : 0)
-                .ThenByDescending(pawn => pawn.IsDowned)
-                .ThenByDescending(pawn => pawn.Health.BleedRate)
-                .FirstOrDefault();
-            if (patient is null)
-                continue;
-            var self = ReferenceEquals(patient, medic);
-            var quality = medic.ColonistStats.MedicalTendQuality * (0.85f + 0.3f * (float)_mindRandom.NextDouble())
-                          * Math.Min(1f, medic.Health.Manipulation) * (self ? 0.7f : 1f);
-            quality = Math.Clamp(quality, 0.05f, 1f);
-            if (patient.Health.Tend(quality) <= 0)
-                continue;
-            medic.Activity = $"Tending {patient.Name}";
-            PostMessage(self
-                ? $"{medic.Name} dressed their own wounds ({quality:P0} quality)."
-                : $"{medic.Name} tended {patient.Name}'s wounds ({quality:P0} quality).");
-        }
     }
 
     /// <summary>Gives every living colony member (player included) the same memory.</summary>
@@ -2324,59 +1921,89 @@ public sealed partial class GameSimulation : IStoryHost
         return false;
     }
 
+    /// <summary>Living settlers (0.3.10: the people who join without a trade, as the crew used to).</summary>
+    public int SettlerCount => _townNpcs.Count(npc => npc.Kind == TownNpcKind.Settler && npc.IsAlive);
+
     /// <summary>
-    /// The two crew members a world started with before crew arrived through housing. Only loading a save from then
-    /// recreates them (same seed, same people), so their saved state has someone to land on.
+    /// A settler joins: a generated person (the crew's generator, deterministic per world and arrival order) who lives in
+    /// a house like any resident and works by their own best skills.
     /// </summary>
-    private void AddLegacyStartingCrew(int count)
+    private TownNpc AddSettler(int arrivalIndex, Vector2 at, CharacterProfile? profile = null)
+    {
+        profile ??= TownPeople.SettlerProfile(unchecked(Seed + 7919 * (arrivalIndex + 1)),
+            _townNpcs.Select(npc => npc.Name).Append(PlayerProfile.Name));
+        var x = Math.Clamp((int)MathF.Floor(at.X), 2, World.Width - 3);
+        var npc = new TownNpc(_nextEntityId++, TownNpcCatalog.Get(TownNpcKind.Settler), profile.Name,
+            new Vector2(x, FindSurface(x) - HumanoidBody.Size.Y), profile) { Look = arrivalIndex };
+        _townNpcs.Add(npc);
+        return npc;
+    }
+
+    /// <summary>A settler joins beside a point (the dev console).</summary>
+    internal TownNpc AddSettlerAt(Vector2 at) => AddSettler(1000 + _townNpcs.Count, at);
+
+    /// <summary>Two settlers beside the landing site, for checks that exercise the colony's work on a fresh world.</summary>
+    internal IReadOnlyList<TownNpc> AddStartingCrewForChecks()
     {
         var crew = ColonistCatalog.GenerateCrew(Seed, 2, PlayerProfile.Name);
-        for (var index = 0; index < Math.Min(count, crew.Count); index++)
-        {
-            var x = Math.Clamp(SpawnColumn + (index == 0 ? 5 : -4), 2, World.Width - 3);
-            var agent = new ColonistAgent(_nextEntityId++, crew[index], new Vector2(x, FindSurface(x) - HumanoidBody.Size.Y),
-                healthSeed: unchecked(Seed * 31 + 7 * (index + 1)));
-            agent.HomePosition = agent.Motion.Position;
-            agent.WanderTarget = agent.Motion.Position;
-            agent.SocialKey = _colonists.Count + 1;
-            _colonists.Add(agent);
-        }
+        return crew.Select((profile, index) => AddSettler(-1 - index,
+            new Vector2(SpawnColumn + (index == 0 ? 5 : -4), 0f), profile with { CreatedAt = DateTimeOffset.UnixEpoch })).ToArray();
     }
 
     /// <summary>
-    /// Gives a world the two crew members (and their seeded relations) every world used to start with, for checks that
-    /// exercise crew systems on a fresh world. A save of such a world reloads them the way older saves do.
+    /// Saves from before 0.3.10 hold crew: the two a world once started with, then the storyteller's wanderers. They come
+    /// back as settlers with the same people (same seed, same profiles), where they stood and as hurt as they were, carrying
+    /// what they carried. The dead stay dead. They take homes through the hourly housing check.
     /// </summary>
-    internal void AddStartingCrewForChecks()
+    private void SettleLegacyCrew(GameSnapshot snapshot)
     {
-        AddLegacyStartingCrew(2);
-        ColonySocialSystem.SeedStartingRelations(ColonyPawns, Seed);
-    }
-
-    private ColonistAgent AddWanderer(int wandererIndex, Vector2 near)
-    {
-        // Deterministic per world and arrival order; avoid repeating a crew member's name.
-        var taken = new HashSet<string>(_colonists.Select(agent => agent.Profile.Name), StringComparer.OrdinalIgnoreCase)
-            { PlayerProfile.Name };
-        var crew = ColonistCatalog.GenerateCrew(unchecked(Seed + 7919 * (wandererIndex + 1)), 4, PlayerProfile.Name);
-        var profile = crew.FirstOrDefault(candidate => !taken.Contains(candidate.Name)) ?? crew[0];
-        var x = Math.Clamp((int)MathF.Floor(near.X) + (wandererIndex % 2 == 0 ? 3 : -3), 2, World.Width - 3);
-        var agent = new ColonistAgent(_nextEntityId++, profile, new Vector2(x, FindSurface(x) - HumanoidBody.Size.Y),
-            healthSeed: unchecked(Seed * 31 + 7919 * (wandererIndex + 1)));
-        agent.SocialKey = _colonists.Count + 1;
-        _colonists.Add(agent);
-        return agent;
+        if (snapshot.Colonists is not { Length: > 0 } saved)
+            return;
+        var joined = Math.Clamp(snapshot.Storyteller?.WanderersJoined ?? 0, 0, 1024);
+        var people = new List<(CharacterProfile Profile, int Look)>();
+        var starting = ColonistCatalog.GenerateCrew(Seed, 2, PlayerProfile.Name);
+        for (var index = 0; index < Math.Min(Math.Max(0, saved.Length - joined), starting.Count); index++)
+            people.Add((starting[index], -1 - index));
+        for (var wanderer = 0; wanderer < joined; wanderer++)
+        {
+            var taken = new HashSet<string>(people.Select(person => person.Profile.Name), StringComparer.OrdinalIgnoreCase) { PlayerProfile.Name };
+            var crew = ColonistCatalog.GenerateCrew(unchecked(Seed + 7919 * (wanderer + 1)), 4, PlayerProfile.Name);
+            people.Add((crew.FirstOrDefault(candidate => !taken.Contains(candidate.Name)) ?? crew[0], wanderer));
+        }
+        var seen = new HashSet<int>();
+        foreach (var colonist in saved)
+        {
+            if (colonist.Index < 0 || colonist.Index >= people.Count || !seen.Add(colonist.Index) ||
+                !float.IsFinite(colonist.X) || !float.IsFinite(colonist.Y) || !float.IsFinite(colonist.HitPoints))
+                throw new InvalidDataException("The saved colonist roster is invalid.");
+            var (profile, look) = people[colonist.Index];
+            if (colonist.HitPoints <= 0f || _townNpcs.Any(npc => npc.Name == profile.Name))
+                continue;
+            var settler = AddSettler(look, new Vector2(colonist.X, 0f), profile with { CreatedAt = DateTimeOffset.UnixEpoch });
+            settler.Motion.Position = new Vector2(Math.Clamp(colonist.X, 0f, World.Width - settler.Motion.Size.X),
+                Math.Clamp(colonist.Y, 0f, World.Height - settler.Motion.Size.Y));
+            LiftClear(settler.Motion);
+            settler.HitPoints = Math.Clamp(colonist.HitPoints / Math.Max(1f, profile.EffectiveMaximumHealth), 0.05f, 1f) * settler.MaximumHitPoints;
+            if (!colonist.Carried.IsEmpty && Items.Contains(colonist.Carried.ItemId))
+                settler.Carried = colonist.Carried;
+            foreach (var held in colonist.Held ?? [])
+                if (!held.IsEmpty && Items.Contains(held.ItemId))
+                    settler.Held[held.ItemId] = settler.Held.GetValueOrDefault(held.ItemId) + held.Count;
+            foreach (var pouched in colonist.Pouch ?? [])
+                if (!pouched.IsEmpty && Items.Contains(pouched.ItemId))
+                    settler.Pouch[pouched.ItemId] = settler.Pouch.GetValueOrDefault(pouched.ItemId) + pouched.Count;
+        }
     }
 
     StoryContext IStoryHost.CaptureStoryContext() => new(
         Day, ClockHour, CurrentBiome.Zone,
-        _colonists.Count(agent => agent.IsAlive),
+        SettlerCount,
         _defeatedBosses.Count,
         ColonyWealth,
         _enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive),
         RadiatedTerrainNearby(),
         Player.MaximumHitPoints <= 0f ? 0f : Player.HitPoints / Player.MaximumHitPoints,
-        CrewShortage: Math.Max(0, CrewCapacity - _colonists.Count(agent => agent.IsAlive)),
+        CrewShortage: Math.Max(0, CrewCapacity - SettlerCount),
         LostResidents: LostResidentKinds().Count(),
         FreeHouse: FindFreeHouse() is not null);
 
@@ -2438,8 +2065,9 @@ public sealed partial class GameSimulation : IStoryHost
 
     bool IStoryHost.TryAddWanderer(int wandererIndex, out string name)
     {
-        var agent = AddWanderer(wandererIndex, PlayerCenter);
-        name = agent.Profile.Name;
+        // 0.3.10: a wanderer is a settler; they look for a home through the hourly housing check.
+        var settler = AddSettler(wandererIndex, PlayerCenter + new Vector2(wandererIndex % 2 == 0 ? 3f : -3f, 0f));
+        name = settler.Name;
         return true;
     }
 
@@ -2460,15 +2088,14 @@ public sealed partial class GameSimulation : IStoryHost
             return true;
         }
         // Crew are limited by what the colony can support (CrewCapacity), not by how many came before: the dead are replaced.
-        if (_colonists.Count(agent => agent.IsAlive) >= CrewCapacity)
+        if (SettlerCount >= CrewCapacity)
             return false;
-        var agent = AddWanderer(_storyteller.WanderersJoined, StandingAt(house));
-        agent.Motion.Position = StandingAt(house);
-        agent.HomePosition = agent.Motion.Position;
-        agent.WanderTarget = agent.Motion.Position;
+        var settler = AddSettler(_storyteller.WanderersJoined, StandingAt(house));
+        settler.Motion.Position = StandingAt(house);
+        settler.HomeCell = house;
         joinedCrew = true;
-        summary = $"{agent.Profile.Name} arrives, asks to join the crew, and moves in.";
-        Record($"{agent.Profile.Name} joined the crew.");
+        summary = $"{settler.Name} arrives, asks to settle here, and moves in.";
+        Record($"{settler.Name} settled in the colony.");
         return true;
     }
 

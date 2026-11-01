@@ -331,7 +331,7 @@ public static class ConsoleSandbox
         var count = player.Inventory.SelectedStack.Count;
         var events = game.ActiveEvents.Count == 0 ? "clear" : string.Join(',', game.ActiveEvents.Select(item => item.Kind));
         var selectedRecipe = game.SelectedRecipe?.Id ?? "none";
-        WriteHud($"Day {game.Day} {game.ClockHour:00.0}h | HP {player.HitPoints:000}/{player.MaximumHitPoints:000} | mood {player.Mood:P0} | food {player.Needs.FoodReserve:P0} rest {player.Needs.RestReserve:P0} joy {player.Needs.JoyReserve:P0} | colonists {game.Colonists.Count} | mobs {game.Enemies.Count} | {events}", viewWidth);
+        WriteHud($"Day {game.Day} {game.ClockHour:00.0}h | HP {player.HitPoints:000}/{player.MaximumHitPoints:000} | mood {player.Mood:P0} | food {player.Needs.FoodReserve:P0} rest {player.Needs.RestReserve:P0} joy {player.Needs.JoyReserve:P0} | people {game.People.Count} | mobs {game.Enemies.Count} | {events}", viewWidth);
         WriteHud($"Slot {player.Inventory.SelectedSlot + 1}: {selected?.Name ?? "empty"} x{count} | {game.LastMessage}", viewWidth);
         WriteHud("A/D move Space jump X dash | 1-0 slot, Tab next | M mine E use R replace | Esc inventory P pause Q quit", viewWidth);
         WriteHud($"Recipe {selectedRecipe} | [ ] choose C craft V guide F eat B boss Q quit", viewWidth);

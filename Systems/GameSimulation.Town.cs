@@ -19,6 +19,10 @@ public sealed partial class GameSimulation
 
     /// <summary>Residents and bound survivors.</summary>
     public IReadOnlyList<TownNpc> TownNpcs => _townNpcs;
+    /// <summary>The colony's people (0.3.10: one kind of character): every living resident not bound in a structure.</summary>
+    public IReadOnlyList<TownNpc> People => _townNpcs.Where(npc => npc.IsAlive && !npc.IsBound).ToArray();
+    /// <summary>The settlers among them, in arrival order (the crew's successors).</summary>
+    public IReadOnlyList<TownNpc> Settlers => _townNpcs.Where(npc => npc.Kind == TownNpcKind.Settler && npc.IsAlive).ToArray();
 
     /// <summary>Validates the room containing <paramref name="cell"/> as housing (for the UI's housing query).</summary>
     public HousingResult CheckHousing(GridPoint cell)
@@ -199,11 +203,11 @@ public sealed partial class GameSimulation
     public bool IsNearGuide(Vector2 point) => Vector2.Distance(point, GuidePosition) <= Guide.InteractionRadius;
 
     /// <summary>
-    /// How many crew the colony can attract: one for every two housed residents, plus one per boss defeated, up to five.
-    /// Crew arrive like Terraria's town NPCs, by day into a free valid house, rather than walking into camp at random.
+    /// How many settlers the colony can attract: one for every two housed residents, plus one per boss defeated, up to five.
+    /// Settlers arrive like Terraria's town NPCs, by day into a free valid house, rather than walking into camp at random.
     /// </summary>
     public int CrewCapacity => Math.Min(WandererJoinsIncident.MaximumCrew,
-        _townNpcs.Count(npc => !npc.IsBound && npc.HomeCell is not null) / 2 + _defeatedBosses.Count);
+        _townNpcs.Count(npc => !npc.IsBound && npc.HomeCell is not null && npc.Kind != TownNpcKind.Settler) / 2 + _defeatedBosses.Count);
 
     /// <summary>Adds a town NPC directly (debug tools, tests and survivor placement).</summary>
     public TownNpc AddTownNpc(TownNpcKind kind, Vector2 position, bool bound)
@@ -213,7 +217,9 @@ public sealed partial class GameSimulation
         var offset = (int)((uint)(Seed * 31 + (int)kind * 7) % (uint)definition.Names.Length);
         var name = Enumerable.Range(0, definition.Names.Length).Select(i => definition.Names[(offset + i) % definition.Names.Length])
             .FirstOrDefault(candidate => !taken.Contains(candidate)) ?? definition.Names[0];
-        var npc = new TownNpc(_nextEntityId++, definition, name, position) { IsBound = bound };
+        // 0.3.10: every resident is a person, the same one for this world, trade and name.
+        var npc = new TownNpc(_nextEntityId++, definition, name, position,
+            TownPeople.ProfileFor(kind, name, unchecked(Seed * 131 + (int)kind))) { IsBound = bound };
         _townNpcs.Add(npc);
         return npc;
     }
@@ -246,10 +252,17 @@ public sealed partial class GameSimulation
             return false;
         }
         DropColonistLoad(npc);
+        DropPouch(npc, npc.Motion.Position + npc.Motion.Size / 2f);
         _townNpcs.Remove(npc);
         Record($"{npc.Name} the {npc.Definition.Role} was slain.");
         if (StationAiDefeat(npc))
             return true;
+        if (npc.Kind == TownNpcKind.Settler)
+        {
+            // A settler is one person, not a trade: they do not come back, and new settlers keep arriving.
+            PostMessage($"{npc.Name} the settler was slain.");
+            return true;
+        }
         if (PeopleDieForGood)
         {
             // Permadeath: the role stays empty until the arrival stream brings someone new to take it up.
@@ -277,6 +290,7 @@ public sealed partial class GameSimulation
     /// <summary>Unlocked town roles emptied by a death and not yet filled again.</summary>
     public IEnumerable<TownNpcKind> LostResidentKinds() => TownNpcCatalog.All
         .Select(definition => definition.Kind)
+        .Where(kind => kind != TownNpcKind.Settler)
         .Where(kind => Flags.IsSet(LostFlag(kind)) && !_townNpcs.Any(npc => npc.Kind == kind));
 
     /// <summary>Hostile creatures touching a resident hurt it; residents heal slowly otherwise.</summary>
@@ -312,15 +326,21 @@ public sealed partial class GameSimulation
         }
     }
 
-    /// <summary>NPCs wander near home by day and go indoors at night or while a dangerous event runs.</summary>
-    private void UpdateTownNpcs(float deltaSeconds)
+    /// <summary>
+    /// The colony's people (0.3.10: one kind of character). A housed resident guards their area against creatures day and
+    /// night; by day they work by skill (their trade's stations, tending, farming, fishing, research), otherwise they
+    /// wander near home. At night or while a dangerous event runs they go indoors. The homeless look for a home near you.
+    /// </summary>
+    private void UpdateTownNpcs(float deltaSeconds, float elapsedHours = 0f)
     {
         if (_townNpcs.Count == 0)
             return;
         UpdateTownNpcHealth(deltaSeconds);
         var shelter = IsNight || _worldEvents.Modifiers.Shelter;
-        foreach (var npc in _townNpcs)
+        foreach (var npc in _townNpcs.ToArray())
         {
+            if (!_townNpcs.Contains(npc))
+                continue;
             if (npc.IsBound)
             {
                 npc.Activity = "Bound";
@@ -328,23 +348,23 @@ public sealed partial class GameSimulation
                 continue;
             }
             var center = npc.Motion.Position + npc.Motion.Size / 2f;
-            // 0.2.4: a housed resident works station bills near home by day (beside the shop), like an Operate colonist.
-            if (npc.HomeCell is not null && !shelter && npc.WorksStations)
+            if (npc.HomeCell is not null)
             {
-                Vector2? step = null;
-                if (TryOperate(npc, center, deltaSeconds, to => step = to, null))
+                // Guarding comes first, by night too: people hold their own area while you are away.
+                if (npc.Work.Priority(WorkType.Guard) != WorkCatalog.Off && TryGuard(npc, center, deltaSeconds))
                 {
-                    StepTownNpcToward(npc, center, step ?? center, deltaSeconds);
+                    npc.CurrentWork = WorkType.Guard;
                     continue;
                 }
+                if (!shelter && TryColonyWork(npc, center, deltaSeconds, elapsedHours))
+                    continue;
             }
-            else
-            {
-                npc.OperateStation = null;
-                npc.OperateProgress = 0f;
-                if (!npc.WorksStations)
-                    DropHeld(npc, center);
-            }
+            npc.CurrentWork = null;
+            npc.OperateStation = null;
+            npc.OperateProgress = 0f;
+            npc.FarmTarget = null;
+            if (!npc.WorksStations)
+                DropHeld(npc, center);
             Vector2 target;
             if (npc.HomeCell is { } home)
             {
@@ -376,13 +396,17 @@ public sealed partial class GameSimulation
         }
     }
 
+    /// <summary>A resident walks toward a target (work uses this): their move speed, scaled by <paramref name="speed"/>.</summary>
+    private void StepColonistToward(TownNpc npc, Vector2 center, Vector2 target, float deltaSeconds, float speed) =>
+        StepTownNpcToward(npc, center, target, deltaSeconds, speed * npc.Stats.MoveSpeedMultiplier);
+
     /// <summary>A resident's walk: toward the target at 70% pace, hopping a one-tile step.</summary>
-    private void StepTownNpcToward(TownNpc npc, Vector2 center, Vector2 target, float deltaSeconds)
+    private void StepTownNpcToward(TownNpc npc, Vector2 center, Vector2 target, float deltaSeconds, float pace = 0.7f)
     {
         var dx = target.X - center.X;
         var horizontal = MathF.Abs(dx) > 0.6f ? MathF.Sign(dx) : 0f;
         var jump = horizontal != 0f && npc.Motion.Grounded && IsGroundBlockedAhead(npc.Motion, horizontal);
-        _colonistMovement.Step(npc.Motion, new MovementInput(horizontal, JumpPressed: jump, SpeedMultiplier: 0.7f), deltaSeconds, World, Tiles);
+        _colonistMovement.Step(npc.Motion, new MovementInput(horizontal, JumpPressed: jump, SpeedMultiplier: pace), deltaSeconds, World, Tiles);
     }
 
     // ------------------------------------------------------------------ happiness and shops
@@ -572,7 +596,9 @@ public sealed partial class GameSimulation
         npc.Motion.Position.X, npc.Motion.Position.Y, npc.HomeCell?.X, npc.HomeCell?.Y, npc.IsBound, npc.HitPoints,
         npc.WorksStations ? null : false,
         npc.Held.Count == 0 ? null : npc.Held.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
-        npc.Carried.IsEmpty ? null : npc.Carried)).ToArray();
+        npc.Carried.IsEmpty ? null : npc.Carried,
+        npc.Profile, npc.Kind == TownNpcKind.Settler ? npc.Look : null,
+        npc.Pouch.Count == 0 ? null : npc.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray())).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -583,9 +609,13 @@ public sealed partial class GameSimulation
         {
             if (saved is null || !Enum.IsDefined(saved.Kind) || !float.IsFinite(saved.X) || !float.IsFinite(saved.Y))
                 throw new InvalidDataException("A saved town NPC is invalid.");
-            var npc = new TownNpc(_nextEntityId++, TownNpcCatalog.Get(saved.Kind), saved.Name ?? TownNpcCatalog.Get(saved.Kind).Names[0],
-                new Vector2(Math.Clamp(saved.X, 0f, World.Width - 1f), Math.Clamp(saved.Y, 0f, World.Height - 2f)))
+            var name = saved.Name ?? TownNpcCatalog.Get(saved.Kind).Names[0];
+            // 0.3.10: the saved person; a resident saved before then gets the person their trade and name give in this world.
+            var person = saved.Person is { } kept ? kept.Normalized() : TownPeople.ProfileFor(saved.Kind, name, unchecked(Seed * 131 + (int)saved.Kind));
+            var npc = new TownNpc(_nextEntityId++, TownNpcCatalog.Get(saved.Kind), name,
+                new Vector2(Math.Clamp(saved.X, 0f, World.Width - 1f), Math.Clamp(saved.Y, 0f, World.Height - 2f)), person)
             {
+                Look = saved.Look ?? 0,
                 IsBound = saved.Bound,
                 HomeCell = saved.HomeX is { } hx && saved.HomeY is { } hy && World.Contains(hx, hy) ? new GridPoint(hx, hy) : null
             };
@@ -599,6 +629,9 @@ public sealed partial class GameSimulation
                     npc.Held[held.ItemId] = npc.Held.GetValueOrDefault(held.ItemId) + held.Count;
             if (saved.Carried is { IsEmpty: false } carried && Items.Contains(carried.ItemId))
                 npc.Carried = carried;
+            foreach (var pouched in saved.Pouch ?? [])
+                if (!pouched.IsEmpty && Items.Contains(pouched.ItemId))
+                    npc.Pouch[pouched.ItemId] = npc.Pouch.GetValueOrDefault(pouched.ItemId) + pouched.Count;
             _townNpcs.Add(npc);
         }
     }

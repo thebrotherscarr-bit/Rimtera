@@ -306,7 +306,7 @@ public static class WorldMetaCodec
     }
 }
 
-/// <summary>Position and vitals for a deterministic colony NPC. Profiles are regenerated from the world seed.</summary>
+/// <summary>Position and vitals for a crew member in a save from before 0.3.10 (loaded as a settler). Profiles are regenerated from the world seed.</summary>
 public readonly record struct ColonistSnapshot(
     int Index,
     float X,

@@ -673,7 +673,7 @@ public sealed class MenuFlow
         if (openInventory is not null)
             entries.Add(new MenuEntry("Inventory", openInventory));
         if (openColonist is not null)
-            entries.Add(new MenuEntry("Crew", openColonist));
+            entries.Add(new MenuEntry("People", openColonist));
         if (openCreative is not null)
             entries.Add(new MenuEntry("Creative Powers", openCreative));
         entries.Add(new MenuEntry("— Settings —", Enabled: false));

@@ -414,8 +414,7 @@ public sealed partial class GameSimulation
             return true;
         }
         var cell = World.GetCell(point);
-        if (Tiles[tile].IsSolid && (Overlaps(Player.Motion, new Vector2(point.X, point.Y), Vector2.One) ||
-                                    _colonists.Any(agent => Overlaps(agent.Motion, new Vector2(point.X, point.Y), Vector2.One))))
+        if (Tiles[tile].IsSolid && Overlaps(Player.Motion, new Vector2(point.X, point.Y), Vector2.One))
         {
             PostMessage("Cannot place: something is in the way.");
             return true;
@@ -838,8 +837,6 @@ public sealed partial class GameSimulation
                     (pressed ??= new HashSet<GridPoint>()).Add(new GridPoint(x, row));
         }
         Probe(Player.Motion);
-        foreach (var agent in _colonists)
-            Probe(agent.Motion);
         foreach (var enemy in _enemies)
             if (enemy.IsAlive)
                 Probe(enemy.Motion);
@@ -987,8 +984,6 @@ public sealed partial class GameSimulation
             }
         }
         Move(Player.Motion);
-        foreach (var agent in _colonists)
-            Move(agent.Motion);
         foreach (var npc in _townNpcs)
             Move(npc.Motion);
         foreach (var enemy in _enemies)
@@ -1146,8 +1141,6 @@ public sealed partial class GameSimulation
                 apply(damage * Math.Clamp(1f - distance / (radius + 1f), 0.25f, 1f));
         }
         Hurt(Player.Motion, amount => Player.TakeDamage(amount, DamageKind.Burn));
-        foreach (var agent in _colonists)
-            Hurt(agent.Motion, amount => agent.TakeDamage(amount));
         foreach (var enemy in _enemies)
             if (enemy.IsAlive)
                 Hurt(enemy.Motion, amount => enemy.TakeDamage(amount));

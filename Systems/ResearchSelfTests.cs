@@ -28,9 +28,9 @@ public static class ResearchSelfTests
         game.Player.Motion.Velocity = Vector2.Zero;
         game.SetTimeOfDay(9f);
         game.AddStartingCrewForChecks();
-        for (var i = 0; i < game.Colonists.Count; i++)
+        for (var i = 0; i < game.Settlers.Count; i++)
         {
-            var agent = game.Colonists[i];
+            var agent = game.Settlers[i];
             agent.Motion.Position = new Vector2(60f + i * 2f, Floor - agent.Motion.Size.Y - 0.01f);
             agent.Motion.Velocity = Vector2.Zero;
             agent.HomePosition = agent.Motion.Position;
@@ -88,7 +88,7 @@ public static class ResearchSelfTests
         var resident = lab.AddTownNpc(TownNpcKind.HeadResearcher, new Vector2(64f, Floor - 3f), bound: false);
         resident.HomeCell = new GridPoint(64, Floor - 2);
         var withResident = lab.StudyRate;
-        lab.Colonists[0].Work.Set(WorkType.Research, 1);
+        lab.Settlers[0].Work.Set(WorkType.Research, 1);
         var start = lab.ResearchProgress("scout");
         TickUntil(lab, () => false, 900);
         var gained = lab.ResearchProgress("scout") - start;

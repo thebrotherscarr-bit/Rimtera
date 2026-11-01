@@ -36,7 +36,7 @@ public static class ControlsParitySelfTests
         }
         game.Player.Motion.Position = new Vector2(30f, 20f - game.Player.Motion.Size.Y - 0.01f);
         game.Player.Motion.Velocity = Vector2.Zero;
-        foreach (var agent in game.Colonists)
+        foreach (var agent in game.Settlers)
             agent.Motion.Position = new Vector2(10f, 20f - agent.Motion.Size.Y - 0.01f);
         Tick(game, 3);
         return game;
@@ -421,33 +421,24 @@ public static class ControlsParitySelfTests
         check(game.Player.Stats.LifeRegenerationPerHour == 0f && game.Player.HitPoints - hpBefore <= allowed + 0.05f && game.Player.HitPoints > hpBefore,
             "the player's health comes back only by Terraria's natural regeneration formula, nothing more");
 
-        // Crew medics tend each other, never the player (no free healing for Terraria's player).
+        // Resident medics tend each other, never the player (no free healing for Terraria's player).
         var colony = NewGame(7308);
-        var addWanderer = typeof(GameSimulation).GetMethod("AddWanderer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
-        ColonistAgent? medic = null;
-        for (var index = 0; index < 24 && medic is null; index++)
-        {
-            var agent = (ColonistAgent)addWanderer.Invoke(colony, [index, colony.Player.Motion.Position])!;
-            if (agent.ColonistStats.Level(Rimtera.Characters.ColonistSkill.Medical) >= 1)
-                medic = agent;
-        }
+        var medic = colony.AddTownNpc(TownNpcKind.Medic, colony.Player.Motion.Position, bound: false);
+        medic.HomeCell = new GridPoint((int)colony.Player.Motion.Position.X, (int)colony.Player.Motion.Position.Y);
         colony.Player.TakeDamage(18f, DamageKind.Cut);
         var woundedNeedsTending = colony.Player.Health.NeedsTending;
         var hpAfterHit = colony.Player.HitPoints;
         var regenAllowed = 0f;
         for (var i = 0; i < 2400; i++)
         {
-            foreach (var agent in colony.Colonists)
-            {
-                agent.Motion.Position = colony.Player.Motion.Position + new Vector2(1.5f, 0f);
-                agent.Motion.Velocity = Vector2.Zero;
-            }
+            medic.Motion.Position = colony.Player.Motion.Position + new Vector2(1.5f, 0f);
+            medic.Motion.Velocity = Vector2.Zero;
             regenAllowed += colony.NaturalLifeRegenPerSecond / 60f;
             Tick(colony);
         }
         // D-36 (0.2.2): the player is HP-only, so a hit leaves no wound to tend at all.
         check(medic is not null && !woundedNeedsTending && !colony.Player.Health.NeedsTending &&
               hpAfterHit < colony.Player.MaximumHitPoints && colony.Player.HitPoints - hpAfterHit <= regenAllowed + 0.05f,
-            "a crew medic standing beside the hurt player never heals them (the HP-only player has no wounds), and their health only follows Terraria's natural regen");
+            "a resident medic standing beside the hurt player never heals them (the HP-only player has no wounds), and their health only follows Terraria's natural regen");
     }
 }

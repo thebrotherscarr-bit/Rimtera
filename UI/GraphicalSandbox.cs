@@ -2559,8 +2559,6 @@ public static partial class GraphicalSandbox
                 g.DrawLine(pen, px, py, px - direction.X * TileSize * 0.9f, py - direction.Y * TileSize * 0.9f);
             }
 
-            foreach (var agent in game.Colonists.Where(agent => agent.IsAlive))
-                DrawCrew(g, agent, startX, startY, now);
             foreach (var npc in game.TownNpcs)
             {
                 var npcFlip = npc.Motion.Velocity.X < -0.05f;
@@ -2598,8 +2596,6 @@ public static partial class GraphicalSandbox
                 new(game.Player.Motion.Position + game.Player.Motion.Size / 2f,
                     game.LumenAccordTint is { } lumen ? Color.FromArgb(lumen.R, lumen.G, lumen.B) : Color.FromArgb(255, 236, 200), 0.85f)
             };
-            lamps.AddRange(game.Colonists.Where(agent => agent.IsAlive)
-                .Select(agent => new LightMap.LampLight(agent.Motion.Position + agent.Motion.Size / 2f, Color.FromArgb(255, 230, 190), 0.6f)));
             if (!game.GuideMovedIn)
                 lamps.Add(new LightMap.LampLight(game.Guide.Position, Color.FromArgb(120, 230, 255), 0.7f));
             lamps.AddRange(game.PlayerLightSources.Select(light => new LightMap.LampLight(light.Position, light.Tint switch
@@ -2860,16 +2856,6 @@ public static partial class GraphicalSandbox
         }
 
         private static float EaseOut(float t) => 1f - (1f - t) * (1f - t);
-
-        private void DrawCrew(Graphics g, ColonistAgent agent, int startX, int startY, double now)
-        {
-            var motion = agent.Motion;
-            var flip = motion.Velocity.X < -0.05f;
-            var bob = MathF.Abs(motion.Velocity.X) > 0.3f ? (float)Math.Abs(Math.Sin(now * 9 + agent.Id)) * -2f : 0f;
-            var crewSprite = SpriteCatalog.AnimatedFrame(SpriteCatalog.ForCrew(agent.Id), MathF.Abs(motion.Velocity.X) > 0.3f, false, now, agent.Id);
-            DrawSpriteActor(g, crewSprite, motion.Position, motion.Size, 1f, flip, startX, startY, bob, reference: SpriteCatalog.ForCrew(agent.Id));
-            DrawNameTag(g, agent.Profile.Name, motion.Position, motion.Size, startX, startY);
-        }
 
         private void DrawNameTag(Graphics g, string? name, Vector2 position, Vector2 size, int startX, int startY)
         {
@@ -3227,9 +3213,6 @@ public static partial class GraphicalSandbox
             foreach (var enemy in game.Enemies)
                 if (enemy.IsAlive && Over(world, enemy.Motion.Position, enemy.Motion.Size, 0.3f))
                     return $"{enemy.DisplayName}: {enemy.HitPoints:0}/{enemy.MaximumHitPoints:0}";
-            foreach (var colonist in game.Colonists)
-                if (colonist.IsAlive && Over(world, colonist.Motion.Position, colonist.Motion.Size, 0.3f))
-                    return $"{colonist.Profile.Name} · {colonist.Activity} · {colonist.MoodLabel}";
             if (!game.GuideMovedIn && Vector2.Distance(world, game.Guide.Position) < 1.2f)
                 return "Station AI · right-click for tips and the recipe guide";
 
@@ -3276,13 +3259,6 @@ public static partial class GraphicalSandbox
             }
             g.InterpolationMode = previous;
             g.PixelOffsetMode = PixelOffsetMode.Default;
-            foreach (var agent in game.Colonists.Where(agent => agent.IsAlive))
-            {
-                var cx = frame.X + frame.Width / 2 + (agent.Motion.Position.X - center.X) * MinimapScale;
-                var cy = frame.Y + frame.Height / 2 + (agent.Motion.Position.Y - center.Y) * MinimapScale;
-                if (frame.Contains(cx, cy))
-                    g.FillEllipse(_restBar, cx - 2, cy - 2, 4, 4);
-            }
             // PU-15: every housed resident's head (the NPC sprite until head art exists).
             foreach (var head in MapDisplay.NpcHeads(game))
             {
@@ -3400,8 +3376,6 @@ public static partial class GraphicalSandbox
                 g.DrawLine(pen, at.X - 7, at.Y - 7, at.X + 7, at.Y + 7);
                 g.DrawLine(pen, at.X + 7, at.Y - 7, at.X - 7, at.Y + 7);
             }
-            foreach (var agent in game.Colonists.Where(agent => agent.IsAlive))
-                Icon(CharacterLook.Face(_sprites, agent.Profile.AppearanceValue.Normalized()), agent.Motion.Position.X, agent.Motion.Position.Y, iconSize - 4);
             if (!game.GuideMovedIn)
                 Icon("station_ai", game.Guide.Position.X, game.Guide.Position.Y, iconSize - 4);
             // PU-15: every housed resident's head wherever it is; bound survivors and homeless arrivals once their spot has

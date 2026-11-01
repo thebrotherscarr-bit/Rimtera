@@ -27,7 +27,7 @@ public static class PlayerSystemsSelfTests
         }
         game.Player.Motion.Position = new Vector2(30f, 20f - game.Player.Motion.Size.Y - 0.01f);
         game.Player.Motion.Velocity = Vector2.Zero;
-        foreach (var agent in game.Colonists)
+        foreach (var agent in game.Settlers)
             agent.Motion.Position = new Vector2(10f, 20f - agent.Motion.Size.Y - 0.01f);
         Step(game, 3);
         return game;
@@ -127,16 +127,16 @@ public static class PlayerSystemsSelfTests
         // ---- Aggro: a taunting player draws a creature off a colonist ----
         var aggroGame = NewGame(9104);
         aggroGame.AddStartingCrewForChecks();
-        var colonist = aggroGame.Colonists.First(agent => agent.IsAlive);
+        var colonist = aggroGame.Settlers.First(agent => agent.IsAlive);
         var hunter = Spawn(aggroGame, EnemyKind.AstroBeast, new Vector2(14f, -0.4f));
         colonist.Motion.Position = hunter.Motion.Position + new Vector2(-1.2f, hunter.Motion.Size.Y - colonist.Motion.Size.Y);
         var onColonist = aggroGame.AggroTargetOf(hunter);
         aggroGame.Player.Equipment.Set(EquipmentSlot.Accessory, ItemId.BeaconHarness);
         var onPlayer = aggroGame.AggroTargetOf(hunter);
         aggroGame.Player.Equipment.Set(EquipmentSlot.Accessory, ItemId.ShroudCloak);
-        check(onColonist.Kind == AggroTargetKind.Colonist && onColonist.Id == colonist.Id && onPlayer.Kind == AggroTargetKind.Player &&
-              aggroGame.PlayerAggro < 0 && aggroGame.AggroTargetOf(hunter).Kind == AggroTargetKind.Colonist,
-            "creatures pick targets by aggro-weighted distance: taunt gear pulls them off a colonist, stealth gear sheds them");
+        check(onColonist.Kind == AggroTargetKind.TownNpc && onColonist.Id == colonist.Id && onPlayer.Kind == AggroTargetKind.Player &&
+              aggroGame.PlayerAggro < 0 && aggroGame.AggroTargetOf(hunter).Kind == AggroTargetKind.TownNpc,
+            "creatures pick targets by aggro-weighted distance: taunt gear pulls them off a resident, stealth gear sheds them");
 
         // ---- Salvage caches (Brutal), trophies and relics ----
         var brutal = NewGame(9105);
