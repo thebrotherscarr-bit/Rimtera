@@ -32,7 +32,7 @@ public static class BuffCurve
         (ItemId.NightSightDrops, "Night Owl", 4), (ItemId.VitalitySerum, "Heartreach", 8), (ItemId.MinersDraught, "Mining", 8),
         (ItemId.SurfaceTensionSerum, "Water Walking", 5), (ItemId.DangerSenseDrops, "Dangersense", 5), (ItemId.GlowDraught, "Shine", 5),
         (ItemId.AnglersBrew, "Fishing", 8), (ItemId.MagnetismTonic, "Treasure Magnet", 5), (ItemId.BuildersBrew, "Builder", 15),
-        (ItemId.FortuneTonic, "Luck", 10)
+        (ItemId.FortuneTonic, "Luck", 10), (ItemId.BattleStim, "Battle", 7), (ItemId.CalmingStim, "Calming", 5)
     ];
 
     /// <summary>Real minutes of Well Fed a food item gives per vital hour it was authored with (6 h → Terraria's 10 minutes).</summary>

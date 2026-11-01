@@ -13,8 +13,6 @@ namespace Rimtera.Systems;
 public sealed partial class GameSimulation
 {
     private const float SpawnIntervalSeconds = 0.65f;
-    private const float BaseSpawnChance = 0.16f;
-    private const float BasePopulationCap = 4f;
     private readonly Dictionary<long, float> _farSeconds = new();
 
     /// <summary>Live town NPCs (not bound survivors) close enough to calm the player's surroundings.</summary>
@@ -35,8 +33,16 @@ public sealed partial class GameSimulation
     {
         var reading = BiomeScanner.Scan(World, PlayerCell());
         return CombatTuning.SpawnFactors(IsNight, reading.Underground, PlayerInBlight(reading.Zone), TownNpcsCalmingSpawns,
-            _enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive));
+            _enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive), FractureActive, Player.Statuses.IsActive(StatusId.Battle),
+            Player.Statuses.IsActive(StatusId.Calm));
     }
+
+    /// <summary>
+    /// The chance one spawn attempt (every <see cref="SpawnIntervalSeconds"/>) succeeds: Terraria's per-tick roll over the
+    /// interval, at <see cref="CombatTuning.SpawnsPerSecond"/> times the rate multiplier (0.3.4, EN-8).
+    /// </summary>
+    public static float SpawnAttemptChance(float rateMultiplier) =>
+        1f - MathF.Exp(-CombatTuning.SpawnsPerSecond * Math.Max(0f, rateMultiplier) * SpawnIntervalSeconds);
 
     private void UpdateSpawning(float deltaSeconds)
     {
@@ -52,12 +58,14 @@ public sealed partial class GameSimulation
         // One biome scan per spawn attempt decides which roster this attempt draws from.
         var reading = BiomeScanner.Scan(World, PlayerCell());
         var (rateFactor, capFactor) = CombatTuning.SpawnFactors(IsNight, reading.Underground, PlayerInBlight(reading.Zone),
-            TownNpcsCalmingSpawns, _enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive));
+            TownNpcsCalmingSpawns, _enemies.Any(enemy => enemy.IsBoss && enemy.IsAlive), FractureActive,
+            Player.Statuses.IsActive(StatusId.Battle), Player.Statuses.IsActive(StatusId.Calm));
         var spawnMultiplier = content.Spawn * rateFactor *
                               (Weather.Dust > 0.4f && CurrentBiome.Zone == BiomeZone.JunkWasteland ? 1.3f : 1f);
-        var limit = Math.Clamp((int)MathF.Ceiling(BasePopulationCap * content.Population * capFactor), 1, 20);
+        var limit = Math.Clamp((int)MathF.Ceiling(CombatTuning.BasePopulation * content.Population * capFactor), 1, 24);
         var population = _enemies.Count(enemy => !enemy.IsBoss && enemy.IsAlive);
-        if (population >= limit || _random.NextDouble() >= Math.Min(0.85f, BaseSpawnChance * spawnMultiplier))
+        if (population >= limit ||
+            _random.NextDouble() >= SpawnAttemptChance(spawnMultiplier * CombatTuning.SpawnRamp(population, limit)))
             return;
 
         for (var attempt = 0; attempt < 14; attempt++)

@@ -212,7 +212,7 @@ rules or numbers.
 | C4 Defense | ✅ extended (0.1.15) | Creatures now have tiered defense too (2-6 early, up to 30-50 late), explicit immunities and lava damage |
 | C7 Healing | ✅ extended (0.1.15) | A four-tier healing and charge ladder, a restoration stim, 60 s potion sickness, boss potions and hearts, heart and charge-orb pickups |
 | C8 Death | ✅ superseded (0.1.8, 0.1.11, 0.1.12) | Drops by character difficulty: Easy part of the money, Medium money and items, Hard everything but tools, Ironman the impossible run (the character dies for good). Terraria's respawn timer: 10 s, 15 s on Brutal and Annihilation, 3 s for Explorer, no boss extension. The bed sets the spawn point. The old "Classic halves material stacks" DIFF is gone |
-| C9 Spawning | ◐ unchanged | Spawn-rate items, ramp-down and Terraria's spawn areas are planned (EN-8 → 0.4.0) |
+| C9 Spawning | ◐ 0.3.4 | Terraria's base rate (1 in 600 ticks), cap (5), night, underground and hardmode factors, the ramp-down, and battle and calming stims are done. Terraria's spawn area above and below the player, and the placeable candles, are not |
 | C10 Spawn locations | ◐ unchanged | Event creatures still spawn anywhere, not only on the surface or near their front (EV-3 → 0.4.0) |
 | C11 Contact damage | ✅ superseded (0.1.15) | Contact uses box overlap; immune players are passed by projectiles |
 | C12 Bosses leave | ◐ unchanged | Per-boss leave rules (dawn, target lost, biome; BO-6) were planned for parity step 0.1.7 and are not done |
