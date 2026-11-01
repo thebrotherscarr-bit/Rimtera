@@ -24,7 +24,7 @@ public static class ItemAudit
     {
         // Gear flags (GameSimulation.Gear.cs and the movement/vision hooks).
         "knockback-immune", "water-walk", "night-vision", "ore-detector", "danger-sense", "auto-swing", "fire-block", "dark",
-        "glide-rig", "glide", "grapple", "rocket-boots", "flight", "featherfall", "double-jump", "climb", "magnet", "gills",
+        "glide-rig", "glide", "grapple", "rocket-boots", "flight", "featherfall", "double-jump", "climb", "magnet", "gills", "swim",
         "catch-scanner", "breath", "lava", "acid", "cold", "heat", "toxic", "fishing-line", "acid-fishing", "lava-fishing",
         // Information gear (GameSimulation.InfoGear.cs).
         "position-readout", "depth-readout", "ore-readout", "life-readout",

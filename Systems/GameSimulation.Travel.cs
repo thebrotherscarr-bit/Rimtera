@@ -22,7 +22,9 @@ public sealed record MountSpec(
     bool Digs = false,
     float DrawWidth = 2.4f,
     float DrawHeight = 1.4f,
-    string MountMessage = "");
+    string MountMessage = "",
+    float FallFactor = 0.5f,
+    float FallCap = 17.5f);
 
 /// <summary>A placed pylon as the map sees it.</summary>
 public readonly record struct PylonInfo(GridPoint Cell, TileId Kind, string Name, bool Active);
@@ -113,21 +115,24 @@ public static class TravelContent
         _ => null
     };
 
-    /// <summary>The mount table. The hover-bike keeps its original tuning.</summary>
+    /// <summary>
+    /// The mount table. The hover-bike keeps its original tuning. Each mount has its own fall: the share of fall damage the
+    /// rider takes (none for the flyers and the spring hopper, half for the rest) and its top falling speed.
+    /// </summary>
     public static IReadOnlyDictionary<MountKind, MountSpec> Mounts { get; } = new Dictionary<MountKind, MountSpec>
     {
         [MountKind.HoverBike] = new(MountKind.HoverBike, "Hover-bike", ItemId.HoverBikeKey, "mount_hover_bike",
-            GameSimulation.HoverBikeSpeed, MountMessage: "The hover-bike hums to life."),
+            GameSimulation.HoverBikeSpeed, MountMessage: "The hover-bike hums to life.", FallFactor: 0f),
         [MountKind.DuneStrider] = new(MountKind.DuneStrider, "Dune strider", ItemId.StriderWhistle, "mount_dune_strider", 1.9f,
             JumpFactor: 1.3f, DrawWidth: 2.4f, DrawHeight: 1.8f, MountMessage: "A dune strider lopes over at your whistle."),
         [MountKind.RotorSkiff] = new(MountKind.RotorSkiff, "Rotor skiff", ItemId.RotorSkiffKey, "mount_rotor_skiff", 1.3f,
-            FlightSeconds: 3.5f, DrawWidth: 2.2f, DrawHeight: 1.3f, MountMessage: "The rotor skiff spins up."),
+            FlightSeconds: 3.5f, DrawWidth: 2.2f, DrawHeight: 1.3f, MountMessage: "The rotor skiff spins up.", FallFactor: 0f),
         [MountKind.TideRay] = new(MountKind.TideRay, "Tide ray", ItemId.TideRayCharm, "mount_tide_ray", 0.85f,
             SwimFactor: 2.6f, DrawWidth: 2.4f, DrawHeight: 1.2f, MountMessage: "A tide ray glides beneath you."),
         [MountKind.Burrower] = new(MountKind.Burrower, "Burrower", ItemId.BurrowerKey, "mount_burrower", 0.7f,
             Digs: true, DrawWidth: 2.2f, DrawHeight: 1.4f, MountMessage: "The burrower's jaws start grinding."),
         [MountKind.SpringHopper] = new(MountKind.SpringHopper, "Spring hopper", ItemId.SpringHopperKey, "mount_spring_hopper", 1.1f,
-            JumpFactor: 2f, DrawWidth: 1.8f, DrawHeight: 1.6f, MountMessage: "The spring hopper coils its legs.")
+            JumpFactor: 2f, DrawWidth: 1.8f, DrawHeight: 1.6f, MountMessage: "The spring hopper coils its legs.", FallFactor: 0f, FallCap: 24f)
     };
 
     public static MountKind? MountForItem(ItemId item) =>
@@ -194,7 +199,7 @@ public sealed partial class GameSimulation
     public const float PylonTownRadius = 40f;
     public const int PylonResidentsNeeded = 2;
     public const float PylonUseRadius = 6f;
-    public const float MountFlightLift = 62f;
+    public const float MountFlightLift = 62f * GravityScale;
     public const float BurrowSeconds = 0.12f;
 
     private readonly HashSet<GridPoint> _pylons = new();
@@ -269,7 +274,7 @@ public sealed partial class GameSimulation
                 _mountFlight = spec.FlightSeconds;
             else if (movement.JumpHeld && _mountFlight > 0f && _bodyLiquid == LiquidKind.None)
             {
-                velocity.Y = Math.Max(velocity.Y - MountFlightLift * deltaSeconds, -7.5f);
+                velocity.Y = Math.Max(velocity.Y - MountFlightLift * deltaSeconds, -7.5f * LiftScale);
                 _mountFlight = Math.Max(0f, _mountFlight - deltaSeconds);
                 motion.FallPeakY = motion.Position.Y;
             }
@@ -277,9 +282,9 @@ public sealed partial class GameSimulation
         if (spec.SwimFactor > 0f && MountSwimsIn(_bodyLiquid))
         {
             if (movement.JumpHeld)
-                velocity.Y = Math.Min(velocity.Y, -6f);
+                velocity.Y = Math.Min(velocity.Y, -6f * LiftScale);
             else if (movement.Vertical > 0.5f)
-                velocity.Y = 5f;
+                velocity.Y = 5f * LiftScale;
             else
                 velocity.Y *= 0.8f;
         }
@@ -294,7 +299,7 @@ public sealed partial class GameSimulation
             return;
         // Boosted jumps: while the jump's sustain window runs, hold the launch speed at the mount's scale.
         if (spec.JumpFactor > 1f && velocity.Y < -1f && (movement.JumpHeld || movement.JumpPressed) && Player.Motion.JumpSustainRemaining > 0f)
-            velocity.Y = Math.Min(velocity.Y, -9.5f * spec.JumpFactor);
+            velocity.Y = Math.Min(velocity.Y, -PlayerMovementSettings.JumpImpulse * spec.JumpFactor);
         if (spec.SwimFactor > 0f && _bodyLiquid != LiquidKind.None)
             _breath = MaximumBreath;
     }
