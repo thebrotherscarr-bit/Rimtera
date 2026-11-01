@@ -137,19 +137,18 @@ public static class GrowthItems
             TileTraits.Plant | TileTraits.Organic | TileTraits.Light, Furniture: true, Value: 1, Drop: ItemId.LifebloomPod);
     }
 
-    private static readonly Random LifebloomRandom = new(0x11FEB1);
 
     /// <summary>
     /// After the Fracture, underground Verdant Canopy ground (mud, canopy or jungle grass below the surface band) rarely
     /// sprouts a lifebloom pod on its open top face, never within 10 columns of another pod. True when one grew.
     /// </summary>
-    public static bool TryGrowLifebloom(TileGrid world, int x, int y, TileId tile, ICollection<GridPoint> changed)
+    public static bool TryGrowLifebloom(TileGrid world, int x, int y, TileId tile, ICollection<GridPoint> changed, Random random)
     {
         if (tile is not (TileId.Mud or TileId.CanopyGrass or TileId.JungleGrass) || y < world.Height * 0.45f || y < 1)
             return false;
         if (world.TileAt(x, y - 1, TileId.Bedrock) != TileId.Air || world.GetCell(x, y - 1).LiquidUnits > 0)
             return false;
-        if (LifebloomRandom.Next(LifebloomGrowthOdds) != 0)
+        if (random.Next(LifebloomGrowthOdds) != 0)
             return false;
         for (var dx = -10; dx <= 10; dx++)
         for (var dy = -3; dy <= 3; dy++)

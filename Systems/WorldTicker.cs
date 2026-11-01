@@ -82,6 +82,8 @@ public sealed class WorldTicker
     private readonly TileCatalog _tiles;
     private readonly Random _random;
     private readonly Random _flora;
+    /// <summary>Content growth (wild plants, gem trees, lifebloom): this world's own streams, so two worlds never share one (0.3.11).</summary>
+    private readonly Random _contentGrowth, _lifebloom;
     private readonly List<GridPoint> _changed = new();
     private double _carry;
     private double _overCarry;
@@ -93,6 +95,8 @@ public sealed class WorldTicker
         _tiles = tiles;
         _random = new Random(seed);
         _flora = new Random(seed ^ 0x0F1A2A);
+        _contentGrowth = new Random(seed ^ 0x0F10A);
+        _lifebloom = new Random(seed ^ 0x11FEB1);
     }
 
     /// <summary>The world's blight; null disables spread (legacy worlds).</summary>
@@ -211,8 +215,8 @@ public sealed class WorldTicker
         }
 
         // Rimtera's own regrowth (tuned to this pass's rate): post-Fracture lifeblooms, wild plants and gem trees.
-        if (Fractured && GrowthItems.TryGrowLifebloom(_world, x, y, tile, _changed)) { PlantGrowths++; return; }
-        if (ContentFillFlora.TickGrowth(_world, _tiles, x, y, tile, _changed)) PlantGrowths++;
+        if (Fractured && GrowthItems.TryGrowLifebloom(_world, x, y, tile, _changed, _lifebloom)) { PlantGrowths++; return; }
+        if (ContentFillFlora.TickGrowth(_world, _tiles, x, y, tile, _changed, _contentGrowth)) PlantGrowths++;
     }
 
     /// <summary>Converts one cell to blight if the rules allow it. Returns true when it converted.</summary>

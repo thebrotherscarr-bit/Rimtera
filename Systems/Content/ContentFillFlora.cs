@@ -65,8 +65,6 @@ public static class ContentFillFlora
     private static readonly HashSet<TileId> Trunks = Species.Select(species => species.Trunk).Append(TileId.GemTreeTrunk).ToHashSet();
     private static readonly HashSet<TileId> Canopies = Species.Select(species => species.Canopy).Concat(GemCrowns.Select(gem => gem.Canopy)).ToHashSet();
 
-    // Growth rolls use their own stream so the world ticker's seeded sequence is unchanged.
-    private static readonly Random GrowthRandom = new(0x0F10A);
 
     public static bool IsTrunk(TileId tile) => Trunks.Contains(tile);
     public static bool IsCanopy(TileId tile) => Canopies.Contains(tile);
@@ -292,24 +290,25 @@ public static class ContentFillFlora
 
     /// <summary>
     /// World-ticker growth for the cell (x, y) holding <paramref name="tile"/>: open ground of a plant biome slowly regrows its
-    /// wild plant, and bare deep cave rock very rarely sprouts a gem tree. Returns true when something grew.
+    /// wild plant, and bare deep cave rock very rarely sprouts a gem tree. Returns true when something grew. Rolls come from
+    /// <paramref name="growth"/>, the world's own stream (the world ticker's), never a shared one.
     /// </summary>
-    public static bool TickGrowth(TileGrid grid, TileCatalog catalog, int x, int y, TileId tile, List<GridPoint> changed)
+    public static bool TickGrowth(TileGrid grid, TileCatalog catalog, int x, int y, TileId tile, List<GridPoint> changed, Random growth)
     {
         if (!grid.Contains(x, y - 1) || grid.TileAt(x, y - 1) != TileId.Air || grid.GetCell(x, y - 1).LiquidUnits > 0 ||
             !catalog[tile].IsSolid)
             return false;
         if (WildPlantFor(tile) is { } wild)
         {
-            if (GrowthRandom.Next(160) != 0 || NearAny(grid, x, y - 1, 4, IsWildPlant))
+            if (growth.Next(160) != 0 || NearAny(grid, x, y - 1, 4, IsWildPlant))
                 return false;
             grid.SetTile(new GridPoint(x, y - 1), wild);
             changed.Add(new GridPoint(x, y - 1));
             return true;
         }
-        if (tile == TileId.Rock && y > grid.Height * 0.45 && GrowthRandom.Next(400) == 0 &&
+        if (tile == TileId.Rock && y > grid.Height * 0.45 && growth.Next(400) == 0 &&
             !NearAny(grid, x, y - 1, 4, candidate => TilePhysics.IsTrunk(candidate)))
-            return TryGrowGemTree(grid, x, y - 1, GrowthRandom, changed);
+            return TryGrowGemTree(grid, x, y - 1, growth, changed);
         return false;
     }
 }

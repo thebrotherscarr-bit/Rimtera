@@ -69,6 +69,8 @@ public static partial class GraphicalSandbox
         private readonly HashSet<Keys> _down = new();
         private readonly HashSet<Keys> _menuDown = new();
         private GameSimulation? _game;
+        /// <summary>Who plays on this machine and on which device (0.3.11: only player 1 until split-screen co-op; UI/PlayerCamera.cs).</summary>
+        private readonly LocalPlayerSetup _localPlayers = new();
         private WorldProfile? _activeWorld;
         private CharacterProfile? _activeCharacter;
         private bool _menuOpen = true;
@@ -1089,12 +1091,14 @@ public static partial class GraphicalSandbox
                 block.PlacedTile != standing)
                 action = PlayerAction.ReplaceSelected;
 
-            _game.Tick(new GameInput(
+            // 0.3.11: the window only sends player 1's command; the game state changes in Advance (docs/MULTIPLAYER.md).
+            _game.Submit(_localPlayers.For(InputDevice.KeyboardMouse)?.Slot ?? 0, new GameInput(
                 new MovementInput(horizontal, JumpPressed: _jump && !mapOpen, DashPressed: _dash && !mapOpen,
                     JumpHeld: !mapOpen && Held("Jump"),
                     Vertical: mapOpen ? 0f : Held("MoveUp") ? -1f : Held("MoveDown") ? 1f : 0f),
                 action,
                 aim));
+            _game.Advance();
             _jump = _dash = _mine = _use = _replace = _eat = _boss = false;
             if (_game.IsOver)
             {
@@ -1971,11 +1975,9 @@ public static partial class GraphicalSandbox
         private float _viewStartX;
         private float _viewStartY;
         /// <summary>Smoothed camera centre (tiles) and how quickly it closes on the player per axis (1/s).</summary>
-        private Vector2 _camera;
-        private bool _cameraReady;
+        /// <summary>Each local player's camera (0.3.11: one until split-screen co-op; UI/PlayerCamera.cs).</summary>
+        private readonly PlayerCamera[] _cameras = [new PlayerCamera()];
         private readonly ScreenShake _screenShake = new();
-        private const float CameraFollowX = 14f;
-        private const float CameraFollowY = 9f;
         private readonly List<(RectangleF Rect, int Slot)> _hotbarHits = new();
         /// <summary>Every HUD panel drawn last frame (vitals, buffs, minimap, status, boss and event bars).</summary>
         private readonly List<RectangleF> _hudRects = new();
@@ -2440,16 +2442,13 @@ public static partial class GraphicalSandbox
             // a tile rather than jumping a tile at a time. Teleports snap.
             var target = SpectateCenter ?? motion.Position + motion.Size / 2f;
             var smoothing = _menu.Preferences.CameraSmoothing;
-            if (!_cameraReady || smoothing <= 0f || Vector2.Distance(_camera, target) > 24f)
-                _camera = target;
-            else
-                _camera += new Vector2((target.X - _camera.X) * (1f - MathF.Exp(-frameDelta * CameraFollowX / smoothing)),
-                    (target.Y - _camera.Y) * (1f - MathF.Exp(-frameDelta * CameraFollowY / smoothing)));
-            _cameraReady = true;
+            var camera = _cameras[0];
+            camera.Follow(target, smoothing, frameDelta);
             var screenTilesW = Width / (float)TileSize;
             var screenTilesH = (Height - HudHeight) / (float)TileSize;
-            var cameraLeft = Math.Clamp(_camera.X - screenTilesW / 2f, 0f, Math.Max(0f, game.World.Width - screenTilesW));
-            var cameraTop = Math.Clamp(_camera.Y - screenTilesH / 2f, 0f, Math.Max(0f, game.World.Height - screenTilesH));
+            var corner = camera.TopLeft(screenTilesW, screenTilesH, game.World.Width, game.World.Height);
+            var cameraLeft = corner.X;
+            var cameraTop = corner.Y;
             // PE-16: boss roars, explosions and heavy landings shake the view briefly (Settings → Interface → Screen shake).
             // Only a running world shakes; the frozen image under a paused menu stays still (pausing ends a shake).
             _screenShake.Observe(game);
@@ -2622,7 +2621,6 @@ public static partial class GraphicalSandbox
             DrawLeisure(g, game, startX, startY, now); // glow coating, pets, kites, golf (GraphicalSandbox.Leisure.cs)
             if (!MenuOpen)
                 DrawWireOverlay(g, game, startX, startY, viewW, viewH);
-            DrawGrowZones(g, game, startX, startY, viewW, viewH); // 0.2.5 grow zones (GraphicalSandbox.World.cs)
             DrawWeather(g, game, startX, startY, now);
             DrawPlayerSystems(g, game, startX, startY, now);
             g.Restore(worldState);
