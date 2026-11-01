@@ -756,7 +756,7 @@ public sealed partial class GameSimulation : IStoryHost
     {
         var result = Crafting.TryCraft(recipeId, Player.Inventory, CreateCraftingEnvironment(), RollCalibration);
         if (result.Success && Crafting.FindById(recipeId) is { } crafted)
-            SpendCraftPower(crafted); // 0.3.8: a craft at a machine draws the station AI's power
+            SpendCraftPowerAt(crafted, PlayerCenter); // 0.3.8: a powered craft draws the AI's power (0.7.6: or a relay's)
         if (result.Success) SoundEvents.Emit(SoundEventKind.Craft, SoundEventQueue.CraftVariant(Crafting.FindById(recipeId)), PlayerCenter, (int)(result.Output ?? 0));
         PostMessage(result.Message);
         return result;

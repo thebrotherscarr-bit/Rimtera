@@ -98,6 +98,7 @@ public sealed class DevConsole
         new("ai", "ai down | ai rebuild", "Takes the station AI down (machines run unpowered) or rebuilds it.", true, Ai),
         new("act", "act", "Shows the run's act and what it asks of you.", false, _ => [$"Act {(int)_game.Act}: {GameSimulation.ActName(_game.Act)}. {GameSimulation.ActGoal(_game.Act)}"]),
         new("incident", "incident [id]", "Lists the storyteller's incidents, or fires one now if it can happen.", true, Incident),
+        new("relay", "relay | relay set <charge> | relay tier <0-5>", "Lists the relays, or sets the nearest one's charge or tier.", true, Relay),
         new("threat", "threat", "Shows the threat budget: what the next threat is built from, the dial and the ease after losses.", false, _ => Threat()),
         new("letters", "letters | letters clear | letters send <text>", "Lists the letters waiting, puts them all away, or sends one.", true, Letters),
         new("storyteller", "storyteller [steady|chaotic|builder] [threat 0.5-2]", "Shows the storyteller, or changes its personality and threat dial.", true, Teller),
@@ -563,5 +564,22 @@ public sealed class DevConsole
             return ["Incidents: " + string.Join(", ", _game.Storyteller.Incidents.Select(incident => incident.Id))];
         var record = _game.ForceIncident(args[0]);
         return [record is null ? $"'{args[0]}' cannot happen now." : $"{record.DisplayName}: {record.Summary}"];
+    }
+
+    private IEnumerable<string> Relay(string[] args)
+    {
+        var pylons = _game.Pylons;
+        if (pylons.Count == 0)
+            return ["No relays stand in this world."];
+        if (args.Length >= 2 && int.TryParse(args[1], out var value))
+        {
+            var nearest = pylons.OrderBy(pylon => System.Numerics.Vector2.Distance(_game.Player.Motion.Position, new System.Numerics.Vector2(pylon.Cell.X, pylon.Cell.Y))).First();
+            if (args[0].Equals("set", StringComparison.OrdinalIgnoreCase))
+                _game.SetRelayChargeForConsole(nearest.Cell, value);
+            else if (args[0].Equals("tier", StringComparison.OrdinalIgnoreCase))
+                _game.SetRelayTierForConsole(nearest.Cell, value);
+            return [_game.RelayStatus(nearest.Cell)];
+        }
+        return pylons.Select(pylon => $"{_game.PylonPlace(pylon)} ({pylon.Cell.X},{pylon.Cell.Y}): {_game.RelayStatus(pylon.Cell)}").ToArray();
     }
 }

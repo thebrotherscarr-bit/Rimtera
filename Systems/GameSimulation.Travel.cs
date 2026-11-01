@@ -471,7 +471,7 @@ public sealed partial class GameSimulation
             return _pylons.OrderBy(cell => cell.X).Select(cell =>
             {
                 var kind = World.GetCell(cell).TileId;
-                return new PylonInfo(cell, kind, Tiles[kind].Name, CountResidentsNear(cell) >= PylonResidentsNeeded);
+                return new PylonInfo(cell, kind, Tiles[kind].Name, RelayOnline(cell)); // 0.7.6: staffed and charged
             }).ToArray();
         }
     }
@@ -505,11 +505,17 @@ public sealed partial class GameSimulation
             return false;
         if (!target.Active)
         {
-            PostMessage($"The {target.Name.ToLowerInvariant()} is dormant: it needs a staffed outpost ({PylonResidentsNeeded} people living around it).");
+            PostMessage(RelayStatus(target.Cell)); // 0.7.6: unstaffed or out of charge
             return false;
         }
         if (target.Cell == source.Cell)
             return false;
+        // 0.7.6: a trip costs charge at both ends.
+        if (RelayCharge(source.Cell) < RelayTravelCost || RelayCharge(target.Cell) < RelayTravelCost)
+        {
+            PostMessage($"Not enough charge to travel: each relay needs {RelayTravelCost}.");
+            return false;
+        }
         var size = Player.Motion.Size;
         foreach (var offset in new[] { 0f, 1f, -1f, 2f, -2f })
         {
@@ -522,6 +528,8 @@ public sealed partial class GameSimulation
             Player.Motion.FallPeakY = position.Y;
             Flags.Increment("player.teleports");
             Flags.Increment("travel.pylon_jumps");
+            SetRelayCharge(source.Cell, RelayCharge(source.Cell) - RelayTravelCost);
+            SetRelayCharge(target.Cell, RelayCharge(target.Cell) - RelayTravelCost);
             PostMessage($"The pylons fold space: you arrive at the {target.Name.ToLowerInvariant()}.");
             return true;
         }

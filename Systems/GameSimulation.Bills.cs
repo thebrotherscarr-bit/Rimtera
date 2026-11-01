@@ -229,8 +229,8 @@ public sealed partial class GameSimulation
         // 0.3.5: a resident works at the skill of their trade (TownTrades); crew at their own skill for the work type.
         var stationSkill = agent.SkillAt(StationAt(job.Station));
         var speed = stationSkill is { } trained ? TownTrades.Speed(trained) : agent.SpeedFor(work ?? BillWork(job.Station));
-        if (StationPowered(StationAt(job.Station)))
-            speed *= PoweredWorkSpeed; // 0.7.5: a powered machine is worked faster
+        if (StationPoweredAt(StationAt(job.Station), stationAt))
+            speed *= PoweredWorkSpeed; // 0.7.5: a powered machine is worked faster (0.7.6: by the base's AI or a relay near it)
         if (agent.OperateProgress < OperateSeconds(speed))
             return true;
 
@@ -254,7 +254,7 @@ public sealed partial class GameSimulation
             made += job.Recipe.OutputCount;
         var calibration = output.Calibratable || CalibrationCatalog.IsAccessory(output) ? RollCalibration(output) : Calibration.None;
         agent.Carried = new ItemStack(job.Recipe.Output, made, calibration);
-        SpendCraftPower(job.Recipe); // 0.3.8
+        SpendCraftPowerAt(job.Recipe, stationAt); // 0.3.8; 0.7.6: from the AI or a relay
         job.Bill.Done++;
         Flags.Increment("colony.crafted", made);
         SoundEvents.Emit(SoundEventKind.Craft, SoundEventQueue.CraftVariant(job.Recipe), stationAt, (int)job.Recipe.Output);

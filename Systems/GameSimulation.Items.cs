@@ -664,6 +664,8 @@ public sealed partial class GameSimulation
             return Report(new InteractionResult(WorldInteractionKind.ContainerOpened, $"Opened the {Tiles[tile].Name.ToLowerInvariant()}.",
                 container, Cell: target));
         }
+        if (TravelContent.IsPylon(tile)) // 0.7.6: a relay: charge it from your fuel crystals, or read its state
+            return Report(new InteractionResult(WorldInteractionKind.None, ChargeRelay(target), Cell: target));
         if (TravelContent.IsGlideWalk(tile) && TryReverseGlideWalk(target))
             return Report(new InteractionResult(WorldInteractionKind.None, "The glide-walk reverses.", Cell: target));
         if (TryInteractWorldGen(target, tile, out var worldGenResult))

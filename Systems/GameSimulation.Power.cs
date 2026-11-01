@@ -229,7 +229,7 @@ public sealed partial class GameSimulation
     /// <summary>Sets the reserve and tier directly (the dev console).</summary>
     internal void SetStationPower(int? power = null, int? tier = null)
     {
-        Flags.Set(PowerInitFlag);
+        InitPower(); // 0.7.6 fix: set up the starting charge first, so setting only the tier keeps it
         if (power is { } value)
             SetPower(value);
         if (tier is { } level)
