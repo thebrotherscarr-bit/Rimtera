@@ -49,6 +49,8 @@ public sealed partial class GameSimulation
             npc.HomeCell is { } home ? $"Lives at {home.X},{home.Y}{(OutpostOf(npc) is { } outpost ? $" ({outpost.Label})" : "")} · happiness {GetHappiness(npc):+0.0;-0.0;0}" : "Homeless",
             $"Doing: {npc.Activity}",
             $"Best at: {string.Join(", ", Enum.GetValues<ColonistSkill>().OrderByDescending(stats.Level).Take(3).Select(skill => $"{skill} {stats.Level(skill)}{(stats.Passion(skill) == PassionLevel.None ? "" : "+")}"))}",
+            $"Grew up: {npc.Childhood?.Title ?? "unknown"} · then: {npc.Adulthood?.Title ?? "unknown"}" +
+                (npc.Refuses.Count > 0 ? $" · won't {string.Join(", ", npc.Refuses.Select(work => WorkCatalog.Get(work).Label.ToLowerInvariant()))}" : ""),
             !npc.WorksStations || TownTrades.Idle(npc.Kind) ? "Works no stations"
                 : npc.Kind == TownNpcKind.Settler ? "Works any station near home by day, by skill"
                 : npc.Trade.Count == 0 ? "Works the basic benches near home by day"
@@ -72,7 +74,7 @@ public sealed partial class GameSimulation
             lines.Add($"Carrying: {string.Join(", ", carrying.Take(3))}{(carrying.Count > 3 ? ", …" : "")}");
         if (!npc.IsBound && GetShop(npc).Count > 0)
             lines.Add($"Sells {GetShop(npc).Count} things (right-click to trade)");
-        var subtitle = npc.IsBound ? $"{npc.Definition.Role} · bound" : $"{npc.Definition.Role} · {npc.Profile.Age} · {npc.Profile.BackstoryName}";
+        var subtitle = npc.IsBound ? $"{npc.Definition.Role} · bound" : $"{npc.Definition.Role} · {npc.Profile.Age} · {npc.Adulthood?.Title ?? npc.Profile.BackstoryName}";
         return new InspectCard(new InspectTarget(InspectKind.Resident, npc.Id), npc.Name,
             subtitle, npc.HitPoints / Math.Max(1f, npc.MaximumHitPoints), null, lines);
     }

@@ -100,6 +100,7 @@ public static class RaidSelfTests
             for (var i = 0; i < guards; i++)
             {
                 var guard = Living(world, TownNpcKind.Settler, 70 + i * 3);
+                guard.SetStory(Rimtera.Characters.Backgrounds.Childhoods[0], Rimtera.Characters.Backgrounds.Adulthoods.First(story => story.Id == "soldier"));
                 world.Player.Inventory.Add(ItemId.ScrapPistol, 1);
                 world.EquipResident(guard, ItemId.ScrapPistol);
             }

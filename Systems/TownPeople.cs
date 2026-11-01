@@ -112,6 +112,20 @@ public static class TownPeople
 
     public static string SettlerSprite(int look) => SettlerSprites[(int)((uint)look % (uint)SettlerSprites.Length)];
 
+    /// <summary>A seed from a name that is the same on every run (string hashes are not).</summary>
+    public static int NameSeed(string name) => StableHash(name);
+
+    /// <summary>
+    /// A new person's story (0.5.1): a childhood and adulthood for this world, whose skills are added to their profile.
+    /// The trade's minimum skills still hold, since stories only add.
+    /// </summary>
+    public static (CharacterProfile Profile, BackgroundDefinition Childhood, BackgroundDefinition Adulthood) WithStory(
+        TownNpcKind kind, CharacterProfile profile, int seed)
+    {
+        var (childhood, adulthood) = Backgrounds.For(kind, seed);
+        return (Backgrounds.Apply(profile, childhood, adulthood), childhood, adulthood);
+    }
+
     private static int StableHash(string text)
     {
         unchecked

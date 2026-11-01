@@ -133,7 +133,7 @@ launch you may continue the world, and the story from there is yours.
 
 | Step | Contents |
 |---|---|
-| 0.5.1 | **Backgrounds and traits.** A random childhood and adulthood set each person's skill spread, their preferred work, and what they won't or can't do. |
+| 0.5.1 | **Backgrounds and traits.** A random childhood and adulthood set each person's skill spread, their preferred work, and what they won't or can't do. *(Done.)* |
 | 0.5.2 | **Skills grow by doing.** A chemist gets better the more they brew. |
 | 0.5.3 | **Health and lasting injuries.** Wounds land on body parts. A lost arm limits someone to one-handed work. |
 | 0.5.4 | **Bionics.** Replacement limbs and implants, crafted and fitted. |

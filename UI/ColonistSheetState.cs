@@ -217,7 +217,9 @@ public sealed class ColonistSheetState : UiState
                 column.Add(Line.Gap);
             column.Add(Line.Head($"{npc.Name}  ·  {npc.Role}"));
             column.Add(Line.Row("Life", $"{npc.HitPoints:0} / {npc.MaximumHitPoints:0}"));
-            column.Add(Line.Row("Background", npc.Profile.BackstoryName));
+            column.Add(Line.Row("Background", $"{npc.Childhood?.Title} / {npc.Adulthood?.Title}"));
+            if (npc.Refuses.Count > 0)
+                column.Add(Line.Row("Won't do", string.Join(", ", npc.Refuses.Select(work => WorkCatalog.Get(work).Label))));
             column.Add(Line.Row("Traits", npc.Profile.TraitSummary));
             column.Add(Line.Row("Best at", string.Join(", ", TopSkills(npc.Stats, 2).Select(line => line.Label))));
             column.Add(Line.Row("Doing", npc.Activity));
