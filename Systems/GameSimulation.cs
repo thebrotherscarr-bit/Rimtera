@@ -364,7 +364,8 @@ public sealed partial class GameSimulation : IStoryHost
             agent.Needs.ComfortReserve,
             agent.Work.Capture(),
             agent.FollowsPlayer,
-            agent.Carried)).ToArray();
+            agent.Carried,
+            agent.Held.Count == 0 ? null : agent.Held.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray())).ToArray();
         return new GameSnapshot(
             GameSnapshot.CurrentFormatVersion, Seed, World.Width, World.Height, null,
             TickNumber, Day, ClockHour, motion.Position.X, motion.Position.Y,
@@ -396,7 +397,8 @@ public sealed partial class GameSimulation : IStoryHost
             WhipBuffSeconds: _whipBuffSeconds,
             Run: CaptureRun(),
             MiscEquipment: CaptureMisc(), BedSpawnX: _bedSpawn?.X, BedSpawnY: _bedSpawn?.Y,
-            Players: CapturePlacements()) { CellData = cellData, CellRuns = cellRuns };
+            Players: CapturePlacements(),
+            Bills: CaptureBills()) { CellData = cellData, CellRuns = cellRuns };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -484,6 +486,7 @@ public sealed partial class GameSimulation : IStoryHost
         var savedBy = snapshot.Character?.CharacterId;
         var arriving = colonist is not null && savedBy is { } saver && saver != Guid.Empty && saver != game.PlayerProfile.Id;
         game.RestorePlacements(snapshot);
+        game.RestoreBills(snapshot.Bills);
         if (!arriving)
             game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
         game._heartsBroken = snapshot.HeartsBroken ?? 0;
@@ -576,6 +579,9 @@ public sealed partial class GameSimulation : IStoryHost
                 agent.FollowsPlayer = colonistSnapshot.FollowsPlayer;
                 if (!colonistSnapshot.Carried.IsEmpty && game.Items.Contains(colonistSnapshot.Carried.ItemId))
                     agent.Carried = colonistSnapshot.Carried;
+                foreach (var held in colonistSnapshot.Held ?? [])
+                    if (!held.IsEmpty && game.Items.Contains(held.ItemId))
+                        agent.Held[held.ItemId] = agent.Held.GetValueOrDefault(held.ItemId) + held.Count;
             }
         }
         if (!arriving && snapshot.PlayerState is { } playerState)
@@ -1591,6 +1597,7 @@ public sealed partial class GameSimulation : IStoryHost
             return;
         agent.Mind.Breaker.End();
         agent.Activity = "Dead";
+        DropColonistLoad(agent);
         PostMessage(agent.Health.DeathCause is { } cause
             ? $"{agent.Name} has died ({cause})."
             : $"{agent.Name} has died.");
@@ -2558,10 +2565,12 @@ public sealed partial class GameSimulation : IStoryHost
         new(Player.Motion.Position + Player.Motion.Size / 2f, PlacementReachRadius,
             RequireLineOfSight: true, ActorSize: Player.Motion.Size);
 
-    private CraftingEnvironment CreateCraftingEnvironment()
+    private CraftingEnvironment CreateCraftingEnvironment() =>
+        CreateCraftingEnvironment(Player.Motion.Position + Player.Motion.Size / 2f, 6f + CraftingStationReachBonus); // fabricator manual
+
+    /// <summary>The stations, liquids and biome around <paramref name="center"/> (the player, or a station a bill is worked at).</summary>
+    private CraftingEnvironment CreateCraftingEnvironment(Vector2 center, float radius)
     {
-        var center = Player.Motion.Position + Player.Motion.Size / 2f;
-        var radius = 6f + CraftingStationReachBonus; // fabricator manual
         var nearbyLiquids = new HashSet<LiquidKind>();
         var minX = Math.Max(0, (int)MathF.Floor(center.X - radius));
         var maxX = Math.Min(World.Width - 1, (int)MathF.Ceiling(center.X + radius));

@@ -7,8 +7,9 @@ namespace Rimtera.Systems;
 
 /// <summary>
 /// Colony work (0.2.1, docs/DESIGN_COLONY_ESCAPE.md §3.3, the think-tree pattern in docs/RESEARCH.md): each colonist asks
-/// the job giver of every enabled work type, in priority order, for a job, and does the first one offered. Guard, Tend
-/// and Haul have job givers now; the other work types arrive with their systems (bills, zones, research).
+/// the job giver of every enabled work type, in priority order, for a job, and does the first one offered. Guard, Tend,
+/// Haul and Operate (station bills, 0.2.3: GameSimulation.Bills.cs) have job givers now; the other work types arrive with
+/// their systems (zones, research).
 /// </summary>
 public sealed partial class GameSimulation
 {
@@ -25,6 +26,11 @@ public sealed partial class GameSimulation
     /// <summary>Asks each enabled job giver in priority order; true when one gave a job and the colonist worked it.</summary>
     private bool TryColonyWork(ColonistAgent agent, Vector2 center, float deltaSeconds, float elapsedHours)
     {
+        if (agent.Work.Priority(WorkType.Operate) == WorkCatalog.Off && (agent.Held.Count > 0 || agent.OperateStation is not null))
+        {
+            agent.OperateStation = null; // taken off Operate: set fetched ingredients down for the haulers
+            DropHeld(agent, center);
+        }
         foreach (var work in agent.Work.Order())
         {
             var worked = work switch
@@ -32,15 +38,19 @@ public sealed partial class GameSimulation
                 WorkType.Guard => TryGuard(agent, center, deltaSeconds),
                 WorkType.Tend => TryTend(agent, center, deltaSeconds, elapsedHours),
                 WorkType.Haul => TryHaul(agent, center, deltaSeconds),
+                WorkType.Operate => TryOperate(agent, center, deltaSeconds),
                 _ => false // no job giver yet
             };
             if (worked)
             {
                 agent.CurrentWork = work;
+                if (work != WorkType.Operate)
+                    agent.OperateStation = null; // free the station for another operator meanwhile
                 return true;
             }
         }
         agent.CurrentWork = null;
+        agent.OperateStation = null;
         return false;
     }
 
@@ -129,22 +139,7 @@ public sealed partial class GameSimulation
     private bool TryHaul(ColonistAgent agent, Vector2 center, float deltaSeconds)
     {
         if (!agent.Carried.IsEmpty)
-        {
-            if (StorageFor(agent, agent.Carried.ItemId) is not { } chest)
-                return false; // nowhere to put it: keep carrying until a chest has room
-            agent.Activity = $"Hauling {Items[agent.Carried.ItemId].Name} to storage";
-            var chestCenter = new Vector2(chest.X + 0.5f, chest.Y + 0.5f);
-            if (Vector2.Distance(chestCenter, center) < 1.8f)
-            {
-                var carried = agent.Carried;
-                var stored = GetContainer(chest)?.Add(carried.ItemId, carried.Count, carried.Calibration) ?? 0;
-                agent.Carried = carried.Count - stored > 0 ? carried with { Count = carried.Count - stored } : default;
-                Flags.Increment("colony.hauled", stored);
-            }
-            else
-                StepColonistToward(agent, center, chestCenter, deltaSeconds, 1f);
-            return true;
-        }
+            return DeliverCarried(agent, center, deltaSeconds); // nowhere to put it: keep carrying until a chest has room
 
         GroundItem? pick = null;
         var nearest = float.MaxValue;
@@ -180,36 +175,63 @@ public sealed partial class GameSimulation
         return true;
     }
 
-    private readonly Dictionary<GridPoint, (long Tick, GridPoint[] Cells)> _storageNearHome = new();
+    /// <summary>Walks the carried stack to the nearest chest with room and puts it in; false when no chest near home has room.</summary>
+    private bool DeliverCarried(ColonistAgent agent, Vector2 center, float deltaSeconds, GridPoint? nearStation = null)
+    {
+        // An operator's product goes to the chest nearest its station (where a "keep N" bill counts it), else near home.
+        var target = (nearStation is { } station ? NearestWithRoom(BillStorage(station), agent.Carried.ItemId, agent.Motion.Position) : null)
+                     ?? StorageFor(agent, agent.Carried.ItemId);
+        if (target is not { } chest)
+            return false;
+        agent.Activity = $"Hauling {Items[agent.Carried.ItemId].Name} to storage";
+        var chestCenter = new Vector2(chest.X + 0.5f, chest.Y + 0.5f);
+        if (Vector2.Distance(chestCenter, center) < 1.8f)
+        {
+            var carried = agent.Carried;
+            var stored = GetContainer(chest)?.Add(carried.ItemId, carried.Count, carried.Calibration) ?? 0;
+            agent.Carried = carried.Count - stored > 0 ? carried with { Count = carried.Count - stored } : default;
+            Flags.Increment("colony.hauled", stored);
+        }
+        else
+            StepColonistToward(agent, center, chestCenter, deltaSeconds, 1f);
+        return true;
+    }
+
+    private readonly Dictionary<(GridPoint, int), (long Tick, GridPoint[] Cells)> _storageNearHome = new();
 
     /// <summary>Chest tiles within haul range of a home, rescanned every two seconds (placed chests count before they are opened).</summary>
-    private IReadOnlyList<GridPoint> StorageCellsNear(Vector2 home)
+    private IReadOnlyList<GridPoint> StorageCellsNear(Vector2 home, float radius = HaulRadius)
     {
-        var key = new GridPoint((int)MathF.Floor(home.X), (int)MathF.Floor(home.Y));
+        var key = (new GridPoint((int)MathF.Floor(home.X), (int)MathF.Floor(home.Y)), (int)MathF.Ceiling(radius));
         if (_storageNearHome.TryGetValue(key, out var cached) && TickNumber - cached.Tick < 120)
             return cached.Cells;
         var cells = new List<GridPoint>();
-        var reach = (int)MathF.Ceiling(HaulRadius);
-        for (var y = key.Y - reach; y <= key.Y + reach; y++)
-        for (var x = key.X - reach; x <= key.X + reach; x++)
+        var reach = key.Item2;
+        var (keyX, keyY) = (key.Item1.X, key.Item1.Y);
+        for (var y = keyY - reach; y <= keyY + reach; y++)
+        for (var x = keyX - reach; x <= keyX + reach; x++)
             if (World.Contains(x, y) && ContentTiles.Has(World.TileAt(x, y), TileTraits.Container) &&
-                Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), home) <= HaulRadius)
+                Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), home) <= radius)
                 cells.Add(new GridPoint(x, y));
         _storageNearHome[key] = (TickNumber, cells.ToArray());
         return cells;
     }
 
     /// <summary>The nearest chest within haul range of the colonist's home with room for <paramref name="item"/>.</summary>
-    private GridPoint? StorageFor(ColonistAgent agent, ItemId item)
+    private GridPoint? StorageFor(ColonistAgent agent, ItemId item) =>
+        NearestWithRoom(StorageCellsNear(agent.HomePosition), item, agent.Motion.Position);
+
+    /// <summary>The chest among <paramref name="cells"/> nearest <paramref name="from"/> with room for <paramref name="item"/>.</summary>
+    private GridPoint? NearestWithRoom(IReadOnlyList<GridPoint> cells, ItemId item, Vector2 from)
     {
         GridPoint? best = null;
         var nearest = float.MaxValue;
-        foreach (var cell in StorageCellsNear(agent.HomePosition))
+        foreach (var cell in cells)
         {
             if (GetContainer(cell) is not { } inventory || inventory.GetAddableCount(item) <= 0)
                 continue;
             var at = new Vector2(cell.X + 0.5f, cell.Y + 0.5f);
-            var distance = Vector2.DistanceSquared(at, agent.Motion.Position);
+            var distance = Vector2.DistanceSquared(at, from);
             if (distance < nearest)
             {
                 nearest = distance;
