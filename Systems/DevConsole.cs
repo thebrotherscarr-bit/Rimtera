@@ -97,6 +97,7 @@ public sealed class DevConsole
         new("power", "power | power set <0-1000> | power tier <1-5> | power feed", "Shows the station AI's power, sets it or its tier, or feeds it from your bag.", true, Power),
         new("ai", "ai down | ai rebuild", "Takes the station AI down (machines go dark) or rebuilds it.", true, Ai),
         new("act", "act", "Shows the run's act and what it asks of you.", false, _ => [$"Act {(int)_game.Act}: {GameSimulation.ActName(_game.Act)}. {GameSimulation.ActGoal(_game.Act)}"]),
+        new("incident", "incident [id]", "Lists the storyteller's incidents, or fires one now if it can happen.", true, Incident),
         new("threat", "threat", "Shows the threat budget: what the next threat is built from, the dial and the ease after losses.", false, _ => Threat()),
         new("letters", "letters | letters clear | letters send <text>", "Lists the letters waiting, puts them all away, or sends one.", true, Letters),
         new("storyteller", "storyteller [steady|chaotic|builder] [threat 0.5-2]", "Shows the storyteller, or changes its personality and threat dial.", true, Teller),
@@ -554,5 +555,13 @@ public sealed class DevConsole
             : _game.Letters.Select(letter => letter.DueHour is null
                 ? $"{letter.Title}: {letter.Body}"
                 : $"{letter.Title} (in {GameSimulation.Countdown(_game.LetterHoursLeft(letter))}): {letter.Body}").ToArray();
+    }
+
+    private IEnumerable<string> Incident(string[] args)
+    {
+        if (args.Length == 0)
+            return ["Incidents: " + string.Join(", ", _game.Storyteller.Incidents.Select(incident => incident.Id))];
+        var record = _game.ForceIncident(args[0]);
+        return [record is null ? $"'{args[0]}' cannot happen now." : $"{record.DisplayName}: {record.Summary}"];
     }
 }

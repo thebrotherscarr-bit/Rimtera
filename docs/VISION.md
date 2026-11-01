@@ -147,7 +147,7 @@ launch you may continue the world, and the story from there is yours.
 | 0.6.1 | **Storytellers to pick** at world creation: three personalities (steady, chaotic, builder-friendly) and difficulty dials. *(Done.)* |
 | 0.6.2 | **Acts follow Terraria's progress:** landfall, descent, the core, the Fracture, the zealots, the collapse, launch. Each act opens new events. *(Done.)* |
 | 0.6.3 | **The threat budget and warnings.** Strength scales with progress and wealth. Warnings come as letters with a countdown. *(Done.)* |
-| 0.6.4 | **The event catalogue.** Terraria's events and invasions under the storyteller, plus arrivals, sickness, power outages for the station AI, supply drops and traders. |
+| 0.6.4 | **The event catalogue.** Terraria's events and invasions under the storyteller, plus arrivals, sickness, power outages for the station AI, supply drops and traders. *(Done.)* |
 | 0.6.5 | **Purposeful events.** Each act's key events push you toward the next step of progress. |
 | 0.6.6 | **The History tab:** the run's story so far. |
 

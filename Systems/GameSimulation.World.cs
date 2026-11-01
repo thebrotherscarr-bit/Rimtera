@@ -45,7 +45,7 @@ public sealed partial class GameSimulation : IWorldEventHost
     private bool _sleeping;
     private bool _triggersWired;
 
-    private WorldEventSystem _worldEvents => _worldEventsField ??= new WorldEventSystem(Seed ^ 0x3E7E47);
+    private WorldEventSystem _worldEvents => _worldEventsField ??= new WorldEventSystem(Seed ^ 0x3E7E47) { InvasionsByStoryteller = true };
     private WeatherSystem _weather => _weatherField ??= new WeatherSystem(Seed ^ 0x3EA7E5);
     private Random TriggerRandom => _triggerRandomField ??= new Random(Seed ^ 0x7216E5);
     private Random WeatherRandom => _weatherRandomField ??= new Random(Seed ^ 0x11F7A1);

@@ -73,6 +73,8 @@ public interface IWorldEventHost
     void Announce(string message);
     void MeteorStrike();
     void ApplyWeatherEvent(WorldEventKind kind, bool active);
+    /// <summary>0.6.4: an event has started (the host writes a letter for the ones that matter).</summary>
+    void EventStarted(WorldEventSpec spec) { }
 }
 
 /// <summary>
@@ -183,6 +185,12 @@ public sealed class WorldEventSystem
 
     public IReadOnlyCollection<WorldEventSpec> Specs => _specs.Values;
     public WorldEventSpec Spec(WorldEventKind kind) => _specs[kind];
+
+    /// <summary>
+    /// 0.6.4: invasions with a natural chance no longer roll at dusk on their own: the storyteller schedules them, with a
+    /// warning (GameSimulation.StoryEvents.cs). Off for a bare event system (tests, audits).
+    /// </summary>
+    public bool InvasionsByStoryteller { get; set; }
     public IReadOnlyList<ActiveEventState> Active => _active;
     public bool IsActive(WorldEventKind kind) => _active.Any(state => state.Kind == kind);
     public int Completions(WorldEventKind kind) => _completions.GetValueOrDefault(kind);
@@ -300,6 +308,7 @@ public sealed class WorldEventSystem
             spec.KillsPerWave, false, forced, spec.StartTier(host));
         _active.Add(state);
         host.Announce($"Event started: {spec.Name}.");
+        host.EventStarted(spec);
         if (spec.Category == WorldEventCategory.Weather)
             host.ApplyWeatherEvent(kind, true);
         if (kind == WorldEventKind.MeteorFall)
@@ -333,7 +342,7 @@ public sealed class WorldEventSystem
             return;
         foreach (var spec in _specs.Values.Where(spec => spec.Moment == moment).OrderBy(spec => spec.Kind))
         {
-            if (spec.Chance <= 0f || NaturalRoll(host.Day, moment, spec.Kind) >= spec.Chance)
+            if (spec.Chance <= 0f || spec.IsInvasion && InvasionsByStoryteller || NaturalRoll(host.Day, moment, spec.Kind) >= spec.Chance)
                 continue;
             if (TryStart(spec.Kind, host, forced: false, out _))
                 break;

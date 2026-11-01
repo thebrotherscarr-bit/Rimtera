@@ -198,6 +198,10 @@ public sealed class TownNpc : IStationWorker
     /// <summary>Food, 0 (starving) to 1 (full) (0.5.5).</summary>
     public float Food { get; internal set; } = 1f;
 
+    /// <summary>Game hours of rust fever left (0.6.4); 0 when well.</summary>
+    public float SickHours { get; internal set; }
+    public bool IsSick => SickHours > 0f;
+
     // ---- 0.5.4: bionics ----
     private readonly List<BionicPart> _bionics = new();
     public IReadOnlyList<BionicPart> Bionics => _bionics;
@@ -257,7 +261,7 @@ public sealed class TownNpc : IStationWorker
         internal set => HomeCell = new GridPoint((int)MathF.Floor(value.X), (int)MathF.Floor(value.Y));
     }
     string IStationWorker.Activity { get => Activity; set => Activity = value; }
-    float IStationWorker.SpeedFor(WorkType work) => WorkCatalog.SkillSpeed(Stats, work) * GameSimulation.HungerFactor(Food); // 0.5.5: hungry, slower
+    float IStationWorker.SpeedFor(WorkType work) => WorkCatalog.SkillSpeed(Stats, work) * GameSimulation.HungerFactor(Food) * GameSimulation.SicknessFactor(this); // 0.5.5: hungry, slower; 0.6.4: sick, slower
     int IStationWorker.LevelFor(WorkType work) => Stats.Level(WorkCatalog.Get(work).Skill);
     bool IStationWorker.CanWorkAt(CraftingStationId station) => Kind == TownNpcKind.Settler ||
         !TownTrades.Idle(Kind) && (Trade.Contains(station) || TownTrades.BasicBenches.Contains(station));
@@ -339,7 +343,9 @@ public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, flo
     // 0.5.5: food (older saves: full).
     float? Food = null,
     // 0.5.6: a prisoner and their resistance.
-    bool? Prisoner = null, float? Resistance = null);
+    bool? Prisoner = null, float? Resistance = null,
+    // 0.6.4: hours of rust fever left.
+    float? Sick = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 
