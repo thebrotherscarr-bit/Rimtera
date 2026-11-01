@@ -61,7 +61,8 @@ public sealed record GameSnapshot(
     int? BedSpawnY = null,
     PlayerPlacement[]? Players = null,
     StationBillSnapshot[]? Bills = null,
-    ChestFilterSnapshot[]? ChestFilters = null)
+    ChestFilterSnapshot[]? ChestFilters = null,
+    GrowZoneSnapshot[]? GrowZones = null)
 {
     /// <summary>
     /// 3 (0.2.2): <see cref="Players"/> keeps every character's place in the world (PU-9). Older versions load through
@@ -317,7 +318,8 @@ public readonly record struct ColonistSnapshot(
     int[]? WorkPriorities = null,
     bool FollowsPlayer = false,
     ItemStack Carried = default,
-    ItemStack[]? Held = null);
+    ItemStack[]? Held = null,
+    ItemStack[]? Pouch = null);
 
 /// <summary>
 /// Body, mind and social state for one pawn: per-part conditions, memories, explicit relations, mental-break

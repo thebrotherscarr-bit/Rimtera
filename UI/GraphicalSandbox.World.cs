@@ -339,6 +339,23 @@ public static partial class GraphicalSandbox
         }
 
         /// <summary>Wires on every layer while a wiring tool or device is held, plus actuator marks.</summary>
+        /// <summary>Grow zones (0.2.5): a faint green outline around each zone's row, as RimWorld tints its zones.</summary>
+        private void DrawGrowZones(Graphics g, GameSimulation game, int startX, int startY, int viewW, int viewH)
+        {
+            if (game.GrowZones.Count == 0)
+                return;
+            using var pen = new Pen(Color.FromArgb(150, 110, 210, 120), 1.5f) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash };
+            using var fill = new SolidBrush(Color.FromArgb(28, 110, 210, 120));
+            foreach (var zone in game.GrowZones)
+            {
+                if (zone.Y < startY - 1 || zone.Y > startY + viewH || zone.X + zone.Width < startX - 1 || zone.X > startX + viewW)
+                    continue;
+                var rect = new RectangleF((zone.X - startX) * TileSize, (zone.Y - startY) * TileSize, zone.Width * TileSize, TileSize);
+                g.FillRectangle(fill, rect);
+                g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
+            }
+        }
+
         private void DrawWireOverlay(Graphics g, GameSimulation game, int startX, int startY, int viewW, int viewH)
         {
             var item = game.Player.Inventory.SelectedItem;

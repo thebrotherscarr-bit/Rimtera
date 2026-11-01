@@ -365,7 +365,8 @@ public sealed partial class GameSimulation : IStoryHost
             agent.Work.Capture(),
             agent.FollowsPlayer,
             agent.Carried,
-            agent.Held.Count == 0 ? null : agent.Held.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray())).ToArray();
+            agent.Held.Count == 0 ? null : agent.Held.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
+            agent.Pouch.Count == 0 ? null : agent.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray())).ToArray();
         return new GameSnapshot(
             GameSnapshot.CurrentFormatVersion, Seed, World.Width, World.Height, null,
             TickNumber, Day, ClockHour, motion.Position.X, motion.Position.Y,
@@ -399,7 +400,8 @@ public sealed partial class GameSimulation : IStoryHost
             MiscEquipment: CaptureMisc(), BedSpawnX: _bedSpawn?.X, BedSpawnY: _bedSpawn?.Y,
             Players: CapturePlacements(),
             Bills: CaptureBills(),
-            ChestFilters: CaptureChestFilters()) { CellData = cellData, CellRuns = cellRuns };
+            ChestFilters: CaptureChestFilters(),
+            GrowZones: CaptureGrowZones()) { CellData = cellData, CellRuns = cellRuns };
     }
 
     private static PawnStateSnapshot CapturePawn(IColonyPawn pawn, int index) => new(
@@ -489,6 +491,7 @@ public sealed partial class GameSimulation : IStoryHost
         game.RestorePlacements(snapshot);
         game.RestoreBills(snapshot.Bills);
         game.RestoreChestFilters(snapshot.ChestFilters);
+        game.RestoreGrowZones(snapshot.GrowZones);
         if (!arriving)
             game.Player.LifeCoresUsed = snapshot.LifeCoresUsed ?? 0;
         game._heartsBroken = snapshot.HeartsBroken ?? 0;
@@ -584,6 +587,9 @@ public sealed partial class GameSimulation : IStoryHost
                 foreach (var held in colonistSnapshot.Held ?? [])
                     if (!held.IsEmpty && game.Items.Contains(held.ItemId))
                         agent.Held[held.ItemId] = agent.Held.GetValueOrDefault(held.ItemId) + held.Count;
+                foreach (var pouched in colonistSnapshot.Pouch ?? [])
+                    if (!pouched.IsEmpty && game.Items.Contains(pouched.ItemId))
+                        agent.Pouch[pouched.ItemId] = agent.Pouch.GetValueOrDefault(pouched.ItemId) + pouched.Count;
             }
         }
         if (!arriving && snapshot.PlayerState is { } playerState)
@@ -1600,6 +1606,7 @@ public sealed partial class GameSimulation : IStoryHost
         agent.Mind.Breaker.End();
         agent.Activity = "Dead";
         DropColonistLoad(agent);
+        DropPouch(agent, agent.Motion.Position + agent.Motion.Size / 2f);
         PostMessage(agent.Health.DeathCause is { } cause
             ? $"{agent.Name} has died ({cause})."
             : $"{agent.Name} has died.");

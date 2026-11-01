@@ -2536,6 +2536,7 @@ public static partial class GraphicalSandbox
             DrawLeisure(g, game, startX, startY, now); // glow coating, pets, kites, golf (GraphicalSandbox.Leisure.cs)
             if (!MenuOpen)
                 DrawWireOverlay(g, game, startX, startY, viewW, viewH);
+            DrawGrowZones(g, game, startX, startY, viewW, viewH); // 0.2.5 grow zones (GraphicalSandbox.World.cs)
             DrawWeather(g, game, startX, startY, now);
             DrawPlayerSystems(g, game, startX, startY, now);
             g.Restore(worldState);

@@ -92,6 +92,8 @@ internal interface IStationWorker
     GridPoint? OperateStation { get; set; }
     float OperateProgress { get; set; }
     string Activity { get; set; }
-    float CraftingSpeed { get; }
-    int CraftingLevel { get; }
+    /// <summary>Work speed at bills of a kind: Operate on Crafting, Brew on Medical (1 = a trained hand, skill 10).</summary>
+    float SpeedFor(WorkType work);
+    /// <summary>The skill level behind <paramref name="work"/> (extra batches above 10).</summary>
+    int LevelFor(WorkType work);
 }

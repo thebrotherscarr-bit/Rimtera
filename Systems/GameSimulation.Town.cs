@@ -329,7 +329,7 @@ public sealed partial class GameSimulation
             if (npc.HomeCell is not null && !shelter && npc.WorksStations)
             {
                 Vector2? step = null;
-                if (TryOperate(npc, center, deltaSeconds, to => step = to))
+                if (TryOperate(npc, center, deltaSeconds, to => step = to, null))
                 {
                     StepTownNpcToward(npc, center, step ?? center, deltaSeconds);
                     continue;

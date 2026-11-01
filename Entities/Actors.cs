@@ -860,8 +860,13 @@ public sealed class ColonistAgent : IColonyPawn, Rimtera.Systems.IStationWorker
     public float OperateProgress { get; set; }
     string Rimtera.Systems.IStationWorker.Activity { get => Activity; set => Activity = value; }
     Vector2 Rimtera.Systems.IStationWorker.HomePosition => HomePosition;
-    float Rimtera.Systems.IStationWorker.CraftingSpeed => ColonistStats.CraftingSpeed;
-    int Rimtera.Systems.IStationWorker.CraftingLevel => ColonistStats.Level(ColonistSkill.Crafting);
+    float Rimtera.Systems.IStationWorker.SpeedFor(Rimtera.Systems.WorkType work) => Rimtera.Systems.WorkCatalog.SkillSpeed(ColonistStats, work);
+    int Rimtera.Systems.IStationWorker.LevelFor(Rimtera.Systems.WorkType work) => ColonistStats.Level(Rimtera.Systems.WorkCatalog.Get(work).Skill);
+    /// <summary>Seeds and harvested herbs a farmer carries (Farm work, 0.2.5).</summary>
+    public Dictionary<Rimtera.Systems.ItemId, int> Pouch { get; } = new();
+    /// <summary>The grow-zone cell this farmer is planting or harvesting, and the seconds put into it.</summary>
+    public Rimtera.World.GridPoint? FarmTarget { get; set; }
+    public float FarmProgress { get; set; }
     public PawnMotionState Motion { get; }
     public SurvivalNeeds Needs { get; }
     public HealthComponent Health { get; }
