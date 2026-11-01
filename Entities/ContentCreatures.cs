@@ -189,34 +189,34 @@ internal static class ContentCreatures
             { Family = EnemyAiFamily.SkitteringHopper, Hops = true, CreditDrop = 1, ContactCooldown = 0.9f };
 
         // ---- Bosses ----
-        yield return new EnemyArchetype(EnemyKind.SporeMonarch, "Spore Monarch", new(2.6f, 2.6f), 900f, 20f, true,
+        yield return new EnemyArchetype(EnemyKind.SporeMonarch, "Spore Monarch", new(2.6f, 2.6f), 12900f, 20f, true,
             BossTier.Easy, ProjectileSpeed: 8f, VolleyCount: 4) { CreditDrop = 80 };
-        yield return new EnemyArchetype(EnemyKind.BloomMatriarch, "Bloom Matriarch", new(2.8f, 2.4f), 1800f, 26f, true,
+        yield return new EnemyArchetype(EnemyKind.BloomMatriarch, "Bloom Matriarch", new(2.8f, 2.4f), 49000f, 32f, true,
             BossTier.Hard, ProjectileSpeed: 10f, VolleyCount: 5) { CreditDrop = 150, MoveSpeedMultiplier = 1.2f };
-        yield return new EnemyArchetype(EnemyKind.PrismEmpress, "Prism Empress", new(2.6f, 3.2f), 2600f, 32f, true,
+        yield return new EnemyArchetype(EnemyKind.PrismEmpress, "Prism Empress", new(2.6f, 3.2f), 57000f, 31f, true,
             BossTier.Hard, ProjectileSpeed: 14f, VolleyCount: 7) { CreditDrop = 220, AttackRange = 14f };
-        yield return new EnemyArchetype(EnemyKind.VaultColossus, "Vault Colossus", new(3.6f, 4.2f), 3400f, 38f, false,
+        yield return new EnemyArchetype(EnemyKind.VaultColossus, "Vault Colossus", new(3.6f, 4.2f), 63000f, 31f, false,
             BossTier.Hard, ProjectileSpeed: 12f, VolleyCount: 5, PhaseThreshold: 0.4f) { CreditDrop = 260, AttackRange = 14f, MoveSpeedMultiplier = 0.7f };
-        yield return new EnemyArchetype(EnemyKind.MoonEater, "Moon Eater", new(3.2f, 2.4f), 1600f, 28f, true,
+        yield return new EnemyArchetype(EnemyKind.MoonEater, "Moon Eater", new(3.2f, 2.4f), 10900f, 15f, true,
             BossTier.Event, ProjectileSpeed: 11f, VolleyCount: 4) { CreditDrop = 140 };
-        yield return new EnemyArchetype(EnemyKind.EclipseLord, "Eclipse Lord", new(2.6f, 3.4f), 2200f, 34f, true,
+        yield return new EnemyArchetype(EnemyKind.EclipseLord, "Eclipse Lord", new(2.6f, 3.4f), 47000f, 32f, true,
             BossTier.Event, ProjectileSpeed: 14f, VolleyCount: 6) { CreditDrop = 200 };
-        yield return new EnemyArchetype(EnemyKind.ScavengerWarlord, "Scavenger Warlord", new(1.8f, 2.6f), 1100f, 24f, false,
+        yield return new EnemyArchetype(EnemyKind.ScavengerWarlord, "Scavenger Warlord", new(1.8f, 2.6f), 9000f, 16f, false,
             BossTier.Event, ProjectileSpeed: 12f, VolleyCount: 3) { CreditDrop = 120, MoveSpeedMultiplier = 1.1f };
-        yield return new EnemyArchetype(EnemyKind.PirateDreadnought, "Pirate Dreadnought", new(4.4f, 2.6f), 2600f, 34f, true,
+        yield return new EnemyArchetype(EnemyKind.PirateDreadnought, "Pirate Dreadnought", new(4.4f, 2.6f), 9900f, 14f, true,
             BossTier.Event, ProjectileSpeed: 14f, VolleyCount: 6) { CreditDrop = 240, AttackRange = 15f };
-        yield return new EnemyArchetype(EnemyKind.ProtocolDragon, "Protocol Dragon", new(4f, 2.4f), 2800f, 36f, true,
+        yield return new EnemyArchetype(EnemyKind.ProtocolDragon, "Protocol Dragon", new(4f, 2.4f), 12200f, 14f, true,
             BossTier.Event, ProjectileSpeed: 13f, VolleyCount: 5) { CreditDrop = 260 };
         yield return new EnemyArchetype(EnemyKind.BloodfinAmbusher, "Bloodfin ambusher", new(1.3f, 0.9f), 140f, 22f, false)
             { CreditDrop = 10, MoveSpeedMultiplier = 1.3f };
         yield return new EnemyArchetype(EnemyKind.VengefulWisp, "Vengeful wisp", new(0.9f, 1.2f), 120f, 20f, true)
             { CreditDrop = 8 };
-        yield return new EnemyArchetype(EnemyKind.AbyssLeviathan, "Abyss Leviathan", new(5.2f, 2.2f), 3000f, 36f, true,
+        yield return new EnemyArchetype(EnemyKind.AbyssLeviathan, "Abyss Leviathan", new(5.2f, 2.2f), 12500f, 14f, true,
             BossTier.Event, ProjectileSpeed: 13f, VolleyCount: 5) { CreditDrop = 280, AttackRange = 15f };
         // ---- Hardmode progression ----
-        yield return new EnemyArchetype(EnemyKind.FissionTyrant, "Fission Tyrant", new(3f, 3.4f), 1150f, 24f, false,
+        yield return new EnemyArchetype(EnemyKind.FissionTyrant, "Fission Tyrant", new(3f, 3.4f), 16600f, 24f, false,
             BossTier.Gate, ProjectileSpeed: 10f, VolleyCount: 4, PhaseThreshold: 0.45f) { CreditDrop = 120, AttackRange = 13f, MoveSpeedMultiplier = 0.8f };
-        yield return new EnemyArchetype(EnemyKind.VoidCantor, "Void Cantor", new(2f, 3f), 3200f, 36f, true,
+        yield return new EnemyArchetype(EnemyKind.VoidCantor, "Void Cantor", new(2f, 3f), 65000f, 30f, true,
             BossTier.Hard, ProjectileSpeed: 13f, VolleyCount: 6, PhaseThreshold: 0.5f) { CreditDrop = 280, AttackRange = 15f, MoveSpeedMultiplier = 1.1f };
         foreach (var (kind, name) in new[]
                  {
@@ -225,7 +225,7 @@ internal static class ContentCreatures
                  })
             yield return new EnemyArchetype(kind, name, new(2.2f, 5f), 4200f, 30f, false)
                 { Stationary = true, CreditDrop = 200, ContactCooldown = 1.2f };
-        yield return new EnemyArchetype(EnemyKind.MothershipCore, "Mothership Core", new(4.6f, 3f), 3200f, 38f, true,
+        yield return new EnemyArchetype(EnemyKind.MothershipCore, "Mothership Core", new(4.6f, 3f), 53000f, 31f, true,
             BossTier.Event, ProjectileSpeed: 15f, VolleyCount: 8) { CreditDrop = 300, AttackRange = 16f };
         // ---- Content fill: critters, gold variants and biome hostiles (data in Systems/Content/ContentFillData.cs) ----
         foreach (var archetype in Rimtera.Systems.ContentFillCreatures.Archetypes())

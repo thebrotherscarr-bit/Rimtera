@@ -33,6 +33,10 @@ public static class CraftingAudit
         public required IReadOnlyList<string> Stages { get; init; }
         public required IReadOnlyDictionary<ItemId, Reach> Items { get; init; }
         public required IReadOnlyDictionary<CraftingStationId, int> Stations { get; init; }
+        /// <summary>Stage at which each boss first became fightable (its gate open and a summon in hand, or it arrives on its own).</summary>
+        public required IReadOnlyDictionary<EnemyKind, int> BossReach { get; init; }
+        /// <summary>Stage at which each world event first became available.</summary>
+        public required IReadOnlyDictionary<WorldEventKind, int> EventReach { get; init; }
         /// <summary>Items never obtainable (deliberate exceptions removed).</summary>
         public required IReadOnlyList<ItemId> Unreachable { get; init; }
         /// <summary>Items obtainable only through a milestone whose own requirement was never met (forced to keep going).</summary>
@@ -195,7 +199,11 @@ public static class CraftingAudit
     private sealed record Rule(string Via, Func<State, bool> Ready, IReadOnlyCollection<ItemId> Outputs);
 
     /// <summary>A progression step: once ready (and earlier ones have had their chance), it changes the world state.</summary>
-    private sealed record Milestone(string Name, int Order, Func<State, bool> Ready, Action<State> Apply);
+    private sealed record Milestone(string Name, int Order, Func<State, bool> Ready, Action<State> Apply)
+    {
+        /// <summary>The boss a "Defeated" milestone stands for (null for every other milestone).</summary>
+        public EnemyKind? Boss { get; init; }
+    }
 
     /// <summary>What breaking a natural tile gave in the scan: before and after the Fracture.</summary>
     private sealed record TileYield(TileId Tile, HashSet<ItemId> Before, HashSet<ItemId> After)
@@ -243,6 +251,7 @@ public static class CraftingAudit
         AddEventRules(rules, events, items);
 
         var recipeStage = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var eventReach = new Dictionary<WorldEventKind, int>();
 
         void Close()
         {
@@ -258,6 +267,7 @@ public static class CraftingAudit
                     if (state.Events.Contains(spec.Kind) || !EventAvailable(spec, state, eventHost, items))
                         continue;
                     state.Events.Add(spec.Kind);
+                    eventReach.TryAdd(spec.Kind, state.Stage);
                     changed = true;
                 }
                 foreach (var rule in rules)
@@ -281,6 +291,14 @@ public static class CraftingAudit
         Close();
         var done = new HashSet<string>();
         var blocked = new List<string>();
+        var bossReach = new Dictionary<EnemyKind, int>();
+        void NoteReachableBosses()
+        {
+            foreach (var milestone in milestones)
+                if (milestone.Boss is { } boss && !bossReach.ContainsKey(boss) && !done.Contains(milestone.Name) && milestone.Ready(state))
+                    bossReach[boss] = state.Stage;
+        }
+        NoteReachableBosses();
         while (true)
         {
             var next = milestones.Where(milestone => !done.Contains(milestone.Name) && milestone.Ready(state))
@@ -291,6 +309,7 @@ public static class CraftingAudit
             state.Stages.Add(next.Name);
             next.Apply(state);
             Close();
+            NoteReachableBosses();
         }
         // Milestones that never became ready: force them in order so what lies behind them is still reported.
         foreach (var milestone in milestones.Where(milestone => !done.Contains(milestone.Name)).OrderBy(milestone => milestone.Order).ToArray())
@@ -324,6 +343,8 @@ public static class CraftingAudit
             Stages = state.Stages.ToArray(),
             Items = new Dictionary<ItemId, Reach>(state.Have),
             Stations = new Dictionary<CraftingStationId, int>(state.StationStage),
+            BossReach = bossReach,
+            EventReach = eventReach,
             Unreachable = unreachable.Where(id => !state.ForcedItems.Contains(id)).ToArray(),
             OnlyAfterBlocked = unreachable.Where(id => state.ForcedItems.Contains(id)).ToArray(),
             DeadEnds = deadEnds,
@@ -812,7 +833,7 @@ public static class CraftingAudit
             var called = summons.GetValueOrDefault(kind) ?? [];
             list.Add(new Milestone("Defeated " + archetype.DisplayName, 3000 + index,
                 state => !state.Defeated.Contains(kind) && BossGateOpen(kind, state) && (called.Any(state.Got) || NaturalBoss(kind, state)),
-                state => DefeatBoss(kind, state)));
+                state => DefeatBoss(kind, state)) { Boss = kind });
         }
         // 5. Events clear (rewards, unlock flags).
         foreach (var spec in new WorldEventSystem(1).Specs)

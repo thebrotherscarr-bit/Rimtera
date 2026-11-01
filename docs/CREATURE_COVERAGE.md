@@ -119,6 +119,81 @@ Every boss now has an obtainable summon item. The one exception is the Abyss Lev
 
 **Event starters** (Terraria has an item for each of these): Corroded flare → Rust Moon (new; night only; Bloody Tear). Umbral lens → Dark Sun (new; day only; Solar Tablet). Scrap beacon → Scavenger Raid. Pirate transmitter → Pirate Boarding. Signal core → Defense Protocol. Hollow lantern → Hollow Moon. Rime beacon → Rime Moon. Cryo orders → Cryo Brigade. Festival flare → Colony Festival. Terraria has no item for slime rain, martians, pillars, weather, lantern night, the windy day or the Torch God, and Rimtera adds none for their analogs.
 
+### Boss balance (0.2.0: PC-15, BO-23, D-6)
+
+The numbers below come from `--boss-balance` (`Systems/BossBalance.cs`) and are frozen once A3 passed. `--boss-balance suggest` prints the hit points and damage that put a boss on its design time; `--boss-balance markdown` prints this table.
+
+**Reference kit.** The crafting audit gives the stage at which each boss can first be fought. For mini-bosses that is their event, or the bulb boss's fall for the late dungeon. The kit is everything the audit's run gathers from that stage until it fights its next boss, up to the highest tier it can craft by then. Drops above that tier and the boss's own loot are left out. The kit holds:
+- each class's best weapon of its top tier (melee, ranged, tech), with the median of the three as the reference weapon;
+- the best armour set or loose pieces, and the five accessories with the most defense;
+- the best stim of the healing ladder;
+- 100 life, plus 100 from life cores and 100 from lifebloom pods once they are reachable.
+
+**Damage out** is per use: the boss's defense takes half off each hit (at least 1), crits double at the weapon's chance, and spread guns and casters count every projectile. The use time sets the rate. Seconds to kill use that ideal rate (every hit lands), as Terraria's boss times do.
+
+**Damage in** is one landed hit per attack cycle. A volley lands at most once through the immunity frames, and contact shares the cooldown. Phase 2 cycles 2.1/1.45 times as fast. Mini-bosses hit by contact each contact cooldown. Each hit is the authored damage × the toughness scale × the difficulty, under the per-tier boss ceiling, less the defense share.
+
+**Bands (Classic, gated).**
+- Time to kill: 60-180 s.
+- Survival without healing: at least 15 s.
+- With half the shots dodged and a stim every 60 s, the player must outlast the fight.
+- The progression bosses rise linearly from 62 s to 175 s (2.8×). Hits to kill correlate with progression at Spearman 0.86, and the Astro-God takes 2.26× the Overseer mech's hits.
+- Boss damage was cut where needed so that survival with stims outlasts the longer fights.
+- The boss ceiling is now per tier (gate and easy 50, hard and event 80, final 100) × the difficulty. No Classic boss reaches it.
+
+**Before this pass**, every boss died in 2-22 s against the same kits, from the Overseer mech's 520 HP to the Astro-God's 6,000. The events and mini-bosses also failed the survival checks.
+
+**Difficulty (D-6).** Brutal is ×2 life and ×2 damage with defense at 75% (Expert). Annihilation is ×3 and ×3 with defense in full (Master). The Fracture's rescale of pre-Fracture creatures is now the same on every difficulty, so the ×2 and ×3 hold after it too. Brutal and Annihilation are reported, not gated:
+- On Brutal the times double (124-351 s) and unhealed survival is 7-14 s. That is Expert's squeeze: the player needs better than tier gear, buffs or arenas.
+- On Annihilation the times triple (187-526 s) and unhealed survival is 4-9 s.
+
+**Reached early.** The Pirate Dreadnought, Protocol Dragon and Abyss Leviathan can be summoned before the Fracture: their summons have no gate, and the Defense Protocol is always available. So the audit, and this table, give them the pre-Fracture kit. Gating them would move them to the tier-6 kit; re-run `suggest` if that changes.
+
+| Boss | Tier | # | Kit stage · reference weapon | Life · def · stim | HP | Def | Dmg | Hits | TTK s | Hit taken | Unhealed s | With stims s | Brutal TTK · unhealed | Annihilation TTK · unhealed |
+|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
+| Overseer mech | gate | 1 | Cleared Lumen Tempest · Spore-puff gyro | 200 · 23 · 50 | 9400 | 10 | 26 | 311 | 62 | 15 | 24 | 74 | 124 · 10 | 187 · 6 |
+| Alpha Skitter | easy | 2 | Cleared Lumen Tempest · Spore-puff gyro | 200 · 23 · 50 | 10900 | 10 | 21 | 361 | 72 | 13 | 27 | 88 | 144 · 11 | 216 · 7 |
+| Damaged Mining Drone | easy | 3 | Cleared Lumen Tempest · Spore-puff gyro | 200 · 23 · 50 | 12500 | 10 | 20 | 414 | 83 | 12 | 30 | 102 | 165 · 12 | 248 · 8 |
+| Plant Overgrowth | easy | 4 | Cleared Lumen Tempest · Spore-puff gyro | 200 · 23 · 50 | 14000 | 10 | 19 | 463 | 93 | 10 | 34 | 121 | 185 · 13 | 278 · 8 |
+| Scout Mech | easy | 5 | Cleared Lumen Tempest · Spore-puff gyro | 200 · 23 · 50 | 15600 | 10 | 18 | 516 | 103 | 9 | 37 | 135 | 206 · 14 | 310 · 9 |
+| Fission Tyrant | gate | 6 | Defeated Scout Mech · Rimeheart blade | 200 · 23 · 100 | 16600 | 12 | 24 | 341 | 114 | 13 | 28 | 157 | 227 · 11 | 341 · 7 |
+| Cyber-Swarm Leader | hard | 7 | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 50000 | 26 | 32 | 671 | 123 | 22 | 24 | 167 | 246 · 9 | 369 · 5 |
+| Renegade Overseer | hard | 8 | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 54000 | 26 | 31 | 725 | 133 | 20 | 26 | 198 | 266 · 9 | 399 · 6 |
+| Mutated Flora | hard | 9 | Defeated Warship Core · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 59000 | 26 | 31 | 792 | 145 | 20 | 27 | 216 | 290 · 10 | 435 · 6 |
+| Abomination | hard | 10 | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 63000 | 26 | 30 | 846 | 155 | 19 | 27 | 222 | 310 · 10 | 465 · 6 |
+| Warship Core | hard | 11 | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 67000 | 26 | 32 | 900 | 165 | 22 | 27 | 227 | 330 · 10 | 494 · 6 |
+| Astro-God | final | 12 | Cleared Shard obelisk siege · Astral blade | 300 · 82 · 200 | 128000 | 50 | 32 | 702 | 175 | 23 | 28 | 240 | 351 · 10 | 526 · 6 |
+| Fallout Hive-mind | easy |  | Cleared Lumen Tempest · Spore-puff gyro | 200 · 23 · 50 | 12100 | 10 | 20 | 401 | 80 | 12 | 30 | 99 | 160 · 12 | 240 · 7 |
+| Spore Monarch | easy |  | Cleared Lumen Tempest · Spore-puff gyro | 200 · 23 · 50 | 12900 | 10 | 20 | 427 | 85 | 12 | 30 | 99 | 171 · 12 | 256 · 7 |
+| Hoarfrost Behemoth | easy |  | Cleared Lumen Tempest · Spore-puff gyro | 200 · 23 · 50 | 13600 | 10 | 19 | 450 | 90 | 10 | 33 | 115 | 180 · 13 | 270 · 8 |
+| Gel Sovereign | hard |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 45000 | 26 | 33 | 604 | 111 | 23 | 22 | 145 | 221 · 8 | 332 · 5 |
+| Bloom Matriarch | hard |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 49000 | 26 | 32 | 658 | 121 | 22 | 24 | 167 | 241 · 9 | 362 · 5 |
+| Prism Empress | hard |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 57000 | 26 | 31 | 765 | 140 | 20 | 26 | 198 | 280 · 9 | 421 · 6 |
+| Vault Colossus | hard |  | Vault opened · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 63000 | 26 | 31 | 846 | 155 | 20 | 27 | 216 | 310 · 10 | 465 · 6 |
+| Void Cantor | hard |  | Defeated Vault Colossus · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 65000 | 26 | 30 | 873 | 160 | 19 | 28 | 243 | 320 · 10 | 480 · 6 |
+| Scavenger Warlord | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 9000 | 16 | 16 | 194 | 65 | 14 | 24 | 76 | 129 · 10 | 194 · 6 |
+| Void Stalker | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 9500 | 16 | 15 | 205 | 68 | 13 | 27 | 89 | 136 · 11 | 205 · 7 |
+| Cyber-Pirate Captain | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 9700 | 16 | 15 | 210 | 70 | 13 | 27 | 89 | 139 · 11 | 209 · 7 |
+| Pirate Dreadnought | event |  | Cleared Lumen Tempest · Pyrocite launcher + Frag rocket | 200 · 23 · 50 | 9900 | 30 | 14 | 170 | 85 | 11 | 31 | 107 | 170 · 12 | 255 · 8 |
+| Solar Flare Entity | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 10000 | 16 | 15 | 216 | 72 | 13 | 27 | 89 | 144 · 11 | 216 · 7 |
+| Asteroid Miner Mech | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 10400 | 16 | 15 | 225 | 75 | 13 | 27 | 89 | 149 · 11 | 224 · 7 |
+| Moon Eater | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 10900 | 16 | 15 | 235 | 78 | 13 | 27 | 89 | 157 · 11 | 235 · 7 |
+| Protocol Dragon | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 12200 | 16 | 14 | 263 | 88 | 11 | 31 | 107 | 175 · 12 | 263 · 8 |
+| Abyss Leviathan | event |  | Cleared Lumen Tempest · Rimeheart blade | 200 · 23 · 50 | 12500 | 16 | 14 | 270 | 90 | 11 | 31 | 107 | 180 · 12 | 269 · 8 |
+| Eclipse Lord | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 47000 | 30 | 32 | 650 | 119 | 22 | 24 | 167 | 238 · 9 | 357 · 5 |
+| Mothership Core | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 53000 | 30 | 31 | 733 | 134 | 20 | 26 | 198 | 269 · 9 | 403 · 6 |
+| Hollow Regent | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 55000 | 30 | 31 | 761 | 139 | 20 | 26 | 198 | 279 · 9 | 418 · 6 |
+| Rime Seraph | event |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 57000 | 30 | 31 | 788 | 144 | 20 | 26 | 198 | 289 · 9 | 433 · 6 |
+| Crypt paladin | mini |  | Vault opened · Cryo-tank cannon + Void rocket | 300 · 59 · 200 | 24000 | 50 | 23 | 142 | 71 | 21 | 18 | 105 | 142 · 7 | 212 · 4 |
+| Blizzard colossus | mini |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 26000 | 30 | 23 | 360 | 66 | 21 | 18 | 105 | 132 · 7 | 198 · 4 |
+| Grit elemental | mini |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 26000 | 30 | 23 | 360 | 66 | 21 | 18 | 105 | 132 · 7 | 198 · 4 |
+| Corrosion nautilus | mini |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 30000 | 30 | 23 | 415 | 76 | 21 | 18 | 105 | 152 · 7 | 228 · 4 |
+| Scavenger hexer | mini |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 25000 | 30 | 23 | 346 | 63 | 21 | 18 | 105 | 127 · 7 | 190 · 4 |
+| Hollow lancer | mini |  | Cleared Cryo Brigade · Cryo-tank cannon + Void rocket | 300 · 59 · 200 | 24000 | 50 | 23 | 142 | 71 | 21 | 18 | 105 | 142 · 7 | 212 · 4 |
+| Ember rootwalker | mini |  | Cleared Cryo Brigade · Phase dirk | 300 · 59 · 200 | 23000 | 50 | 23 | 378 | 75 | 21 | 18 | 105 | 151 · 7 | 226 · 4 |
+| Frostspire pine | mini |  | Cleared Cryo Brigade · Cryo-tank cannon + Void rocket | 300 · 59 · 200 | 25000 | 50 | 23 | 148 | 74 | 21 | 18 | 105 | 147 · 7 | 221 · 4 |
+| Cryo tank | mini |  | Cleared Cryo Brigade · Pine-needle repeater + Voidsteel rounds | 300 · 59 · 200 | 27000 | 50 | 23 | 439 | 80 | 21 | 18 | 105 | 161 · 7 | 241 · 4 |
+
 ## 4. What the pass added
 
 | Kind | Count | Ids |
@@ -133,7 +208,7 @@ Every boss now has an obtainable summon item. The one exception is the Abyss Lev
 | Sprites | 189 kitbashed placeholders: 77 creatures, 73 banners, 16 boss items, 23 items (`tools/sprites/kitbash.py`, `_CREATURE_COVERAGE`) | no existing sprite overwritten |
 
 Each creature has:
-- an archetype in its tier band (pre-Fracture 25–150 HP; post-Fracture 150–800 HP; mini-bosses 900–1800 HP; bosses inside their tier)
+- an archetype in its tier band (pre-Fracture 25–150 HP; post-Fracture 150–800 HP; mini-bosses 20,000–35,000 HP and bosses inside their tier since the 0.2.0 boss curve)
 - an existing AI family (default, hopper, skittering hopper, worm, caster, diving flyer or mimic)
 - drops, with event materials (hollow embers, rime shards, astral ore) from event units
 - a banner, a bestiary entry (automatic) and a spawn slot
