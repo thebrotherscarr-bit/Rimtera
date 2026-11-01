@@ -223,7 +223,7 @@ public sealed partial class GameSimulation
         agent.Activity = $"Making {product} at the {StationAt(job.Station).DisplayName()}";
         move(center);
         agent.OperateProgress += deltaSeconds;
-        if (agent.OperateProgress < OperateSeconds(agent.SpeedFor(work ?? BillWork(job.Station))))
+        if (agent.OperateProgress < OperateSeconds(agent.SpeedFor(work ?? BillWork(job.Station))) / ResearchBillSpeed)
             return true;
 
         agent.OperateProgress = 0f;

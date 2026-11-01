@@ -421,6 +421,10 @@ public sealed class CraftingSystem
     public IReadOnlyList<RecipeDefinition> FindByStation(CraftingStationId station) =>
         _byStation.TryGetValue(station, out var recipes) ? recipes.ToArray() : Array.Empty<RecipeDefinition>();
 
+    /// <summary>Learns a guide-gated recipe without its reveal material (research, 0.2.7); false when unknown or already known.</summary>
+    public bool LearnGuideRecipe(string recipeId) =>
+        FindById(recipeId) is { RequiresGuideUnlock: true } recipe && _knownGuideRecipes.Add(recipe.Id);
+
     /// <summary>Unlocks guide-gated recipes when the player carries a configured reveal material.</summary>
     public IReadOnlyList<string> ConsultGuide(Inventory inventory)
     {
