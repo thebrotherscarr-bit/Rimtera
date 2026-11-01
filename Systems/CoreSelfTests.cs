@@ -1662,7 +1662,8 @@ public static class CoreSelfTests
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
         MultiplayerSelfTests.Run(Check); // 0.3.11: player slots and commands, replays, split-screen, local devices, cameras
         ResidentGearSelfTests.Run(Check);
-        GuardPostSelfTests.Run(Check); // 0.4.1: guard posts, falling back, taking cover // 0.4.0: equipping people with Terraria's gear
+        GuardPostSelfTests.Run(Check); // 0.4.1: guard posts, falling back, taking cover
+        OutpostSelfTests.Run(Check); // 0.4.2: outposts; arrivals settle at the base first // 0.4.0: equipping people with Terraria's gear
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab

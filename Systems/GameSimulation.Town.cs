@@ -142,7 +142,7 @@ public sealed partial class GameSimulation
     {
         _regions.EnsureCurrent();
         foreach (var room in _regions.Rooms.Where(room => room.CellCount >= HousingValidator.MinimumCells)
-                     .OrderBy(room => Vector2.Distance(room.Centroid, PlayerCenter)))
+                     .OrderBy(room => Vector2.Distance(room.Centroid, BaseCenter))) // 0.4.2: arrivals settle at the base first
         {
             var cell = room.CellIndices.Count > 0
                 ? new GridPoint(room.CellIndices[0] % World.Width, room.CellIndices[0] / World.Width)
