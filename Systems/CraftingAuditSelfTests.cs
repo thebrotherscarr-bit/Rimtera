@@ -100,6 +100,12 @@ public static class CraftingAuditSelfTests
             $"the only exceptions are Brutal/Annihilation boss rewards (salvage caches, their core-chips, relics, the auxiliary socket): " +
             $"{excepted.Length} items; deliberate dead ends are sellable fishing junk ({string.Join(", ", CraftingAudit.DeliberateDeadEnds.Keys)})");
 
+        // ---- X-CR-1: tier 4+ gear before the Fracture is only the documented whitelist, each entry with a reason ----
+        var outside = audit.EarlyGear.Where(id => !CraftingAudit.EarlyGearWhitelist.ContainsKey(id)).ToArray();
+        check(outside.Length == 0 && CraftingAudit.EarlyGearWhitelist.Values.All(reason => reason.Length > 0),
+            $"tier 4+ gear before the Fracture is only the whitelist in CRAFTING_PROGRESSION §6 ({audit.EarlyGear.Count} early, " +
+            $"{outside.Length} outside it: {string.Join(", ", outside.Take(12))})");
+
         // ---- Stations in Terraria's order, around the existing gates ----
         int Stage(CraftingStationId station) => audit.Stations.GetValueOrDefault(station, int.MaxValue);
         int StageNamed(string name) => audit.Stages.ToList().FindIndex(stage => stage == name) is var at and >= 0 ? at : int.MaxValue;

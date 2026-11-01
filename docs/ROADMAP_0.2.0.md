@@ -6,6 +6,28 @@ Planning document, written 2026-10-28 on `main` (v0.1.6 released 2026-10-23, plu
 
 **Detailed plans, one per step:** [0.1.7](roadmap/0.1.7.md) · [0.1.8](roadmap/0.1.8.md) · [0.1.9](roadmap/0.1.9.md) · [0.1.10](roadmap/0.1.10.md) · [0.1.11](roadmap/0.1.11.md) · [0.1.12](roadmap/0.1.12.md) · [0.1.13](roadmap/0.1.13.md) · [0.1.14](roadmap/0.1.14.md) · [0.2.0](roadmap/0.2.0.md).
 
+**Status (2026-11-01).** The step numbers below are this roadmap's own. `docs/PLAN.md` later re-cut the work into
+milestones, so the released version numbers differ:
+
+| Parity step | Status | Shipped in |
+|---|---|---|
+| 0.1.7 Ship the session | Mostly not done | Release 0.1.7 shipped the session work (X-SES) and the animation frames (PE-1); the player has no autonomous behaviour (NC-1). The rest of its fix list is not in the code and no milestone holds it: for example the Rust Moon still ends with the Moon Eater before the Fracture (PC-1), the Abyss Leviathan is not gated (PC-3), obelisk shields time out (EV-1), the legacy `EventManager` still runs (EV-2), station inheritance is one level (PC-18), the temple brick has no drill gate (WT-1), sprites load eagerly (PE-2), and there is no boss self-test suite (BO-24). PC-8, PC-9 and IC-5 were replaced by 0.1.8's death drops, and BO-16 by 0.1.11's respawn timer |
+| 0.1.8 Foundations | Mostly done | releases 0.1.11-0.1.14 (clock, statuses, event ends, respawn timer, falls, air, bed, Creative split, Hazard row, autosave, movement, mounts, fins, camera, pause rules) and 0.1.9 (buff cancel). Not done: PC-13 (research on the character), PC-14 (Creative kit polish), PU-15 (map fixes), PU-24 (feats and credits on the title), PU-26 (video rows), PE-15 (audio latency and pitch), the screen-shake half of PE-16, and X-CR-10 (Journey weather and spread-freeze powers). They are not scheduled yet |
+| 0.1.9 Combat core | Done, all 20 items | release 0.1.15 |
+| 0.1.10 Creature AI and boss framework | Not done | planned for 0.4.0 "The storyteller" |
+| 0.1.11 World and progression ladder | Not done | planned for 0.5.0 "Pressure" |
+| 0.1.12 Events and weather | Not done | planned for 0.4.0 |
+| 0.1.13 Town and colony | Not done; partly started | planned for 0.5.0. Already in: selling and buyback, the housing page with residents (0.1.9), arrivals that replace dead crew (0.1.8) |
+| 0.1.14 Bespoke bosses, gear depth, building depth | Not done; partly started | planned for 0.6.0 "The escape". Already in: coin and ammo slots (PU-18, IC-22; 0.1.10), pet, light pet, mount and hook slots (part of PU-19; 0.1.9) |
+| 0.2.0 Balance and hardening | In progress | On the branch: CI asset check and bench budgets (PE-20), coloured lighting on High (PE-11), the Emotes tab (PU-27), Ironman spectate (PU-28), F8/F9 keys (X-CP-3), the docs pass and the tier-4+ whitelist (X-TG-1, X-CR-1). In work: the boss and difficulty balance (PC-15, BO-23, D-6). Waiting: the D3 play-through sign-off |
+
+Releases 0.1.8 "Stakes", 0.1.9 "Terraria basics" and 0.1.10 "Coin and ammo slots" came from `docs/PLAN.md`, not from
+this roadmap. Because most of 0.1.7 and all of 0.1.10-0.1.14 are not done, the 0.2.0 goal in §1.1 is not met in
+full at 0.2.0: points 2 (honest progression; see `docs/CRAFTING_PROGRESSION.md` §6), 3 (creature and boss behaviour),
+4 (events and weather), 5 (world shape) and 6 (colony) move to the later milestones, and the parity 0.1.7 fixes need a
+home in `docs/PLAN.md`.
+The per-ID status is in the "0.2.0 status" column of each `docs/breakdown/` file.
+
 ---
 
 ## 1. Overview
