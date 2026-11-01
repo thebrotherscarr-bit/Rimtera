@@ -190,6 +190,23 @@ public sealed class TownNpc : IStationWorker
         _injuries.Add(injury);
         RefreshWork();
     }
+    // ---- 0.5.4: bionics ----
+    private readonly List<BionicPart> _bionics = new();
+    public IReadOnlyList<BionicPart> Bionics => _bionics;
+    /// <summary>Fits a part; one lost part it replaces is healed.</summary>
+    internal void FitBionic(BionicPart part, LastingInjury? replaces)
+    {
+        if (replaces is { } lost)
+            _injuries.Remove(lost);
+        _bionics.Add(part);
+        RefreshWork();
+    }
+    internal void RestoreBionics(IEnumerable<BionicPart>? saved)
+    {
+        _bionics.Clear();
+        _bionics.AddRange((saved ?? []).Where(Enum.IsDefined));
+    }
+
     internal void RestoreInjuries(IEnumerable<LastingInjury>? saved)
     {
         _injuries.Clear();
@@ -308,7 +325,9 @@ public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, flo
     // 0.5.2: practice toward each skill's next level.
     float[]? Practice = null,
     // 0.5.3: lasting injuries.
-    LastingInjury[]? Injuries = null);
+    LastingInjury[]? Injuries = null,
+    // 0.5.4: fitted bionics.
+    BionicPart[]? Bionics = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 

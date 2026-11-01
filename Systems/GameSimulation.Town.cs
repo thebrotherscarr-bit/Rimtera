@@ -491,7 +491,7 @@ public sealed partial class GameSimulation
         var dx = target.X - center.X;
         var horizontal = MathF.Abs(dx) > 0.6f ? MathF.Sign(dx) : 0f;
         var jump = horizontal != 0f && npc.Motion.Grounded && IsGroundBlockedAhead(npc.Motion, horizontal);
-        pace *= LegFactor(npc.Injuries); // 0.5.3: a lost leg slows them
+        pace *= LegFactor(npc.Injuries) * (npc.Bionics.Contains(BionicPart.Leg) ? 1.05f : 1f); // 0.5.3: a lost leg slows them; 0.5.4: a bionic one is quick
         _colonistMovement.Step(npc.Motion, new MovementInput(horizontal, JumpPressed: jump, SpeedMultiplier: pace), deltaSeconds, World, Tiles);
     }
 
@@ -687,7 +687,8 @@ public sealed partial class GameSimulation
         npc.Pouch.Count == 0 ? null : npc.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
         CaptureResidentGear(npc), npc.Post?.X, npc.Post?.Y, npc.Childhood?.Id, npc.Adulthood?.Id,
         npc.CapturePractice().Any(value => value > 0f) ? npc.CapturePractice() : null,
-        npc.Injuries.Count == 0 ? null : npc.Injuries.ToArray())).ToArray();
+        npc.Injuries.Count == 0 ? null : npc.Injuries.ToArray(),
+        npc.Bionics.Count == 0 ? null : npc.Bionics.ToArray())).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -720,6 +721,7 @@ public sealed partial class GameSimulation
             // living resident never loads dead.
             npc.RestorePractice(saved.Practice);
             npc.RestoreInjuries(saved.Injuries);
+            npc.RestoreBionics(saved.Bionics);
             RestoreResidentGear(npc, saved.Gear); // before the hit points: gear sets the maximum they are clamped to
             if (saved.PostX is { } px && saved.PostY is { } py && World.Contains(px, py) && npc.IsArmed)
                 npc.Post = new GridPoint(px, py);
