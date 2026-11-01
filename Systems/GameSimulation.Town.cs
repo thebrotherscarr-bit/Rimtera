@@ -21,9 +21,9 @@ public sealed partial class GameSimulation
     /// <summary>Residents and bound survivors.</summary>
     public IReadOnlyList<TownNpc> TownNpcs => _townNpcs;
     /// <summary>The colony's people (0.3.10: one kind of character): every living resident not bound in a structure.</summary>
-    public IReadOnlyList<TownNpc> People => _townNpcs.Where(npc => npc.IsAlive && !npc.IsBound).ToArray();
+    public IReadOnlyList<TownNpc> People => _townNpcs.Where(npc => npc.IsAlive && !npc.IsBound && !npc.IsPrisoner).ToArray();
     /// <summary>The settlers among them, in arrival order (the crew's successors).</summary>
-    public IReadOnlyList<TownNpc> Settlers => _townNpcs.Where(npc => npc.Kind == TownNpcKind.Settler && npc.IsAlive).ToArray();
+    public IReadOnlyList<TownNpc> Settlers => _townNpcs.Where(npc => npc.Kind == TownNpcKind.Settler && npc.IsAlive && !npc.IsPrisoner).ToArray();
 
     /// <summary>Validates the room containing <paramref name="cell"/> as housing (for the UI's housing query).</summary>
     public HousingResult CheckHousing(GridPoint cell)
@@ -42,6 +42,7 @@ public sealed partial class GameSimulation
     private void UpdateTownHourly()
     {
         RefreshUnlockFlags();
+        UpdateRecruiting(); // 0.5.6: the best talker works on the prisoners
         UpdateContentFillTown(); // content fill: travelling merchant and town gels (Systems/Content/ContentFillTown.cs)
         // The trade consul leaves at dusk (until D-53). Unhappy residents stay (NC-9): unhappiness only raises their prices.
         foreach (var npc in _townNpcs.ToArray())
@@ -363,6 +364,11 @@ public sealed partial class GameSimulation
             }
             var center = npc.Motion.Position + npc.Motion.Size / 2f;
             UpdateHunger(npc, deltaSeconds); // 0.5.5: food is the one need
+            if (npc.IsPrisoner)
+            {
+                UpdatePrisoner(npc, center, deltaSeconds); // 0.5.6: held in their cell
+                continue;
+            }
             if (npc.HomeCell is not null)
             {
                 if (npc.Work.Priority(WorkType.Guard) != WorkCatalog.Off)
@@ -696,7 +702,8 @@ public sealed partial class GameSimulation
         npc.CapturePractice().Any(value => value > 0f) ? npc.CapturePractice() : null,
         npc.Injuries.Count == 0 ? null : npc.Injuries.ToArray(),
         npc.Bionics.Count == 0 ? null : npc.Bionics.ToArray(),
-        npc.Food < 1f ? npc.Food : null)).ToArray();
+        npc.Food < 1f ? npc.Food : null,
+        npc.IsPrisoner ? true : null, npc.IsPrisoner ? npc.Resistance : null)).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -731,6 +738,8 @@ public sealed partial class GameSimulation
             npc.RestoreInjuries(saved.Injuries);
             npc.RestoreBionics(saved.Bionics);
             npc.Food = saved.Food is { } food && float.IsFinite(food) ? Math.Clamp(food, 0f, 1f) : 1f;
+            npc.IsPrisoner = saved.Prisoner == true && saved.Kind == TownNpcKind.Settler;
+            npc.Resistance = npc.IsPrisoner && saved.Resistance is { } resistance && float.IsFinite(resistance) ? Math.Max(0f, resistance) : 0f;
             RestoreResidentGear(npc, saved.Gear); // before the hit points: gear sets the maximum they are clamped to
             if (saved.PostX is { } px && saved.PostY is { } py && World.Contains(px, py) && npc.IsArmed)
                 npc.Post = new GridPoint(px, py);

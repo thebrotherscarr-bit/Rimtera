@@ -664,6 +664,7 @@ public sealed partial class GameSimulation : IStoryHost
 
         UpdateTownNpcs(deltaSeconds, vitalHours); // 0.3.10: one kind of character (the crew are residents now)
         UpdateRaids(); // 0.4.3: a raid announced earlier arrives at its target
+        UpdateSurrenders(); // 0.5.6: human raiders brought low surrender
         UpdateResearch(deltaSeconds); // 0.3.7: the station AI studies the open research tier
         UpdateStocking(deltaSeconds); // 0.3.9: labs and cooking stations keep healing and food in stock by themselves
         UpdateEnemies(deltaSeconds);
@@ -1932,7 +1933,7 @@ public sealed partial class GameSimulation : IStoryHost
     }
 
     /// <summary>Living settlers (0.3.10: the people who join without a trade, as the crew used to).</summary>
-    public int SettlerCount => _townNpcs.Count(npc => npc.Kind == TownNpcKind.Settler && npc.IsAlive);
+    public int SettlerCount => _townNpcs.Count(npc => npc.Kind == TownNpcKind.Settler && npc.IsAlive && !npc.IsPrisoner);
 
     /// <summary>
     /// A settler joins: a generated person (the crew's generator, deterministic per world and arrival order) who lives in
