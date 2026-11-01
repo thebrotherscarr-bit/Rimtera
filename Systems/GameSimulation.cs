@@ -663,6 +663,7 @@ public sealed partial class GameSimulation : IStoryHost
             PerformAction(input.Action, input.Target);
 
         UpdateTownNpcs(deltaSeconds, vitalHours); // 0.3.10: one kind of character (the crew are residents now)
+        UpdateRaids(); // 0.4.3: a raid announced earlier arrives at its target
         UpdateResearch(deltaSeconds); // 0.3.7: the station AI studies the open research tier
         UpdateStocking(deltaSeconds); // 0.3.9: labs and cooking stations keep healing and food in stock by themselves
         UpdateEnemies(deltaSeconds);
@@ -2016,36 +2017,8 @@ public sealed partial class GameSimulation : IStoryHost
         LostResidents: LostResidentKinds().Count(),
         FreeHouse: FindFreeHouse() is not null);
 
-    int IStoryHost.SpawnRaidWave(BiomeZone biome, float threatPoints, out string description)
-    {
-        var count = Math.Clamp((int)MathF.Round(threatPoints / 45f), 2, 8);
-        var side = _storyteller.NextUnit() < 0.5f ? -1 : 1;
-        var night = ClockHour >= 18f || ClockHour < 6f;
-        var arrivals = new List<string>();
-        var playerX = (int)MathF.Floor(PlayerCenter.X);
-        for (var index = 0; index < count; index++)
-        {
-            var kind = BiomeSpawnTables.Pick(biome, _storyteller.NextUnit(), night);
-            var archetype = EnemyArchetypes.Get(kind);
-            var x = playerX + side * ((int)ViewHalfWidth + 3 + index * 2);
-            if (x < 2 || x >= World.Width - 2)
-            {
-                side = -side;
-                x = playerX + side * ((int)ViewHalfWidth + 3 + index * 2);
-                if (x < 2 || x >= World.Width - 2)
-                    continue;
-            }
-            if (!TryFindSpawnGround(x, CurrentBiome.Underground, out var groundY))
-                continue;
-            var lift = archetype.Flying ? 3f : 0f;
-            _raidEnemyIds.Add(SpawnCreature(kind, new Vector2(x, groundY - archetype.Size.Y - lift)).Id);
-            arrivals.Add(archetype.DisplayName);
-        }
-        description = arrivals.Count == 0
-            ? string.Empty
-            : $"{arrivals.Count} hostiles ({string.Join(", ", arrivals.Distinct())}) are";
-        return arrivals.Count;
-    }
+    int IStoryHost.SpawnRaidWave(BiomeZone biome, float threatPoints, out string description) =>
+        PlanRaid(threatPoints, out description); // 0.4.3: a raid is announced first and arrives later (GameSimulation.Raids.cs)
 
     string IStoryHost.DeliverCargo(BiomeZone biome, float threatPoints)
     {

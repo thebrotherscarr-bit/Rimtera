@@ -96,6 +96,7 @@ public sealed class DevConsole
         new("where", "where", "Prints your tile, biome, depth layer and the time.", false, _ => Where()),
         new("power", "power | power set <0-1000> | power tier <1-5> | power feed", "Shows the station AI's power, sets it or its tier, or feeds it from your bag.", true, Power),
         new("ai", "ai down | ai rebuild", "Takes the station AI down (machines go dark) or rebuilds it.", true, Ai),
+        new("raid", "raid | raid warn [hours] | raid now", "Shows the raid on its way, or announces one (default 2 hours' warning), or sends one now.", true, Raid),
         new("outposts", "outposts", "Lists the outposts: where they are, who lives there and how many are armed.", false, _ => Outposts()),
         new("research", "research list | research done <tier>|all | research reset <tier>|all", "Lists the research tiers, finishes one or all, or puts them back.", true, Research),
     ];
@@ -158,6 +159,20 @@ public sealed class DevConsole
         // 0.3.10: a settler is a generated person, not the catalog's placeholder name.
         var npc = kind == TownNpcKind.Settler ? _game.AddSettlerAt(Beside(2f)) : _game.AddTownNpc(kind, Beside(2f), bound: false);
         return [$"{npc.Name} the {npc.Definition.Role} is here."];
+    }
+
+    private IEnumerable<string> Raid(string[] args)
+    {
+        var verb = args.Length == 0 ? "show" : args[0].ToLowerInvariant();
+        if (verb == "show")
+            return [_game.PendingRaid is { } raid
+                ? $"A raid of about {raid.Count} is coming for {raid.TargetName} from the {raid.SideName} in {_game.RaidHoursLeft:0.0} hours."
+                : "No raid is on its way."];
+        var hours = verb == "now" ? 0.01f
+            : verb == "warn" ? (args.Length > 1 && float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var given)
+                ? Math.Clamp(given, 0.01f, 24f) : GameSimulation.RaidWarningHours)
+            : throw new ConsoleError("Use raid, raid warn [hours] or raid now.");
+        return [_game.PlanRaid(200f, out var description, hours) > 0 ? description : "A raid is already on its way."];
     }
 
     private IEnumerable<string> Outposts()
