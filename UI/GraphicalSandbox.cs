@@ -342,6 +342,12 @@ public static partial class GraphicalSandbox
                 e.SuppressKeyPress = true; // Alt is bindable; don't let it open the window menu.
             if (HandleEmoteKey(e))
                 return;
+            if (e.KeyCode == Keys.Escape && !_menuOpen && _canvas.Inspecting is not null)
+            {
+                _canvas.Inspecting = null; // Escape closes the inspect card first
+                e.Handled = true;
+                return;
+            }
             var actions = ActionsFor(e.KeyCode);
             if (actions.Count == 0 && e.KeyCode == Keys.Escape)
             {
@@ -730,6 +736,12 @@ public static partial class GraphicalSandbox
         /// </summary>
         private void OnCanvasMouseDown(MouseEventArgs e)
         {
+            // 0.2.8: a middle click inspects the character under the cursor (or closes the card on empty ground).
+            if (e.Button == MouseButtons.Middle && !_menuOpen && _game is not null && !_canvas.FullscreenMapOpen)
+            {
+                _canvas.Inspecting = _game.PickInspectTarget(_canvas.WorldPointAt(e.Location));
+                return;
+            }
             if (ButtonOf(e.Button) is not { } button)
                 return;
             _canvas.MousePosition = e.Location;
@@ -774,6 +786,18 @@ public static partial class GraphicalSandbox
                 if (button == UiPointerButton.Left && HandleGuideHintClick(e.Location) || _canvas.GuideHintAt(e.Location))
                 {
                     _mouse.Press(button, PointerOwner.Interface);
+                    return;
+                }
+                if (button == UiPointerButton.Left && _canvas.ColonistBarAt(e.Location) is { } crewId)
+                {
+                    _mouse.Press(button, PointerOwner.Interface);
+                    _canvas.Inspecting = new InspectTarget(InspectKind.Colonist, crewId);
+                    return;
+                }
+                if (button == UiPointerButton.Left && _canvas.InspectCardAt(e.Location))
+                {
+                    _mouse.Press(button, PointerOwner.Interface);
+                    _canvas.Inspecting = null;
                     return;
                 }
                 if (_canvas.HotbarSlotAt(e.Location) is { } slot)
@@ -2823,6 +2847,7 @@ public static partial class GraphicalSandbox
 
             DrawControlsHint(g);
             DrawGuideHint(g, game);
+            DrawColonyHud(g, game); // 0.2.8: colonist bar and inspect card (GraphicalSandbox.Colony.cs)
         }
 
         private static void DrawShadowed(Graphics g, string text, Font font, Brush brush, float x, float y)
