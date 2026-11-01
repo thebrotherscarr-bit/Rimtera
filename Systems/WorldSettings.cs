@@ -57,8 +57,8 @@ public static class WorldSettings
     public static string Describe(WorldDifficulty difficulty) => difficulty switch
     {
         WorldDifficulty.Explorer => "Creatures are weaker and raids are smaller. A gentle landing.",
-        WorldDifficulty.Brutal => "Creatures hit harder, have more armour, and the storyteller sends bigger threats.",
-        WorldDifficulty.Annihilation => "Brutal and then some: creatures have double strength, armour counts in full, bosses leave relics, and you gain a sixth accessory slot.",
+        WorldDifficulty.Brutal => "Creatures have twice the life and hit twice as hard, armour counts for three quarters, and the storyteller sends bigger threats.",
+        WorldDifficulty.Annihilation => "Brutal and then some: creatures have triple life and damage, armour counts in full, bosses leave relics, and you gain a sixth accessory slot.",
         _ => "The intended balance between building and surviving."
     };
 
@@ -98,12 +98,25 @@ public static class WorldSettings
         ? hazard
         : (seed & 1) == 0 ? WorldHazard.RadiatedDeeps : WorldHazard.MoltenChasm;
 
-    /// <summary>Multiplier for creature hit points and damage.</summary>
-    public static float EnemyScale(WorldDifficulty difficulty) => difficulty switch
+    /// <summary>
+    /// Multiplier for creature hit points (D-6, Terraria's difficulty scaling): Explorer ×0.75, Classic ×1, Brutal ×2
+    /// (Expert), Annihilation ×3 (Master). Creatures keep their authored hit points; the player's hits are divided by this,
+    /// which is the same fight.
+    /// </summary>
+    public static float EnemyHealthScale(WorldDifficulty difficulty) => difficulty switch
     {
         WorldDifficulty.Explorer => 0.75f,
-        WorldDifficulty.Brutal => 1.4f,
-        WorldDifficulty.Annihilation => 2f,
+        WorldDifficulty.Brutal => 2f,
+        WorldDifficulty.Annihilation => 3f,
+        _ => 1f
+    };
+
+    /// <summary>Multiplier for creature damage (D-6): Explorer ×0.75, Classic ×1, Brutal ×2 (Expert), Annihilation ×3 (Master).</summary>
+    public static float EnemyDamageScale(WorldDifficulty difficulty) => difficulty switch
+    {
+        WorldDifficulty.Explorer => 0.75f,
+        WorldDifficulty.Brutal => 2f,
+        WorldDifficulty.Annihilation => 3f,
         _ => 1f
     };
 

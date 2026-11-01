@@ -472,44 +472,45 @@ public static class EnemyArchetypes
         new EnemyArchetype(EnemyKind.SporeRat, "Spore rat", new(0.8f, 0.55f), 22f, 7f, false) { ContactCooldown = 1.2f },
         new EnemyArchetype(EnemyKind.AstroBeast, "Astro-beast", new(1.6f, 1.3f), 110f, 18f, false) { ContactCooldown = 1.8f },
 
-        // Gate boss: the original two-phase sentinel, unchanged.
-        new EnemyArchetype(EnemyKind.StoneSentinel, "Overseer mech", new(1.3f, 1.8f), 520f, 20f, false,
+        // Gate boss: the original two-phase sentinel. Boss hit points and damage follow the 0.2.0 boss curve
+        // (PC-15, BO-23: Systems/BossBalance.cs, `--boss-balance`; table in docs/CREATURE_COVERAGE.md).
+        new EnemyArchetype(EnemyKind.StoneSentinel, "Overseer mech", new(1.3f, 1.8f), 9400f, 26f, false,
             BossTier.Gate, ProjectileSpeed: 8f, VolleyCount: 1, PhaseThreshold: 0.5f),
 
         // Easy tier.
-        new EnemyArchetype(EnemyKind.AlphaSkitter, "Alpha Skitter", new(2.6f, 1.8f), 650f, 18f, false,
+        new EnemyArchetype(EnemyKind.AlphaSkitter, "Alpha Skitter", new(2.6f, 1.8f), 10900f, 21f, false,
             BossTier.Easy, ProjectileSpeed: 9f, VolleyCount: 3, PhaseThreshold: 0.5f) { MoveSpeedMultiplier = 1.2f },
-        new EnemyArchetype(EnemyKind.DamagedMiningDrone, "Damaged Mining Drone", new(2.2f, 2f), 600f, 16f, true,
+        new EnemyArchetype(EnemyKind.DamagedMiningDrone, "Damaged Mining Drone", new(2.2f, 2f), 12500f, 20f, true,
             BossTier.Easy, ProjectileSpeed: 9f, VolleyCount: 2, PhaseThreshold: 0.45f),
-        new EnemyArchetype(EnemyKind.PlantOvergrowth, "Plant Overgrowth", new(2.8f, 3f), 820f, 20f, false,
+        new EnemyArchetype(EnemyKind.PlantOvergrowth, "Plant Overgrowth", new(2.8f, 3f), 14000f, 19f, false,
             BossTier.Easy, ProjectileSpeed: 7f, VolleyCount: 5, PhaseThreshold: 0.4f) { MoveSpeedMultiplier = 0.6f, AttackRange = 12f },
-        new EnemyArchetype(EnemyKind.ScoutMech, "Scout Mech", new(2.2f, 2.8f), 900f, 22f, false,
+        new EnemyArchetype(EnemyKind.ScoutMech, "Scout Mech", new(2.2f, 2.8f), 15600f, 18f, false,
             BossTier.Easy, ProjectileSpeed: 12f, VolleyCount: 2, PhaseThreshold: 0.5f) { AttackRange = 12f },
         // Radiated hearts' avenger before the Fracture: a buzzing cloud of fused fallout drones (not in the summon order).
-        new EnemyArchetype(EnemyKind.FalloutHivemind, "Fallout Hive-mind", new(2.4f, 2f), 800f, 22f, true,
+        new EnemyArchetype(EnemyKind.FalloutHivemind, "Fallout Hive-mind", new(2.4f, 2f), 12100f, 20f, true,
             BossTier.Easy, ProjectileSpeed: 9f, VolleyCount: 4, PhaseThreshold: 0.5f)
             { MoveSpeedMultiplier = 1.15f, ContactCooldown = 1.2f, Family = EnemyAiFamily.DivingFlyer },
 
         // Hard tier.
-        new EnemyArchetype(EnemyKind.CyberSwarmLeader, "Cyber-Swarm Leader", new(2.6f, 2.2f), 1400f, 26f, true,
+        new EnemyArchetype(EnemyKind.CyberSwarmLeader, "Cyber-Swarm Leader", new(2.6f, 2.2f), 50000f, 32f, true,
             BossTier.Hard, ProjectileSpeed: 11f, VolleyCount: 5, PhaseThreshold: 0.5f) { MoveSpeedMultiplier = 1.25f },
-        new EnemyArchetype(EnemyKind.RenegadeOverseer, "Renegade Overseer", new(2.6f, 3.4f), 1700f, 30f, false,
+        new EnemyArchetype(EnemyKind.RenegadeOverseer, "Renegade Overseer", new(2.6f, 3.4f), 54000f, 31f, false,
             BossTier.Hard, ProjectileSpeed: 13f, VolleyCount: 3, PhaseThreshold: 0.5f) { AttackRange = 12f },
-        new EnemyArchetype(EnemyKind.MutatedFlora, "Mutated Flora", new(3.2f, 3.2f), 1900f, 30f, false,
+        new EnemyArchetype(EnemyKind.MutatedFlora, "Mutated Flora", new(3.2f, 3.2f), 59000f, 31f, false,
             BossTier.Hard, ProjectileSpeed: 9f, VolleyCount: 7, PhaseThreshold: 0.4f) { MoveSpeedMultiplier = 0.55f, AttackRange = 13f },
-        new EnemyArchetype(EnemyKind.Abomination, "Abomination", new(3.6f, 3f), 2300f, 34f, false,
+        new EnemyArchetype(EnemyKind.Abomination, "Abomination", new(3.6f, 3f), 63000f, 30f, false,
             BossTier.Hard, ProjectileSpeed: 10f, VolleyCount: 4, PhaseThreshold: 0.6f) { MoveSpeedMultiplier = 1.1f },
-        new EnemyArchetype(EnemyKind.WarshipCore, "Warship Core", new(4.2f, 2.2f), 2600f, 34f, true,
+        new EnemyArchetype(EnemyKind.WarshipCore, "Warship Core", new(4.2f, 2.2f), 67000f, 32f, true,
             BossTier.Hard, ProjectileSpeed: 14f, VolleyCount: 5, PhaseThreshold: 0.5f) { AttackRange = 15f, AttackCooldown = 2.4f },
 
         // Event bosses arrive at dusk once an easy-tier boss has fallen.
-        new EnemyArchetype(EnemyKind.SolarFlareEntity, "Solar Flare Entity", new(2.8f, 2.8f), 1300f, 26f, true,
+        new EnemyArchetype(EnemyKind.SolarFlareEntity, "Solar Flare Entity", new(2.8f, 2.8f), 10000f, 15f, true,
             BossTier.Event, ProjectileSpeed: 12f, VolleyCount: 6, PhaseThreshold: 0.5f),
-        new EnemyArchetype(EnemyKind.VoidStalker, "Void Stalker", new(2.2f, 3.2f), 1200f, 30f, true,
+        new EnemyArchetype(EnemyKind.VoidStalker, "Void Stalker", new(2.2f, 3.2f), 9500f, 15f, true,
             BossTier.Event, ProjectileSpeed: 13f, VolleyCount: 2, PhaseThreshold: 0.5f) { MoveSpeedMultiplier = 1.3f },
-        new EnemyArchetype(EnemyKind.AsteroidMinerMech, "Asteroid Miner Mech", new(3f, 3f), 1500f, 28f, false,
+        new EnemyArchetype(EnemyKind.AsteroidMinerMech, "Asteroid Miner Mech", new(3f, 3f), 10400f, 15f, false,
             BossTier.Event, ProjectileSpeed: 10f, VolleyCount: 3, PhaseThreshold: 0.5f),
-        new EnemyArchetype(EnemyKind.CyberPirateCaptain, "Cyber-Pirate Captain", new(2f, 2.8f), 1250f, 26f, false,
+        new EnemyArchetype(EnemyKind.CyberPirateCaptain, "Cyber-Pirate Captain", new(2f, 2.8f), 9700f, 15f, false,
             BossTier.Event, ProjectileSpeed: 14f, VolleyCount: 3, PhaseThreshold: 0.5f) { MoveSpeedMultiplier = 1.2f },
 
         // Frozen Wasteland.
@@ -544,7 +545,7 @@ public static class EnemyArchetypes
         new EnemyArchetype(EnemyKind.SkyHawk, "Sky-hawk", new(0.9f, 0.6f), 18f, 0f, true) { Passive = true },
 
         // End-world boss.
-        new EnemyArchetype(EnemyKind.AstroGod, "Astro-God", new(5f, 5f), 6000f, 45f, true,
+        new EnemyArchetype(EnemyKind.AstroGod, "Astro-God", new(5f, 5f), 128000f, 32f, true,
             BossTier.Final, ProjectileSpeed: 15f, VolleyCount: 8, PhaseThreshold: 0.5f) { AttackRange = 18f, AttackCooldown = 2.6f }
     }.Concat(ContentCreatures.Archetypes()).Append(Rimtera.Systems.PhysicsContent.DungeonGuardian)
         .Select(CreatureStatTable.Apply) // defense tiers, immunities and lava (values set in a roster win)

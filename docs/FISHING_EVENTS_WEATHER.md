@@ -96,3 +96,24 @@ Evidence: REA metadata of `Terraria.exe` 1.4.5.8 — `docs/terraria-evidence/fis
 - **Lifecycle:** each event is an `IWorldEvent` with eligibility (world flags, day number, biome, weather), natural rolls on time boundaries, cooldown days, a duration or kill quota, waves with point values, a spawn-table override, a progress bar, rewards and a save state.
 - **Clearing:** first clears set `event.<id>.cleared` and can unlock town NPCs and items.
 - **Weather events:** rain, storm, dust storm, blizzard and acid rain are part of this model, so they can gate other events (Swarm Rain only during rain, Aurora Night only on clear cold nights).
+
+## 4. Status at 0.2.0 (2026-11-01)
+
+The design in §3 is built: the fishing loop with the Tide-Warden and the Abyss Leviathan (`Fishing.cs`,
+`GameSimulation.Fishing.cs`), the world flag registry (`WorldFlags.cs`), the weather model (`Weather.cs`) and the event
+framework (`WorldEvents.cs`). §2 describes the state before that pass. What has changed since, and what still differs
+from Terraria (the details are in `docs/breakdown/04_events_weather.md`, with its "0.2.0 status" column):
+
+| Area | Status | Notes |
+|---|---|---|
+| Fishing | ✅ | Crates hold hardmode ores only after the Fracture. Fishing finds of tier 4 and above are on the craft audit's whitelist (`docs/CRAFTING_PROGRESSION.md` §6) |
+| Clock | ✅ changed (0.1.11) | Terraria's 24-minute day (15 minutes of day, 9 of night). The 4× sleep rate in §3.2 still applies, but sleep no longer drains buffs. Crops, arrivals, events and the storyteller hang on the clock, so they now run six times slower in real time |
+| Event ends | ✅ (0.1.11) | Moons end at dawn and day events at dusk. Outlasting an event is not clearing it |
+| Obelisk shields and the second event system | ❌ | Shields still drop when the siege times out, and the legacy `EventManager` still rolls three hidden events (EV-1, EV-2: planned for parity step 0.1.7, not done, not scheduled) |
+| Event spawn areas | ❌ | Event rosters still take spawn rolls anywhere, including caves and the dungeon (EV-3 → 0.4.0) |
+| Natural triggers | ◐ | Several triggers differ from Terraria's shape, such as Swarm Rain needing rain and invasions rolling at dusk (EV-5 → 0.4.0) |
+| Defense Protocol | ◐ | A kill quota, not a defend-the-core event (EV-7 → 0.4.0) |
+| Event skies and lighting | ❌ | No red sky on a Rust Moon and no dark sun (EV-8, PE-10 → 0.4.0). Event music is in |
+| Weather source | ◐ | Rolled from the zone the player stands in, not from the world's climate (EV-9 → 0.4.0) |
+| Lightning and wind | ◐ | Lightning depends on the frame rate; wind does not push the player (EV-10, EV-11 → 0.4.0) |
+| Seasons by real date | ➕ | Kept as designed (harvest festival, starfall) |

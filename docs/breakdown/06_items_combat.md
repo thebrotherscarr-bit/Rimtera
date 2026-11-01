@@ -1,5 +1,7 @@
 # 06 · Items and combat: Rimtera vs Terraria
 
+> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open. An arrow gives the milestone `docs/PLAN.md` now plans the step for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "Not done, not scheduled" marks steps of parity 0.1.7 and 0.1.8 that no release shipped and no milestone holds yet: release 0.1.7 did not carry parity step 0.1.7's fix list. "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
+
 Area: weapons (melee, ranged, Tech = magic, Command = summon), projectiles and ammo, tools as weapons, armor and set bonuses, accessories and mobility gear, potions, food, buffs and debuffs, calibrations (prefixes), damage, crit, defense, knockback and immunity-frame formulas, player hurt, death and respawn, stacks, rarity, value and selling, minions, sentries, whips, wings, hooks, item sprites and use animations.
 
 Method: I read the code (pointers are `file:line` on `main` as of 2026-10-28; another agent is editing input/UI code, so UI line numbers may drift by a few lines). I ran `--item-census`, `--item-audit` and `--balance` in a private build, plus two scratch probes (catalog statistics; regen, damage-over-time, buff duration and respawn timer measured over real ticks). Terraria evidence: `docs/terraria-evidence/full/tables/player_stats.md` (v1.4.5.8 IL), `items.csv`, `prefixes.csv`, `armor_sets.csv`, `accessories.csv`. "(knowledge)" marks Terraria behaviour that comes from general knowledge, not from the IL dump. Terraria is behavioural evidence only.
@@ -39,194 +41,194 @@ The problems sit in the layers around that core.
 
 ### A. Damage pipeline and formulas
 
-| ID | Feature | Rimtera (code) | Terraria | Status |
-|---|---|---|---|---|
-| A1 | Weapon damage = round(base × prefix dmg) + ammo, × class multiplier (1 + additive bonuses, × multiplicative penalties) | `CombatTuning.WeaponDamage` `Content/CombatModel.cs:420`; `ComputeWeaponDamage` `GameSimulation.Combat.cs:146`. Keeps the fraction before the roll (D2). | `GetWeaponDamage` truncates (player_stats §4) | ✅ |
-| A2 | Colonist skill multiplies damage (Melee/Shooting/Intellectual/Social) | `CombatStatsCalculator.SkillMultiplier` `CombatModel.cs:384` | none | ➕ |
-| A3 | ±15% spread, luck reroll keeps higher/lower | `RollVariance` `CombatModel.cs:432` | `Main.DamageVar` (§4.3) | ✅ |
-| A4 | Crit: base 4 + weapon crit + bonuses; ×2; summons never crit | `WeaponCritChance` `CombatModel.cs:462`, `CritChanceFor` `Combat.cs:176`; probe: Command item crit 0 | §4.1, `GetWeaponCrit` returns 0 for summon | ✅ |
-| A5 | Crit and spread rolled per hit | Rolled once per use, shared by every creature that use hits (`RollUse` `Combat.cs:191`; D5 in GEAR_DIFF_MECHANICS) | per NPC hit | ◐ |
-| A6 | NPC damage taken = max(1, D + AP give-back − def/2), ×2 crit | `CreatureDamageTaken` `CombatModel.cs:452`, `StrikeEnemy` `Combat.cs:206` | `StrikeNPC_Inner`, `checkArmorPenetration` (§4.4–5) | ✅ |
-| A7 | Creature defense values | `EnemyArchetype.Defense` exists (`Entities/Actors.cs:441`), but no archetype sets it: all 0 | NPC defense 0–~100 by tier (knowledge; `NPC.SetDefaults`) | ⚠ |
-| A8 | Armor penetration from gear (`ap`, `ap-melee` tags) | `PlayerArmorPenetration` `Combat.cs:181` | `armorPenetration`, `meleeArmorPenetration` | ✅ |
-| A9 | Knockback taken: resist share, soft caps 8/10/12/14, hard cap 16, crit ×1.4 | `KnockbackTaken` `CombatModel.cs:473`, `KnockbackResistance` `:610` | §5 | ✅ |
-| A10 | Player-side knockback modifiers (kb glove ×2 melee, titan buff ×1.5, minionKB) | none (D6) | `GetWeaponKnockback` §5 | ❌ |
-| A11 | Use time: prefix speed baked in (rounded), melee × 1/min(attack speed, 3) | `CalibratedUseTicks`, `MeleeUseTicks`, `UseTimeMultiplier` `CombatModel.cs:491–503`; `GearAttackSpeedFactor` `Gear.cs:147` | §6 | ✅ |
-| A12 | Class damage bonuses from gear/buffs (dmg, dmg-melee…) are additive | `CombatStatsCalculator.Calculate` `CombatModel.cs:334`; `GearAdjust` `Gear.cs:123` | additive within a stat (§3) | ✅ |
-| A13 | Ammo-family multipliers (arrowDamage, bulletDamage, rocketDamage) | none: ranged gear only adds `dmg-ranged` | `bowEffectiveDamage`, `gunEffectiveDamage` (§4) | ❌ |
-| A14 | Charge (mana): delay, regen units, cost rounding, cap 400, sickness | `ChargeRegenDelayTicks`/`ChargeRegenUnits`/`ChargeCost` `CombatModel.cs:679–716`; `Combat.cs:107–122,472` | §10 | ✅ |
-| A15 | Banner bonus on damage dealt and taken | `BannerDamageFactor`/`BannerDefenseFactor` `GameSimulation.Player.cs` (~1093) | `BannerEffect` (§4.2) | ✅ |
-| A16 | NPC immunity after hits | Per-use hit sets for swings and pierce; yo-yo 0.22 s per enemy (`WeaponStyles.cs:31`); generic melee 0.05 s; tool swing 0.8 × swing time. No shared per-player NPC immunity, so stacked shots and drones are never throttled. | NPC.immune per player (~10 ticks), local/static immunity per projectile type (knowledge) | ◐ |
-| A17 | Difficulty damage scaling for creatures (in/out) | `ScaleIncoming`/`ScaleOutgoing` `GameSimulation.cs:2548`; `DefenseBalance.EnemyHitScale` `Content/DefenseBalance.cs:37` | Expert/Master NPC stat scaling (knowledge) | ✅ |
-| A18 | Boss hit ceiling | `CapBossHit` `GameSimulation.Hardmode.cs:124` | none | ➕ |
+| ID | Feature | Rimtera (code) | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| A1 | Weapon damage = round(base × prefix dmg) + ammo, × class multiplier (1 + additive bonuses, × multiplicative penalties) | `CombatTuning.WeaponDamage` `Content/CombatModel.cs:420`; `ComputeWeaponDamage` `GameSimulation.Combat.cs:146`. Keeps the fraction before the roll (D2). | `GetWeaponDamage` truncates (player_stats §4) | ✅ | ✅ as audited |
+| A2 | Colonist skill multiplies damage (Melee/Shooting/Intellectual/Social) | `CombatStatsCalculator.SkillMultiplier` `CombatModel.cs:384` | none | ➕ | ➕ kept |
+| A3 | ±15% spread, luck reroll keeps higher/lower | `RollVariance` `CombatModel.cs:432` | `Main.DamageVar` (§4.3) | ✅ | ✅ as audited |
+| A4 | Crit: base 4 + weapon crit + bonuses; ×2; summons never crit | `WeaponCritChance` `CombatModel.cs:462`, `CritChanceFor` `Combat.cs:176`; probe: Command item crit 0 | §4.1, `GetWeaponCrit` returns 0 for summon | ✅ | ✅ as audited |
+| A5 | Crit and spread rolled per hit | Rolled once per use, shared by every creature that use hits (`RollUse` `Combat.cs:191`; D5 in GEAR_DIFF_MECHANICS) | per NPC hit | ◐ | ◐ unchanged since the audit |
+| A6 | NPC damage taken = max(1, D + AP give-back − def/2), ×2 crit | `CreatureDamageTaken` `CombatModel.cs:452`, `StrikeEnemy` `Combat.cs:206` | `StrikeNPC_Inner`, `checkArmorPenetration` (§4.4–5) | ✅ | ✅ as audited |
+| A7 | Creature defense values | `EnemyArchetype.Defense` exists (`Entities/Actors.cs:441`), but no archetype sets it: all 0 | NPC defense 0–~100 by tier (knowledge; `NPC.SetDefaults`) | ⚠ | ✅ EN-4 0.1.15; IC-10 0.1.15 |
+| A8 | Armor penetration from gear (`ap`, `ap-melee` tags) | `PlayerArmorPenetration` `Combat.cs:181` | `armorPenetration`, `meleeArmorPenetration` | ✅ | ✅ as audited |
+| A9 | Knockback taken: resist share, soft caps 8/10/12/14, hard cap 16, crit ×1.4 | `KnockbackTaken` `CombatModel.cs:473`, `KnockbackResistance` `:610` | §5 | ✅ | ✅ as audited |
+| A10 | Player-side knockback modifiers (kb glove ×2 melee, titan buff ×1.5, minionKB) | none (D6) | `GetWeaponKnockback` §5 | ❌ | ❌ IC-16 → 0.6.0 |
+| A11 | Use time: prefix speed baked in (rounded), melee × 1/min(attack speed, 3) | `CalibratedUseTicks`, `MeleeUseTicks`, `UseTimeMultiplier` `CombatModel.cs:491–503`; `GearAttackSpeedFactor` `Gear.cs:147` | §6 | ✅ | ✅ as audited |
+| A12 | Class damage bonuses from gear/buffs (dmg, dmg-melee…) are additive | `CombatStatsCalculator.Calculate` `CombatModel.cs:334`; `GearAdjust` `Gear.cs:123` | additive within a stat (§3) | ✅ | ✅ as audited |
+| A13 | Ammo-family multipliers (arrowDamage, bulletDamage, rocketDamage) | none: ranged gear only adds `dmg-ranged` | `bowEffectiveDamage`, `gunEffectiveDamage` (§4) | ❌ | ❌ IC-16 → 0.6.0 |
+| A14 | Charge (mana): delay, regen units, cost rounding, cap 400, sickness | `ChargeRegenDelayTicks`/`ChargeRegenUnits`/`ChargeCost` `CombatModel.cs:679–716`; `Combat.cs:107–122,472` | §10 | ✅ | ✅ as audited |
+| A15 | Banner bonus on damage dealt and taken | `BannerDamageFactor`/`BannerDefenseFactor` `GameSimulation.Player.cs` (~1093) | `BannerEffect` (§4.2) | ✅ | ✅ as audited |
+| A16 | NPC immunity after hits | Per-use hit sets for swings and pierce; yo-yo 0.22 s per enemy (`WeaponStyles.cs:31`); generic melee 0.05 s; tool swing 0.8 × swing time. No shared per-player NPC immunity, so stacked shots and drones are never throttled. | NPC.immune per player (~10 ticks), local/static immunity per projectile type (knowledge) | ◐ | ◐ unchanged since the audit |
+| A17 | Difficulty damage scaling for creatures (in/out) | `ScaleIncoming`/`ScaleOutgoing` `GameSimulation.cs:2548`; `DefenseBalance.EnemyHitScale` `Content/DefenseBalance.cs:37` | Expert/Master NPC stat scaling (knowledge) | ✅ | ✅ as audited |
+| A18 | Boss hit ceiling | `CapBossHit` `GameSimulation.Hardmode.cs:124` | none | ➕ | ➕ kept |
 
 ### B. Weapon classes and styles (429 weapons: Melee 141, Ranged 131, Tech 86, Command 71; every weapon has a style and a class)
 
-| ID | Style | Rimtera (code, probe data) | Terraria | Status |
-|---|---|---|---|---|
-| B1 | Broadsword arc (57) | `StartSwing`/`UpdateSwing` `GameSimulation.WeaponStyles.cs:180,218`. 2.3 rad arc; size calibration scales reach. | useStyle 1 swing | ✅ |
-| B2 | Sword beams (projectile-firing swords) | `StartSwing` never fires a projectile | Enchanted Sword, Night's Edge, Terra Blade… (knowledge) | ❌ |
-| B3 | Shortsword thrust (13) | `UpdateSwing` sine extension | 1.4 shortsword stab | ✅ |
-| B4 | Spear (22) | thrust 0.45/0.15/0.4 timing, pierce via the swing set | spear projectile AI | ✅ |
-| B5 | Yo-yo (20) | `ThrowYoyo`/`StepYoyo` `WeaponStyles.cs:335,446`: tethered, held, 0.22 s re-hit | yo-yo AI, plus string, counterweight and yo-yo glove accessories | ◐ |
-| B6 | Boomerang (12) | `ThrowReturning`/`StepReturning` `:347,481`, one out at a time | boomerang AI | ✅ |
-| B7 | Flail (16) | Thrown and reeled like a boomerang (`StepReturning`) | 1.4 flails: spin while held, then launch (knowledge) | ◐ |
-| B8 | Bow (34) | `FireStyledRanged` `:521`; arrows fly straight (gravity only for `Thrown`, `:566`) | arrows fall under gravity (knowledge) | ◐ |
-| B9 | Gun (41) / Shotgun (9) | `FireStyledRanged`; a shotgun forces ≥4 pellets with spread | guns, shotguns | ✅ |
-| B10 | Launcher (17) | Rockets explode on contact (`StepExplosive`/`Explode` `:571,588`); blasts never hurt the player or tiles | rockets and grenades hurt the player; some rockets break tiles | ➕ |
-| B11 | Thrown consumables (30, Ranged class) | `ThrowConsumable` `:551`: consumed, gravity 16 | 1.4: thrown is ranged and consumed | ✅ |
-| B12 | Staff / Tome (53/22) | `AttackTech` `Combat.cs:292` → straight bolts, count/spread/pierce | many staff projectile AIs | ✅ (shape) |
-| B13 | Beam (channel) (11) | `StartBeam`/`UpdateBeam` `:605,617`: pulses, drains charge per pulse | channel magic (Last Prism-type) | ✅ |
-| B14 | Auto-reuse per item kind | `ItemUseRules.AutoReuse` `GameSimulation.Controls.cs:16`, rules counted from items.csv | `Item.autoReuse` | ✅ |
-| B15 | Melee hits cut plants | `CutPlantsAlong` in `UpdateSwing` | `CutTiles` | ✅ |
-| B16 | Legacy paths: `AttackMelee` (miss chance from colonist skill), `AttackRanged` tier-0 energy guns (no spread roll, no class multiplier, `Critical` never set) | `GameSimulation.cs:1148,1197`. 8 tier-0 weapons; the melee miss path is reached only by non-styled melee. | n/a | ◐ |
-| B17 | Solar flare disables ranged | `FireStyledRanged` `:523` | none | ➕ |
+| ID | Style | Rimtera (code, probe data) | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| B1 | Broadsword arc (57) | `StartSwing`/`UpdateSwing` `GameSimulation.WeaponStyles.cs:180,218`. 2.3 rad arc; size calibration scales reach. | useStyle 1 swing | ✅ | ✅ as audited |
+| B2 | Sword beams (projectile-firing swords) | `StartSwing` never fires a projectile | Enchanted Sword, Night's Edge, Terra Blade… (knowledge) | ❌ | ❌ IC-12 → 0.6.0 |
+| B3 | Shortsword thrust (13) | `UpdateSwing` sine extension | 1.4 shortsword stab | ✅ | ✅ as audited |
+| B4 | Spear (22) | thrust 0.45/0.15/0.4 timing, pierce via the swing set | spear projectile AI | ✅ | ✅ as audited |
+| B5 | Yo-yo (20) | `ThrowYoyo`/`StepYoyo` `WeaponStyles.cs:335,446`: tethered, held, 0.22 s re-hit | yo-yo AI, plus string, counterweight and yo-yo glove accessories | ◐ | ❌ IC-12 → 0.6.0 |
+| B6 | Boomerang (12) | `ThrowReturning`/`StepReturning` `:347,481`, one out at a time | boomerang AI | ✅ | ✅ as audited |
+| B7 | Flail (16) | Thrown and reeled like a boomerang (`StepReturning`) | 1.4 flails: spin while held, then launch (knowledge) | ◐ | ❌ IC-12 → 0.6.0 |
+| B8 | Bow (34) | `FireStyledRanged` `:521`; arrows fly straight (gravity only for `Thrown`, `:566`) | arrows fall under gravity (knowledge) | ◐ | ❌ IC-12 → 0.6.0 |
+| B9 | Gun (41) / Shotgun (9) | `FireStyledRanged`; a shotgun forces ≥4 pellets with spread | guns, shotguns | ✅ | ✅ as audited |
+| B10 | Launcher (17) | Rockets explode on contact (`StepExplosive`/`Explode` `:571,588`); blasts never hurt the player or tiles | rockets and grenades hurt the player; some rockets break tiles | ➕ | ➕ kept |
+| B11 | Thrown consumables (30, Ranged class) | `ThrowConsumable` `:551`: consumed, gravity 16 | 1.4: thrown is ranged and consumed | ✅ | ✅ as audited |
+| B12 | Staff / Tome (53/22) | `AttackTech` `Combat.cs:292` → straight bolts, count/spread/pierce | many staff projectile AIs | ✅ (shape) | ✅ as audited |
+| B13 | Beam (channel) (11) | `StartBeam`/`UpdateBeam` `:605,617`: pulses, drains charge per pulse | channel magic (Last Prism-type) | ✅ | ✅ as audited |
+| B14 | Auto-reuse per item kind | `ItemUseRules.AutoReuse` `GameSimulation.Controls.cs:16`, rules counted from items.csv | `Item.autoReuse` | ✅ | ✅ as audited |
+| B15 | Melee hits cut plants | `CutPlantsAlong` in `UpdateSwing` | `CutTiles` | ✅ | ✅ as audited |
+| B16 | Legacy paths: `AttackMelee` (miss chance from colonist skill), `AttackRanged` tier-0 energy guns (no spread roll, no class multiplier, `Critical` never set) | `GameSimulation.cs:1148,1197`. 8 tier-0 weapons; the melee miss path is reached only by non-styled melee. | n/a | ◐ | ✅ IC-21 0.1.15 |
+| B17 | Solar flare disables ranged | `FireStyledRanged` `:523` | none | ➕ | ➕ kept |
 
 ### C. Projectiles and ammunition
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| C1 | Projectile behaviours | straight, pierce, homing (`UpdateWeaponStyles` `WeaponStyles.cs:661`), explode, gravity (thrown), tether, return, beam, wind drift | ~190 aiStyles: bounce, split, chain, sticky, spawn-on-hit, orbit… (knowledge) | ◐ |
-| C2 | Ammo families | Arrow 11, Bullet 18, Rocket 9, Dart 7, Fuel 7, Cell 3 (`AmmoClass` `ItemSystem.cs:~1475`). Dart and Fuel each have only 1 weapon. | arrows, bullets, rockets, darts, gel, etc. | ◐ |
-| C3 | Ammo effects: damage add, pierce, homing, blast, affliction | `FireStyledRanged` + `TagStyled` `:163`, `TagLastProjectiles` `PlayerSystems.cs:175` | per-ammo projectile | ✅ |
-| C4 | Ammo choice order | First matching stack in inventory order (`FindAmmo` `WeaponStyles.cs:510`); no ammo slots | 4 ammo slots used first (knowledge) | ◐ |
-| C5 | Ammo saving (set, potion, tags) | `AmmoSaveChance` `CombatModel.cs:378`, `Gear.cs:139` | ammo-cost reducers; per-weapon chances (e.g. 50%) | ◐ |
-| C6 | Player projectile hit loop: pierce, lifesteal, on-hit gear | `UpdateProjectiles` `GameSimulation.cs:1844–1890` | `Projectile.Damage` | ✅ |
-| C7 | Hostile projectile vs immune player | Still consumed, still knocks the player back, and the message shows the raw damage while 0 is applied (`GameSimulation.cs:1893–1899`) | hostile projectiles do not collide with an immune player (knowledge) | ⚠ |
-| C8 | Projectile visuals | Lines only (`GraphicalSandbox.cs:2275`); `ProjectileState.SpriteName` is set but not drawn | per-projectile textures | ❌ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| C1 | Projectile behaviours | straight, pierce, homing (`UpdateWeaponStyles` `WeaponStyles.cs:661`), explode, gravity (thrown), tether, return, beam, wind drift | ~190 aiStyles: bounce, split, chain, sticky, spawn-on-hit, orbit… (knowledge) | ◐ | ❌ IC-12 → 0.6.0 |
+| C2 | Ammo families | Arrow 11, Bullet 18, Rocket 9, Dart 7, Fuel 7, Cell 3 (`AmmoClass` `ItemSystem.cs:~1475`). Dart and Fuel each have only 1 weapon. | arrows, bullets, rockets, darts, gel, etc. | ◐ | ◐ unchanged since the audit |
+| C3 | Ammo effects: damage add, pierce, homing, blast, affliction | `FireStyledRanged` + `TagStyled` `:163`, `TagLastProjectiles` `PlayerSystems.cs:175` | per-ammo projectile | ✅ | ✅ as audited |
+| C4 | Ammo choice order | First matching stack in inventory order (`FindAmmo` `WeaponStyles.cs:510`); no ammo slots | 4 ammo slots used first (knowledge) | ◐ | ✅ IC-22 0.1.10 |
+| C5 | Ammo saving (set, potion, tags) | `AmmoSaveChance` `CombatModel.cs:378`, `Gear.cs:139` | ammo-cost reducers; per-weapon chances (e.g. 50%) | ◐ | ◐ unchanged since the audit |
+| C6 | Player projectile hit loop: pierce, lifesteal, on-hit gear | `UpdateProjectiles` `GameSimulation.cs:1844–1890` | `Projectile.Damage` | ✅ | ✅ as audited |
+| C7 | Hostile projectile vs immune player | Still consumed, still knocks the player back, and the message shows the raw damage while 0 is applied (`GameSimulation.cs:1893–1899`) | hostile projectiles do not collide with an immune player (knowledge) | ⚠ | ✅ IC-18 0.1.15 |
+| C8 | Projectile visuals | Lines only (`GraphicalSandbox.cs:2275`); `ProjectileState.SpriteName` is set but not drawn | per-projectile textures | ❌ | ❌ IC-11 → 0.4.0 |
 
 ### D. Command class: drones, sentries, whips
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| D1 | Base slots 1 minion + 1 sentry, gear and buffs add | `BaseDroneSlots`/`BaseSentrySlots` `CombatModel.cs:331`, `drone:`/`sentry:` tags | `maxMinions = 1`, `maxTurrets = 1` (§2) | ✅ |
-| D2 | Summon replaces the oldest past the limit | `SummonMinion` `Combat.cs:355–379` | same | ✅ |
-| D3 | 18 minion kinds, all used by 53 command items | `MinionCatalog` `CombatModel.cs:219` | ~60 summons (knowledge) | ✅ |
-| D4 | Minion AI | Every drone orbits the player and fires bolts; sentries fire from position; no chase, no contact attack, no line-of-sight check (`UpdateMinions` `Combat.cs:383`) | minions chase and contact-hit, or shoot (varied AI) | ◐ |
-| D5 | Minion damage follows current gear and buffs | Frozen at summon (`MinionState.Damage`, `Combat.cs:376`); colonist skill baked in | `minionDamage` read live each hit | ⚠ |
-| D6 | Minions despawn on death and when slots shrink | Never: no clear on death, unequip or slot change; not saved (lost on reload). `MinionSpec.LifetimeSeconds` is unused. | killed on death and when over the slot cap (knowledge) | ⚠ |
-| D7 | Minion and sentry sprites | 14 of 18 exist. `minion_mech_companion`, `minion_coral_jelly`, `minion_spore_familiar` and `minion_hive_familiar` are missing, so they draw as the red **enemy** box (`DrawSpriteActor` fallback, `GraphicalSandbox.cs:2297`). | own sprites | ⚠ |
-| D8 | Right-click target selection for minions | none | summon staff alt-use targets an NPC | ❌ |
-| D9 | Whip tag | Any whip hit marks the target: drones and sentries focus it and deal ×1.3 for 4 s, the same for all 19 whips (`StyleHit` `WeaponStyles.cs:313`, `UpdateMinions` `Combat.cs:424`). No flat tag damage, no crit tag, no whip attack-speed scaling. | per-whip flat `bonusTagDamage`, some crit tags, summon attack speed (§6, prefixes.csv tag) | ◐ |
-| D10 | Whip class | 18 Command, 1 Melee (name-matched "lash", `WeaponStyleAssignments.cs:68`); the Melee one crits and lifesteals | all whips are summon class | ◐ |
-| D11 | Repair drone heals the player | `MinionSpec.Heals` `Combat.cs:403` | none | ➕ |
-| D12 | Minion slot cost | always 1 | 0.5–2 slots per minion type (knowledge) | ◐ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| D1 | Base slots 1 minion + 1 sentry, gear and buffs add | `BaseDroneSlots`/`BaseSentrySlots` `CombatModel.cs:331`, `drone:`/`sentry:` tags | `maxMinions = 1`, `maxTurrets = 1` (§2) | ✅ | ✅ as audited |
+| D2 | Summon replaces the oldest past the limit | `SummonMinion` `Combat.cs:355–379` | same | ✅ | ✅ as audited |
+| D3 | 18 minion kinds, all used by 53 command items | `MinionCatalog` `CombatModel.cs:219` | ~60 summons (knowledge) | ✅ | ✅ as audited |
+| D4 | Minion AI | Every drone orbits the player and fires bolts; sentries fire from position; no chase, no contact attack, no line-of-sight check (`UpdateMinions` `Combat.cs:383`) | minions chase and contact-hit, or shoot (varied AI) | ◐ | ❌ IC-8 → 0.6.0 |
+| D5 | Minion damage follows current gear and buffs | Frozen at summon (`MinionState.Damage`, `Combat.cs:376`); colonist skill baked in | `minionDamage` read live each hit | ⚠ | ◐ IC-7 partly (minions track their source item; the rest not checked) |
+| D6 | Minions despawn on death and when slots shrink | Never: no clear on death, unequip or slot change; not saved (lost on reload). `MinionSpec.LifetimeSeconds` is unused. | killed on death and when over the slot cap (knowledge) | ⚠ | ◐ IC-7 partly (minions track their source item; the rest not checked) |
+| D7 | Minion and sentry sprites | 14 of 18 exist. `minion_mech_companion`, `minion_coral_jelly`, `minion_spore_familiar` and `minion_hive_familiar` are missing, so they draw as the red **enemy** box (`DrawSpriteActor` fallback, `GraphicalSandbox.cs:2297`). | own sprites | ⚠ | ◐ IC-7 partly (minions track their source item; the rest not checked) |
+| D8 | Right-click target selection for minions | none | summon staff alt-use targets an NPC | ❌ | ❌ IC-8 → 0.6.0 |
+| D9 | Whip tag | Any whip hit marks the target: drones and sentries focus it and deal ×1.3 for 4 s, the same for all 19 whips (`StyleHit` `WeaponStyles.cs:313`, `UpdateMinions` `Combat.cs:424`). No flat tag damage, no crit tag, no whip attack-speed scaling. | per-whip flat `bonusTagDamage`, some crit tags, summon attack speed (§6, prefixes.csv tag) | ◐ | ❌ IC-9 → 0.6.0 |
+| D10 | Whip class | 18 Command, 1 Melee (name-matched "lash", `WeaponStyleAssignments.cs:68`); the Melee one crits and lifesteals | all whips are summon class | ◐ | ❌ IC-9 → 0.6.0 |
+| D11 | Repair drone heals the player | `MinionSpec.Heals` `Combat.cs:403` | none | ➕ | ➕ kept |
+| D12 | Minion slot cost | always 1 | 0.5–2 slots per minion type (knowledge) | ◐ | ❌ IC-8 → 0.6.0 |
 
 ### E. Tools as weapons
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| E1 | Tool swing hits creatures in an arc, once per swing (61 tools have damage) | `StrikeWithToolSwing` `GameSimulation.ToolCombat.cs:18`; damage from `ToolCombat.Apply` `Content/ToolCombat.cs:12` | pick/axe/hammer carry a melee hitbox | ✅ |
-| E2 | Tools take prefixes | `Calibratable` excludes the Pickaxe/Cutter/Demolisher use kinds (`ItemSystem.cs` `Calibratable`) | tools roll melee prefixes; speed prefixes matter for mining | ◐ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| E1 | Tool swing hits creatures in an arc, once per swing (61 tools have damage) | `StrikeWithToolSwing` `GameSimulation.ToolCombat.cs:18`; damage from `ToolCombat.Apply` `Content/ToolCombat.cs:12` | pick/axe/hammer carry a melee hitbox | ✅ | ✅ as audited |
+| E2 | Tools take prefixes | `Calibratable` excludes the Pickaxe/Cutter/Demolisher use kinds (`ItemSystem.cs` `Calibratable`) | tools roll melee prefixes; speed prefixes matter for mining | ◐ | ❌ IC-13 → 0.5.0 |
 
 ### F. Armor and set bonuses (152 pieces, 50 complete sets)
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| F1 | Player damage taken = max(1, D − def × 0.5/0.75/1.0) | `DefenseBalance.ApplyDefense` `Content/DefenseBalance.cs:28`, `GearHitPlayer` `Gear.cs:163` | `CalculateDamagePlayersTake` (§8) | ✅ |
-| F2 | Endurance multiplies the post-defense damage | `Gear.cs:176`, capped at 60% (D7) | `(1−endurance)×dmg`, no cap | ✅ (cap ➕) |
-| F3 | Set detection: head + body + legs of one set | `CombatStatsCalculator` `CombatModel.cs:354`, `PlayerStatsCalculator` `PlayerProgression.cs:~384` | `ArmorSetBonuses.GetCompleteSet` | ✅ |
-| F4 | Set bonus content | Stat bonus (defense, class damage, crit, slots, ammo save, lifesteal, thorns) plus one of 8 generic specials (`SetSpecial` `ArsenalItems.cs:6`; `SetSpecials` `:74`). 49 of 50 sets have a class bonus. | 64 sets, many unique or active (double-tap shields, guardian, stealth, heal bolts) (`armor_sets.csv`) | ◐ |
-| F5 | Per-piece bonuses (class damage, crit) | 135/152 pieces carry class damage, 18 carry crit | `GrantArmorBenefits` per-piece switch | ✅ |
-| F6 | Armor defense curve per tier | `--balance`: T1 5 → T7 58; endgame + accessories 88 cuts 49% of the final boss hit | defense ~2 (copper) → ~60s (endgame sets) | ✅ |
-| F7 | Vanity armor slots | `EquipmentLoadout` vanity slots exist; `--item-census` counts only 1 vanity item | ~400 vanity pieces | ◐ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| F1 | Player damage taken = max(1, D − def × 0.5/0.75/1.0) | `DefenseBalance.ApplyDefense` `Content/DefenseBalance.cs:28`, `GearHitPlayer` `Gear.cs:163` | `CalculateDamagePlayersTake` (§8) | ✅ | ✅ as audited |
+| F2 | Endurance multiplies the post-defense damage | `Gear.cs:176`, capped at 60% (D7) | `(1−endurance)×dmg`, no cap | ✅ (cap ➕) | ✅ as audited |
+| F3 | Set detection: head + body + legs of one set | `CombatStatsCalculator` `CombatModel.cs:354`, `PlayerStatsCalculator` `PlayerProgression.cs:~384` | `ArmorSetBonuses.GetCompleteSet` | ✅ | ✅ as audited |
+| F4 | Set bonus content | Stat bonus (defense, class damage, crit, slots, ammo save, lifesteal, thorns) plus one of 8 generic specials (`SetSpecial` `ArsenalItems.cs:6`; `SetSpecials` `:74`). 49 of 50 sets have a class bonus. | 64 sets, many unique or active (double-tap shields, guardian, stealth, heal bolts) (`armor_sets.csv`) | ◐ | ❌ IC-20 → 0.6.0 |
+| F5 | Per-piece bonuses (class damage, crit) | 135/152 pieces carry class damage, 18 carry crit | `GrantArmorBenefits` per-piece switch | ✅ | ✅ as audited |
+| F6 | Armor defense curve per tier | `--balance`: T1 5 → T7 58; endgame + accessories 88 cuts 49% of the final boss hit | defense ~2 (copper) → ~60s (endgame sets) | ✅ | ✅ as audited |
+| F7 | Vanity armor slots | `EquipmentLoadout` vanity slots exist; `--item-census` counts only 1 vanity item | ~400 vanity pieces | ◐ | ◐ PU-19 partly (0.1.9 pet, light pet, mount and hook slots) |
 
 ### G. Accessories and mobility (220 accessories, 30 wings)
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| G1 | Slots: 5 + a gated 6th | `EquipmentLoadout.AccessorySlots`/`Slot6Gate` `PlayerProgression.cs:60–72` | 5, +1 expert, +1 master (knowledge) | ✅ |
-| G2 | Accessory effects via tags (~45 tag kinds, 0 unread per `--item-audit`) | `GearTagValue`/`GearHasTag` `Gear.cs:32,57` | `ApplyEquipFunctional` | ✅ |
-| G3 | Same accessory can't be worn twice | `EquipmentSystem.TryEquip` `PlayerProgression.cs:~420` | same | ✅ |
-| G4 | Auto-swing accessories (3 items, tag `auto-swing`) | `AutoSwingActive` `Gear.cs:81` is never read; `ItemUseRules.AutoReuse` ignores it | Feral Claws/Power Glove give melee autoReuse | ⚠ |
-| G5 | Attack-speed accessories | `attackspeed:` tag → `GearAttackSpeedFactor` | `meleeSpeed +=` | ✅ |
-| G6 | Missing accessory families | none: knockback glove, longer i-frames (Cross Necklace), on-hurt effects (Star/Bee Cloak, Panic Necklace), low-HP damage reduction (Frozen Turtle Shell), dash (Tabi/Shield of Cthulhu), auto-mana (Mana Flower), mana-on-hurt (Magic Cuffs), yo-yo accessories, arrow/bullet multipliers (Magic Quiver) | `accessories.csv` | ❌ |
-| G7 | Wings: flight time (best wing counts), climb, glide | `GearWingFlightSeconds` `Gear.cs:83`; 0.7–4.2 s; `MaximumRocketFuel` `GameSimulation.Player.cs:145` | per-wing flight time, horizontal speed and acceleration | ◐ |
-| G8 | Double jump, rocket boots, glide, climb, water walk, featherfall, lava/heat/cold | tags read in `PreparePlayerMovement`/`AfterPlayerMovement` `GameSimulation.Player.cs:~330–432` | cloud bottle, rocket boots, claws, water walking, lava charm… | ✅ |
-| G9 | Grappling hooks | `TryFireGrapple`/`UpdateGrapple` `GameSimulation.Player.cs:528`; `HookSpec` (range, speed, count, instant retract) `GrowthItems.cs:32`. Needs the `grapple` tag on an *accessory*. | dedicated hook slot; 1–3 hooks | ◐ |
-| G10 | Accessory defense cap 6 | `DefenseBalance.MaximumAccessoryDefense` `DefenseBalance.cs:13` | no cap | ➕ |
-| G11 | 6th-slot gate respected everywhere | `GearTagValue` checks the gate (`Gear.cs:37`); `CombatStatsCalculator.Calculate` iterates every slot without it (`CombatModel.cs:338`) | n/a | ⚠ |
-| G12 | Info accessories (readouts, ore/danger sense) | `GameSimulation.InfoGear.cs`, `OreDetectorActive` `Gear.cs:75` | info accessories | ✅ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| G1 | Slots: 5 + a gated 6th | `EquipmentLoadout.AccessorySlots`/`Slot6Gate` `PlayerProgression.cs:60–72` | 5, +1 expert, +1 master (knowledge) | ✅ | ✅ as audited |
+| G2 | Accessory effects via tags (~45 tag kinds, 0 unread per `--item-audit`) | `GearTagValue`/`GearHasTag` `Gear.cs:32,57` | `ApplyEquipFunctional` | ✅ | ✅ as audited |
+| G3 | Same accessory can't be worn twice | `EquipmentSystem.TryEquip` `PlayerProgression.cs:~420` | same | ✅ | ✅ as audited |
+| G4 | Auto-swing accessories (3 items, tag `auto-swing`) | `AutoSwingActive` `Gear.cs:81` is never read; `ItemUseRules.AutoReuse` ignores it | Feral Claws/Power Glove give melee autoReuse | ⚠ | ✅ IC-15 0.1.15 |
+| G5 | Attack-speed accessories | `attackspeed:` tag → `GearAttackSpeedFactor` | `meleeSpeed +=` | ✅ | ✅ as audited |
+| G6 | Missing accessory families | none: knockback glove, longer i-frames (Cross Necklace), on-hurt effects (Star/Bee Cloak, Panic Necklace), low-HP damage reduction (Frozen Turtle Shell), dash (Tabi/Shield of Cthulhu), auto-mana (Mana Flower), mana-on-hurt (Magic Cuffs), yo-yo accessories, arrow/bullet multipliers (Magic Quiver) | `accessories.csv` | ❌ | ❌ IC-16 → 0.6.0 |
+| G7 | Wings: flight time (best wing counts), climb, glide | `GearWingFlightSeconds` `Gear.cs:83`; 0.7–4.2 s; `MaximumRocketFuel` `GameSimulation.Player.cs:145` | per-wing flight time, horizontal speed and acceleration | ◐ | ◐ unchanged since the audit |
+| G8 | Double jump, rocket boots, glide, climb, water walk, featherfall, lava/heat/cold | tags read in `PreparePlayerMovement`/`AfterPlayerMovement` `GameSimulation.Player.cs:~330–432` | cloud bottle, rocket boots, claws, water walking, lava charm… | ✅ | ✅ as audited |
+| G9 | Grappling hooks | `TryFireGrapple`/`UpdateGrapple` `GameSimulation.Player.cs:528`; `HookSpec` (range, speed, count, instant retract) `GrowthItems.cs:32`. Needs the `grapple` tag on an *accessory*. | dedicated hook slot; 1–3 hooks | ◐ | ◐ unchanged since the audit |
+| G10 | Accessory defense cap 6 | `DefenseBalance.MaximumAccessoryDefense` `DefenseBalance.cs:13` | no cap | ➕ | ➕ kept |
+| G11 | 6th-slot gate respected everywhere | `GearTagValue` checks the gate (`Gear.cs:37`); `CombatStatsCalculator.Calculate` iterates every slot without it (`CombatModel.cs:338`) | n/a | ⚠ | ✅ IC-21 0.1.15 |
+| G12 | Info accessories (readouts, ore/danger sense) | `GameSimulation.InfoGear.cs`, `OreDetectorActive` `Gear.cs:75` | info accessories | ✅ | ✅ as audited |
 
 ### H. Potions, food, buffs and debuffs (51 statuses; 79 buff/heal items)
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| H1 | Healing potions | **1 item**: Med stim 50 HP (`ContentItems.cs:309`) | Lesser 50, Healing 100, Greater 150, Super 200, Restoration 90, plus healing foods (items.csv `healLife`) | ❌ |
-| H2 | Charge (mana) restore items | 1 item | 50/100/200/300 (items.csv `healMana`) | ❌ |
-| H3 | Potion sickness | 45 s, blocks QuickHeal and direct use (`PotionSicknessSeconds` `GameSimulation.Player.cs:83`, `ConsumeBatchBItem`) | 60 s (45 s restoration / Philosopher's Stone) (knowledge) | ◐ |
-| H4 | Quick heal / quick charge / quick buff | `QuickHeal`/`QuickCharge`/`QuickBuff` `GameSimulation.Player.cs:610–672` | QuickHeal/QuickMana/QuickBuff | ✅ |
-| H5 | Buff durations | Game-hours; 1 h = 12.5 real s (`GameHoursPerRealSecond = 0.08`). Potions 3–6 h ≈ 37–75 s; probe: Fortified 4 h → 49 s left after 1 s. Sleep fast-forward also drains them. | Regeneration/Ironskin/Swiftness 28800 ticks = 8 min (items.csv `buffTime`) | ⚠ |
-| H6 | Regen from buffs and gear | `LifeRegenerationPerHour` × game hours (`GameSimulation.cs:660`). Probe: Regeneration +0.13 HP in 4 s, Rejuvenation +0.29. | Regeneration +4 units = 2 HP/s; Band of Regen +1 HP/s (§9) | ⚠ |
-| H7 | Damage-over-time strength | Poison 1.25 per 0.5 h (probe 0.12 HP/s), Burning 1 per 0.25 h (0.3 HP/s) (`StatusEffectSystem` `PlayerProgression.cs:~157`) | poisoned −4 units (2 HP/s), onFire −8 (4 HP/s) (§9.1) | ⚠ |
-| H8 | Creatures inflict debuffs on the player | none (only lava → Burning, fallout → Poison) | dozens of NPCs inflict Poisoned, OnFire, Bleeding, Confused, Slow, Weak, Darkness, Broken Armor, Chilled, Frozen, Venom, Cursed, Silenced… | ❌ |
-| H9 | Movement and stat debuffs on the player | none (no slow, chilled, confused, darkness, weak, broken armor, silenced) | strongest move-speed debuff, `statDefense/=2`, `meleeDamage*=0.5` (§1) | ❌ |
-| H10 | Buff effects through tags (dmg, crit, speed, mining, light, dodge, thorns, slots, ammo save…) | `StatusEffectSystem` `PlayerProgression.cs:157–205`; read by `GearTagValue` | buff effects in `UpdateBuffs` | ✅ |
-| H11 | Well Fed tiers (3), food replaces lower tiers | `GearOnAte` `Gear.cs:249` | Well Fed / Plenty Satisfied / Exquisitely Stuffed | ✅ |
-| H12 | Hunger need from food | `Player.Needs.Restore` `GameSimulation.cs:~1250` | none | ➕ |
-| H13 | Charge sickness after a restore | `ChargeSicknessSeconds`/`ChargeSicknessPenalty` `CombatModel.cs:670` | mana sickness | ✅ |
-| H14 | Debuff immunities (poison, heat, cold, toxic, acid, lava, fire-block) | `BlockedByImmunityTag` `PlayerProgression.cs`; `GearTick` `Gear.cs:209` | debuff-immunity accessories | ✅ (little to block, see H8) |
-| H15 | Buff/debuff count | 51 statuses (8 have no item: FrostGuard, Phased, PotionSickness, PhaseStrain + 4 creature afflictions) | ~400 buff ids | ◐ |
-| H16 | Afflictions on creatures (burning, poison, frostbite, armor shred, confused, marked) | `AfflictEnemy`/`WeaponAffliction` `GameSimulation.PlayerSystems.cs:97,119` | NPC debuffs | ✅ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| H1 | Healing potions | **1 item**: Med stim 50 HP (`ContentItems.cs:309`) | Lesser 50, Healing 100, Greater 150, Super 200, Restoration 90, plus healing foods (items.csv `healLife`) | ❌ | ✅ IC-2 0.1.15 |
+| H2 | Charge (mana) restore items | 1 item | 50/100/200/300 (items.csv `healMana`) | ❌ | ✅ IC-2 0.1.15 |
+| H3 | Potion sickness | 45 s, blocks QuickHeal and direct use (`PotionSicknessSeconds` `GameSimulation.Player.cs:83`, `ConsumeBatchBItem`) | 60 s (45 s restoration / Philosopher's Stone) (knowledge) | ◐ | ✅ IC-2 0.1.15 |
+| H4 | Quick heal / quick charge / quick buff | `QuickHeal`/`QuickCharge`/`QuickBuff` `GameSimulation.Player.cs:610–672` | QuickHeal/QuickMana/QuickBuff | ✅ | ✅ as audited |
+| H5 | Buff durations | Game-hours; 1 h = 12.5 real s (`GameHoursPerRealSecond = 0.08`). Potions 3–6 h ≈ 37–75 s; probe: Fortified 4 h → 49 s left after 1 s. Sleep fast-forward also drains them. | Regeneration/Ironskin/Swiftness 28800 ticks = 8 min (items.csv `buffTime`) | ⚠ | ✅ IC-1 0.1.11 |
+| H6 | Regen from buffs and gear | `LifeRegenerationPerHour` × game hours (`GameSimulation.cs:660`). Probe: Regeneration +0.13 HP in 4 s, Rejuvenation +0.29. | Regeneration +4 units = 2 HP/s; Band of Regen +1 HP/s (§9) | ⚠ | ✅ IC-1 0.1.11 |
+| H7 | Damage-over-time strength | Poison 1.25 per 0.5 h (probe 0.12 HP/s), Burning 1 per 0.25 h (0.3 HP/s) (`StatusEffectSystem` `PlayerProgression.cs:~157`) | poisoned −4 units (2 HP/s), onFire −8 (4 HP/s) (§9.1) | ⚠ | ✅ IC-1 0.1.11 |
+| H8 | Creatures inflict debuffs on the player | none (only lava → Burning, fallout → Poison) | dozens of NPCs inflict Poisoned, OnFire, Bleeding, Confused, Slow, Weak, Darkness, Broken Armor, Chilled, Frozen, Venom, Cursed, Silenced… | ❌ | ✅ IC-3 0.1.15 |
+| H9 | Movement and stat debuffs on the player | none (no slow, chilled, confused, darkness, weak, broken armor, silenced) | strongest move-speed debuff, `statDefense/=2`, `meleeDamage*=0.5` (§1) | ❌ | ✅ IC-3 0.1.15 |
+| H10 | Buff effects through tags (dmg, crit, speed, mining, light, dodge, thorns, slots, ammo save…) | `StatusEffectSystem` `PlayerProgression.cs:157–205`; read by `GearTagValue` | buff effects in `UpdateBuffs` | ✅ | ✅ as audited |
+| H11 | Well Fed tiers (3), food replaces lower tiers | `GearOnAte` `Gear.cs:249` | Well Fed / Plenty Satisfied / Exquisitely Stuffed | ✅ | ✅ as audited |
+| H12 | Hunger need from food | `Player.Needs.Restore` `GameSimulation.cs:~1250` | none | ➕ | ➕ kept |
+| H13 | Charge sickness after a restore | `ChargeSicknessSeconds`/`ChargeSicknessPenalty` `CombatModel.cs:670` | mana sickness | ✅ | ✅ as audited |
+| H14 | Debuff immunities (poison, heat, cold, toxic, acid, lava, fire-block) | `BlockedByImmunityTag` `PlayerProgression.cs`; `GearTick` `Gear.cs:209` | debuff-immunity accessories | ✅ (little to block, see H8) | ✅ IC-3 0.1.15 |
+| H15 | Buff/debuff count | 51 statuses (8 have no item: FrostGuard, Phased, PotionSickness, PhaseStrain + 4 creature afflictions) | ~400 buff ids | ◐ | ✅ EN-17 0.1.15 |
+| H16 | Afflictions on creatures (burning, poison, frostbite, armor shred, confused, marked) | `AfflictEnemy`/`WeaponAffliction` `GameSimulation.PlayerSystems.cs:97,119` | NPC debuffs | ✅ | ✅ as audited |
 
 ### I. Calibrations (prefixes)
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| I1 | Table: 51 calibrations in 6 groups (universal, melee, ranged, tech, command, accessory) with weights | `CalibrationCatalog` `CombatModel.cs:63–125` | 97 prefixes (`prefixes.csv`) | ✅ |
-| I2 | Effects: damage, crit, speed, knockback, cost, velocity, size, accessory defense/crit/damage/move | `CalibrationDefinition` `CombatModel.cs:46`; applied in `WeaponDamage`, `CalibratedUseTicks`, `ChargeCost`, `GearProjectileSpeedFactor`, `CalibratedSize` | `Item.Prefix` (§11) | ✅ |
-| I3 | Roll when crafted | Always rolls (no "none" outcome), luck-weighted (`LuckyCalibration` `PlayerSystems.cs:279`; `GameSimulation.cs:789`) | `Prefix(-1)`: 1 in 4 none | ◐ |
-| I4 | Prefixes on loot and drops | Never: drops, chests and boss loot are always uncalibrated | dropped weapons roll prefixes (knowledge) | ❌ |
-| I5 | Reforging | none | Goblin Tinkerer reforge for coins | ❌ |
-| I6 | Value and rarity from prefix | Sell value × ValueMultiplier, linear (`GetSellPrice` `GameSimulation.Town.cs:389`); rarity unchanged | value × valueMult²; rarity ±1/±2 (§11) | ◐ |
-| I7 | Accessory prefixes | defense up to +3, crit up to +3, damage up to +4%, move speed up to +4% | also +1–4% melee speed, +20 mana | ◐ |
-| I8 | Calibrated stackables | Thrown consumables (30) calibrate, and stacks only merge with the same calibration (`Inventory.Add` `ItemSystem.cs:1989`), so knife stacks fragment | consumable thrown items take no prefix | ⚠ |
-| I9 | Calibration kept on drop, pickup, equip and save | `GroundItems` snapshot, `CaptureEquipmentWithCalibrations` `Gear.cs:274` | prefix persists | ✅ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| I1 | Table: 51 calibrations in 6 groups (universal, melee, ranged, tech, command, accessory) with weights | `CalibrationCatalog` `CombatModel.cs:63–125` | 97 prefixes (`prefixes.csv`) | ✅ | ✅ as audited |
+| I2 | Effects: damage, crit, speed, knockback, cost, velocity, size, accessory defense/crit/damage/move | `CalibrationDefinition` `CombatModel.cs:46`; applied in `WeaponDamage`, `CalibratedUseTicks`, `ChargeCost`, `GearProjectileSpeedFactor`, `CalibratedSize` | `Item.Prefix` (§11) | ✅ | ✅ as audited |
+| I3 | Roll when crafted | Always rolls (no "none" outcome), luck-weighted (`LuckyCalibration` `PlayerSystems.cs:279`; `GameSimulation.cs:789`) | `Prefix(-1)`: 1 in 4 none | ◐ | ❌ IC-13 → 0.5.0 |
+| I4 | Prefixes on loot and drops | Never: drops, chests and boss loot are always uncalibrated | dropped weapons roll prefixes (knowledge) | ❌ | ❌ IC-13 → 0.5.0 |
+| I5 | Reforging | none | Goblin Tinkerer reforge for coins | ❌ | ❌ IC-13 → 0.5.0 |
+| I6 | Value and rarity from prefix | Sell value × ValueMultiplier, linear (`GetSellPrice` `GameSimulation.Town.cs:389`); rarity unchanged | value × valueMult²; rarity ±1/±2 (§11) | ◐ | ❌ IC-14 → 0.5.0 |
+| I7 | Accessory prefixes | defense up to +3, crit up to +3, damage up to +4%, move speed up to +4% | also +1–4% melee speed, +20 mana | ◐ | ❌ IC-14 → 0.5.0 |
+| I8 | Calibrated stackables | Thrown consumables (30) calibrate, and stacks only merge with the same calibration (`Inventory.Add` `ItemSystem.cs:1989`), so knife stacks fragment | consumable thrown items take no prefix | ⚠ | ❌ IC-14 → 0.5.0 |
+| I9 | Calibration kept on drop, pickup, equip and save | `GroundItems` snapshot, `CaptureEquipmentWithCalibrations` `Gear.cs:274` | prefix persists | ✅ | ✅ as audited |
 
 ### J. Player hurt, death and respawn
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| J1 | Hit immunity 0.67 s; a dodge grants immunity | `HitImmunitySeconds` `Entities/Actors.cs:130`, `TakeHit` `:139`; `Gear.cs:168` | `immuneTime = 40` ticks (knowledge) | ✅ |
-| J2 | Dodge chance (tags + set special, cap 60%) | `GearHitPlayer` `Gear.cs:166` | Black Belt, Master Ninja Gear 10% (§8) | ✅ |
-| J3 | Contact damage variance | none: creature hits are exact (`HitPlayerFromEnemy` `GameSimulation.Player.cs:1153`, `GameSimulation.cs:1673`) | `Main.DamageVar(npc.damage, −luck)` on contact (knowledge) | ◐ |
-| J4 | Contact hit test | Creature centre within 1.15 tiles of the player centre (`GameSimulation.cs:~1671`), not hitbox overlap | hitbox intersection | ◐ |
-| J5 | Knockback on the player | Fixed push (3, −2) on contact, projectile's own on shots; knockback-immune tag cancels it | fixed ~(4.5, −3.5) push (knowledge); Cobalt Shield immunity | ✅ |
-| J6 | Thorns, burst-when-hit, lifesteal, heal-on-hit, charge-on-hit | `Gear.cs:177–205`, `GameSimulation.cs:1680` | thorns, beetle, spectre, etc. | ✅ |
-| J7 | RimWorld body layer on the player | Hits wound body parts (×0.5); limb loss reported (`ReportPartLoss`); downed by pain, unconsciousness or legs (`HealthComponent.cs:816–836`); death by blood loss or heart failure independent of HP (`:805–813`) | HP is the only death condition; no downed state | ⚠ |
-| J8 | Natural life regeneration | `NaturalLifeRegenUnits` `CombatModel.cs:642`, `UpdateLifeRegen` `Combat.cs:88` | §9.3 exactly | ✅ |
-| J9 | Max life progression | 100 + 10 Life cores × 10 + 20 Lifeblooms × 5 = 300 (`Actors.cs:91`, `GrowthItems.cs:43`) | 100 + 15 × 20 + 20 × 5 = 500 (§2) | ◐ |
-| J10 | Death drops by difficulty | Explorer none; Classic drops 40% credits **and destroys half of every material stack** (`RespawnPlayer` `GameSimulation.cs:2557`); Salvager drops the whole inventory with a long life; Ironman deletes the character | Softcore 50% coins; Mediumcore all items; Hardcore deletion | ◐ |
-| J11 | Tombstone with epitaph | `PlaceTombstone` `GameSimulation.Player.cs:1044` | tombstone | ✅ |
-| J12 | Respawn delay | `UpdateWhileDead` `GameSimulation.Player.cs:1025` sets 5 s (20 s with a boss) for every difficulty; `GetRespawnDelay` (`:1021`, used by the UI) says Explorer 3 s. Probe: timer 5.0 vs Explorer 3. | ~10 s base, longer while a boss lives (knowledge) | ⚠ |
-| J13 | Respawn point | Always the landing site column (`RespawnPlayer`); no bed spawn | bed spawn point (knowledge) | ❌ |
-| J14 | Bosses leave when the player dies | `BossesLeaveOnPlayerDeath` `GameSimulation.Spawning.cs:253` | bosses despawn | ✅ |
-| J15 | Medic heals for credits | `HealAtMedic` `GameSimulation.Town.cs:~413` | Nurse | ✅ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| J1 | Hit immunity 0.67 s; a dodge grants immunity | `HitImmunitySeconds` `Entities/Actors.cs:130`, `TakeHit` `:139`; `Gear.cs:168` | `immuneTime = 40` ticks (knowledge) | ✅ | ✅ as audited |
+| J2 | Dodge chance (tags + set special, cap 60%) | `GearHitPlayer` `Gear.cs:166` | Black Belt, Master Ninja Gear 10% (§8) | ✅ | ✅ as audited |
+| J3 | Contact damage variance | none: creature hits are exact (`HitPlayerFromEnemy` `GameSimulation.Player.cs:1153`, `GameSimulation.cs:1673`) | `Main.DamageVar(npc.damage, −luck)` on contact (knowledge) | ◐ | ✅ IC-18 0.1.15 |
+| J4 | Contact hit test | Creature centre within 1.15 tiles of the player centre (`GameSimulation.cs:~1671`), not hitbox overlap | hitbox intersection | ◐ | ✅ EN-12 0.1.15 |
+| J5 | Knockback on the player | Fixed push (3, −2) on contact, projectile's own on shots; knockback-immune tag cancels it | fixed ~(4.5, −3.5) push (knowledge); Cobalt Shield immunity | ✅ | ✅ as audited |
+| J6 | Thorns, burst-when-hit, lifesteal, heal-on-hit, charge-on-hit | `Gear.cs:177–205`, `GameSimulation.cs:1680` | thorns, beetle, spectre, etc. | ✅ | ✅ as audited |
+| J7 | RimWorld body layer on the player | Hits wound body parts (×0.5); limb loss reported (`ReportPartLoss`); downed by pain, unconsciousness or legs (`HealthComponent.cs:816–836`); death by blood loss or heart failure independent of HP (`:805–813`) | HP is the only death condition; no downed state | ⚠ | ❌ IC-4 not done, not scheduled |
+| J8 | Natural life regeneration | `NaturalLifeRegenUnits` `CombatModel.cs:642`, `UpdateLifeRegen` `Combat.cs:88` | §9.3 exactly | ✅ | ✅ as audited |
+| J9 | Max life progression | 100 + 10 Life cores × 10 + 20 Lifeblooms × 5 = 300 (`Actors.cs:91`, `GrowthItems.cs:43`) | 100 + 15 × 20 + 20 × 5 = 500 (§2) | ◐ | ❌ IC-23 → 0.5.0 |
+| J10 | Death drops by difficulty | Explorer none; Classic drops 40% credits **and destroys half of every material stack** (`RespawnPlayer` `GameSimulation.cs:2557`); Salvager drops the whole inventory with a long life; Ironman deletes the character | Softcore 50% coins; Mediumcore all items; Hardcore deletion | ◐ | ✅ 0.1.8: death drops by character difficulty (replaces IC-5) |
+| J11 | Tombstone with epitaph | `PlaceTombstone` `GameSimulation.Player.cs:1044` | tombstone | ✅ | ✅ as audited |
+| J12 | Respawn delay | `UpdateWhileDead` `GameSimulation.Player.cs:1025` sets 5 s (20 s with a boss) for every difficulty; `GetRespawnDelay` (`:1021`, used by the UI) says Explorer 3 s. Probe: timer 5.0 vs Explorer 3. | ~10 s base, longer while a boss lives (knowledge) | ⚠ | ✅ PU-5 0.1.11 |
+| J13 | Respawn point | Always the landing site column (`RespawnPlayer`); no bed spawn | bed spawn point (knowledge) | ❌ | ✅ IC-6 0.1.12 |
+| J14 | Bosses leave when the player dies | `BossesLeaveOnPlayerDeath` `GameSimulation.Spawning.cs:253` | bosses despawn | ✅ | ✅ as audited |
+| J15 | Medic heals for credits | `HealAtMedic` `GameSimulation.Town.cs:~413` | Nurse | ✅ | ✅ as audited |
 
 ### K. Stacks, rarity, value, selling, consumables
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| K1 | Max stack | 1:884, 20:144, 30:54, 99:623, 999:261 (ammo 999) | 9999 for nearly all stackables (1.4.4+) (knowledge) | ◐ |
-| K2 | Rarity | 7 tiers from progression tier (`RarityFor` `ContentItems.cs:35`); never shown (no tooltip colour), not changed by calibration | −1…11 + expert/master, shown as name colour | ◐ |
-| K3 | Value | `CreditValue` = Value → ShopPrice → tier² × 10 (`ItemSystem.cs`); 45 items use the fallback | `value` in copper | ✅ |
-| K4 | Selling | 1/5 of value × calibration × happiness (`GetSellPrice` `GameSimulation.Town.cs:389`) | sell at value/5 | ✅ |
-| K5 | Buy-back of sold items | none | shop buy-back row (knowledge) | ❌ |
-| K6 | Currency | single "Credits" item, 99999 stack | copper/silver/gold/platinum | ➕ |
-| K7 | Boss summons and event starters | `ConsumeContentItem` `GameSimulation.Items.cs:77–120` | summon items | ✅ |
-| K8 | Crates and treasure bags open | `OpenCrate`, `OpenTreasureBag` `PlayerSystems.cs:422` | same | ✅ |
-| K9 | Life/charge capacity items | Life core, Lifebloom, Charge crystal (`ConsumeBatchBItem` `GameSimulation.Player.cs:~678`) | Life Crystal, Life Fruit, Mana Crystal | ✅ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| K1 | Max stack | 1:884, 20:144, 30:54, 99:623, 999:261 (ammo 999) | 9999 for nearly all stackables (1.4.4+) (knowledge) | ◐ | ✅ IC-19 0.1.15 |
+| K2 | Rarity | 7 tiers from progression tier (`RarityFor` `ContentItems.cs:35`); never shown (no tooltip colour), not changed by calibration | −1…11 + expert/master, shown as name colour | ◐ | ❌ IC-14 → 0.5.0 |
+| K3 | Value | `CreditValue` = Value → ShopPrice → tier² × 10 (`ItemSystem.cs`); 45 items use the fallback | `value` in copper | ✅ | ✅ as audited |
+| K4 | Selling | 1/5 of value × calibration × happiness (`GetSellPrice` `GameSimulation.Town.cs:389`) | sell at value/5 | ✅ | ✅ as audited |
+| K5 | Buy-back of sold items | none | shop buy-back row (knowledge) | ❌ | ✅ 0.1.9: buyback of the last ten sales |
+| K6 | Currency | single "Credits" item, 99999 stack | copper/silver/gold/platinum | ➕ | ➕ kept |
+| K7 | Boss summons and event starters | `ConsumeContentItem` `GameSimulation.Items.cs:77–120` | summon items | ✅ | ✅ as audited |
+| K8 | Crates and treasure bags open | `OpenCrate`, `OpenTreasureBag` `PlayerSystems.cs:422` | same | ✅ | ✅ as audited |
+| K9 | Life/charge capacity items | Life core, Lifebloom, Charge crystal (`ConsumeBatchBItem` `GameSimulation.Player.cs:~678`) | Life Crystal, Life Fruit, Mana Crystal | ✅ | ✅ as audited |
 
 ### L. Sprites, use animations, item UI
 
-| ID | Feature | Rimtera | Terraria | Status |
-|---|---|---|---|---|
-| L1 | Own sprite for every item | `--item-audit`: 0 missing, 0 shared | per-item textures | ✅ |
-| L2 | Use animations by style | `UseAnimation` (21 kinds) `UI/GraphicalSandbox.HeldItems.cs:14–125`: swing, heavy swing, stab, aim, bow, staff, tome, beam, hold-up, eat, drink, throw, tether, whip, place, pour, spray, cast, drill, net | useStyle 1–14 | ✅ |
-| L3 | Melee swing/thrust art at the simulation reach | `DrawSimSwing` `HeldItems.cs:~677` | item drawn on the arc | ✅ |
-| L4 | Spinning sprites for yo-yos, boomerangs, flails and thrown | `DrawStyledProjectiles` `UI/GraphicalSandbox.Weapons.cs:131` | projectile textures | ✅ |
-| L5 | Item tooltip | `DrawItemTooltip` `GraphicalSandbox.cs:3250`: "uses Energy cells" for every ranged item; no damage line for Tech or Command; no crit, knockback, charge cost, calibration name, set bonus, accessory effect, rarity colour or value | full stat tooltip, prefix name, rarity colour, sell price | ⚠ |
-| L6 | Explosion visuals | `RecentExplosions` `WeaponStyles.cs:82` | explosion dust | ✅ |
+| ID | Feature | Rimtera | Terraria | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| L1 | Own sprite for every item | `--item-audit`: 0 missing, 0 shared | per-item textures | ✅ | ✅ as audited |
+| L2 | Use animations by style | `UseAnimation` (21 kinds) `UI/GraphicalSandbox.HeldItems.cs:14–125`: swing, heavy swing, stab, aim, bow, staff, tome, beam, hold-up, eat, drink, throw, tether, whip, place, pour, spray, cast, drill, net | useStyle 1–14 | ✅ | ✅ as audited |
+| L3 | Melee swing/thrust art at the simulation reach | `DrawSimSwing` `HeldItems.cs:~677` | item drawn on the arc | ✅ | ✅ as audited |
+| L4 | Spinning sprites for yo-yos, boomerangs, flails and thrown | `DrawStyledProjectiles` `UI/GraphicalSandbox.Weapons.cs:131` | projectile textures | ✅ | ✅ as audited |
+| L5 | Item tooltip | `DrawItemTooltip` `GraphicalSandbox.cs:3250`: "uses Energy cells" for every ranged item; no damage line for Tech or Command; no crit, knockback, charge cost, calibration name, set bonus, accessory effect, rarity colour or value | full stat tooltip, prefix name, rarity colour, sell price | ⚠ | ✅ IC-17 0.1.15 |
+| L6 | Explosion visuals | `RecentExplosions` `WeaponStyles.cs:82` | explosion dust | ✅ | ✅ as audited |
 
 ---
 

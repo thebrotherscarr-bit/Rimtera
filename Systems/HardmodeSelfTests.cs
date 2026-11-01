@@ -345,11 +345,14 @@ public static class HardmodeSelfTests
         var brute = brutal.SpawnCreature(EnemyKind.RockGolem, brutal.Player.Motion.Position + new Vector2(14f, -4f));
         var astro = brutal.SpawnCreature(EnemyKind.AstroGod, brutal.Player.Motion.Position + new Vector2(-20f, -10f));
         Tick(brutal);
-        check(easyStats && scaled && brute.MaximumHitPoints > after.MaximumHitPoints &&
-              GameSimulation.HardmodeScale(WorldDifficulty.Explorer).Health < classicHealth &&
+        // D-6: the hardmode rescale is the same on every difficulty; Brutal's x2 life rides on top (the player's hits are halved).
+        var brutalCap = GameSimulation.BossDamageCapFor(astro.Archetype, WorldDifficulty.Brutal);
+        check(easyStats && scaled && brute.MaximumHitPoints == after.MaximumHitPoints &&
+              GameSimulation.HardmodeScale(WorldDifficulty.Explorer) == GameSimulation.HardmodeScale(WorldDifficulty.Brutal) &&
+              WorldSettings.EnemyHealthScale(WorldDifficulty.Brutal) == 2f &&
               astro.MaximumHitPoints == EnemyArchetypes.Get(EnemyKind.AstroGod).HitPoints &&
-              astro.AttackDamage <= GameSimulation.BossDamageCap &&
-              brutal.ProbeCappedBossHit(astro, 500f) == GameSimulation.BossDamageCap && brutal.ProbeCappedBossHit(brute, 500f) == 500f,
-            "after the Fracture regular creatures gain the difficulty's hardmode health and damage; bosses keep theirs, capped per hit");
+              astro.AttackDamage <= GameSimulation.BossDamageCap && brutalCap == 2f * GameSimulation.BossDamageCap &&
+              brutal.ProbeCappedBossHit(astro, 500f) == brutalCap && brutal.ProbeCappedBossHit(brute, 500f) == 500f,
+            "after the Fracture regular creatures gain the hardmode health and damage (the same on every difficulty, D-6); bosses keep theirs, capped per hit by tier and difficulty");
     }
 }
