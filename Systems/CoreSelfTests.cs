@@ -1724,6 +1724,7 @@ public static class CoreSelfTests
         SoundEventSelfTests.Run(Check); // 0.1.9 feedback: simulation sound events, despawns are not kills, dust under the cap, crit records (PE-4/5/7/14)
         TooltipSelfTests.Run(Check); // 0.1.9 IC-17: the truthful item tooltip (class damage, real ammo, calibration, sets, sell value)
         HealingLadderSelfTests.Run(Check); // 0.1.9 C1: healing and charge ladders, their gates, potion sickness, quick heal, cooked food
+        BuffCurveSelfTests.Run(Check); // 0.3.2: buff durations on Terraria's scale (real minutes), food, caps and saves
         DropRuleSelfTests.Run(Check); // 0.1.9 C2-C5: drop chances and conditions, event drops, hearts and orbs, boss potions, 9999 stacks
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab

@@ -328,3 +328,45 @@ The core-chips in `PlayerSystemsContent` (defense 2 + tier, capped at 6) are out
 window. Under Terraria's chop formula, a copper-tier axe (35%, 21 ticks) needs 13 chops, about 273 ticks. The parity
 version of the same test (`ParityBuildTests` B5) already sizes its window from the item's numbers. The BatchA test
 needs the same change, or a higher-tier cutter.
+
+## 8. Consumables: re-checked in 0.3.2
+
+0.3.2 re-ran the gear checks after the 0.2.x changes. The tier curve still holds: `GearCurveSelfTests` passes
+unchanged. It then compared the consumables with Terraria 1.4.
+
+| Area | Terraria | Rimtera before | Rimtera now |
+|---|---|---|---|
+| Healing potions | 50 / 100 / 150 / 200, 60 s sickness | Same; restoration 90 with 45 s | Unchanged |
+| Buff potions | 2–15 real minutes (most 4–8) | 3–10 vital hours, i.e. **40 s to 2 min** | Each matches its Terraria counterpart |
+| Well Fed food | 5–20 minutes | 4–10 vital hours (50 s to 2 min) | 6.7–16.7 minutes (a common meal 10) |
+| Stack sizes | 9999 for stackables (1.4.5) | 9999 since 0.1.9 | Unchanged |
+| Ammo | Wooden arrow 5, musket ball 7, luminite 15–20 | Bolts 3 to 16, rounds 2 to 15 | Unchanged (below) |
+| Coin values | Rise with tier | Median value rises with every tier (12 → 1495) | Unchanged |
+
+**Buff durations.** Statuses run on vital hours, and one vital hour is 12.5 real seconds. The buff items were authored
+as if an hour were a minute, so every potion ran out four to ten times sooner than its Terraria counterpart.
+`Systems/Content/BuffCurve.cs` now gives each buff item the duration of its counterpart, in real minutes, and
+`BuffCurveSelfTests` holds it. Examples:
+
+| Item | Terraria counterpart | Minutes |
+|---|---|---|
+| Speed stim, marathon stim | Swiftness | 8 |
+| Armor stim | Ironskin | 8 |
+| Restorative tonic | Regeneration | 8 |
+| Lifeforce serum | Lifeforce | 8 |
+| Miner's draught | Mining | 8 |
+| Combat tonics (close quarters, ballistics, tech) | Titan, Archery, Magic Power | 4 (greater 8) |
+| Command tonic, drone and sentry link | Summoning | 6 (greater tonic 10) |
+| Fortify, endurance, wrath, ammo reserve | Endurance, Wrath, Ammo Reservation | 4 |
+| Spelunker spray, glow draught, surface tension | Spelunker, Shine, Water Walking | 5 |
+| Night-owl and night-sight drops | Night Owl | 4 |
+| Thornskin serum, water-breath capsule, evasion serum | Thorns, Gills, Invisibility | 2 |
+| Builder's brew | Builder | 15 |
+| Fortune tonic | Luck | 10 |
+
+Food keeps its spread and is rescaled so a common meal lasts Terraria's ten minutes. Buffs may now last up to twenty
+minutes; the shorter caps they were authored with no longer cut them short. Debuffs are unchanged.
+
+**Ammo is left as it is.** Rimtera's ammo adds less than Terraria's, but its bows and guns carry more of the damage. The
+total is what matters, and it is on the curve: a tier-1 bow (8) with ferrite bolts (3) hits for 11, the same as
+Terraria's copper bow (6) with a wooden arrow (5).
