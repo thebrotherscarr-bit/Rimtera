@@ -754,9 +754,17 @@ public sealed partial class GameSimulation : IStoryHost
 
     public CraftingResult TryCraft(string recipeId)
     {
-        var result = Crafting.TryCraft(recipeId, Player.Inventory, CreateCraftingEnvironment(), RollCalibration);
-        if (result.Success && Crafting.FindById(recipeId) is { } crafted)
-            SpendCraftPowerAt(crafted, PlayerCenter); // 0.3.8: a powered craft draws the AI's power (0.7.6: or a relay's)
+        // 0.7.7: crafting at a powered machine gives you a small bonus: a better roll now and then, and sometimes an extra batch.
+        var recipe = Crafting.FindById(recipeId);
+        var powered = recipe is not null && PowerSourceAt(PowerCost(recipe), PlayerCenter) is not null;
+        Func<ItemDefinition, Calibration> roll = powered ? item => LuckyCalibration(CraftRandom, LuckRandom, item, Luck + PlayerPoweredLuck) : RollCalibration;
+        var result = Crafting.TryCraft(recipeId, Player.Inventory, CreateCraftingEnvironment(), roll);
+        if (result.Success && recipe is not null)
+        {
+            if (powered && Items[recipe.Output].MaxStack > 1 && CraftRandom.NextDouble() < PlayerPoweredExtra)
+                Player.Inventory.Add(recipe.Output, recipe.OutputCount);
+            SpendCraftPowerAt(recipe, PlayerCenter); // 0.3.8: a powered craft draws the AI's power (0.7.6: or a relay's)
+        }
         if (result.Success) SoundEvents.Emit(SoundEventKind.Craft, SoundEventQueue.CraftVariant(Crafting.FindById(recipeId)), PlayerCenter, (int)(result.Output ?? 0));
         PostMessage(result.Message);
         return result;

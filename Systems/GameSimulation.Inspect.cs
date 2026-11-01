@@ -50,6 +50,7 @@ public sealed partial class GameSimulation
             $"Doing: {npc.Activity}",
             GameSimulation.Eats(npc) ? $"Food {(int)MathF.Round(npc.Food * 100f)}%{(npc.Food <= 0f ? " · starving" : npc.Food < GameSimulation.HungryBelow ? " · hungry" : "")}{(npc.IsSick ? $" · rust fever ({npc.SickHours:0}h)" : "")}" : "Does not eat",
             $"Best at: {string.Join(", ", Enum.GetValues<ColonistSkill>().OrderByDescending(stats.Level).Take(3).Select(skill => $"{skill} {stats.Level(skill)}{(stats.Passion(skill) == PassionLevel.None ? "" : "+")}"))}",
+            GameSimulation.AffinityLine(stats), // 0.7.7
             $"Grew up: {npc.Childhood?.Title ?? "unknown"} · then: {npc.Adulthood?.Title ?? "unknown"}" +
                 (npc.Refuses.Count > 0 ? $" · won't {string.Join(", ", npc.Refuses.Select(work => WorkCatalog.Get(work).Label.ToLowerInvariant()))}" : ""),
             !npc.WorksStations || TownTrades.Idle(npc.Kind) ? "Works no stations"
