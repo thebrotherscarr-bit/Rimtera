@@ -1855,6 +1855,7 @@ public sealed partial class GameSimulation : IStoryHost
         if (hour <= _lastStoryHour)
             return;
         _lastStoryHour = hour;
+        UpdateActs(); // 0.6.2: the run's act, before the storyteller reads it
         _storyteller.OnHour(this);
         UpdateTownHourly();
     }
@@ -2022,7 +2023,8 @@ public sealed partial class GameSimulation : IStoryHost
         Player.MaximumHitPoints <= 0f ? 0f : Player.HitPoints / Player.MaximumHitPoints,
         CrewShortage: Math.Max(0, CrewCapacity - SettlerCount),
         LostResidents: LostResidentKinds().Count(),
-        FreeHouse: FindFreeHouse() is not null);
+        FreeHouse: FindFreeHouse() is not null,
+        Act: (int)Act);
 
     int IStoryHost.SpawnRaidWave(BiomeZone biome, float threatPoints, out string description) =>
         PlanRaid(threatPoints, out description); // 0.4.3: a raid is announced first and arrives later (GameSimulation.Raids.cs)

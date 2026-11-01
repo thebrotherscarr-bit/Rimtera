@@ -28,7 +28,9 @@ public readonly record struct StoryContext(
     float PlayerHealthFraction,
     int CrewShortage = 0,
     int LostResidents = 0,
-    bool FreeHouse = false);
+    bool FreeHouse = false,
+    // 0.6.2: the run's act (1 Landfall ... 7 Launch).
+    int Act = 1);
 
 /// <summary>Parameters handed to one incident execution.</summary>
 public readonly record struct IncidentParms(float ThreatPoints, BiomeZone Biome, bool Forced);
@@ -192,10 +194,11 @@ public sealed class Storyteller
     }
 
     /// <summary>Wealth follows a square-root curve so hoarding raises threats with diminishing returns.</summary>
-    public static float ComputeThreatPoints(int day, float wealth, int colonists, int defeatedBosses)
+    public static float ComputeThreatPoints(int day, float wealth, int colonists, int defeatedBosses, int act = 1)
     {
         var wealthPoints = 2.4f * MathF.Sqrt(Math.Max(0f, wealth));
-        var points = 30f + wealthPoints + colonists * 16f + Math.Max(0, day - 1) * 7f + defeatedBosses * 32f;
+        // 0.6.2: each act past Landfall raises the floor.
+        var points = 30f + wealthPoints + colonists * 16f + Math.Max(0, day - 1) * 7f + defeatedBosses * 32f + Math.Max(0, act - 1) * 20f;
         return Math.Clamp(points, MinimumThreatPoints, MaximumThreatPoints);
     }
 
@@ -206,7 +209,7 @@ public sealed class Storyteller
         HoursElapsed++;
         AdvanceTimers(host, 1f);
         var context = host.CaptureStoryContext();
-        LastThreatPoints = ComputeThreatPoints(context.Day, context.ColonyWealth, context.ColonistCount, context.DefeatedBosses);
+        LastThreatPoints = ComputeThreatPoints(context.Day, context.ColonyWealth, context.ColonistCount, context.DefeatedBosses, context.Act);
         if (TryArrival(context, host) is { } arrival)
             return arrival;
         if (CooldownHours > 0f)
@@ -233,7 +236,7 @@ public sealed class Storyteller
         if (incident is null)
             return null;
         var context = host.CaptureStoryContext();
-        LastThreatPoints = ComputeThreatPoints(context.Day, context.ColonyWealth, context.ColonistCount, context.DefeatedBosses);
+        LastThreatPoints = ComputeThreatPoints(context.Day, context.ColonyWealth, context.ColonistCount, context.DefeatedBosses, context.Act);
         return incident.CanFire(context, this) ? Execute(incident, context, host, forced: true) : null;
     }
 
@@ -315,6 +318,7 @@ public sealed class Storyteller
         // Early days lean toward boons; threats grow more common as the colony ages.
         var threatBias = Math.Min(1f, context.Day / 6f);
         var (major, boon) = Kind switch { StorytellerKind.Chaotic => (1.5f, 0.8f), StorytellerKind.Builder => (0.6f, 1.3f), _ => (1f, 1f) };
+        major *= 1f + 0.1f * Math.Max(0, context.Act - 1); // 0.6.2: later acts lean toward major threats
         var weights = new (IncidentCategory Category, float Weight)[]
         {
             (IncidentCategory.MajorThreat, (0.15f + 0.3f * threatBias) * major),
@@ -489,7 +493,7 @@ public sealed class ToxicFalloutIncident : IStoryIncident
     public IncidentCategory Category => IncidentCategory.MinorThreat;
     public float RefireHours => 36f;
     public bool CanFire(StoryContext context, Storyteller teller) =>
-        context.Day >= Storyteller.FirstWeatherDay && context.RadiatedNearby && !teller.FalloutActive;
+        context.Day >= Storyteller.FirstWeatherDay && context.RadiatedNearby && !teller.FalloutActive && context.Act >= 2; // 0.6.2: from the Descent
     public float ChanceWeight(StoryContext context) => context.Biome == BiomeZone.RadiatedDeeps ? 1.5f : 0.9f;
 
     public string? TryExecute(IncidentParms parms, Storyteller teller, IStoryHost host)
@@ -506,7 +510,8 @@ public sealed class SolarFlareIncident : IStoryIncident
     public string DisplayName => "Solar flare";
     public IncidentCategory Category => IncidentCategory.MinorThreat;
     public float RefireHours => 40f;
-    public bool CanFire(StoryContext context, Storyteller teller) => !teller.SolarFlareActive && context.Day >= Storyteller.FirstWeatherDay;
+    // 0.6.2: solar flares belong to the Core and after.
+    public bool CanFire(StoryContext context, Storyteller teller) => !teller.SolarFlareActive && context.Day >= Storyteller.FirstWeatherDay && context.Act >= 3;
     public float ChanceWeight(StoryContext context) => 0.7f;
 
     public string? TryExecute(IncidentParms parms, Storyteller teller, IStoryHost host)
