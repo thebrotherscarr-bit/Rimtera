@@ -345,6 +345,10 @@ public sealed class MenuFlow
     public WorldDifficulty WorldDifficultyDraft => _worldDifficulty;
     public WorldHazard WorldHazardDraft => _worldHazard;
     private WorldBlight _worldBlight = WorldBlight.Random;
+    /// <summary>0.6.1: the storyteller and threat dial picked for a new world.</summary>
+    private StorytellerKind _worldStoryteller = StorytellerKind.Steady;
+    private float _worldThreat = 1f;
+    private static readonly float[] ThreatSteps = [0.5f, 0.75f, 1f, 1.5f, 2f];
     public WorldBlight WorldBlightDraft => _worldBlight;
     public (string Label, int Width, int Height) WorldSizeDraft => WorldSizes[_worldSizeIndex];
 
@@ -1227,6 +1231,21 @@ public sealed class MenuFlow
                 ReplaceCurrent(CreateWorldCreationMenu());
             },
             Description: WorldSettings.Describe(_worldBlight)),
+        new MenuEntry($"Storyteller: {Storyteller.Name(_worldStoryteller)}",
+            Adjust: amount =>
+            {
+                _worldStoryteller = Cycle(_worldStoryteller, amount);
+                ReplaceCurrent(CreateWorldCreationMenu());
+            },
+            Description: Storyteller.Describe(_worldStoryteller) + " Picked now; it runs every event for the whole run."),
+        new MenuEntry($"Threat: ×{_worldThreat:0.##}",
+            Adjust: amount =>
+            {
+                var index = Array.IndexOf(ThreatSteps, _worldThreat);
+                _worldThreat = ThreatSteps[Math.Clamp((index < 0 ? 2 : index) + Math.Sign(amount), 0, ThreatSteps.Length - 1)];
+                ReplaceCurrent(CreateWorldCreationMenu());
+            },
+            Description: "How hard the storyteller hits: raids and threats are this much stronger (or weaker) than usual."),
         new MenuEntry($"Seed: {_worldSeed}", () => PromptForText("World seed", "Any whole number. The same seed makes the same world.",
                 _worldSeed.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 value => SetWorldSeed(int.TryParse(value, out var parsed) ? parsed : unchecked((int)StableHash(value)))),
@@ -1247,7 +1266,8 @@ public sealed class MenuFlow
             {
                 var size = WorldSizes[_worldSizeIndex];
                 Launch(_profiles.CreateWorld(_worldDraft, _worldSeed, size.Width, size.Height, _worldDifficulty, _worldHazard, _worldBlight,
-                    createdByCreative: _selectedCharacter?.Difficulty == CharacterDifficulty.Creative));
+                    createdByCreative: _selectedCharacter?.Difficulty == CharacterDifficulty.Creative,
+                    storyteller: _worldStoryteller, storytellerThreat: _worldThreat));
             }
             catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
             { ReplaceCurrentWithStatus(CreateWorldCreationMenu(), ex.Message); }

@@ -611,7 +611,10 @@ public sealed record WorldProfile(
     WorldHazard Hazard = WorldHazard.Random,
     bool Favorite = false,
     WorldBlight Blight = WorldBlight.Random,
-    bool CreatedByCreative = false)
+    bool CreatedByCreative = false,
+    // 0.6.1: the storyteller picked at creation and its threat dial.
+    StorytellerKind Storyteller = StorytellerKind.Steady,
+    float StorytellerThreat = 1f)
 {
     /// <summary>
     /// Creative (Journey) characters and worlds stay apart, as in Terraria: a Creative character plays only worlds a
@@ -649,7 +652,8 @@ public sealed class UserProfileStore
 
     public WorldProfile CreateWorld(string name, int seed, int width = 160, int height = 72,
         WorldDifficulty difficulty = WorldDifficulty.Classic, WorldHazard hazard = WorldHazard.Random,
-        WorldBlight blight = WorldBlight.Random, bool createdByCreative = false)
+        WorldBlight blight = WorldBlight.Random, bool createdByCreative = false,
+        StorytellerKind storyteller = StorytellerKind.Steady, float storytellerThreat = 1f)
     {
         name = NormalizeName(name, "New World");
         width = Math.Clamp(width, 80, 8400);
@@ -660,7 +664,7 @@ public sealed class UserProfileStore
                 throw new InvalidOperationException($"A world named '{name}' already exists.");
             var now = DateTimeOffset.UtcNow;
             var world = new WorldProfile(Guid.NewGuid(), name, seed, now, now, width, height, difficulty, hazard, Blight: blight,
-                CreatedByCreative: createdByCreative);
+                CreatedByCreative: createdByCreative, Storyteller: storyteller, StorytellerThreat: storytellerThreat);
             _index = _index with { Worlds = _index.Worlds.Append(world).ToArray() };
             SaveUnsafe();
             return world;
