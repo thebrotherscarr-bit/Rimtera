@@ -389,11 +389,18 @@ public sealed partial class GameSimulation
     public bool BagReplacesBossLoot(EnemyAgent enemy) =>
         enemy.IsBoss && Difficulty >= WorldDifficulty.Brutal && PlayerSystemsContent.BagFor(enemy.Kind) is not null;
 
-    /// <summary>The guaranteed drops of a defeated creature, or its salvage cache on Brutal.</summary>
+    /// <summary>
+    /// The drops of a defeated creature that pass their chance and conditions (Fracture, night, difficulty, event; 0.1.9 C4),
+    /// or its salvage cache on Brutal.
+    /// </summary>
     private IReadOnlyList<NpcDropDefinition> BossDropsOrBag(EnemyAgent enemy) =>
         BagReplacesBossLoot(enemy) && PlayerSystemsContent.BagFor(enemy.Kind) is { } bag
             ? [new NpcDropDefinition(enemy.Kind, bag, 1)]
-            : NpcDropRegistry.GetDrops(enemy.Kind);
+            : NpcDropRegistry.Roll(enemy.Kind, DropContext, DropRandom);
+
+    /// <summary>What drop conditions see right now.</summary>
+    public NpcDropContext DropContext => new(FractureActive, IsNight, Difficulty,
+        _worldEvents.Active.Select(state => state.Kind).ToHashSet());
 
     /// <summary>Lucky extra drops, trophies (any difficulty, a small luck-tilted chance) and relics (Annihilation only).</summary>
     private void OnCreatureDefeatedPlayerSystems(EnemyAgent enemy)
@@ -424,7 +431,7 @@ public sealed partial class GameSimulation
         if (PlayerSystemsContent.BagBoss(bag) is not { } boss || !Player.Inventory.TryConsume(bag))
             return false;
         var center = PlayerCenter;
-        foreach (var drop in NpcDropRegistry.GetDrops(boss))
+        foreach (var drop in NpcDropRegistry.Roll(boss, DropContext, DropRandom))
             CollectOrDrop(drop.Item, drop.Quantity > 1 ? (int)MathF.Ceiling(drop.Quantity * 1.25f) : drop.Quantity, center);
         if (ArsenalItems.BossPools.TryGetValue(boss, out var pool) && pool.Length > 0)
             CollectOrDrop(pool[PlayerSystemsRandom.Next(pool.Length)], 1, center);

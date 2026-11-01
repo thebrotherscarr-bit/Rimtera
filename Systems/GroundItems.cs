@@ -1,4 +1,5 @@
 using System.Numerics;
+using Rimtera.Entities;
 using Rimtera.World;
 
 namespace Rimtera.Systems;
@@ -77,9 +78,10 @@ public sealed partial class GameSimulation
     {
         if (count <= 0 || !Items.Contains(item))
             return;
-        if (_groundDrops && !_directDrops)
+        if (_groundDrops && !_directDrops || Items[item].IsInstantPickup)
         {
-            // Broken blocks pop out as loose items and are picked up by walking near them.
+            // Broken blocks pop out as loose items and are picked up by walking near them; hearts and charge orbs always
+            // land as pickups (applied on touch, never put in the bag).
             SpawnGroundItem(item, count, position, calibration);
             return;
         }
@@ -166,9 +168,18 @@ public sealed partial class GameSimulation
                 continue;
             }
             var distance = Vector2.Distance(item.Position, center);
-            item.Attracted = canCollect && item.PickupDelay <= 0f && distance <= grab && Player.Inventory.CanAdd(item.ItemId, 1);
+            var instant = Items[item.ItemId].IsInstantPickup;
+            item.Attracted = canCollect && item.PickupDelay <= 0f && distance <= grab && (instant || Player.Inventory.CanAdd(item.ItemId, 1));
             if (item.Attracted)
             {
+                if (instant && distance <= ItemCollectRadius)
+                {
+                    // Hearts and charge orbs work on touch and never enter the bag.
+                    for (var n = 0; n < item.Count; n++)
+                        ApplyInstantPickup(Items[item.ItemId]);
+                    _groundItems.RemoveAt(i);
+                    continue;
+                }
                 if (distance <= ItemCollectRadius)
                 {
                     var added = Player.Inventory.Add(item.ItemId, item.Count, item.Calibration);
@@ -253,6 +264,79 @@ public sealed partial class GameSimulation
                 if (b.Count <= 0)
                     _groundItems.RemoveAt(j);
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ hearts, charge orbs and boss potions (0.1.9 C2/C3)
+
+    /// <summary>Hearts and charge orbs the player has picked up (for checks and the stats screen).</summary>
+    public int HeartsPickedUp { get; private set; }
+    public int ChargeOrbsPickedUp { get; private set; }
+
+    private Random? _dropRandomField;
+    /// <summary>Rolls drop chances, hearts and charge orbs, and boss potion counts.</summary>
+    private Random DropRandom => _dropRandomField ??= new Random(Seed ^ 0x1D80F5);
+
+    /// <summary>Base one-in-12 chance of a heart (or orb), rising to one in four for an empty bar.</summary>
+    public const float PickupBaseChance = 1f / 12f, PickupMissingChance = 1f / 6f;
+
+    /// <summary>
+    /// Chance a kill drops a heart: none at full health, otherwise a base chance plus a share weighted by how hurt the player is
+    /// (Terraria's NPCLoot_DropHeals favours a hurt player). At half health it is one in six.
+    /// </summary>
+    public float HeartDropChance => Player.IsDead || Player.HitPoints >= Player.MaximumHitPoints - 0.5f ? 0f
+        : PickupBaseChance + PickupMissingChance * (1f - Player.HitPoints / Math.Max(1f, Player.MaximumHitPoints));
+
+    /// <summary>Chance a kill drops a charge orb: none with a full charge bar, more the emptier it is (Terraria's mana stars).</summary>
+    public float ChargeOrbDropChance => Player.IsDead || Charge >= MaximumCharge - 0.5f ? 0f
+        : PickupBaseChance + PickupMissingChance * (1f - Charge / Math.Max(1f, MaximumCharge));
+
+    /// <summary>
+    /// After the regular loot: a boss leaves 5-15 healing stims of its tier (delivered like its loot, outside any salvage cache,
+    /// on every difficulty) and 3-5 hearts; any other hostile kill may leave a heart or a charge orb.
+    /// </summary>
+    private void DropSustainLoot(EnemyAgent enemy)
+    {
+        var center = enemy.Motion.Position + enemy.Motion.Size / 2f;
+        if (enemy.IsBoss)
+        {
+            var (stim, low, high) = BossPotions(enemy.Archetype.Tier);
+            DropLoot(enemy, stim, DropRandom.Next(low, high + 1));
+            var hearts = DropRandom.Next(3, 6);
+            for (var n = 0; n < hearts; n++)
+                SpawnGroundItem(ItemId.HeartPickup, 1, center + new Vector2((n - hearts / 2f) * 0.5f, 0f), pickupDelay: 0.5f);
+            return;
+        }
+        if (enemy.Archetype.Passive || enemy.Archetype.AttackDamage <= 0f || enemy.Archetype.HitPoints <= 1f)
+            return;
+        if (DropRandom.NextDouble() < HeartDropChance)
+            SpawnGroundItem(ItemId.HeartPickup, 1, center);
+        if (DropRandom.NextDouble() < ChargeOrbDropChance)
+            SpawnGroundItem(ItemId.ChargeOrb, 1, center);
+    }
+
+    /// <summary>The healing stim a boss of <paramref name="tier"/> drops and how many (5-15, more for later bosses).</summary>
+    public static (ItemId Stim, int Low, int High) BossPotions(BossTier tier) => tier switch
+    {
+        BossTier.Gate => (ItemId.MedStim, 5, 8),
+        BossTier.Easy => (ItemId.MedStim, 6, 10),
+        BossTier.Hard => (ItemId.TraumaStim, 8, 12),
+        BossTier.Event => (ItemId.NaniteStim, 10, 14),
+        _ => (ItemId.PhoenixStim, 11, 15)
+    };
+
+    /// <summary>A heart heals, a charge orb refills charge; neither brings on sickness.</summary>
+    private void ApplyInstantPickup(ItemDefinition item)
+    {
+        if (item.PickupHeal > 0f)
+        {
+            Player.Heal(item.PickupHeal);
+            HeartsPickedUp++;
+        }
+        if (item.PickupCharge > 0f)
+        {
+            Charge += item.PickupCharge;
+            ChargeOrbsPickedUp++;
         }
     }
 

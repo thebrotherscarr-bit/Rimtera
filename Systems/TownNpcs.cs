@@ -208,13 +208,19 @@ public static class TownNpcCatalog
             [(TownNpcKind.Cook, Affection.Like), (TownNpcKind.TradeConsul, Affection.Dislike)],
             [(ItemId.Berry, null), (ItemId.WallTorch, null), (ItemId.RopeCoil, null), (ItemId.WoodBlock, null), (ItemId.FerriteBar, null),
              (ItemId.PlankChair, null), (ItemId.PlankTable, null), (ItemId.PlankDoor, null), (ItemId.BugNet, null), (ItemId.FishingRod, null),
-             (ItemId.EmptyBucket, null), (ItemId.GlowSticks, null), (ItemId.CompanionPermit, null)],
+             (ItemId.EmptyBucket, null), (ItemId.GlowSticks, null), (ItemId.CompanionPermit, null),
+             // The charge ladder (0.1.9 C1), each rung once its gate has passed.
+             (ItemId.ChargeCellMedium, "boss.stone_sentinel.down"), (ItemId.ChargeCellLarge, "ore.voidsteel"),
+             (ItemId.ChargeCellPeak, "boss.void_cantor.down")],
             ["Torches, rope, rations. The basics never go out of stock.", "Credits are credits. I don't ask where they came from."]);
         yield return new(TownNpcKind.Medic, "Medic", "npc_medical_doctor", ["Dr. Senna Abara", "Dr. Ilo Marchetti"],
             [(BiomeZone.FrozenWasteland, Affection.Like), (BiomeZone.RadiatedDeeps, Affection.Hate)],
             [(TownNpcKind.AstroBotanist, Affection.Love), (TownNpcKind.Demolitionist, Affection.Dislike)],
             [(ItemId.MedStim, null), (ItemId.RestorativeTonic, null), (ItemId.RegenPatch, null), (ItemId.LaserScalpel, null),
-             (ItemId.LifeMonitor, null), (ItemId.ChargeStim, "boss.stone_sentinel.down")],
+             (ItemId.LifeMonitor, null), (ItemId.ChargeStim, "boss.stone_sentinel.down"),
+             // The healing ladder (0.1.9 C1), each rung once its gate has passed.
+             (ItemId.TraumaStim, "boss.stone_sentinel.down"), (ItemId.RestorationStim, "boss.stone_sentinel.down"),
+             (ItemId.NaniteStim, "ore.voidsteel"), (ItemId.PhoenixStim, "boss.void_cantor.down")],
             ["Hold still. This stings less than it looks.", "I can patch you up — for a fee. Nothing is free out here."]);
         yield return new(TownNpcKind.Armorer, "Armorer", "npc_security_guard", ["Captain Rhee", "Sergeant Okafor", "Lieutenant Brask"],
             [(BiomeZone.JunkWasteland, Affection.Like), (BiomeZone.VerdantCanopy, Affection.Dislike)],

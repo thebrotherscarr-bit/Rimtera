@@ -2,14 +2,82 @@ using Rimtera.Entities;
 
 namespace Rimtera.Systems;
 
-public sealed record NpcDropDefinition(EnemyKind Kind, ItemId Item, int Quantity = 1);
+/// <summary>When a drop rule may fire (Terraria's ItemDropRule conditions). Combine flags; all must hold.</summary>
+[Flags]
+public enum DropCondition : byte
+{
+    None = 0,
+    /// <summary>Only after the Fracture (Terraria: hardmode).</summary>
+    Fracture = 1,
+    /// <summary>Only before the Fracture.</summary>
+    PreFracture = 2,
+    Night = 4,
+    Day = 8,
+    /// <summary>Only while the rule's <see cref="NpcDropDefinition.Event"/> is running.</summary>
+    DuringEvent = 16
+}
+
+/// <summary>The world state drop conditions are checked against.</summary>
+public sealed record NpcDropContext(bool Fracture, bool Night, WorldDifficulty Difficulty, IReadOnlySet<WorldEventKind> Events)
+{
+    /// <summary>A Classic world before the Fracture, by day, with no event running.</summary>
+    public static NpcDropContext Default { get; } = new(false, false, WorldDifficulty.Classic, new HashSet<WorldEventKind>());
+}
 
 /// <summary>
-/// Guaranteed loot per creature. The first entry is the primary drop; bosses add
-/// crystals, alloy, and sometimes a weapon tied to their tier.
+/// One drop rule: <paramref name="Quantity"/> of <paramref name="Item"/> with a chance of
+/// <see cref="Numerator"/>/<see cref="Denominator"/> (chances below 1% are fine: 1/500), when every condition holds.
+/// The defaults (1/1, no conditions) are a guaranteed drop.
+/// </summary>
+public sealed record NpcDropDefinition(EnemyKind Kind, ItemId Item, int Quantity = 1)
+{
+    public int Numerator { get; init; } = 1;
+    public int Denominator { get; init; } = 1;
+    public DropCondition Conditions { get; init; }
+    /// <summary>The easiest world difficulty the rule fires on (Brutal for Terraria's expert-only drops).</summary>
+    public WorldDifficulty MinimumDifficulty { get; init; } = WorldDifficulty.Explorer;
+    /// <summary>The event <see cref="DropCondition.DuringEvent"/> refers to.</summary>
+    public WorldEventKind? Event { get; init; }
+
+    /// <summary>Probability of the roll alone (conditions aside).</summary>
+    public double Chance => Denominator <= 0 ? 0d : Math.Min(1d, (double)Numerator / Denominator);
+
+    /// <summary>A plain guaranteed drop: certain, with no conditions.</summary>
+    public bool Guaranteed => Numerator >= Denominator && Conditions == DropCondition.None && MinimumDifficulty == WorldDifficulty.Explorer;
+
+    /// <summary>True when every condition holds in <paramref name="context"/>.</summary>
+    public bool Allows(NpcDropContext context) =>
+        context.Difficulty >= MinimumDifficulty &&
+        (!Conditions.HasFlag(DropCondition.Fracture) || context.Fracture) &&
+        (!Conditions.HasFlag(DropCondition.PreFracture) || !context.Fracture) &&
+        (!Conditions.HasFlag(DropCondition.Night) || context.Night) &&
+        (!Conditions.HasFlag(DropCondition.Day) || !context.Night) &&
+        (!Conditions.HasFlag(DropCondition.DuringEvent) || Event is { } kind && context.Events.Contains(kind));
+
+    /// <summary>Rolls the chance alone.</summary>
+    public bool RollChance(Random random) => Numerator >= Denominator || Numerator > 0 && random.Next(Denominator) < Numerator;
+
+    /// <summary>The rule with a chance of one in <paramref name="denominator"/>.</summary>
+    public NpcDropDefinition OneIn(int denominator) => this with { Numerator = 1, Denominator = Math.Max(1, denominator) };
+
+    /// <summary>The rule fires only while <paramref name="kind"/> is running.</summary>
+    public NpcDropDefinition During(WorldEventKind kind) => this with { Conditions = Conditions | DropCondition.DuringEvent, Event = kind };
+}
+
+/// <summary>
+/// Loot per creature. The first entry is the primary drop; bosses add crystals, alloy, and sometimes a weapon tied to
+/// their tier. Rules carry a chance and conditions (<see cref="NpcDropDefinition"/>); most are guaranteed.
 /// </summary>
 public static class NpcDropRegistry
 {
+    /// <summary>The rules of <paramref name="kind"/> that pass their conditions and their chance this time.</summary>
+    public static IReadOnlyList<NpcDropDefinition> Roll(EnemyKind kind, NpcDropContext context, Random random)
+    {
+        var rules = GetDrops(kind);
+        if (rules.All(rule => rule.Guaranteed))
+            return rules;
+        return rules.Where(rule => rule.Allows(context) && rule.RollChance(random)).ToArray();
+    }
     private static readonly Dictionary<EnemyKind, NpcDropDefinition[]> _drops = new()
     {
         [EnemyKind.MossSlime] = Drops(EnemyKind.MossSlime, (ItemId.Berry, 1)),
@@ -103,6 +171,7 @@ public static class NpcDropRegistry
     public static IReadOnlyList<NpcDropDefinition> GetDrops(EnemyKind kind) =>
         _drops.TryGetValue(kind, out var drops) ? drops
         : _contentDrops.TryGetValue(kind, out var content) ? content
+        : _eventDrops.TryGetValue(kind, out var invasion) ? invasion
         : ContentFillCreatures.Drops(kind) ?? CreatureCoverage.Drops(kind) ?? Array.Empty<NpcDropDefinition>();
 
     /// <summary>Content-expansion creature drops (biome materials, boss loot and summons).</summary>
@@ -176,4 +245,105 @@ public static class NpcDropRegistry
 
     private static NpcDropDefinition[] Drops(EnemyKind kind, params (ItemId Item, int Quantity)[] entries) =>
         entries.Select(entry => new NpcDropDefinition(kind, entry.Item, entry.Quantity)).ToArray();
+
+    /// <summary>A drop with a one-in-<paramref name="oneIn"/> chance (1 = guaranteed).</summary>
+    private static NpcDropDefinition D(EnemyKind kind, ItemId item, int quantity, int oneIn = 1) =>
+        new NpcDropDefinition(kind, item, quantity).OneIn(oneIn);
+
+    /// <summary>An event's rare signature item: one in <paramref name="oneIn"/>, only while that event runs.</summary>
+    private static NpcDropDefinition Signature(EnemyKind kind, ItemId item, int oneIn, WorldEventKind during) =>
+        new NpcDropDefinition(kind, item).OneIn(oneIn).During(during);
+
+    /// <summary>
+    /// The event units (D-22, Terraria's invasion enemies drop items): every Event* creature drops its event's materials, and
+    /// the invasions whose finale has an arsenal signature item (the Scavenger Warlord's medal, the pirate spyglass, the eclipse
+    /// sigil, the protocol shard, the mothership chip) let their units drop it rarely while the invasion runs.
+    /// </summary>
+    private static readonly Dictionary<EnemyKind, NpcDropDefinition[]> _eventDrops = new NpcDropDefinition[]
+    {
+        // Raid units (storyteller raids and the hardmode blight roster).
+        D(EnemyKind.EventGrunt, ItemId.ScrapIronOre, 2),
+        D(EnemyKind.EventScout, ItemId.ScrapIronOre, 1), D(EnemyKind.EventScout, ItemId.ClothRoll, 1, 3),
+        D(EnemyKind.EventMarksman, ItemId.SlugRounds, 8),
+        D(EnemyKind.EventBrute, ItemId.ScrapIronOre, 4), D(EnemyKind.EventBrute, ItemId.PlateBlock, 3, 2),
+        D(EnemyKind.EventCommander, ItemId.CircuitBoard, 2), D(EnemyKind.EventCommander, ItemId.WarlordsMedal, 1, 150),
+        D(EnemyKind.EventDrone, ItemId.ScrapIronOre, 1), D(EnemyKind.EventDrone, ItemId.PowerCell, 1, 2),
+        D(EnemyKind.EventEnergyVortex, ItemId.EnergyCrystal, 2),
+        D(EnemyKind.EventRogueTerraformer, ItemId.CircuitBoard, 2), D(EnemyKind.EventRogueTerraformer, ItemId.PowerCell, 1, 2),
+        D(EnemyKind.EventVoidSiphon, ItemId.VoidEssence, 1, 2),
+        D(EnemyKind.EventCorruptedSurvivor, ItemId.ClothRoll, 1), D(EnemyKind.EventCorruptedSurvivor, ItemId.BioGel, 1),
+        D(EnemyKind.EventAbomination, ItemId.BioGel, 3), D(EnemyKind.EventAbomination, ItemId.CausticShard, 2),
+        // Swarm rain.
+        D(EnemyKind.EventSwarmer, ItemId.BioGel, 2),
+        D(EnemyKind.EventSwarmQueen, ItemId.BioGel, 8), D(EnemyKind.EventSwarmQueen, ItemId.PrismShard, 1, 3),
+        // Rust moon.
+        D(EnemyKind.EventHusk, ItemId.OxidizedShard, 1),
+        D(EnemyKind.EventRustWraith, ItemId.OxidizedShard, 2),
+        D(EnemyKind.EventRustHound, ItemId.OxidizedShard, 1),
+        D(EnemyKind.EventEyeDrone, ItemId.OxidizedShard, 1), D(EnemyKind.EventEyeDrone, ItemId.PowerCell, 1, 3),
+        D(EnemyKind.EventCorrodedMech, ItemId.OxidizedShard, 4), D(EnemyKind.EventCorrodedMech, ItemId.CircuitBoard, 1),
+        // Dust storm.
+        D(EnemyKind.EventDustDevil, ItemId.SandBlock, 4),
+        D(EnemyKind.EventSandRay, ItemId.OxidizedShard, 1),
+        D(EnemyKind.EventScrapElemental, ItemId.ScrapIronOre, 5),
+        D(EnemyKind.EventDustRaider, ItemId.ScrapIronOre, 2),
+        // Acid rain.
+        D(EnemyKind.EventAcidSlime, ItemId.BioGel, 2), D(EnemyKind.EventAcidSlime, ItemId.CausticShard, 1, 2),
+        D(EnemyKind.EventAcidBird, ItemId.CausticShard, 1),
+        D(EnemyKind.EventToxicCloud, ItemId.CausticShard, 1),
+        // Calm nights and parties: the harmless units still leave a keepsake.
+        D(EnemyKind.EventAuroraWisp, ItemId.GlowSpore, 1),
+        D(EnemyKind.EventFestivalBalloonDrone, ItemId.ClothRoll, 1),
+        // Meteor fall.
+        D(EnemyKind.EventMeteorHead, ItemId.MeteoriteOre, 2),
+        D(EnemyKind.EventMeteorCrawler, ItemId.MeteoriteOre, 3),
+        // Dark sun (the eclipse).
+        D(EnemyKind.EventEclipseShade, ItemId.VoidEssence, 1),
+        D(EnemyKind.EventEclipseReaper, ItemId.VoidEssence, 2),
+        D(EnemyKind.EventEclipseMothMech, ItemId.PowerCell, 2), D(EnemyKind.EventEclipseMothMech, ItemId.VoidEssence, 1),
+        Signature(EnemyKind.EventEclipseShade, ItemId.EclipseSigil, 250, WorldEventKind.DarkSun),
+        Signature(EnemyKind.EventEclipseReaper, ItemId.EclipseSigil, 250, WorldEventKind.DarkSun),
+        Signature(EnemyKind.EventEclipseMothMech, ItemId.EclipseSigil, 250, WorldEventKind.DarkSun),
+        // Scavenger raid.
+        D(EnemyKind.EventScavengerGrunt, ItemId.ScrapIronOre, 2),
+        D(EnemyKind.EventScavengerBrute, ItemId.ScrapIronOre, 4), D(EnemyKind.EventScavengerBrute, ItemId.PlateBlock, 3, 2),
+        D(EnemyKind.EventScavengerSniper, ItemId.SlugRounds, 10),
+        D(EnemyKind.EventScavengerRigger, ItemId.CircuitBoard, 1), D(EnemyKind.EventScavengerRigger, ItemId.ScrapIronOre, 2),
+        Signature(EnemyKind.EventScavengerGrunt, ItemId.WarlordsMedal, 200, WorldEventKind.ScavengerRaid),
+        Signature(EnemyKind.EventScavengerBrute, ItemId.WarlordsMedal, 200, WorldEventKind.ScavengerRaid),
+        Signature(EnemyKind.EventScavengerSniper, ItemId.WarlordsMedal, 200, WorldEventKind.ScavengerRaid),
+        Signature(EnemyKind.EventScavengerRigger, ItemId.WarlordsMedal, 200, WorldEventKind.ScavengerRaid),
+        // Pirate boarding.
+        D(EnemyKind.EventPirateDeckhand, ItemId.ClothRoll, 1), D(EnemyKind.EventPirateDeckhand, ItemId.Credits, 10),
+        D(EnemyKind.EventPirateGunner, ItemId.SlugRounds, 12),
+        D(EnemyKind.EventPirateParrotDrone, ItemId.PowerCell, 1),
+        D(EnemyKind.EventPirateCannon, ItemId.ExplosiveCharge, 3), D(EnemyKind.EventPirateCannon, ItemId.FerriteBar, 3),
+        Signature(EnemyKind.EventPirateDeckhand, ItemId.PiratesSpyglass, 200, WorldEventKind.PirateBoarding),
+        Signature(EnemyKind.EventPirateGunner, ItemId.PiratesSpyglass, 200, WorldEventKind.PirateBoarding),
+        Signature(EnemyKind.EventPirateParrotDrone, ItemId.PiratesSpyglass, 200, WorldEventKind.PirateBoarding),
+        Signature(EnemyKind.EventPirateCannon, ItemId.PiratesSpyglass, 200, WorldEventKind.PirateBoarding),
+        // Defense protocol.
+        D(EnemyKind.EventProtocolGrunt, ItemId.CircuitBoard, 1),
+        D(EnemyKind.EventProtocolShieldbearer, ItemId.PlateBlock, 4),
+        D(EnemyKind.EventProtocolWyvern, ItemId.PowerCell, 1),
+        D(EnemyKind.EventProtocolOgre, ItemId.CircuitBoard, 3),
+        D(EnemyKind.EventProtocolMage, ItemId.EnergyCrystal, 2),
+        Signature(EnemyKind.EventProtocolGrunt, ItemId.ProtocolShard, 250, WorldEventKind.DefenseProtocol),
+        Signature(EnemyKind.EventProtocolShieldbearer, ItemId.ProtocolShard, 250, WorldEventKind.DefenseProtocol),
+        Signature(EnemyKind.EventProtocolWyvern, ItemId.ProtocolShard, 250, WorldEventKind.DefenseProtocol),
+        Signature(EnemyKind.EventProtocolOgre, ItemId.ProtocolShard, 250, WorldEventKind.DefenseProtocol),
+        Signature(EnemyKind.EventProtocolMage, ItemId.ProtocolShard, 250, WorldEventKind.DefenseProtocol),
+        // Precursor probes (the martian-madness analog).
+        D(EnemyKind.EventPrecursorProbe, ItemId.AncientPowerCell, 1, 2),
+        D(EnemyKind.EventProbeGunner, ItemId.AncientPowerCell, 1),
+        D(EnemyKind.EventProbeTeslaWalker, ItemId.AncientPowerCell, 2), D(EnemyKind.EventProbeTeslaWalker, ItemId.PowerCell, 1),
+        D(EnemyKind.EventProbeBrainDrone, ItemId.CircuitBoard, 2),
+        Signature(EnemyKind.EventPrecursorProbe, ItemId.MothershipChip, 300, WorldEventKind.PrecursorProbes),
+        Signature(EnemyKind.EventProbeGunner, ItemId.MothershipChip, 300, WorldEventKind.PrecursorProbes),
+        Signature(EnemyKind.EventProbeTeslaWalker, ItemId.MothershipChip, 300, WorldEventKind.PrecursorProbes),
+        Signature(EnemyKind.EventProbeBrainDrone, ItemId.MothershipChip, 300, WorldEventKind.PrecursorProbes),
+    }.GroupBy(rule => rule.Kind).ToDictionary(group => group.Key, group => group.ToArray());
+
+    /// <summary>The Event* creatures (invasion and raid units); each has at least one item drop.</summary>
+    public static IReadOnlyCollection<EnemyKind> EventUnits => _eventDrops.Keys;
 }

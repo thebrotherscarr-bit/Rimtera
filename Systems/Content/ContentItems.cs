@@ -34,6 +34,72 @@ internal static class ContentItems
 
     public static ItemRarity RarityFor(int tier) => (ItemRarity)Math.Clamp(tier - 1, 0, 6);
 
+    // ------------------------------------------------------------ sustain (0.1.9 stream C)
+
+    /// <summary>The healing ladder, smallest first: Terraria's lesser, regular, greater and super healing potions.</summary>
+    public static readonly (ItemId Item, string Name, int Tier, float Heal, int Value)[] HealingLadder =
+    [
+        (ItemId.MedStim, "Med stim", 1, 50f, 25),
+        (ItemId.TraumaStim, "Trauma stim", 2, 100f, 60),
+        (ItemId.NaniteStim, "Nanite stim", 4, 150f, 120),
+        (ItemId.PhoenixStim, "Phoenix stim", 6, 200f, 250),
+    ];
+
+    /// <summary>The charge ladder, smallest first (the small charge cell is the first rung).</summary>
+    public static readonly (ItemId Item, string Name, int Tier, float Charge, int Value)[] ChargeLadder =
+    [
+        (ItemId.ChargeCellSmall, "Small charge cell", 1, 40f, 8),
+        (ItemId.ChargeCellMedium, "Charge cell", 2, 100f, 30),
+        (ItemId.ChargeCellLarge, "Large charge cell", 4, 200f, 70),
+        (ItemId.ChargeCellPeak, "Peak charge cell", 6, 300f, 150),
+    ];
+
+    /// <summary>The restoration stim's shorter sickness (Terraria's restoration potion: 90 life, 45 s).</summary>
+    public const float RestorationSicknessSeconds = 45f;
+    /// <summary>Hit points a heart restores and charge an orb restores (Terraria's heart and star pickups).</summary>
+    public const float PickupHeartHeal = 20f, PickupOrbCharge = 100f;
+    /// <summary>The accessory tag that scales potion sickness, and the accessory carrying it (Terraria: Charm of Myths).</summary>
+    public const string PotionSicknessTag = "potion-sickness";
+    public const ItemId PotionSicknessAccessory = ItemId.BioWeave;
+    /// <summary>Stack size of every stackable item (Terraria 1.4.4): blocks, materials, ammo, potions, bait and critters.</summary>
+    public const int StackSize = 9999;
+
+    /// <summary>Hit points cooked food restores per well-fed tier (a small deliberate heal; raw food heals nothing).</summary>
+    public static float FoodHealFor(StatusId? fed) => fed switch
+    {
+        StatusId.WellFed => 10f,
+        StatusId.Satiated => 15f,
+        StatusId.Gourmet => 20f,
+        _ => 0f
+    };
+
+    /// <summary>
+    /// Sustain pass after registration: cooked food (anything granting a well-fed tier) heals a little, and the Bio-weave
+    /// (a regeneration band grown from the Nano-mender, the Charm of Myths analog) shortens potion sickness by a quarter.
+    /// </summary>
+    public static void ApplySustain(Dictionary<ItemId, ItemDefinition> items)
+    {
+        foreach (var (id, item) in items.ToArray())
+            if (item.UseKind == ItemUseKind.Food && FoodHealFor(item.GrantsStatus) is var heal and > 0f)
+                items[id] = item with { FoodHeal = heal };
+        if (items.TryGetValue(PotionSicknessAccessory, out var accessory))
+            items[PotionSicknessAccessory] = accessory with
+            {
+                ImmunityTags = new HashSet<string>(accessory.ImmunityTags.Append(PotionSicknessTag + ":0.75"), StringComparer.OrdinalIgnoreCase)
+            };
+    }
+
+    /// <summary>
+    /// The stack-size pass (0.1.9 C5, run after registration like <see cref="DefenseBalance.Apply"/>): every stackable item
+    /// stacks to 9999. Weapons, armor, tools and accessories stay at 1; credits keep their larger stack; instant pickups never stack.
+    /// </summary>
+    public static void ApplyStackSizes(Dictionary<ItemId, ItemDefinition> items)
+    {
+        foreach (var (id, item) in items.ToArray())
+            if (item.MaxStack > 1 && item.MaxStack < StackSize && !item.IsInstantPickup && item.EquipmentSlot is null)
+                items[id] = item with { MaxStack = StackSize };
+    }
+
     private sealed class Builder(Dictionary<ItemId, ItemDefinition> items)
     {
         private void Add(ItemDefinition definition) => items[definition.Id] = definition;
@@ -307,23 +373,39 @@ internal static class ContentItems
             Consumable(ItemId.ChargeCellSmall, "Small charge cell", 8, item => item with { ChargeRestore = 40f });
             Consumable(ItemId.ChargeStim, "Charge stim", 20, item => item with { GrantsStatus = StatusId.ChargeSurge, StatusDurationHours = 3f });
             Consumable(ItemId.MedStim, "Med stim", 25, item => item with { HealAmount = 50f });
+            // The healing and charge ladders (0.1.9 C1, Terraria's lesser / regular / greater / super potions). Tiers follow
+            // their gates: the Bio Lab after the first boss, the Alloy Anvil after the Fracture, the Void Forge at the end.
+            foreach (var (id, name, tier, heal, value) in HealingLadder.Skip(1))
+                Consumable(id, name, value, item => item with { HealAmount = heal, Tier = tier, Rarity = RarityFor(tier) });
+            Consumable(ItemId.RestorationStim, "Restoration stim", 45, item => item with
+                { HealAmount = 90f, PotionSicknessSeconds = RestorationSicknessSeconds, Tier = 2, Rarity = RarityFor(2) });
+            foreach (var (id, name, tier, charge, value) in ChargeLadder.Skip(1))
+                Consumable(id, name, value, item => item with { ChargeRestore = charge, Tier = tier, Rarity = RarityFor(tier) });
+            // Hearts and charge orbs (0.1.9 C3, D-61): kill drops applied on touch (GameSimulation GroundItems.cs).
+            void Pickup(ItemId id, string name, float heal, float charge) =>
+                Add(new ItemDefinition(id, name, ItemUseKind.Consumable, 1) { IsInstantPickup = true, PickupHeal = heal, PickupCharge = charge, Tier = 1 });
+            Pickup(ItemId.HeartPickup, "Heart", PickupHeartHeal, 0f);
+            Pickup(ItemId.ChargeOrb, "Charge orb", 0f, PickupOrbCharge);
             Consumable(ItemId.SpeedStim, "Speed stim", 20, item => item with { GrantsStatus = StatusId.Haste, StatusDurationHours = 3f });
             Consumable(ItemId.ArmorStim, "Armor stim", 20, item => item with { GrantsStatus = StatusId.Armored, StatusDurationHours = 3f });
             Consumable(ItemId.RegenPatch, "Regen patch", 15, item => item with { GrantsStatus = StatusId.Regeneration, StatusDurationHours = 6f });
             Consumable(ItemId.SpelunkerSpray, "Spelunker spray", 18, item => item with { GrantsStatus = StatusId.Spelunker, StatusDurationHours = 5f });
-            Add(new ItemDefinition(ItemId.RationBar, "Ration bar", ItemUseKind.Food, 99) { FoodRestore = 0.45f, Value = 6 });
+            Add(new ItemDefinition(ItemId.RationBar, "Ration bar", ItemUseKind.Food, 99)
+                { FoodRestore = 0.45f, Value = 6, GrantsStatus = StatusId.WellFed, StatusDurationHours = 4f });
             Add(new ItemDefinition(ItemId.TideFish, "Tide fish", ItemUseKind.Food, 99) { FoodRestore = 0.3f, Value = 5 });
             Consumable(ItemId.NightOwlDrops, "Night-owl drops", 15, item => item with { GrantsStatus = StatusId.Spelunker, StatusDurationHours = 6f });
             Consumable(ItemId.HunterLens, "Hunter lens", 18, item => item with { GrantsStatus = StatusId.Guarded, StatusDurationHours = 4f });
             Consumable(ItemId.FeatherfallPill, "Featherfall pill", 12, item => item with { GrantsStatus = StatusId.Haste, StatusDurationHours = 2f });
             Consumable(ItemId.WaterBreathCapsule, "Water-breath capsule", 14, item => item with { GrantsStatus = StatusId.Regeneration, StatusDurationHours = 2f });
-            void Food(ItemId id, string name, float restore, int value) =>
-                Add(new ItemDefinition(id, name, ItemUseKind.Food, 99) { FoodRestore = restore, Value = value });
-            Food(ItemId.SnowWolfSteak, "Snow-wolf steak", 0.4f, 8);
-            Food(ItemId.MushroomStew, "Mushroom stew", 0.45f, 9);
-            Food(ItemId.NectarTea, "Nectar tea", 0.25f, 7);
-            Food(ItemId.CoralSushi, "Coral sushi", 0.4f, 10);
-            Food(ItemId.NanoBananaSplit, "Nano-banana split", 0.55f, 12);
+            // Cooked dishes give a well-fed tier (NC-2 follow-up, 0.1.9 C1) like the arsenal's cooking-station food.
+            void Food(ItemId id, string name, float restore, int value, StatusId fed, float hours) =>
+                Add(new ItemDefinition(id, name, ItemUseKind.Food, 99)
+                    { FoodRestore = restore, Value = value, GrantsStatus = fed, StatusDurationHours = hours });
+            Food(ItemId.SnowWolfSteak, "Snow-wolf steak", 0.4f, 8, StatusId.WellFed, 6f);
+            Food(ItemId.MushroomStew, "Mushroom stew", 0.45f, 9, StatusId.WellFed, 6f);
+            Food(ItemId.NectarTea, "Nectar tea", 0.25f, 7, StatusId.WellFed, 5f);
+            Food(ItemId.CoralSushi, "Coral sushi", 0.4f, 10, StatusId.Satiated, 8f);
+            Food(ItemId.NanoBananaSplit, "Nano-banana split", 0.55f, 12, StatusId.Satiated, 8f);
         }
 
         // ------------------------------------------------------------ tools

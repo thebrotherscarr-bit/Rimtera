@@ -1549,6 +1549,22 @@ for _i, (_boss, _sprite) in enumerate(_CC_BOSSES.items()):
     RECIPES.setdefault(f"item_relic_{_boss}", (_sprite, [("tint", (215, 170, 70), 0.55), ("glow", (255, 210, 110))]))
     RECIPES.setdefault(f"item_core_chip_{_boss}", ("item_reflex_chip", [("scale", 3), ("hue", _h), ("fit", _sprite, (0.5, 0.5), 0.45, [])]))
 
+# Combat core (0.1.9 stream C): the healing and charge potion ladders and the heart and charge pickups.
+# Placeholder recolours of the Med stim, the small charge cell and the gem shards; real art is queued.
+for _name, _recipe in {
+    "item_trauma_stim": ("item_med_stim", [("hue", 0.07)]),
+    "item_nanite_stim": ("item_med_stim", [("hue", 0.83)]),
+    "item_phoenix_stim": ("item_med_stim", [("hue", 0.12), ("glow", (255, 200, 90))]),
+    "item_restoration_stim": ("item_med_stim", [("hue", 0.36)]),
+    "item_charge_cell_medium": ("tech_charge_cell_small", [("hue", 0.5)]),
+    "item_charge_cell_large": ("tech_charge_cell_small", [("hue", 0.75)]),
+    "item_charge_cell_peak": ("tech_charge_cell_small", [("hue", 0.75), ("glow", (150, 120, 255))]),
+    "item_heart_pickup": ("item_ruby_shard", [("hue", 0.97), ("glow", (255, 60, 90))]),
+    "item_charge_orb": ("item_sapphire_shard", [("hue", 0.6), ("glow", (90, 150, 255))]),
+}.items():
+    RECIPES.setdefault(_name, _recipe)
+
+
 def main():
     global SPRITES
     root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parents[2]

@@ -259,7 +259,7 @@ public static class BatchBSelfTests
         quick.Player.Inventory.Add(ItemId.SpeedStim, 1);
         quick.Player.Inventory.Add(ItemId.ArmorStim, 1);
         var buffs = quick.QuickBuff();
-        check(healed && blockedHeal && sickness is { IsDebuff: true, RemainingSeconds: > 30f and <= 46f, IconName: "buff_potion_sickness" } &&
+        check(healed && blockedHeal && sickness is { IsDebuff: true, RemainingSeconds: > 45f and <= 61f, IconName: "buff_potion_sickness" } &&
               charged && buffs == 2 && quick.Player.Statuses.IsActive(StatusId.Haste) && quick.Player.Statuses.IsActive(StatusId.Armored),
             "quick heal, quick charge and quick buff use the right items; potion sickness blocks a second heal");
         var maxCharge = quick.MaximumCharge;
