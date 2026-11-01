@@ -6,6 +6,9 @@ source game gives it, and the road to 1.0. `docs/PLAN.md` holds the step-by-step
 
 ## 1. The game
 
+**Terraria is the base, with a sci-fi twist, an AI storyteller, and a more in-depth NPC system.** (The owner,
+2026-11-01.) Everything below follows from that line.
+
 **A Terraria playthrough with more chaos and calamity.** You crash-land, dig, craft and fight up a Terraria ladder of
 bosses and gear, and you gather people who guard and help you. A RimWorld storyteller, picked when the world is made,
 runs every event and raid. It warns you before they come, so each one plays like a small tower defence of your base

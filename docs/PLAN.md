@@ -7,6 +7,7 @@ Written 2026-10-31; re-based on `docs/VISION.md` (2026-11-01), which now holds t
 - Next: **0.3.6**, the first step on the road to 0.4.0 (`docs/VISION.md` §4.1).
 
 ## Direction (owner, 2026-11-01)
+- **In one line:** Terraria is the base, with a sci-fi twist, an AI storyteller, and a more in-depth NPC system (`docs/VISION.md`).
 - **Terraria first.** The foundations (world, chests, items, crafting, progression, enemies, town NPCs) should feel like Terraria and keep Terraria's progress loops. 0.3.x diffs each foundation against Terraria and fixes the gaps.
 - **The colony waits for 0.4.0.** No RimWorld-style management (no blueprints and the like). The colonists are the NPCs: assistive, and acting like sentries for their area.
 - **RimWorld's part is the pressure.** Invasion-style raids and calamities, paced by a storyteller, on top of Terraria's progression.
