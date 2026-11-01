@@ -226,7 +226,10 @@ public sealed partial class GameSimulation
         agent.Activity = $"Making {product} at the {StationAt(job.Station).DisplayName()}";
         move(center);
         agent.OperateProgress += deltaSeconds;
-        if (agent.OperateProgress < OperateSeconds(agent.SpeedFor(work ?? BillWork(job.Station))) / ResearchBillSpeed)
+        // 0.3.5: a resident works at the skill of their trade (TownTrades); crew at their own skill for the work type.
+        var stationSkill = agent.SkillAt(StationAt(job.Station));
+        var speed = stationSkill is { } trained ? TownTrades.Speed(trained) : agent.SpeedFor(work ?? BillWork(job.Station));
+        if (agent.OperateProgress < OperateSeconds(speed) / ResearchBillSpeed)
             return true;
 
         agent.OperateProgress = 0f;
@@ -243,7 +246,8 @@ public sealed partial class GameSimulation
         var kind = work ?? BillWork(job.Station);
         // 0.2.9 meal quality: a cook's food comes out with extra servings, more often the better the cook (4% a Cooking
         // level, 80% at most); other bills keep the extra-batch chance above skill 10.
-        var bonus = kind == WorkType.Cook && output.UseKind == ItemUseKind.Food ? CookServingChance(agent.LevelFor(kind)) : ExtraBatchChance(agent.LevelFor(kind));
+        var level = stationSkill ?? agent.LevelFor(kind);
+        var bonus = kind == WorkType.Cook && output.UseKind == ItemUseKind.Food ? CookServingChance(level) : ExtraBatchChance(level);
         if (output.MaxStack > 1 && CraftRandom.NextDouble() < bonus)
             made += job.Recipe.OutputCount;
         var calibration = output.Calibratable || CalibrationCatalog.IsAccessory(output) ? RollCalibration(output) : Calibration.None;
@@ -261,7 +265,7 @@ public sealed partial class GameSimulation
     private BillJob? FindBillJob(IStationWorker agent, WorkType? work)
     {
         var stations = _bills.Keys
-            .Where(station => (work is null || BillWork(station) == work) && Vector2.Distance(new Vector2(station.X + 0.5f, station.Y + 0.5f), agent.HomePosition) <= OperateRadius &&
+            .Where(station => (work is null || BillWork(station) == work) && agent.CanWorkAt(StationAt(station)) && Vector2.Distance(new Vector2(station.X + 0.5f, station.Y + 0.5f), agent.HomePosition) <= OperateRadius &&
                               !StationWorkers().Any(other => !ReferenceEquals(other, agent) && other.IsAlive && other.OperateStation == station))
             .OrderBy(station => station == agent.OperateStation ? 0 : 1)
             .ThenBy(station => Vector2.DistanceSquared(new Vector2(station.X + 0.5f, station.Y + 0.5f), agent.Motion.Position))

@@ -111,8 +111,68 @@ public sealed class TownNpc : IStationWorker
     public float OperateProgress { get; set; }
     public Vector2 HomePosition => HomeCell is { } home ? new Vector2(home.X + 0.5f, home.Y + 0.5f) : Motion.Position;
     string IStationWorker.Activity { get => Activity; set => Activity = value; }
-    float IStationWorker.SpeedFor(WorkType work) => 0.65f + CraftingSkill * 0.035f;
+    float IStationWorker.SpeedFor(WorkType work) => TownTrades.Speed(CraftingSkill);
     int IStationWorker.LevelFor(WorkType work) => CraftingSkill;
+    bool IStationWorker.CanWorkAt(CraftingStationId station) => TownTrades.CanWork(Kind, station);
+    int? IStationWorker.SkillAt(CraftingStationId station) => TownTrades.Skill(Kind, station);
+}
+
+/// <summary>
+/// Which crafting stations each resident works (0.3.5): every resident can turn a hand to the basic benches (the
+/// Nano-Fabricator and the Field Workbench) at a generalist's skill; beyond those, each works only the stations of their
+/// trade, and at a specialist's skill there. Travelling traders and town gels work nothing.
+/// </summary>
+public static class TownTrades
+{
+    /// <summary>Skill at the basic benches, and at a resident's own trade stations.</summary>
+    public const int GeneralSkill = TownNpc.CraftingSkill, TradeSkill = 12;
+
+    public static readonly CraftingStationId[] BasicBenches = [CraftingStationId.Workbench, CraftingStationId.FieldWorkbench];
+
+    /// <summary>Each resident's trade stations.</summary>
+    public static readonly IReadOnlyDictionary<TownNpcKind, CraftingStationId[]> Stations = new Dictionary<TownNpcKind, CraftingStationId[]>
+    {
+        [TownNpcKind.StationAi] = [CraftingStationId.ResearchTerminal, CraftingStationId.ChargeReactor],
+        [TownNpcKind.Quartermaster] = [CraftingStationId.Sawmill, CraftingStationId.Kiln],
+        [TownNpcKind.Medic] = [CraftingStationId.ChemLab, CraftingStationId.BioLab],
+        [TownNpcKind.Armorer] = [CraftingStationId.AmmoPress, CraftingStationId.Anvil, CraftingStationId.PowerForgeMk2],
+        [TownNpcKind.ChiefEngineer] = [CraftingStationId.Furnace, CraftingStationId.OreRefineryMk2, CraftingStationId.Anvil,
+            CraftingStationId.PowerForgeMk2, CraftingStationId.AlloyAnvil, CraftingStationId.Kiln],
+        [TownNpcKind.AstroBotanist] = [CraftingStationId.ChemLab, CraftingStationId.BioLab],
+        [TownNpcKind.HeadResearcher] = [CraftingStationId.ResearchTerminal, CraftingStationId.NanoFabricatorMk2],
+        [TownNpcKind.TideWarden] = [CraftingStationId.CookingStation],
+        [TownNpcKind.Demolitionist] = [CraftingStationId.AmmoPress],
+        [TownNpcKind.Tailor] = [CraftingStationId.Loom, CraftingStationId.DyeVat],
+        [TownNpcKind.Cartographer] = [CraftingStationId.ResearchTerminal],
+        [TownNpcKind.Mechanic] = [CraftingStationId.TinkerBench, CraftingStationId.DroneBay, CraftingStationId.NanoFabricatorMk2],
+        [TownNpcKind.Pilot] = [CraftingStationId.DroneBay, CraftingStationId.ChargeReactor],
+        [TownNpcKind.Cook] = [CraftingStationId.CookingStation],
+        [TownNpcKind.Arborist] = [CraftingStationId.Sawmill],
+        [TownNpcKind.Archivist] = [CraftingStationId.ResearchTerminal],
+        [TownNpcKind.Isotopist] = [CraftingStationId.ChargeReactor, CraftingStationId.AlloyAnvil, CraftingStationId.VoidForge],
+        [TownNpcKind.Aeronaut] = [CraftingStationId.TinkerBench, CraftingStationId.AstralAssembler],
+        [TownNpcKind.RelicWarden] = [CraftingStationId.VoidForge, CraftingStationId.AstralAssembler],
+        [TownNpcKind.Greenskeeper] = [CraftingStationId.Sawmill],
+        [TownNpcKind.FieldZoologist] = [CraftingStationId.BioLab],
+        [TownNpcKind.PigmentTrader] = [CraftingStationId.DyeVat, CraftingStationId.Loom],
+        [TownNpcKind.PartyPlanner] = [CraftingStationId.CookingStation]
+    };
+
+    /// <summary>Residents who work no station at all.</summary>
+    public static bool Idle(TownNpcKind kind) => kind is TownNpcKind.TradeConsul or TownNpcKind.TravellingMerchant ||
+                                                 kind is >= TownNpcKind.GelAzure and <= TownNpcKind.GelVerdant;
+
+    public static IReadOnlyList<CraftingStationId> TradeOf(TownNpcKind kind) => Stations.TryGetValue(kind, out var stations) ? stations : [];
+
+    public static bool CanWork(TownNpcKind kind, CraftingStationId station) =>
+        !Idle(kind) && (TradeOf(kind).Contains(station) || BasicBenches.Contains(station));
+
+    /// <summary>The resident's skill at a station: the trade skill at their own stations, the generalist's at the basic benches.</summary>
+    public static int? Skill(TownNpcKind kind, CraftingStationId station) =>
+        TradeOf(kind).Contains(station) ? TradeSkill : CanWork(kind, station) ? GeneralSkill : null;
+
+    /// <summary>Work speed for a skill level (1 at skill 10, as crew).</summary>
+    public static float Speed(int skill) => 0.65f + skill * 0.035f;
 }
 
 /// <summary>A saved resident. <see cref="Hp"/> was appended in 0.2.2 (NC-20); older saves leave it null (full health).</summary>
@@ -221,7 +281,7 @@ public static class TownNpcCatalog
              "Heart fragments refine viridium. Overseer circuits forge the trio."]);
         yield return new(TownNpcKind.Quartermaster, "Quartermaster", "npc_store_clerk", ["Dorrin Vask", "Imke Oyelaran", "Pell Hatchway"],
             [(BiomeZone.Grassland, Affection.Love), (BiomeZone.JunkWasteland, Affection.Dislike)],
-            [(TownNpcKind.Cook, Affection.Like), (TownNpcKind.TradeConsul, Affection.Dislike)],
+            [(TownNpcKind.Cook, Affection.Like), (TownNpcKind.Demolitionist, Affection.Dislike)],
             [(ItemId.Berry, null), (ItemId.WallTorch, null), (ItemId.RopeCoil, null), (ItemId.WoodBlock, null), (ItemId.FerriteBar, null),
              (ItemId.PlankChair, null), (ItemId.PlankTable, null), (ItemId.PlankDoor, null), (ItemId.BugNet, null), (ItemId.FishingRod, null),
              (ItemId.EmptyBucket, null), (ItemId.GlowSticks, null), (ItemId.CompanionPermit, null),
@@ -301,7 +361,7 @@ public static class TownNpcCatalog
             ["If it rattles, it works. If it stops rattling, run.", "Your drones need oil. And love."], Survivor: true);
         yield return new(TownNpcKind.Pilot, "Pilot", "npc_pilot", ["Skye Morrow", "Dax Ilunga"],
             [(BiomeZone.Grassland, Affection.Love), (BiomeZone.Caverns, Affection.Hate)],
-            [(TownNpcKind.TradeConsul, Affection.Like), (TownNpcKind.Armorer, Affection.Dislike)],
+            [(TownNpcKind.Aeronaut, Affection.Like), (TownNpcKind.Armorer, Affection.Dislike)],
             [(ItemId.RocketPack, "ore.voidsteel"), (ItemId.GliderWings, null), (ItemId.DoubleJumpCanister, null), (ItemId.GrappleHook, null)],
             ["Nothing beats open sky.", "Pirates fly old hulls. Shoot the engines."], Survivor: true);
         yield return new(TownNpcKind.Cook, "Cook", "npc_cook", ["Mama Teodora", "Chef Kwame"],

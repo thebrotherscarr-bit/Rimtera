@@ -1,3 +1,4 @@
+using Rimtera.World;
 using System.Numerics;
 using Rimtera.Characters;
 using Rimtera.Entities;
@@ -75,7 +76,10 @@ public sealed partial class GameSimulation
             $"Health {npc.HitPoints:0}/{npc.MaximumHitPoints:0}",
             npc.HomeCell is { } home ? $"Lives at {home.X},{home.Y} · happiness {GetHappiness(npc):+0.0;-0.0;0}" : "Homeless",
             $"Doing: {npc.Activity}",
-            npc.WorksStations ? "Works bills near home by day" : "Doesn't work bills"
+            !npc.WorksStations ? "Doesn't work bills"
+                : TownTrades.Idle(npc.Kind) ? "Works no bills"
+                : TownTrades.TradeOf(npc.Kind).Count == 0 ? "Works bills at the basic benches near home by day"
+                : $"Works bills by day at {string.Join(", ", TownTrades.TradeOf(npc.Kind).Select(station => station.DisplayName()))} (skilled) and the basic benches"
         };
         if (!npc.Carried.IsEmpty)
             lines.Add($"Carrying: {npc.Carried.Count} {Items[npc.Carried.ItemId].Name}");
