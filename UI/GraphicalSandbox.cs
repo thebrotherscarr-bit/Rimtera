@@ -991,7 +991,7 @@ public static partial class GraphicalSandbox
             var horizontal = mapOpen ? 0f : (Held("MoveRight") ? 1f : 0f) - (Held("MoveLeft") ? 1f : 0f);
             _worldUseHeld = !mapOpen && _mouse.WorldUseHeld(overInterface);
             // Items without auto-reuse are used once per press; the rest keep going while held (Item.autoReuse).
-            if (_useGate.Update(_worldUseHeld, ItemUseRules.AutoReuse(_game.Player.Inventory.SelectedItem)) && !_mine && !_use)
+            if (_useGate.Update(_worldUseHeld, _game.AutoReuseSelected) && !_mine && !_use) // auto-swing gear included
             {
                 if (_game.Player.Inventory.SelectedItem?.UseKind == ItemUseKind.Pickaxe)
                     _mine = true;
@@ -2474,6 +2474,7 @@ public static partial class GraphicalSandbox
             var lighting = _menu.Preferences.Lighting;
             _lighting.Subdivision = lighting == LightingQuality.Low ? 1 : 4;
             _lighting.ColouredGlow = lighting == LightingQuality.High;
+            _lighting.Dimming = game.DarknessDimming; // the darkness debuff
             // Sky light follows the clock, moon phase and weather (cloud, rain, storms dim the surface).
             _lighting.Compute(game.World, game.Tiles, startX, startY, viewW, viewH, game.SkyLightLevel, lamps, present: lighting != LightingQuality.Off);
             _profiler.Mark("light calc");

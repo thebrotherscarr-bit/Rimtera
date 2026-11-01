@@ -33,7 +33,9 @@ public sealed partial class GameSimulation
     public const float SharedTargetRadius = 6f;
 
     public static readonly StatusId[] CreatureAfflictions =
-        [StatusId.Burning, StatusId.Poison, StatusId.Frostbite, StatusId.ArmorShred, StatusId.Confused, StatusId.Marked];
+        [StatusId.Burning, StatusId.Poison, StatusId.Frostbite, StatusId.ArmorShred, StatusId.Confused, StatusId.Marked,
+         // 0.1.9 EN-17 (GameSimulation.Debuffs.cs): stronger venom, corroded defense, the salvage mark, wet.
+         StatusId.Venom, StatusId.Corroded, StatusId.SalvageMark, StatusId.Wet];
 
     private Random? _playerSystemsRandomStream;
     private Random? _luckRandomStream;
@@ -65,13 +67,14 @@ public sealed partial class GameSimulation
     public static float AfflictionSeconds(StatusId id) => id switch
     {
         StatusId.Burning => 4f, StatusId.Poison => 6f, StatusId.Frostbite => 4f,
-        StatusId.ArmorShred => 6f, StatusId.Confused => 3f, StatusId.Marked => 8f, _ => 0f
+        StatusId.ArmorShred => 6f, StatusId.Confused => 3f, StatusId.Marked => 8f,
+        StatusId.Venom => 5f, StatusId.Corroded => 6f, StatusId.SalvageMark => 10f, StatusId.Wet => 6f, _ => 0f
     };
 
     /// <summary>Damage per second an affliction deals.</summary>
     public static float AfflictionDamagePerSecond(StatusId id) => id switch
     {
-        StatusId.Burning => 6f, StatusId.Poison => 4f, StatusId.Frostbite => 2f, _ => 0f
+        StatusId.Burning => 6f, StatusId.Poison => 4f, StatusId.Frostbite => 2f, StatusId.Venom => CreatureVenomDps, _ => 0f
     };
 
     /// <summary>
@@ -119,7 +122,7 @@ public sealed partial class GameSimulation
     public bool AfflictEnemy(EnemyAgent enemy, StatusId id, float? seconds = null)
     {
         ArgumentNullException.ThrowIfNull(enemy);
-        if (!enemy.IsAlive || ResistsAffliction(enemy, id))
+        if (!enemy.IsAlive || ResistsAffliction(enemy, id) || !WetAllowsAffliction(enemy, id)) // wet creatures do not burn
             return false;
         var duration = seconds ?? AfflictionSeconds(id);
         enemy.Afflict(id, enemy.IsBoss ? duration * 0.5f : duration);
@@ -141,6 +144,8 @@ public sealed partial class GameSimulation
     public static (StatusId Status, int Chance)? WeaponAffliction(ItemDefinition item)
     {
         ArgumentNullException.ThrowIfNull(item);
+        if (ArsenalItems.WeaponAfflictions.TryGetValue(item.Id, out var authored)) // authored data first (ArsenalItems.Data.cs)
+            return authored;
         if (item.GrantsStatus is { } granted && Array.IndexOf(CreatureAfflictions, granted) >= 0 &&
             item.UseKind is not (ItemUseKind.Consumable or ItemUseKind.Food))
             return (granted, 100);
@@ -221,6 +226,8 @@ public sealed partial class GameSimulation
     {
         foreach (var enemy in _enemies)
         {
+            if (enemy.IsAlive && enemy.HasAffliction(StatusId.Burning))
+                SoakEnemyInWater(enemy); // water puts burning out
             if (!enemy.IsAlive || enemy.Afflictions.Count == 0)
                 continue;
             enemy.AfflictionPulse -= deltaSeconds;

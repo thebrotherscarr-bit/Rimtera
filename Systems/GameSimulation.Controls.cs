@@ -13,6 +13,14 @@ namespace Rimtera.Systems;
 /// </summary>
 public static class ItemUseRules
 {
+    /// <summary>
+    /// Auto-reuse with auto-swing gear (Terraria's feral claws, <c>Player.autoReuseGlove</c>): every melee weapon and whip
+    /// repeats while held when <paramref name="autoSwingActive"/>; otherwise the item's own rule.
+    /// </summary>
+    public static bool AutoReuse(ItemDefinition? item, bool autoSwingActive) =>
+        AutoReuse(item) || autoSwingActive && item is not null &&
+        (item.Style == WeaponStyle.Whip || item.EffectiveClass == DamageClass.Melee && item.UseKind == ItemUseKind.Melee);
+
     public static bool AutoReuse(ItemDefinition? item)
     {
         if (item is null)
