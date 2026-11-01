@@ -191,6 +191,17 @@ public sealed partial class GameSimulation
             _spawnTimer += deltaSeconds * 0.5f; // half again as many spawns
         }
         _ticker.SpreadFrozen = CreativeSpreadFrozen;
+        // 0.3.6 dev console overrides, in any mode (Systems/DevConsole.cs): god mode and a spawn-rate multiplier.
+        if (Flags.IsSet(DevConsole.GodFlag) && !Player.IsDead)
+            Player.Heal(Player.MaximumHitPoints);
+        if (Flags.Get(DevConsole.SpawnRateFlag) is var devRate and > 0)
+        {
+            var multiplier = (devRate - 1) / 100f;
+            if (multiplier <= 0f)
+                _spawnTimer = 0f;
+            else
+                _spawnTimer += deltaSeconds * (multiplier - 1f);
+        }
         if (!IsCreative)
             return;
         if (CreativeWeatherLocked)

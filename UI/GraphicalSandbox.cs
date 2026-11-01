@@ -272,6 +272,14 @@ public static partial class GraphicalSandbox
             }
             if (_transition.BlocksGameplay)
                 return;
+            // 0.3.6 dev console: the ` key opens and closes it over a running game; while open it takes every key.
+            if (_game is not null && (e.KeyCode == Keys.Oemtilde || _canvas.Console is { IsOpen: true }))
+            {
+                HandleConsoleKey(e);
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                return;
+            }
             if (_canvas.SpectateCenter is not null)
             {
                 // Ironman spectate: WASD moves the ghost camera (read while held in Advance); Esc leaves for the title.
@@ -568,6 +576,29 @@ public static partial class GraphicalSandbox
                 _game?.RequestHotbarSlot(back);
         }
 
+        private void HandleConsoleKey(KeyEventArgs e)
+        {
+            if (_game is null)
+                return;
+            if (_canvas.Console is null || !ReferenceEquals(_canvas.Console.Game, _game))
+                _canvas.Console = new DevConsoleView(_game);
+            var console = _canvas.Console;
+            if (e.KeyCode == Keys.Oemtilde || (console.IsOpen && e.KeyCode == Keys.Escape))
+            {
+                console.IsOpen = !console.IsOpen;
+                _down.Clear(); // nothing stays held while typing
+            }
+            else if (console.IsOpen)
+                switch (e.KeyCode)
+                {
+                    case Keys.Enter: console.Submit(); break;
+                    case Keys.Back: console.Backspace(); break;
+                    case Keys.Up: console.HistoryStep(-1); break;
+                    case Keys.Down: console.HistoryStep(1); break;
+                }
+            _canvas.Invalidate();
+        }
+
         private void HandleTextPromptKey(KeyEventArgs e)
         {
             switch (e.KeyCode)
@@ -637,6 +668,14 @@ public static partial class GraphicalSandbox
 
         private void OnKeyPress(object? sender, KeyPressEventArgs e)
         {
+            if (_canvas.Console is { IsOpen: true } console)
+            {
+                if (!char.IsControl(e.KeyChar) && e.KeyChar != '`' && e.KeyChar != '~')
+                    console.Type(e.KeyChar);
+                e.Handled = true;
+                _canvas.Invalidate();
+                return;
+            }
             if (!_menuOpen || !_menu.IsTextPromptActive)
                 return;
             if (char.IsControl(e.KeyChar))
@@ -2111,6 +2150,8 @@ public static partial class GraphicalSandbox
                 _frames = 0;
                 _fpsWindowStart = Environment.TickCount64;
             }
+            if (Console is { IsOpen: true } console && ReferenceEquals(console.Game, Game))
+                DrawDevConsole(g, console);
             if (_menu.Preferences.ShowFrameRate)
             {
                 _profiler.Mark("menus");
@@ -2121,6 +2162,31 @@ public static partial class GraphicalSandbox
                 g.FillRectangle(back, 2, 2, size.Width + 8, size.Height + 4);
                 g.DrawString(report, _small, _amberBrush, 6, 4);
             }
+        }
+
+        /// <summary>The dev console: a dark band across the top with the last lines and the input line (0.3.6).</summary>
+        private void DrawDevConsole(Graphics g, DevConsoleView console)
+        {
+            const int lines = 14;
+            var lineHeight = _small.GetHeight(g) + 2f;
+            var height = lineHeight * (lines + 1) + 12f;
+            using (var back = new SolidBrush(Color.FromArgb(215, 12, 15, 20)))
+                g.FillRectangle(back, 0, 0, Width, height);
+            using (var edge = new Pen(Color.FromArgb(220, 214, 160, 60)))
+                g.DrawLine(edge, 0, height, Width, height);
+            var log = console.Console.Log;
+            var y = 6f;
+            foreach (var line in log.Skip(Math.Max(0, log.Count - lines)))
+            {
+                g.DrawString(line, _small, line.StartsWith('>') ? _amberBrush : Brushes.Gainsboro, 8, y);
+                y += lineHeight;
+            }
+            y = height - lineHeight - 6f;
+            var caret = Environment.TickCount64 / 500 % 2 == 0 ? "_" : " ";
+            g.DrawString($"> {console.Input}{caret}", _small, Brushes.White, 8, y);
+            const string hint = "dev console · Enter runs · Up/Down history · Esc or ` closes · help lists commands";
+            var size = g.MeasureString(hint, _small);
+            g.DrawString(hint, _small, Brushes.Gray, Width - size.Width - 8, y);
         }
 
         private void DrawTransition(Graphics g, ScreenTransition transition)
@@ -2895,6 +2961,9 @@ public static partial class GraphicalSandbox
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ShowControls { get; set; }
+        /// <summary>The dev console over the running game (0.3.6); null until first opened.</summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public DevConsoleView? Console { get; set; }
 
         /// <summary>The player's key bindings, for the help overlay and key prompts.</summary>
         [Browsable(false)]
