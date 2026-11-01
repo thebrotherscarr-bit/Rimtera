@@ -32,6 +32,23 @@ public sealed partial class GameSimulation
                       npc.Kind != TownNpcKind.StationAi && npc.Stats.Level(ColonistSkill.Medical) >= FittingSkill)
         .MaxBy(npc => npc.Stats.Level(ColonistSkill.Medical));
 
+    /// <summary>Using a bionic from the hotbar: it goes to the nearest resident within six tiles who can take it.</summary>
+    private string UseBionic(ItemId item)
+    {
+        var near = People.Where(npc => System.Numerics.Vector2.Distance(npc.Motion.Position, Player.Motion.Position) <= 6f)
+            .OrderBy(npc => System.Numerics.Vector2.Distance(npc.Motion.Position, Player.Motion.Position)).ToArray();
+        var patient = near.FirstOrDefault(npc => BionicFor(item) switch
+        {
+            BionicPart.Arm => npc.Injuries.Contains(LastingInjury.LostArm),
+            BionicPart.Leg => npc.Injuries.Contains(LastingInjury.LostLeg),
+            BionicPart.Eye => npc.Injuries.Contains(LastingInjury.LostEye),
+            _ => npc.Kind != TownNpcKind.StationAi && !npc.Bionics.Contains(BionicPart.NeuralCoprocessor)
+        });
+        return patient is null
+            ? $"Stand beside someone who needs the {Items[item].Name.ToLowerInvariant()}, or hand it over in the Housing tab."
+            : FitBionic(patient, item);
+    }
+
     /// <summary>Fits a bionic from your bag to a resident; returns what happened.</summary>
     public string FitBionic(TownNpc npc, ItemId item)
     {
