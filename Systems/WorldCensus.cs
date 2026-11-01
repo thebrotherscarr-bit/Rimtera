@@ -28,6 +28,26 @@ public sealed record WorldCensusReport(
         foreach (var layer in Layers)
             if (OrePerMillion.TryGetValue(layer, out var ores) && ores.Count > 0)
                 yield return $"ore per million cells, {layer}: " + string.Join(", ", ores.OrderByDescending(pair => pair.Value).Select(pair => $"{pair.Key} {pair.Value:0}"));
+        foreach (var layer in new[] { "surface", "underground", "caverns" })
+        {
+            var shares = TierShares(layer);
+            yield return $"ore by tier, {layer}: tier 1 {shares[0]:P0}, tier 2 {shares[1]:P0}, tier 3+ {shares[2]:P0}";
+        }
+    }
+
+    /// <summary>
+    /// The share of a layer's ore in each tier (0.3.3): tier 1 (ferrite: copper and scrap iron), tier 2 (cobalt) and tier 3
+    /// and up (glacial, pyrocite, uranium, viridium, lumenite) — Terraria's copper/tin, iron/lead and silver-and-better.
+    /// </summary>
+    public double[] TierShares(string layer)
+    {
+        var shares = new double[3];
+        if (!OrePerMillion.TryGetValue(layer, out var ores))
+            return shares;
+        foreach (var (ore, amount) in ores)
+            shares[Math.Min(WorldCensus.OreTier(ore), 3) - 1] += amount;
+        var total = shares.Sum();
+        return total <= 0 ? shares : shares.Select(share => share / total).ToArray();
     }
 }
 
@@ -39,6 +59,16 @@ public static class WorldCensus
         TileId.ScrapIronOre, TileId.CopperOre, TileId.GlacialOre, TileId.UraniumOre, TileId.PyrociteOre, TileId.CobaltOre,
         TileId.ViridiumOre, TileId.LumeniteOre
     ];
+
+    /// <summary>The ladder tier an ore smelts into (1 ferrite, 2 cobalt, 3 the biome bars, 4 viridium, 5 lumenite).</summary>
+    public static int OreTier(TileId ore) => ore switch
+    {
+        TileId.CopperOre or TileId.ScrapIronOre => 1,
+        TileId.CobaltOre => 2,
+        TileId.GlacialOre or TileId.PyrociteOre or TileId.UraniumOre => 3,
+        TileId.ViridiumOre => 4,
+        _ => 5
+    };
 
     public static WorldCensusReport Take(GameSimulation game)
     {
@@ -112,6 +142,12 @@ public static class WorldCensusReference
         ["surface"] = 22_554, ["underground"] = 23_589, ["caverns"] = 24_534
     };
 
+    /// <summary>Terraria's ore by tier in each layer (0.3.3): copper/tin, iron/lead, then silver/tungsten and gold/platinum together.</summary>
+    public static readonly IReadOnlyDictionary<string, double[]> TierShares = new Dictionary<string, double[]>
+    {
+        ["surface"] = [0.55, 0.38, 0.07], ["underground"] = [0.52, 0.36, 0.12], ["caverns"] = [0.31, 0.31, 0.38]
+    };
+
     public static IReadOnlyList<Target> Targets(int width, int height)
     {
         var scale = width * (double)height / (4200.0 * 1200.0);
@@ -129,7 +165,11 @@ public static class WorldCensusReference
             new("life cores", 35 * scale, 110 * scale, report => report.LifeCores),
             new("altars", 10 * scale, 32 * scale, report => report.Altars),
             .. OrePerMillion.Select(pair => new Target($"ore per million, {pair.Key}", pair.Value * 0.8, pair.Value * 1.2,
-                report => Ore(report, pair.Key)))
+                report => Ore(report, pair.Key))),
+            // Tier mix (0.3.3), in percentage points either side of Terraria's share.
+            .. TierShares.SelectMany(pair => new[] { 0, 1, 2 }.Select(tier => new Target(
+                $"tier {(tier == 2 ? "3+" : (tier + 1).ToString())} share of ore, {pair.Key} (%)",
+                100 * pair.Value[tier] - 12, 100 * pair.Value[tier] + 12, report => 100 * report.TierShares(pair.Key)[tier])))
         ];
     }
 

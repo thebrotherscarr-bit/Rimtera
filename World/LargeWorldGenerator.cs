@@ -653,7 +653,7 @@ public sealed partial class LargeWorldGenerator
             var y = RandomRow(random, _surface[x] + 3, _cavernRow + _height / 10);
             var sand = random.Next(3) != 0;
             // 0.3.1: fewer scrap-iron pockets in the underground layer (see OreVeins).
-            if (!sand && InUndergroundLayer(x, y) && random.Next(10) < 4)
+            if (!sand && InUndergroundLayer(x, y) && random.Next(10) < 7)
                 continue;
             Blob(grid, random, x, y, 2 + random.NextDouble() * 2.5, random.Next(4, 10),
                 random.NextDouble() - 0.5, random.NextDouble() * 0.4 - 0.2,
@@ -1266,9 +1266,12 @@ public sealed partial class LargeWorldGenerator
         }
 
         token.ThrowIfCancellationRequested();
-        // 0.3.1: half the copper veins that land in the underground layer are dropped, bringing its ore density down to
-        // the reference's (docs/WORLDGEN_DIFF.md §5) — it held about two-thirds more ore than the layers around it.
-        Veins(TileId.CopperOre, N(WorldGenDensity.CopperVeins), x => (_surface[x] + 3, _cavernRow + _height / 10), 1.6, (4, 11), true, 0.5);
+        // 0.3.1: some copper veins that land in the underground layer are dropped, bringing its ore density down to the
+        // reference's (docs/WORLDGEN_DIFF.md §5) — it held about two-thirds more ore than the layers around it.
+        // 0.3.3: tier 2 starts at the surface, as Terraria's iron and lead do: cobalt veins run from just under the ground
+        // to the caverns, and copper thins to make room (docs/WORLDGEN_DIFF.md §6).
+        Veins(TileId.CopperOre, N(WorldGenDensity.CopperVeins), x => (_surface[x] + 3, _cavernRow + _height / 20), 1.6, (4, 11), true, 0.5);
+        Veins(TileId.CobaltOre, N(WorldGenDensity.ShallowCobaltVeins), x => (_surface[x] + 3, _cavernRow), 1.5, (4, 10), true, 0.45);
         Veins(TileId.CobaltOre, N(WorldGenDensity.CobaltVeins), x => (_cavernRow, _moltenTop[x] - 3), 1.4, (4, 10), false);
         Veins(TileId.ViridiumOre, N(WorldGenDensity.ViridiumVeins), x => ((int)(_height * 0.68), _moltenTop[x] - 2), 1.3, (3, 9), false);
     }

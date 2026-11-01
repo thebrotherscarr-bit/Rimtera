@@ -363,3 +363,40 @@ The precursor vault's locked chests keep their fixed loot.
 
 The biome material and the rare thruster fins are unchanged. Terraria's tier mix within each layer (which metals sit
 where) is left for 0.3.3, which works on the ore and crafting ladder.
+
+## 6. Ore by tier: matched in 0.3.3
+
+0.3.1 matched how much ore each layer holds; 0.3.3 matches which tiers it is. Rimtera's ore ladder is shorter than
+Terraria's, so the census compares three bands:
+- **tier 1:** ferrite (copper and scrap iron), Terraria's copper and tin;
+- **tier 2:** cobalt, Terraria's iron and lead;
+- **tier 3 and up:** the biome bars and viridium, Terraria's silver, tungsten, gold and platinum.
+
+Before 0.3.3, cobalt was only found in the caverns, so the first tier-2 gear waited until the player was deep
+underground. Terraria's iron and lead are a third of the ore right under the surface.
+
+**Small world, three seeds (31337, 7, 99); tier 1 / tier 2 / tier 3+ as shares of each layer's ore**
+
+| Layer | Terraria (approx.) | Before | After |
+|---|---|---|---|
+| Surface | 55 / 38 / 7% | 92 / 0 / 8% | 52–55 / 40–44 / 4–6% |
+| Underground | 52 / 36 / 12% | 93 / 0 / 7% | 50–54 / 36–44 / 6–10% |
+| Caverns | 31 / 31 / 38% | 52 / 27 / 21% | 30–32 / 39 / 29–31% |
+
+Total ore per layer stays in the §5 ranges.
+
+**Generator changes**
+- **Shallow cobalt:** new veins from just under the ground to the caverns (700 per million cells), with some thinned in
+  the underground layer so it does not collect there.
+- **Copper:** veins cut from 1290 to 560 per million cells, and the band stops a little higher (20 rows of a Small
+  world into the caverns rather than 120).
+- **Scrap iron:** 70% of the pockets in the underground layer are dropped, up from 40%.
+- **Deep cobalt:** cut from 667 to 450 per million cells, since the shallow veins now reach the cavern roof.
+- **Viridium:** up from 385 to 600 per million cells. It is mineable before the Fracture, but its gear still needs the
+  Alloy Anvil.
+
+The cavern tier-3+ share stays a little under Terraria's. Rimtera's tier-3 metals are biome ores (glacial in the
+Frozen Wasteland, pyrocite and uranium in the core), with no plain-rock silver or gold to spread through every cavern.
+
+`WorldCensusReference.TierShares` holds the Terraria shares. `WorldGenSelfTests` checks each one to within 12
+percentage points.
