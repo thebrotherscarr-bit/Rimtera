@@ -384,7 +384,10 @@ public sealed partial class GameSimulation : IStoryHost
             agent.Needs.FoodReserve,
             agent.Needs.RestReserve,
             agent.Needs.JoyReserve,
-            agent.Needs.ComfortReserve)).ToArray();
+            agent.Needs.ComfortReserve,
+            agent.Work.Capture(),
+            agent.FollowsPlayer,
+            agent.Carried)).ToArray();
         return new GameSnapshot(
             GameSnapshot.CurrentFormatVersion, Seed, World.Width, World.Height, null,
             TickNumber, Day, ClockHour, motion.Position.X, motion.Position.Y,
@@ -576,6 +579,10 @@ public sealed partial class GameSimulation : IStoryHost
                     colonistSnapshot.RestReserve,
                     colonistSnapshot.JoyReserve,
                     colonistSnapshot.ComfortReserve);
+                agent.Work.Restore(colonistSnapshot.WorkPriorities);
+                agent.FollowsPlayer = colonistSnapshot.FollowsPlayer;
+                if (!colonistSnapshot.Carried.IsEmpty && game.Items.Contains(colonistSnapshot.Carried.ItemId))
+                    agent.Carried = colonistSnapshot.Carried;
             }
         }
         if (snapshot.PlayerState is { } playerState)
@@ -1389,7 +1396,13 @@ public sealed partial class GameSimulation : IStoryHost
             var atCamp = Vector2.Distance(agent.Motion.Position, agent.HomePosition) < 5.5f;
             agent.WanderTimer -= deltaSeconds;
 
-            if (distance > 9f)
+            // Work (the Work tab's priorities) comes before the camp routine, unless a need is pressing. Crew stay home
+            // unless told to follow the player; a follower works only while near the player.
+            var urgentNeed = agent.Needs.RestReserve < 0.35f || agent.Needs.FoodReserve < 0.35f;
+            if (!urgentNeed && (!agent.FollowsPlayer || distance <= 9f) && TryColonyWork(agent, center, deltaSeconds, elapsedHours))
+                continue;
+
+            if (agent.FollowsPlayer && distance > 9f)
             {
                 agent.Activity = "Following";
             }
@@ -1429,7 +1442,7 @@ public sealed partial class GameSimulation : IStoryHost
             }
 
             Vector2 target;
-            if (distance > 9f)
+            if (agent.FollowsPlayer && distance > 9f)
             {
                 target = playerCenter;
             }
@@ -1439,7 +1452,7 @@ public sealed partial class GameSimulation : IStoryHost
             }
             else
             {
-                if (distance < 4f)
+                if (agent.FollowsPlayer && distance < 4f)
                     agent.HomePosition = agent.Motion.Position;
                 if (agent.WanderTimer <= 0f)
                 {

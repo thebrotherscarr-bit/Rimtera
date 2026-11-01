@@ -222,7 +222,10 @@ public readonly record struct ColonistSnapshot(
     float FoodReserve,
     float RestReserve,
     float JoyReserve,
-    float ComfortReserve);
+    float ComfortReserve,
+    int[]? WorkPriorities = null,
+    bool FollowsPlayer = false,
+    ItemStack Carried = default);
 
 /// <summary>
 /// Body, mind and social state for one pawn: per-part conditions, memories, explicit relations, mental-break
