@@ -288,6 +288,78 @@ The surface steps a little more than the reference because the extra cave mouths
 Medium (6400×1800) lands the same way. Generation stays inside the bench budget: Small takes 4.8 s against a soft
 budget of 8 s.
 
-**What is still not compared.** Ores, chests, structures and biome widths have no reference numbers, because the
-Terraria side here is a measuring model, not Terraria's code. Section 2 maps every Terraria pass to its Rimtera
-counterpart instead.
+**What is still not compared.** Structures and biome widths have no reference numbers, because the Terraria side here
+is a measuring model, not Terraria's code. Section 2 maps every Terraria pass to its Rimtera counterpart instead. Section
+5 adds the world's contents.
+
+## 5. World contents: measured (0.3.1)
+
+`Systems/WorldCensus.cs` counts what generation puts in a world, by Terraria's layers:
+- **sky:** more than 20 tiles above the ground line;
+- **surface:** down to 40 tiles below it;
+- **underground:** down to a tenth of the height below it;
+- **caverns:** down to the Irradiated Core;
+- **underworld:** the core.
+
+It counts chests by layer and kind, pots, life cores, altars, and ore cells per million cells of each layer.
+`WorldCensusReference` holds Terraria-style ranges for a world of the same area. They are reconstructed from the
+structure of 1.4's chest, pot, life crystal, altar and "Shinies" passes, so **every reference figure is approximate**,
+and the ranges are deliberately wide. `--worldgen-diff` now prints the census and the comparison after the shape
+numbers, and `WorldGenSelfTests` holds both.
+
+**Small world, three seeds (31337, 7, 99)**
+
+| Measure | Before | After | Reference (approx.) |
+|---|---|---|---|
+| Chests | 120 | 183–198 | 150–300 |
+| Chests underground and in the caverns | 78 | 124–145 | 100–220 |
+| Dungeon chests | 9 | 22 | 15–35 |
+| Underworld chests | 3 | 6–8 | 5–14 |
+| Pots | 936 | 938–999 | 600–1500 |
+| Life cores | 50 | 50 | 35–110 |
+| Altars | 20 | 20 | 10–32 |
+| Ore per million cells, surface | 20,775 | 20,175–22,202 | about 22,554 |
+| Ore per million cells, underground | 39,190 | 25,574–26,330 | about 23,589 |
+| Ore per million cells, caverns | 26,135 | 26,734–28,433 | about 24,534 |
+
+**Generator changes**
+- **Burying cave chests:** a new pass before chests are improved.
+  - Cabin chests on cave floors through the underground and caverns, 12 per million cells.
+  - Slag chests in the Irradiated Core, 1 per million cells (at least 3).
+  - Strongboxes along the dungeon's halls, 3 per 1000 columns (at least 4).
+  - Each is kept clear of other containers.
+- **Ore:** half the copper veins and 40% of the scrap-iron pockets that land in the underground layer are dropped, and
+  copper veins are 10% more common overall. The underground held about two-thirds more ore than the reference; it now
+  matches, and the surface rises to the reference.
+
+**Chest contents.** Terraria's chests always hold one primary item for their kind, with supplies rolled on top. Every
+generated Rimtera chest now does the same.
+
+The chest's family comes from its tile, depth and biome. Each family has a pool, and a chest holds one item from it:
+
+| Family | Primary pool |
+|---|---|
+| Surface | return boomerang, dart blower, sprint servos, headlamp, compass chip, depth meter, life monitor, miner's gauntlet, scrap tether, spark emitter |
+| Underground and caverns | double-jump canister, climbing claws, grapple hook, magnet ring, sprint servos, scrap chakram, lucky charm, night-vision goggles |
+| Frozen | thermal sleeve, frost-grip gloves, grav damper |
+| Canopy | power glove, sprint servos, barb mesh, climbing claws |
+| Sunken | coral pendant, oxygen tank, hydro skimmers, fishing line |
+| Sky | glider wings, lucky charm, tractor coil, double-jump canister |
+| Underworld | regen implant, thermal regulator, blink module, leech coil |
+| Dungeon | grav anchor, blink module, reflex chip, targeting lens |
+
+On top of the primary, a chest rolls supplies for its depth tier:
+- light: torches, or glow sticks deeper down;
+- rope;
+- bars of that depth's metal;
+- throwables or ammo;
+- healing stims and buff stims;
+- recall capsules;
+- credits.
+
+A supply is skipped when the chest's own table already holds that kind of item.
+
+The precursor vault's locked chests keep their fixed loot.
+
+The biome material and the rare thruster fins are unchanged. Terraria's tier mix within each layer (which metals sit
+where) is left for 0.3.3, which works on the ore and crafting ladder.

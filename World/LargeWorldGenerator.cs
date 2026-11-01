@@ -129,7 +129,7 @@ public static class FeatureNames
     public const string WaterSeeps = "water-seeps", LavaSeeps = "lava-seeps", SlopedEdges = "sloped-edges", HalfBlocks = "half-blocks";
     public const string SettledSand = "settled-sand", ClearedSkyWalls = "cleared-sky-walls", CaveWallRuns = "cave-wall-runs";
     public const string EnclosedWalls = "enclosed-walls", GrassWalls = "grass-walls", CooledSurfaceLava = "cooled-surface-lava";
-    public const string SurfaceCrates = "surface-crates", SunkenChests = "sunken-chests", ImprovedChests = "improved-chests";
+    public const string SurfaceCrates = "surface-crates", SunkenChests = "sunken-chests", ImprovedChests = "improved-chests", CaveChests = "cave-chests";
     public const string WildGourds = "wild-gourds", WildMushrooms = "wild-mushrooms", ExtraHives = "extra-hives";
     public const string UraniumFalls = "uranium-falls", UraniumLakes = "uranium-lakes", Oceans = "oceans";
 }
@@ -268,6 +268,7 @@ public sealed partial class LargeWorldGenerator
         Add("Heaping rubble and shell piles", 0.3, Piles);
         Add("Laying graveyards", 0.2, Graveyards);
         Add("Seeding brood pods", 0.1, BroodPods);
+        Add("Burying cave chests", 0.3, CaveChests);
         Add("Improving chest contents", 0.4, ImproveChests);
         Add("Tidying up", 0.6, Cleanup);
         Add("Laying derelict transit walkways", 0.1, TransitWalkways);
@@ -406,6 +407,8 @@ public sealed partial class LargeWorldGenerator
     private bool InBlightZone(int x, int margin = 0) =>
         Features.BlightZones.Any(zone => x >= zone.Left - margin && x <= zone.Right + margin);
 
+    /// <summary>Terraria's underground layer: 40 tiles below the surface line down to a tenth of the height below it (as <see cref="Systems.WorldCensus"/> counts).</summary>
+    private bool InUndergroundLayer(int x, int y) => y >= _surface[x] + 40 && y < _surface[x] + _height / 10;
     private bool IsFrozen(int x, int y) => x < _frozenEdge[Math.Clamp(y, 0, _height - 1)];
     private bool IsJunk(int x, int y) => x >= _junkStart[Math.Clamp(y, 0, _height - 1)];
 
@@ -649,6 +652,9 @@ public sealed partial class LargeWorldGenerator
             var x = random.Next(_width);
             var y = RandomRow(random, _surface[x] + 3, _cavernRow + _height / 10);
             var sand = random.Next(3) != 0;
+            // 0.3.1: fewer scrap-iron pockets in the underground layer (see OreVeins).
+            if (!sand && InUndergroundLayer(x, y) && random.Next(10) < 4)
+                continue;
             Blob(grid, random, x, y, 2 + random.NextDouble() * 2.5, random.Next(4, 10),
                 random.NextDouble() - 0.5, random.NextDouble() * 0.4 - 0.2,
                 tile => tile is TileId.Soil or TileId.Rock ? (sand ? TileId.Sand : TileId.ScrapIronOre) : null);
@@ -1241,7 +1247,8 @@ public sealed partial class LargeWorldGenerator
 
     private void OreVeins(TileGrid grid, TileCatalog catalog, Random random, CancellationToken token)
     {
-        void Veins(TileId ore, int count, Func<int, (int Top, int Bottom)> band, double radius, (int, int) steps, bool soilToo)
+        void Veins(TileId ore, int count, Func<int, (int Top, int Bottom)> band, double radius, (int, int) steps, bool soilToo,
+            double undergroundShare = 1)
         {
             for (var i = 0; i < count; i++)
             {
@@ -1250,6 +1257,8 @@ public sealed partial class LargeWorldGenerator
                 if (bottom <= top + 1)
                     continue;
                 var y = RandomRow(random, top, bottom);
+                if (undergroundShare < 1 && InUndergroundLayer(x, y) && random.NextDouble() >= undergroundShare)
+                    continue;
                 Blob(grid, random, x, y, radius * (0.7 + random.NextDouble() * 0.6), random.Next(steps.Item1, steps.Item2),
                     random.NextDouble() - 0.5, random.NextDouble() - 0.5,
                     tile => tile == TileId.Rock || (soilToo && tile == TileId.Soil) ? ore : null, minY: top, maxY: bottom);
@@ -1257,7 +1266,9 @@ public sealed partial class LargeWorldGenerator
         }
 
         token.ThrowIfCancellationRequested();
-        Veins(TileId.CopperOre, N(WorldGenDensity.CopperVeins), x => (_surface[x] + 3, _cavernRow + _height / 10), 1.6, (4, 11), true);
+        // 0.3.1: half the copper veins that land in the underground layer are dropped, bringing its ore density down to
+        // the reference's (docs/WORLDGEN_DIFF.md §5) — it held about two-thirds more ore than the layers around it.
+        Veins(TileId.CopperOre, N(WorldGenDensity.CopperVeins), x => (_surface[x] + 3, _cavernRow + _height / 10), 1.6, (4, 11), true, 0.5);
         Veins(TileId.CobaltOre, N(WorldGenDensity.CobaltVeins), x => (_cavernRow, _moltenTop[x] - 3), 1.4, (4, 10), false);
         Veins(TileId.ViridiumOre, N(WorldGenDensity.ViridiumVeins), x => ((int)(_height * 0.68), _moltenTop[x] - 2), 1.3, (3, 9), false);
     }
