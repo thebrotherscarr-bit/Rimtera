@@ -331,6 +331,11 @@ public sealed partial class GameSimulation
             TryEquipFromInventory(wings);
         if (Player.Inventory.FindSlot(ItemId.CobaltStiletto) is var sword and >= 0)
             Player.Inventory.Select(sword);
+        // PC-14: the drone uplink's drone is already out on first entry.
+        foreach (var (item, _, _) in StarterKits.Creative)
+            if (Items.Contains(item) && Items[item].Summons is { } minion && !MinionCatalog.Get(minion).IsSentry &&
+                Player.Inventory.Count(item) > 0 && ActiveDrones == 0)
+                SummonMinion(Items[item], minion, RegionMap.CellAt(PlayerCenter));
         PostMessage("A colony supply drop lands beside you.");
     }
 

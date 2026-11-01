@@ -110,9 +110,9 @@ public sealed class PlayerCharacter : IColonyPawn
     public bool AtBreakingPoint => Mind.Breaker.Risk == MentalBreakSeverity.Extreme;
     /// <summary>Multiplier on maximum run speed from the moving capacity (0 when downed).</summary>
     public float MoveCapacityFactor => IsDowned ? 0f : Math.Clamp(Health.Moving, 0f, 1f);
-    /// <summary>Multiplier on action cooldowns from manipulation and the extreme-mood work penalty.</summary>
+    /// <summary>Multiplier on action cooldowns from manipulation. No mood penalty: the player has no break risk (D-48, NC-2).</summary>
     public float ActionCooldownScale =>
-        1f / Math.Max(0.3f, Health.Manipulation) * (AtBreakingPoint ? 1.35f : 1f);
+        1f / Math.Max(0.3f, Health.Manipulation);
     public DamageResult LastDamage { get; private set; } = DamageResult.None;
 
     int IColonyPawn.SocialKey => 0;

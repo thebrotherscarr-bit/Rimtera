@@ -1713,6 +1713,8 @@ public static class CoreSelfTests
         DropRuleSelfTests.Run(Check); // 0.1.9 C2-C5: drop chances and conditions, event drops, hearts and orbs, boss potions, 9999 stacks
         LightingSelfTests.Run(Check); // 0.2.0 C1 (PE-11): coloured lighting on High is a per-channel multiply; Standard unchanged
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
+        ColonyRulingSelfTests.Run(Check); // 0.2.2 E: no auto-tend, no player needs, harmless breaks, unhappy residents stay, HUD, resident HP (NC-1/2/7/9/16/20)
+        CreativeResearchSelfTests.Run(Check); // 0.2.2 E: research on the character, old world flags migrated, weather and spread powers, the Creative kit (PC-13, X-CR-10, PC-14)
         BalanceSelfTests.Run(Check); // 0.2.0 A: the boss curve (--boss-balance), the 60-180 s band and D-6 difficulty scaling (PC-15, BO-23)
         Console.WriteLine($"{passed} checks passed.");
         return 0;

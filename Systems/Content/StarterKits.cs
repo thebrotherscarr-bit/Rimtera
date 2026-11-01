@@ -18,13 +18,19 @@ public static class StarterKits
         (ItemId.FerriteStiletto, 1, true), (ItemId.CopperPickaxe, 1, true), (ItemId.FerriteHatchet, 1, true), (ItemId.Berry, 12, false)
     ];
 
-    /// <summary>The Creative supply drop: cobalt tools, a drone uplink, light, rope, recall, a hook and glider wings (worn).</summary>
+    /// <summary>The Creative supply drop: cobalt tools, a drone uplink (its drone already out), light, rope, a reusable recall, a hook and glider wings (worn).</summary>
     public static readonly (ItemId Item, int Count, bool Calibrated)[] Creative =
     [
         (ItemId.CobaltStiletto, 1, true), (ItemId.CobaltDrill, 1, true), (ItemId.CobaltHatchet, 1, true), (ItemId.CobaltDemolisher, 1, true),
         (ItemId.FerriteDroneUplink, 1, true), (ItemId.GlowSticks, 100, false), (ItemId.ClimbingRope, 100, false),
-        (ItemId.RecallCapsule, 3, false), (ItemId.GrappleHook, 1, false), (ItemId.GliderWings, 1, true), (ItemId.Berry, 12, false)
+        (CreativeRecall, 1, false), (ItemId.GrappleHook, 1, false), (ItemId.GliderWings, 1, true), (ItemId.Berry, 12, false)
     ];
+
+    /// <summary>
+    /// The Creative recall: the teleport beacon, a reusable recall to the landing site (Journey's magic mirror), in place of
+    /// the three one-use recall capsules (PC-14).
+    /// </summary>
+    public const ItemId CreativeRecall = ItemId.TeleportBeacon;
 
     /// <summary>The item Creative characters start wearing in their first accessory slot.</summary>
     public const ItemId CreativeWornWings = ItemId.GliderWings;

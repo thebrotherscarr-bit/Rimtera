@@ -119,11 +119,9 @@ public sealed class ColonistSheetState : UiState
     private void BuildOverview()
     {
         var stats = _game?.Player.ColonistStats ?? _profile.Stats;
-        var needs = _game?.Player.Needs ?? PreviewNeeds();
         var health = _game?.Player.Health;
         var hitPoints = _game?.Player.HitPoints ?? _profile.HitPoints;
         var maximumHitPoints = _game?.Player.MaximumHitPoints ?? _profile.EffectiveMaximumHealth;
-        var mood = _game?.Player.Mood ?? ColonistMoodCalculator.Calculate(needs, stats, health);
         var injured = health?.GetPartStatuses().Count(part => part.Missing || part.Health < part.MaxHealth - 0.5f) ?? 0;
 
         AddColumn(0, new List<Line>
@@ -134,12 +132,8 @@ public sealed class ColonistSheetState : UiState
             Line.Row("Backstory", _profile.BackstoryName),
             Line.Row("Traits", _profile.TraitSummary),
             Line.Gap,
-            Line.Head("Needs"),
-            Line.Row("Mood", $"{Percent(mood)}  {ColonistMoodCalculator.Label(mood)}"),
-            Line.Row("Food", Percent(needs.FoodReserve)),
-            Line.Row("Rest", Percent(needs.RestReserve)),
-            Line.Row("Joy", Percent(needs.JoyReserve)),
-            Line.Row("Comfort", Percent(needs.ComfortReserve)),
+            // The player's sheet has no needs or mood: the player has no needs upkeep (D-48, NC-2).
+            Line.Text("You have no needs to keep up: food gives buffs (Well Fed)."),
             Line.Gap,
             Line.Head("Health"),
             Line.Row("Life", $"{hitPoints:0} / {maximumHitPoints:0}"),
@@ -296,7 +290,7 @@ public sealed class ColonistSheetState : UiState
         vitals.Add(Line.Row("Blood loss", Percent(health.BloodLoss)));
         vitals.Add(Line.Row("State", pawn.IsDowned ? $"Downed: {health.DownedReason}" : pawn.IsAlive ? "Conscious and mobile" : "Dead"));
         vitals.Add(Line.Gap);
-        vitals.Add(Line.Text("Crew with Medical skill tend nearby wounds."));
+        vitals.Add(Line.Text("Crew with Medical skill tend each other."));
         vitals.Add(Line.Text("Tended wounds stop bleeding and heal faster."));
         AddColumn(1, vitals);
     }
@@ -310,24 +304,39 @@ public sealed class ColonistSheetState : UiState
             return;
         }
         var mood = pawn.Mind.Mood;
-        AddColumn(0, new List<Line>
+        if (pawn.IsPlayerCharacter)
         {
-            Line.Head($"Mood  ·  {pawn.Name}"),
-            Line.Row("Mood", $"{Percent(mood.Current)}  {ColonistMoodCalculator.Label(mood.Current)}"),
-            Line.Row("Heading to", Percent(mood.Target)),
-            Line.Row("From needs", Percent(mood.Baseline)),
-            Line.Row("From thoughts", $"{mood.ThoughtOffset * 100f:+0;-0;0}%"),
-            Line.Row("State", pawn.Mind.Breaker.StateLabel),
-            Line.Gap,
-            Line.Head("Needs"),
-            Line.Row("Food", Percent(pawn.Needs.FoodReserve)),
-            Line.Row("Rest", Percent(pawn.Needs.RestReserve)),
-            Line.Row("Joy", Percent(pawn.Needs.JoyReserve)),
-            Line.Row("Comfort", Percent(pawn.Needs.ComfortReserve)),
-            Line.Gap,
-            Line.Text("A break comes when mood stays low for a while."),
-            Line.Text("Iron-willed colonists hold out longer, nervous ones less.")
-        });
+            // D-48 (NC-2): no needs, mood or break risk for the player; only the thoughts list below.
+            AddColumn(0, new List<Line>
+            {
+                Line.Head($"Mood  ·  {pawn.Name}"),
+                Line.Text("You have no needs to keep up and never break."),
+                Line.Text("Food gives buffs (Well Fed); thoughts still come and go."),
+                Line.Gap,
+                Line.Text("Crew have needs and moods of their own: see their pages.")
+            });
+        }
+        else
+        {
+            AddColumn(0, new List<Line>
+            {
+                Line.Head($"Mood  ·  {pawn.Name}"),
+                Line.Row("Mood", $"{Percent(mood.Current)}  {ColonistMoodCalculator.Label(mood.Current)}"),
+                Line.Row("Heading to", Percent(mood.Target)),
+                Line.Row("From needs", Percent(mood.Baseline)),
+                Line.Row("From thoughts", $"{mood.ThoughtOffset * 100f:+0;-0;0}%"),
+                Line.Row("State", pawn.Mind.Breaker.StateLabel),
+                Line.Gap,
+                Line.Head("Needs"),
+                Line.Row("Food", Percent(pawn.Needs.FoodReserve)),
+                Line.Row("Rest", Percent(pawn.Needs.RestReserve)),
+                Line.Row("Joy", Percent(pawn.Needs.JoyReserve)),
+                Line.Row("Comfort", Percent(pawn.Needs.ComfortReserve)),
+                Line.Gap,
+                Line.Text("A break comes when mood stays low for a while."),
+                Line.Text("Iron-willed colonists hold out longer, nervous ones less.")
+            });
+        }
 
         var thoughts = new List<Line> { Line.Head("Thoughts") };
         var current = pawn.Mind.CurrentThoughts;
@@ -405,7 +414,6 @@ public sealed class ColonistSheetState : UiState
     private static string SplitWords(string name) =>
         string.Concat(name.Select((c, i) => i > 0 && char.IsUpper(c) ? " " + char.ToLowerInvariant(c) : c.ToString()));
 
-    private static SurvivalNeeds PreviewNeeds() => new(0.82f, 0.90f, 0.72f, 0.70f);
 
     private static float Capacity(HealthComponent? health, BodyPartFunction function) =>
         health?.GetTaggedCapacity(function) ?? 1f;

@@ -582,7 +582,7 @@ public sealed partial class GameSimulation : IWorldEventHost
             SettleSnow(weather.Snow);
         if (outdoors && weather.Rain > 0.2f)
         {
-            Player.Needs.Drain(NeedKind.Comfort, hours * 0.03f * weather.Rain);
+            // No comfort drain for the player in the rain: the player has no needs upkeep (D-48, NC-2).
             if (weather.AcidRain && !Player.Stats.ImmunityTags.Contains("acid"))
                 Player.TakeDamage(hours * 6f * weather.Rain, DamageKind.Burn);
         }

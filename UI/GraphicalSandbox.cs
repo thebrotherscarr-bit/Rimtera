@@ -1642,7 +1642,7 @@ public static partial class GraphicalSandbox
         private int TileSize => Math.Clamp((int)MathF.Round(20f * _menu.Preferences.Zoom), 12, 40);
         // The world fills the window; HUD elements float over it (hotbar top-left, vitals and map top-right).
         private const int HudHeight = 0;
-        private const int VitalsHeight = 82;
+        private const int VitalsHeight = 60;
         private const int HotbarTop = 26;
         private const int HotbarSlot = 44;
         private readonly MenuFlow _menu;
@@ -2761,24 +2761,13 @@ public static partial class GraphicalSandbox
 
             DrawVitals(g, game);
 
-            // Clock, defence, mood and money: one quiet line in the bottom-right corner.
-            var info = $"Day {game.Day}  {FormatClock(game.ClockHour)}   DEF {game.Player.Stats.Defense}   Mood {game.Player.Mood:P0} {game.Player.MoodLabel}   " +
-                       $"{game.Player.Inventory.Count(ItemId.Credits)} cr   Crew {game.Colonists.Count(agent => agent.IsAlive)}" +
-                       (game.DroneSlots > 0 ? $"   Drones {game.ActiveDrones}/{game.DroneSlots}" : string.Empty) +
-                       (game.SentrySlots > 0 ? $"   Sentries {game.ActiveSentries}/{game.SentrySlots}" : string.Empty) +
-                       (game.TimeRate > 1.01f ? $"   time ×{game.TimeRate:0}" : string.Empty);
+            // Clock, defence and money: one quiet line in the bottom-right corner (NC-16, UI/HudStatusLine.cs).
+            var info = HudStatusLine.Build(game);
             var infoSize = g.MeasureString(info, _small);
             DrawShadowed(g, info, _small, _hudBrush, Width - infoSize.Width - 10, Height - 22);
 
             DrawControlsHint(g);
             DrawGuideHint(g, game);
-        }
-
-        private static string FormatClock(float hour)
-        {
-            var h = (int)hour % 24;
-            var m = (int)((hour - MathF.Floor(hour)) * 60f);
-            return $"{(h % 12 == 0 ? 12 : h % 12)}:{m:00} {(h < 12 ? "AM" : "PM")}";
         }
 
         private static void DrawShadowed(Graphics g, string text, Font font, Brush brush, float x, float y)
@@ -2787,7 +2776,7 @@ public static partial class GraphicalSandbox
             g.DrawString(text, font, brush, x, y);
         }
 
-        /// <summary>Life, charge, food and rest in one panel above the minimap; low life pulses.</summary>
+        /// <summary>Life and charge in one panel above the minimap; low life pulses.</summary>
         private void DrawVitals(Graphics g, GameSimulation game)
         {
             var panel = new RectangleF(Width - MinimapWidth - 10, 8, MinimapWidth, VitalsHeight - 8);
@@ -2800,9 +2789,7 @@ public static partial class GraphicalSandbox
             DrawBar(g, x, panel.Y + 9, width, 16, life, lifeBrush, $"LIFE  {game.Player.HitPoints:0} / {game.Player.MaximumHitPoints:0}");
             if (game.MaximumCharge > 0f)
                 DrawBar(g, x, panel.Y + 29, width, 13, game.Charge / game.MaximumCharge, _chargeBar, $"CHARGE  {game.Charge:0} / {game.MaximumCharge:0}");
-            var half = (width - 8) / 2f;
-            DrawBar(g, x, panel.Y + 47, half, 5, game.Player.Needs.FoodReserve, _foodBar, $"FOOD {game.Player.Needs.FoodReserve:P0}");
-            DrawBar(g, x + half + 8, panel.Y + 47, half, 5, game.Player.Needs.RestReserve, _restBar, $"REST {game.Player.Needs.RestReserve:P0}");
+            // No FOOD or REST bars: the player has no needs upkeep (D-48, NC-2); Well Fed shows in the buff bar.
         }
 
         /// <summary>A bar with its label on top (or underneath, for thin bars).</summary>

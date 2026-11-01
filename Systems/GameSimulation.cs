@@ -126,7 +126,6 @@ public sealed partial class GameSimulation : IStoryHost
     private readonly Random _mindRandom;
     private readonly HashSet<int> _deathsHandled = new();
     private readonly HashSet<long> _raidEnemyIds = new();
-    private bool _playerEdgeWarned;
     private bool _playerDownedWarned;
 
     static GameSimulation()
@@ -678,10 +677,8 @@ public sealed partial class GameSimulation : IStoryHost
         // not the buffs, as in Terraria.
         var vitalHours = deltaSeconds * VitalHoursPerRealSecond;
         AdvanceClock(elapsedHours * ClockPace); // nights pass faster than days (GameSimulation.World.cs)
-        Player.Needs.Advance(
-            vitalHours,
-            Player.ColonistStats.FoodConsumptionMultiplier,
-            Player.ColonistStats.RestRateMultiplier);
+        // D-48 (NC-2): the player has no needs upkeep. Food, rest, joy and comfort never drain for the player and drive
+        // nothing; colonists keep theirs (UpdateColonists).
         Player.Health.IsResting = Player.IsDowned;
         Player.Health.Tick(vitalHours);
         var statusDamage = Player.Statuses.Advance(vitalHours);
@@ -1280,15 +1277,20 @@ public sealed partial class GameSimulation : IStoryHost
             PostMessage("No food available.");
             return;
         }
-        Player.Needs.Restore(NeedKind.Food, food.FoodRestore);
         SoundEvents.Emit(SoundEventKind.Eat, string.Empty, PlayerCenter, (int)food.Id);
         if (food.FoodHeal > 0f) Player.Heal(food.FoodHeal); // cooked food heals a little (0.1.9 C1; a deliberate use)
+        // D-48: food gives buffs only. Cooked food applies its well-fed tier; raw food (nano-bananas, fish) a short Well Fed.
         GearOnAte(food);
+        if (food.GrantsStatus is null && !Player.Statuses.IsActive(StatusId.Satiated) && !Player.Statuses.IsActive(StatusId.Gourmet))
+            Player.Statuses.Apply(StatusId.WellFed, RawFoodWellFedHours(food), Player.Stats.ImmunityTags);
         if (food.Id == ItemId.Berry)
             Player.Mind.Thoughts.AddMemory(ThoughtId.AteNanoBanana);
         SetPlayerCooldown(Math.Max(Player.ActionCooldownTicks, 8));
         PostMessage($"Ate {food.Name}.");
     }
+
+    /// <summary>Vital hours of Well Fed that raw food (no well-fed tier of its own) gives: a nano-banana about two.</summary>
+    public static float RawFoodWellFedHours(ItemDefinition food) => Math.Clamp(food.FoodRestore * 10f, 1f, 4f);
 
     private void EquipSelected(bool vanity)
     {
@@ -1483,6 +1485,14 @@ public sealed partial class GameSimulation : IStoryHost
             Tiles);
     }
 
+    /// <summary>The needs the player's mood reads (D-48): always full, so needs never move the player's mood.</summary>
+    private readonly SurvivalNeeds PlayerNeutralNeeds = new(1f, 1f, 1f, 1f);
+    /// <summary>Food a binging colonist forages per bite (NC-7: from the land, never from the player's pack).</summary>
+    public const float BingeForageFood = 0.08f;
+    /// <summary>A binge forages, so there is always food to binge on (NC-7); the player's pack is never read.</summary>
+    private static bool ColonyHasFoodToBinge => true;
+
+    /// <summary>Furniture a tantrum kicks at (harmlessly, NC-7).</summary>
     private static readonly TileId[] FurnitureTiles =
     [
         TileId.Workbench, TileId.Furnace, TileId.Anvil, TileId.MiniTurret, TileId.HydroponicsTray,
@@ -1516,41 +1526,34 @@ public sealed partial class GameSimulation : IStoryHost
                 target = room?.Centroid ?? agent.HomePosition;
                 break;
             case MentalBreakKind.FoodBinge:
-                // The colony's food travels in the player's pack.
-                agent.Activity = "Food binge";
-                target = PlayerCenter;
+                // NC-7: a binge forages around home and gorges on what it finds. It never touches the player's pack.
+                agent.Activity = "Food binge (foraging)";
+                agent.WanderTimer -= deltaSeconds;
+                if (agent.WanderTimer <= 0f)
+                {
+                    agent.WanderTimer = 2f + (float)_mindRandom.NextDouble() * 2f;
+                    var offset = ((float)_mindRandom.NextDouble() * 2f - 1f) * 6f;
+                    agent.WanderTarget = new Vector2(
+                        Math.Clamp(agent.HomePosition.X + offset, 1f, World.Width - 2f), agent.HomePosition.Y);
+                }
+                target = agent.WanderTarget;
                 if (agent.BreakTimer <= 0f)
                 {
                     agent.BreakTimer = 0.4f;
-                    if (Player.Inventory.TryConsume(ItemId.Berry))
-                    {
-                        agent.Needs.Restore(NeedKind.Food, Items[ItemId.Berry].FoodRestore);
-                        agent.Mind.Thoughts.AddMemory(ThoughtId.AteNanoBanana);
-                    }
-                    else
-                    {
-                        agent.Activity = "Food binge (nothing left)";
-                    }
+                    agent.Needs.Restore(NeedKind.Food, BingeForageFood);
                 }
                 break;
             case MentalBreakKind.Tantrum:
+                // NC-7: a tantrum shouts and kicks at the furniture harmlessly. It never damages a station, turret,
+                // hydroponics tray, solar panel or oxygen unit (or any other tile).
                 agent.Activity = "Tantrum";
                 if (FindNearbyFurniture(center, 8) is { } spot)
                 {
                     target = new Vector2(spot.X + 0.5f, spot.Y + 0.5f);
                     if (agent.BreakTimer <= 0f && Vector2.Distance(center, target) <= 2.5f)
                     {
-                        agent.BreakTimer = 0.35f;
-                        var name = Tiles[World.GetCell(spot).TileId].Name;
-                        if (World.TryDamageTile(spot, 12, Tiles, out _))
-                        {
-                            _framing.ReframeRegion(World, Tiles, TileFramingSystem.GetDirtyRegion(World, new[] { spot }));
-                            PostMessage($"{agent.Name} smashed the {name} in a tantrum!");
-                        }
-                        else
-                        {
-                            PostMessage($"{agent.Name} is kicking the {name}.");
-                        }
+                        agent.BreakTimer = 2f;
+                        PostMessage($"{agent.Name} is shouting and kicking at the {Tiles[World.GetCell(spot).TileId].Name}.");
                     }
                 }
                 break;
@@ -2013,7 +2016,7 @@ public sealed partial class GameSimulation : IStoryHost
 
         PlayerAmbientTemperature = AmbientAt(PlayerCenter, CurrentBiome);
         PlayerComfort = TemperatureModel.Evaluate(PlayerAmbientTemperature, Player.Stats.ImmunityTags);
-        ApplyThermalComfort(PlayerComfort, Player.Needs, hours,
+        ApplyThermalComfort(PlayerComfort, null, hours, // no comfort need for the player (D-48); the injury still applies
             (amount, cause) => Player.TakeExposureDamage(amount, cause));
         if (PlayerComfort.Dangerous && !_exposureWarned)
             PostMessage(PlayerComfort.TooCold
@@ -2065,19 +2068,15 @@ public sealed partial class GameSimulation : IStoryHost
             var mind = pawn.Mind;
             mind.Thoughts.Advance(hours);
             mind.Thoughts.SetSituational(ComputeSituationalThoughts(pawn, comfort, indoors, night, living));
-            mind.UpdateMood(pawn.Needs, pawn.ColonistStats, hours);
-            mind.Breaker.Track(mind.Mood.Current, hours);
-
             if (pawn.IsPlayerCharacter)
             {
-                // The player never loses control: they get a visible warning and, at the extreme, slower work.
-                if (Player.OnTheEdge && !_playerEdgeWarned)
-                    PostMessage($"{Player.Name} is on the edge ({mind.Breaker.StateLabel}).");
-                else if (!Player.OnTheEdge && _playerEdgeWarned)
-                    PostMessage($"{Player.Name} has steadied.");
-                _playerEdgeWarned = Player.OnTheEdge;
+                // D-48 (NC-2): the player has no needs upkeep, so needs never move their mood, and they have no break risk
+                // (no "on the edge" warning, no slower work). Thoughts still come and go for the social layer.
+                mind.UpdateMood(PlayerNeutralNeeds, pawn.ColonistStats, hours);
                 continue;
             }
+            mind.UpdateMood(pawn.Needs, pawn.ColonistStats, hours);
+            mind.Breaker.Track(mind.Mood.Current, hours);
 
             if (mind.Breaker.IsBreaking)
             {
@@ -2089,8 +2088,8 @@ public sealed partial class GameSimulation : IStoryHost
             }
             else
             {
-                var started = mind.Breaker.TryStartBreak(_mindRandom, hours, canBreak: !pawn.IsDowned,
-                    hasFood: Player.Inventory.Count(ItemId.Berry) > 0);
+                // A food binge forages (NC-7), so the colony always has food to binge on; never the player's pack.
+                var started = mind.Breaker.TryStartBreak(_mindRandom, hours, canBreak: !pawn.IsDowned, hasFood: ColonyHasFoodToBinge);
                 if (started != MentalBreakKind.None)
                     PostMessage($"{pawn.Name} is having a {mind.Breaker.ActiveSeverity.ToString().ToLowerInvariant()} " +
                                 $"mental break: {MentalBreaker.Describe(started)}.");
@@ -2136,10 +2135,13 @@ public sealed partial class GameSimulation : IStoryHost
             yield return (ThoughtId.Downed, 1f, null);
 
         var needs = pawn.Needs;
-        if (needs.FoodReserve < 0.08f) yield return (ThoughtId.Starving, 1f, null);
-        else if (needs.FoodReserve < 0.25f) yield return (ThoughtId.Hungry, 1f, null);
-        if (needs.RestReserve < 0.10f) yield return (ThoughtId.Exhausted, 1f, null);
-        else if (needs.RestReserve < 0.25f) yield return (ThoughtId.Tired, 1f, null);
+        if (!pawn.IsPlayerCharacter) // D-48: no Hungry, Starving, Tired or Exhausted for the player
+        {
+            if (needs.FoodReserve < 0.08f) yield return (ThoughtId.Starving, 1f, null);
+            else if (needs.FoodReserve < 0.25f) yield return (ThoughtId.Hungry, 1f, null);
+            if (needs.RestReserve < 0.10f) yield return (ThoughtId.Exhausted, 1f, null);
+            else if (needs.RestReserve < 0.25f) yield return (ThoughtId.Tired, 1f, null);
+        }
 
         if (!comfort.Comfortable)
         {
@@ -2211,12 +2213,12 @@ public sealed partial class GameSimulation : IStoryHost
                 pawn.Mind.Thoughts.AddMemory(id);
     }
 
-    private static void ApplyThermalComfort(ThermalComfort comfort, SurvivalNeeds needs, float hours, Action<float, string> injure)
+    private static void ApplyThermalComfort(ThermalComfort comfort, SurvivalNeeds? needs, float hours, Action<float, string> injure)
     {
         if (hours <= 0f)
             return;
         if (!comfort.Comfortable)
-            needs.Drain(NeedKind.Comfort, hours * 0.04f * Math.Min(3f, comfort.DegreesOutsideComfort / 8f + 0.25f));
+            needs?.Drain(NeedKind.Comfort, hours * 0.04f * Math.Min(3f, comfort.DegreesOutsideComfort / 8f + 0.25f));
         if (comfort.Dangerous)
             injure(hours * 1.5f * Math.Min(3f, comfort.DegreesOutsideSafe / 10f + 0.5f), comfort.TooCold ? "frostbite" : "heatstroke");
     }

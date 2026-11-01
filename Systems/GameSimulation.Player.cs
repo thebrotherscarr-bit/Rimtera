@@ -1423,6 +1423,7 @@ public sealed partial class GameSimulation
             ApplyCharacter(file);
         else if (snapshot.Character is { } embedded)
             ApplyCharacter(embedded, inventoryAlreadyRestored: true);
+        MigrateWorldResearch(); // saves older than the character file: world research flags still move to the character
         GrantCreativeKitOnce();
     }
 
