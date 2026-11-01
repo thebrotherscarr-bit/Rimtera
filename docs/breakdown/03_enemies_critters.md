@@ -1,5 +1,7 @@
 # 03 · Enemies and critters: Rimtera compared with Terraria
 
+> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open, with the milestone `docs/PLAN.md` now plans it for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
+
 This is a read-only audit. No game code was changed. Terraria (v1.4.5.8) is used only as evidence of behaviour. Rimtera names, numbers, code and art stay original.
 
 **Sources**
@@ -63,146 +65,146 @@ Rimtera's dispatcher is `GameSimulation.UpdateEnemies` (`Systems/GameSimulation.
 
 Terraria has about 127 aiStyles; named helpers include `AI_001_Slimes`, `AI_002_FloatingEye`, `AI_003_Fighters` (20,049 instructions), `AI_005_EaterOfSouls`, `AI_006_Worms`, `AI_026_Unicorns`, `AI_065_Butterflies`, `AI_107_ImprovedWalkers`, `AI_108_DivingFlyer`, `AI_114_Dragonflies`, `AI_116_WaterStriders`, `AI_118_Seahorses` and more, plus the inline cases in `NPC::AI` (113,899 instructions).
 
-| ID | Feature | Terraria | Rimtera (code) | Status |
-|---|---|---|---|---|
-| A1 | Fighter / walker (Default ground) | aiStyle 3: always walks toward or away from the target. Jumps high when blocked, turns around when stuck, some open doors. | It walks only within 22 tiles (`alertRadius`, GameSimulation.cs:1630), jumps only when a 1-tile step is ahead (`IsGroundBlockedAhead` :1601) and never turns around. [probe] | ◐ |
-| A2 | Slime hopper | aiStyle 1: crouch, then hop. | `MossSlime`, `RockMite` and the `Hops` kinds jump every 1.1 s (:1655). There are three hopper families (`StepHopper` EnemyAiFamilies.cs:258). | ✅ |
-| A3 | Default flier | aiStyles 2 (eye bounce), 14 (bat erratic), 5 (eater) and 44: several distinct movement models. | One model, `MoveFlyingEnemy` (:1812): it lerps toward the target and bounces off tiles at 35%. Eyes, bats, harpies and drones all move the same way. | ◐ |
-| A4 | Diving flier | `AI_108_DivingFlyer` | `StepDiver` (EnemyAiFamilies.cs:195): hover above the target, dive, pull up. 17 kinds. | ✅ |
-| A5 | Worm | `AI_006_Worms`: segmented, burrows. | `StepWorm` (:50): the head steers underground and arcs in the air under gravity, segments trail it, and projectiles hit the segments (`EnemyProjectileDistance` GameSimulation.Player.cs:1166). 19 kinds. | ✅ |
-| A6 | Caster | aiStyle 8: teleports, then fires a slow bolt. | `StepCaster` (:109): teleports after 3.8 s, then fires 3 homing bolts. 21 kinds. | ✅ |
-| A7 | Mimic | aiStyle 25: disguised until it is touched or hit. | `StepMimic` (:232): unmasks within 2.6 tiles or when hurt, then leaping hops. 8 kinds. | ✅ |
-| A8 | Stationary attacker (antlion, man eater, turret) | aiStyles 19 and 13: they shoot or lunge from a fixed spot. | 12 `Stationary` kinds never move and have no attack, so they hurt only on contact (`ContentCreatures.cs:162`). | ❌ |
-| A9 | Ranged non-boss (archer, gunner, spitter) | Many fighter, flier and turret variants shoot (skeleton archer, goblin archer, hornet, snow balla, pirate deadeye, sniper…). | No such family. Only casters, bosses (`FireBossVolley` :1789) and dart traps make `ProjectileTeam.Enemy` shots. [probe] found 12 names that promise ranged attacks. | ❌ |
-| A10 | Swimmer | aiStyles 16 (fish), 18 (jellyfish) and `AI_118_Seahorses`: confined to water, flop on land. | No swim AI. 17 of 19 swimmers are flagged `Flying` and use `MoveFlyingEnemy` with no liquid check. Passive "flying" fish drift down to the bed (`UpdatePassiveCreature` :1722). Non-flying swimmers walk the bed. [probe] | ⚠ |
-| A11 | Critter AI | aiStyles 7, 24, 64–68, `AI_112_FairyCritter`, `AI_114`, `AI_115`, `AI_116`: birds land and take off, fireflies glow, snails crawl walls, ducks swim. | Two models in `UpdatePassiveCreature`: walk in 3-second legs, or flier drift, plus a 4 s flee when hurt. | ◐ |
-| A12 | Phasing ghost or skull | aiStyles 22 and 10: `noTileCollide`, they drift through walls. | Every non-boss flier collides with tiles, and the void wisp cannot pass a wall [probe]. There is no per-archetype "phases" flag. | ❌ |
-| A13 | Charger | `AI_026_Unicorns`: run up, then gallop at speed. | There is no charge family. The Shard strider and the hounds are Default walkers. | ❌ |
-| A14 | Wall climber (spiders) | aiStyle 40 (wall-crawling spiders). | Burrow spider, Silk spider-mite and Venom recluse are Default walkers. | ❌ |
-| A15 | Split-on-death and summoners | Mother slime and corrupt slime split. Brood and hive enemies spawn minions. | Nothing spawns on death, and the Mite broodmother does not breed. | ❌ |
-| A16 | Boss controller (bosses belong to another area) | Unique AI per boss. | One shared approach, telegraph and volley loop (`UpdateBossController` :1751), with phase 2 under a threshold. | ◐ |
-| A17 | Aggro on colonists and residents | n/a | `AggroGoal`: crew and town NPCs draw attacks, with distance penalties (GameSimulation.PlayerSystems.cs:30). | ➕ |
+| ID | Feature | Terraria | Rimtera (code) | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| A1 | Fighter / walker (Default ground) | aiStyle 3: always walks toward or away from the target. Jumps high when blocked, turns around when stuck, some open doors. | It walks only within 22 tiles (`alertRadius`, GameSimulation.cs:1630), jumps only when a 1-tile step is ahead (`IsGroundBlockedAhead` :1601) and never turns around. [probe] | ◐ | ❌ EN-2 → 0.4.0 |
+| A2 | Slime hopper | aiStyle 1: crouch, then hop. | `MossSlime`, `RockMite` and the `Hops` kinds jump every 1.1 s (:1655). There are three hopper families (`StepHopper` EnemyAiFamilies.cs:258). | ✅ | ✅ as audited |
+| A3 | Default flier | aiStyles 2 (eye bounce), 14 (bat erratic), 5 (eater) and 44: several distinct movement models. | One model, `MoveFlyingEnemy` (:1812): it lerps toward the target and bounces off tiles at 35%. Eyes, bats, harpies and drones all move the same way. | ◐ | ❌ EN-13 → 0.4.0 |
+| A4 | Diving flier | `AI_108_DivingFlyer` | `StepDiver` (EnemyAiFamilies.cs:195): hover above the target, dive, pull up. 17 kinds. | ✅ | ✅ as audited |
+| A5 | Worm | `AI_006_Worms`: segmented, burrows. | `StepWorm` (:50): the head steers underground and arcs in the air under gravity, segments trail it, and projectiles hit the segments (`EnemyProjectileDistance` GameSimulation.Player.cs:1166). 19 kinds. | ✅ | ✅ as audited |
+| A6 | Caster | aiStyle 8: teleports, then fires a slow bolt. | `StepCaster` (:109): teleports after 3.8 s, then fires 3 homing bolts. 21 kinds. | ✅ | ✅ as audited |
+| A7 | Mimic | aiStyle 25: disguised until it is touched or hit. | `StepMimic` (:232): unmasks within 2.6 tiles or when hurt, then leaping hops. 8 kinds. | ✅ | ✅ as audited |
+| A8 | Stationary attacker (antlion, man eater, turret) | aiStyles 19 and 13: they shoot or lunge from a fixed spot. | 12 `Stationary` kinds never move and have no attack, so they hurt only on contact (`ContentCreatures.cs:162`). | ❌ | ❌ EN-1 → 0.4.0 |
+| A9 | Ranged non-boss (archer, gunner, spitter) | Many fighter, flier and turret variants shoot (skeleton archer, goblin archer, hornet, snow balla, pirate deadeye, sniper…). | No such family. Only casters, bosses (`FireBossVolley` :1789) and dart traps make `ProjectileTeam.Enemy` shots. [probe] found 12 names that promise ranged attacks. | ❌ | ❌ EN-1 → 0.4.0 |
+| A10 | Swimmer | aiStyles 16 (fish), 18 (jellyfish) and `AI_118_Seahorses`: confined to water, flop on land. | No swim AI. 17 of 19 swimmers are flagged `Flying` and use `MoveFlyingEnemy` with no liquid check. Passive "flying" fish drift down to the bed (`UpdatePassiveCreature` :1722). Non-flying swimmers walk the bed. [probe] | ⚠ | ❌ EN-3 → 0.4.0 |
+| A11 | Critter AI | aiStyles 7, 24, 64–68, `AI_112_FairyCritter`, `AI_114`, `AI_115`, `AI_116`: birds land and take off, fireflies glow, snails crawl walls, ducks swim. | Two models in `UpdatePassiveCreature`: walk in 3-second legs, or flier drift, plus a 4 s flee when hurt. | ◐ | ❌ EN-16 → 0.4.0 |
+| A12 | Phasing ghost or skull | aiStyles 22 and 10: `noTileCollide`, they drift through walls. | Every non-boss flier collides with tiles, and the void wisp cannot pass a wall [probe]. There is no per-archetype "phases" flag. | ❌ | ❌ EN-13 → 0.4.0 |
+| A13 | Charger | `AI_026_Unicorns`: run up, then gallop at speed. | There is no charge family. The Shard strider and the hounds are Default walkers. | ❌ | ❌ EN-13 → 0.4.0 |
+| A14 | Wall climber (spiders) | aiStyle 40 (wall-crawling spiders). | Burrow spider, Silk spider-mite and Venom recluse are Default walkers. | ❌ | ❌ EN-13 → 0.4.0 |
+| A15 | Split-on-death and summoners | Mother slime and corrupt slime split. Brood and hive enemies spawn minions. | Nothing spawns on death, and the Mite broodmother does not breed. | ❌ | ❌ EN-13 → 0.4.0 |
+| A16 | Boss controller (bosses belong to another area) | Unique AI per boss. | One shared approach, telegraph and volley loop (`UpdateBossController` :1751), with phase 2 under a threshold. | ◐ | ❌ BO-1 → 0.4.0 |
+| A17 | Aggro on colonists and residents | n/a | `AggroGoal`: crew and town NPCs draw attacks, with distance penalties (GameSimulation.PlayerSystems.cs:30). | ➕ | ➕ kept |
 
 ### B. Pathing through tiles
 
-| ID | Feature | Terraria | Rimtera | Status |
-|---|---|---|---|---|
-| B1 | Step-up and small ledges | Walk up slopes and 1-tile steps. | A jump triggers on a blocked step; jump impulse 8.5 against gravity 24 gives about 1.5 tiles (`_enemyMovement`, GameSimulation.cs:55). | ✅ |
-| B2 | Clearing walls | Fighters jump several tiles when blocked, then turn and give up (knowledge). | It cannot cross 2 tiles and stays stuck forever [probe]. A 2-tall dirt wall makes the player fully safe. | ⚠ |
-| B3 | Platforms | Fighters drop through platforms when the target is below (knowledge). | `MovementInput.Vertical` is never set for creatures, so they never drop [probe]. | ❌ |
-| B4 | Closed doors | Normal enemies cannot open them. | Closed doors are solid [probe]. | ✅ |
-| B5 | Door-breaking on blood moon and invasions | Zombies and goblins bash doors open (knowledge). | None. | ❌ |
-| B6 | Liquids | Water slows NPCs, swimmers stay inside it, some enemies are lava-immune. | `PawnMovementSystem` has no liquid term for creatures, so walkers move at full speed underwater. | ◐ |
-| B7 | Lava damage to creatures | NPCs take lava damage unless `lavaImmune` (knowledge). | None: 70 → 70 HP after 3 s in lava [probe]. | ❌ |
-| B8 | Idle wandering | Fighters keep walking, and turn at walls or ledges. | Speed is 0 outside the 22-tile alert radius (`horizontal = 0`, :1632), so a creature stands frozen [probe]. Flyers wiggle in place. | ❌ |
-| B9 | Fliers and tiles | Most fliers collide; ghosts do not. | They collide and bounce back (`MoveFlyingEnemy`). Huge flying bosses clip through. | ✅ |
+| ID | Feature | Terraria | Rimtera | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| B1 | Step-up and small ledges | Walk up slopes and 1-tile steps. | A jump triggers on a blocked step; jump impulse 8.5 against gravity 24 gives about 1.5 tiles (`_enemyMovement`, GameSimulation.cs:55). | ✅ | ✅ as audited |
+| B2 | Clearing walls | Fighters jump several tiles when blocked, then turn and give up (knowledge). | It cannot cross 2 tiles and stays stuck forever [probe]. A 2-tall dirt wall makes the player fully safe. | ⚠ | ❌ EN-2 → 0.4.0 |
+| B3 | Platforms | Fighters drop through platforms when the target is below (knowledge). | `MovementInput.Vertical` is never set for creatures, so they never drop [probe]. | ❌ | ❌ EN-2 → 0.4.0 |
+| B4 | Closed doors | Normal enemies cannot open them. | Closed doors are solid [probe]. | ✅ | ✅ as audited |
+| B5 | Door-breaking on blood moon and invasions | Zombies and goblins bash doors open (knowledge). | None. | ❌ | ❌ unchanged since the audit |
+| B6 | Liquids | Water slows NPCs, swimmers stay inside it, some enemies are lava-immune. | `PawnMovementSystem` has no liquid term for creatures, so walkers move at full speed underwater. | ◐ | ❌ EN-3 → 0.4.0 |
+| B7 | Lava damage to creatures | NPCs take lava damage unless `lavaImmune` (knowledge). | None: 70 → 70 HP after 3 s in lava [probe]. | ❌ | ✅ EN-5 0.1.15 |
+| B8 | Idle wandering | Fighters keep walking, and turn at walls or ledges. | Speed is 0 outside the 22-tile alert radius (`horizontal = 0`, :1632), so a creature stands frozen [probe]. Flyers wiggle in place. | ❌ | ❌ EN-2 → 0.4.0 |
+| B9 | Fliers and tiles | Most fliers collide; ghosts do not. | They collide and bounce back (`MoveFlyingEnemy`). Huge flying bosses clip through. | ✅ | ✅ as audited |
 
 ### C. Spawning (`Systems/GameSimulation.Spawning.cs`)
 
-| ID | Feature | Terraria | Rimtera | Status |
-|---|---|---|---|---|
-| C1 | Spawn tick and rate | `defaultSpawnRate` (600) and `defaultMaxSpawns` (5) (knowledge for the numbers). A 1-in-spawnRate roll each tick (`GetSpawnRate`, `SpawnNPC_*`). | An attempt every 0.65 s with 16% × factors, at most 85% (`UpdateSpawning` :36). Spawns come faster on average than Terraria at day. | ◐ |
-| C2 | Population cap | maxSpawns, weighted by `npcSlots`. | Base 4 × event, content and biome factors, clamped to 1–20. Critters count toward it. The night peak was 6 [probe]. | ✅ |
-| C3 | Time and depth factors | `GetSpawnRate` IL: night ×0.6 rate and ×1.3 cap; underground (`rockLayer`) ×0.4–0.5 and ×1.7–1.9; blood moon ×0.3 and ×1.8; eclipse ×0.2 and ×1.9; hardmode ×0.9 and +1. | `CombatTuning.SpawnFactors` (CombatModel.cs:726): night 1.7× rate and 1.5× cap; underground 1.45× and 1.35×; blight 1.3× and 1.25×. The underground boost is weaker than Terraria's 2–2.5×. | ◐ |
-| C4 | Spawn position | Random tiles in a 0.7-screen box outside a 0.52-screen safe box, in **both** axes (`GetSpawnArea` IL: `sWidth/16×0.7`, `×0.52`). | Left or right only, 22–40 tiles out, on ground within ±10 rows of the player's depth (`TryFindSpawnGround` GameSimulation.cs:2203). Nothing spawns above or below. Cave spawns need a roof. | ◐ |
-| C5 | Safe distance | `safeRangeX` is 0.52 of the screen (about 62 tiles at 1080p). | `SafeSpawnHalfWidth` is 22 tiles against a view half-width of 18 (GameSimulation.cs:46). | ✅ |
-| C6 | Town calming | Town NPCs nearby cut spawns; three or more nearly stop them (knowledge). | ×1/(1+0.6n), and ×0.12 at three or more (`SpawnFactors`). `TownNpcsCalmingSpawns` counts within 45 tiles. | ✅ |
-| C7 | Spawns while a boss lives | Only a few special cases, such as the Wall of Flesh (`Main.wofNPCIndex` in `GetSpawnRate`). | Rate ×0.35 and cap ×0.6 while any boss is alive. | ◐ |
-| C8 | Spawn-rate items and buffs | `Player.enemySpawns` (battle potion, water candle: ×0.5 rate), `calmed` (×1.65), `sunflower` (×1.2), plus invisibility, peace candle and shadow candle (IL reads all three fields). | None. The only knobs are the creative-mode slider (`Creative.cs:84`) and the "Hardened" seed. | ❌ |
-| C9 | Ramp-down as the population fills | Rate ×0.6/0.7/0.8/0.9 while `nearbyActiveNPCs` is below 20/40/60/80% of max (`GetSpawnRate` IL 1692–1825). | Hard cap only. | ❌ |
-| C10 | Biome rosters | Zone flags pick pools. | `BiomeSpawnTables` holds weighted day and night tables for 14 zones. Context bands and content-fill cover grassland and caves (`BiomeSpawnTables.cs:13`, `ContentFill` :291). | ✅ |
-| C11 | Hardmode roster share | Hardmode pools replace or extend the old ones. | 55% of rolls go to `HardTables` after the Fracture (`HardShare`). | ➕ |
-| C12 | Water spawns | Sharks, jellyfish and piranhas spawn in water. | `IsSwimmer` with `TryFindSwimSpot` needs at least 3 cells of water (Spawning.cs:150). | ✅ |
-| C13 | Event and weather rosters | Rain, blood moon, invasions and so on override pools. | `_worldEvents.PickSpawn`, `HardmodeEventCreature`, `CoverageSpawn` (GameSimulation.CreatureCoverage.cs:58). | ✅ |
-| C14 | Dungeon roster | ZoneDungeon pool. | Rolled while the player stands on dungeon wall (`PickDungeon`). | ✅ |
-| C15 | Side "family" spawn stream | n/a | `UpdateFamilySpawns` (EnemyAiFamilies.cs:300): every 45 s, at most 2 alive. **It ignores** `CreativeSpawnRate = 0`, `NoHostiles` events and the biome (except core and ocean). It spawns the 260-HP Tunnel wyrm and the Rift caster before the Fracture. | ⚠ |
-| C16 | Statue spawns | Statue NPCs drop no loot or coins and are flagged `SpawnedFromStatue` (knowledge). | `TriggerStatue` (GameSimulation.WorldGenContent.cs:109) calls `SpawnCreature`, so the creatures drop items, credits and banner counts. This is farmable. | ⚠ |
-| C17 | Critter spawning | Critters have their own conditions: daytime surface, town boosts, rain worms and so on. | Critters sit in the hostile tables and share the cap. Towns cut critters too (×0.12). | ◐ |
+| ID | Feature | Terraria | Rimtera | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| C1 | Spawn tick and rate | `defaultSpawnRate` (600) and `defaultMaxSpawns` (5) (knowledge for the numbers). A 1-in-spawnRate roll each tick (`GetSpawnRate`, `SpawnNPC_*`). | An attempt every 0.65 s with 16% × factors, at most 85% (`UpdateSpawning` :36). Spawns come faster on average than Terraria at day. | ◐ | ❌ EN-8 → 0.4.0 |
+| C2 | Population cap | maxSpawns, weighted by `npcSlots`. | Base 4 × event, content and biome factors, clamped to 1–20. Critters count toward it. The night peak was 6 [probe]. | ✅ | ✅ as audited |
+| C3 | Time and depth factors | `GetSpawnRate` IL: night ×0.6 rate and ×1.3 cap; underground (`rockLayer`) ×0.4–0.5 and ×1.7–1.9; blood moon ×0.3 and ×1.8; eclipse ×0.2 and ×1.9; hardmode ×0.9 and +1. | `CombatTuning.SpawnFactors` (CombatModel.cs:726): night 1.7× rate and 1.5× cap; underground 1.45× and 1.35×; blight 1.3× and 1.25×. The underground boost is weaker than Terraria's 2–2.5×. | ◐ | ❌ EN-8 → 0.4.0 |
+| C4 | Spawn position | Random tiles in a 0.7-screen box outside a 0.52-screen safe box, in **both** axes (`GetSpawnArea` IL: `sWidth/16×0.7`, `×0.52`). | Left or right only, 22–40 tiles out, on ground within ±10 rows of the player's depth (`TryFindSpawnGround` GameSimulation.cs:2203). Nothing spawns above or below. Cave spawns need a roof. | ◐ | ❌ EN-8 → 0.4.0 |
+| C5 | Safe distance | `safeRangeX` is 0.52 of the screen (about 62 tiles at 1080p). | `SafeSpawnHalfWidth` is 22 tiles against a view half-width of 18 (GameSimulation.cs:46). | ✅ | ✅ as audited |
+| C6 | Town calming | Town NPCs nearby cut spawns; three or more nearly stop them (knowledge). | ×1/(1+0.6n), and ×0.12 at three or more (`SpawnFactors`). `TownNpcsCalmingSpawns` counts within 45 tiles. | ✅ | ✅ as audited |
+| C7 | Spawns while a boss lives | Only a few special cases, such as the Wall of Flesh (`Main.wofNPCIndex` in `GetSpawnRate`). | Rate ×0.35 and cap ×0.6 while any boss is alive. | ◐ | ❌ EN-8 → 0.4.0 |
+| C8 | Spawn-rate items and buffs | `Player.enemySpawns` (battle potion, water candle: ×0.5 rate), `calmed` (×1.65), `sunflower` (×1.2), plus invisibility, peace candle and shadow candle (IL reads all three fields). | None. The only knobs are the creative-mode slider (`Creative.cs:84`) and the "Hardened" seed. | ❌ | ❌ EN-8 → 0.4.0 |
+| C9 | Ramp-down as the population fills | Rate ×0.6/0.7/0.8/0.9 while `nearbyActiveNPCs` is below 20/40/60/80% of max (`GetSpawnRate` IL 1692–1825). | Hard cap only. | ❌ | ❌ EN-8 → 0.4.0 |
+| C10 | Biome rosters | Zone flags pick pools. | `BiomeSpawnTables` holds weighted day and night tables for 14 zones. Context bands and content-fill cover grassland and caves (`BiomeSpawnTables.cs:13`, `ContentFill` :291). | ✅ | ✅ as audited |
+| C11 | Hardmode roster share | Hardmode pools replace or extend the old ones. | 55% of rolls go to `HardTables` after the Fracture (`HardShare`). | ➕ | ➕ kept |
+| C12 | Water spawns | Sharks, jellyfish and piranhas spawn in water. | `IsSwimmer` with `TryFindSwimSpot` needs at least 3 cells of water (Spawning.cs:150). | ✅ | ✅ as audited |
+| C13 | Event and weather rosters | Rain, blood moon, invasions and so on override pools. | `_worldEvents.PickSpawn`, `HardmodeEventCreature`, `CoverageSpawn` (GameSimulation.CreatureCoverage.cs:58). | ✅ | ✅ as audited |
+| C14 | Dungeon roster | ZoneDungeon pool. | Rolled while the player stands on dungeon wall (`PickDungeon`). | ✅ | ✅ as audited |
+| C15 | Side "family" spawn stream | n/a | `UpdateFamilySpawns` (EnemyAiFamilies.cs:300): every 45 s, at most 2 alive. **It ignores** `CreativeSpawnRate = 0`, `NoHostiles` events and the biome (except core and ocean). It spawns the 260-HP Tunnel wyrm and the Rift caster before the Fracture. | ⚠ | ✅ EN-7 0.1.7 |
+| C16 | Statue spawns | Statue NPCs drop no loot or coins and are flagged `SpawnedFromStatue` (knowledge). | `TriggerStatue` (GameSimulation.WorldGenContent.cs:109) calls `SpawnCreature`, so the creatures drop items, credits and banner counts. This is farmable. | ⚠ | ✅ EN-6 0.1.7 |
+| C17 | Critter spawning | Critters have their own conditions: daytime surface, town boosts, rain worms and so on. | Critters sit in the hostile tables and share the cap. Towns cut critters too (×0.12). | ◐ | ❌ EN-16 → 0.4.0 |
 
 ### D. Stats and combat on creatures
 
-| ID | Feature | Terraria | Rimtera | Status |
-|---|---|---|---|---|
-| D1 | HP and damage by tier | `SetDefaults` IL: type 1 slime has 25 HP, 7 damage, 2 defense; type 2 demon eye has 60 HP, 18 damage; type 3 zombie has 45 HP, 14 damage, 6 defense. | Authored per archetype. The swarm bug has 24 HP and 8 damage. Hard-roster kinds have 200–600 HP. `DefenseBalance.EnemyHitScale` raises damage for tough creatures. | ✅ |
-| D2 | Creature defense | `stfld NPC.defense` appears 635 times in `SetDefaults`. | `EnemyArchetype.Defense` (Actors.cs:441) is **0 for all 465** [probe]. `CreatureDefense` (Combat.cs:185) is wired but unused in practice. | ❌ |
-| D3 | Knockback resistance | Per NPC: `knockBackResist` appears 531 times (demon eye 0.8, zombie 0.5). | Derived: HP bulk, size and worm flag; bosses 0.85–1 (`KnockbackResistance` CombatModel.cs:610). | ◐ |
-| D4 | Knockback soft caps | Soft caps above 8/10/12/14, hard cap 16, ×1.4 on a crit. | `KnockbackTaken` (:473) matches. | ✅ |
-| D5 | Contact hitbox | Hitbox rectangles intersect. | Centre distance must be under 1.15 tiles (GameSimulation.cs:1666). Worm segments must be within 0.9 of the player **centre** (EnemyAiFamilies.cs:96). Bosses use the rectangle. | ⚠ |
-| D6 | Contact cadence | Player immunity frames after a hit. | Per-creature `ContactCooldown` plus the player's immunity frames. | ✅ |
-| D7 | Difficulty scaling | Expert and Master multiply HP and damage (knowledge). | `WorldSettings.EnemyScale` is 0.75, 1, 1.4 or 2 (incoming ×, outgoing ÷). | ✅ |
-| D8 | Post-Fracture rescale of **all** regular creatures | Not done: hardmode only adds new pools. | `ApplyHardmodeScaling` (Hardmode.cs:186) applies ×1.7 HP and ×1.3 damage (Classic) to every non-boss, **including** hard-roster natives that were authored for hardmode. | ➕ |
-| D9 | Per-attacker hit immunity | `NPC.immune[player]` (`GetImmuneTime` IL). | `MarkHitBy` and `CanBeHitBy` per attacker id (Actors.cs:636). | ✅ |
-| D10 | Thorns reflection | Thorns potion. | `CombatStats.Thorns` reflects contact hits (:1679). | ✅ |
+| ID | Feature | Terraria | Rimtera | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| D1 | HP and damage by tier | `SetDefaults` IL: type 1 slime has 25 HP, 7 damage, 2 defense; type 2 demon eye has 60 HP, 18 damage; type 3 zombie has 45 HP, 14 damage, 6 defense. | Authored per archetype. The swarm bug has 24 HP and 8 damage. Hard-roster kinds have 200–600 HP. `DefenseBalance.EnemyHitScale` raises damage for tough creatures. | ✅ | ✅ as audited |
+| D2 | Creature defense | `stfld NPC.defense` appears 635 times in `SetDefaults`. | `EnemyArchetype.Defense` (Actors.cs:441) is **0 for all 465** [probe]. `CreatureDefense` (Combat.cs:185) is wired but unused in practice. | ❌ | ✅ EN-4 0.1.15 |
+| D3 | Knockback resistance | Per NPC: `knockBackResist` appears 531 times (demon eye 0.8, zombie 0.5). | Derived: HP bulk, size and worm flag; bosses 0.85–1 (`KnockbackResistance` CombatModel.cs:610). | ◐ | ✅ EN-4 0.1.15 |
+| D4 | Knockback soft caps | Soft caps above 8/10/12/14, hard cap 16, ×1.4 on a crit. | `KnockbackTaken` (:473) matches. | ✅ | ✅ as audited |
+| D5 | Contact hitbox | Hitbox rectangles intersect. | Centre distance must be under 1.15 tiles (GameSimulation.cs:1666). Worm segments must be within 0.9 of the player **centre** (EnemyAiFamilies.cs:96). Bosses use the rectangle. | ⚠ | ✅ EN-12 0.1.15 |
+| D6 | Contact cadence | Player immunity frames after a hit. | Per-creature `ContactCooldown` plus the player's immunity frames. | ✅ | ✅ as audited |
+| D7 | Difficulty scaling | Expert and Master multiply HP and damage (knowledge). | `WorldSettings.EnemyScale` is 0.75, 1, 1.4 or 2 (incoming ×, outgoing ÷). | ✅ | ✅ as audited |
+| D8 | Post-Fracture rescale of **all** regular creatures | Not done: hardmode only adds new pools. | `ApplyHardmodeScaling` (Hardmode.cs:186) applies ×1.7 HP and ×1.3 damage (Classic) to every non-boss, **including** hard-roster natives that were authored for hardmode. | ➕ | ➕ kept |
+| D9 | Per-attacker hit immunity | `NPC.immune[player]` (`GetImmuneTime` IL). | `MarkHitBy` and `CanBeHitBy` per attacker id (Actors.cs:636). | ✅ | ✅ as audited |
+| D10 | Thorns reflection | Thorns potion. | `CombatStats.Thorns` reflects contact hits (:1679). | ✅ | ✅ as audited |
 
 ### E. Debuffs on creatures (`Systems/GameSimulation.PlayerSystems.cs`)
 
-| ID | Feature | Terraria | Rimtera | Status |
-|---|---|---|---|---|
-| E1 | Debuff set | About 20 NPC debuffs: on fire, poisoned, venom, cursed inferno, ichor (−defense), frostburn, confused, midas, daybroken, shadowflame, oiled, Betsy's curse and others (knowledge). | Six: burning 6/s, poison 4/s, frostbite 2/s plus slow, armour shred (×1.25 damage taken), confused (stumbles), marked (×1.1) (`AfflictionSeconds` :65, `UpdateAfflictions` :198). | ◐ |
-| E2 | Immunities | A per-NPC `buffImmune[]` table. | A keyword match on the display name (`ResistsAffliction` :78). Brittle: any name with "drone" resists poison, and any name containing "fire" resists burning. | ◐ |
-| E3 | Bosses | Bosses are immune to confusion, and some to many debuffs. | Bosses ignore confusion and keep afflictions for half as long. | ✅ |
-| E4 | Damage-over-time kills | Count as kills. | The shared defeat loop (:1693) gives drops, banners and the bestiary entry. | ✅ |
+| ID | Feature | Terraria | Rimtera | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| E1 | Debuff set | About 20 NPC debuffs: on fire, poisoned, venom, cursed inferno, ichor (−defense), frostburn, confused, midas, daybroken, shadowflame, oiled, Betsy's curse and others (knowledge). | Six: burning 6/s, poison 4/s, frostbite 2/s plus slow, armour shred (×1.25 damage taken), confused (stumbles), marked (×1.1) (`AfflictionSeconds` :65, `UpdateAfflictions` :198). | ◐ | ✅ EN-17 0.1.15; IC-3 0.1.15 |
+| E2 | Immunities | A per-NPC `buffImmune[]` table. | A keyword match on the display name (`ResistsAffliction` :78). Brittle: any name with "drone" resists poison, and any name containing "fire" resists burning. | ◐ | ✅ EN-5 0.1.15 |
+| E3 | Bosses | Bosses are immune to confusion, and some to many debuffs. | Bosses ignore confusion and keep afflictions for half as long. | ✅ | ✅ as audited |
+| E4 | Damage-over-time kills | Count as kills. | The shared defeat loop (:1693) gives drops, banners and the bestiary entry. | ✅ | ✅ as audited |
 
 ### F. Despawning
 
-| ID | Feature | Terraria | Rimtera | Status |
-|---|---|---|---|---|
-| F1 | Far despawn | `CheckActive` IL: outside a box of `activeRangeX/Y` (about 2.1 screens), `timeLeft` counts down from `activeTime` (750 ticks, about 12.5 s; knowledge for the value). | Beyond 48 tiles for 3 s (`UpdateDespawning` Spawning.cs:203, `CombatTuning.DespawnDistance`). | ◐ |
-| F2 | Exemptions | Bosses, town NPCs and `DoesntDespawnToInactivity` (IL). | Exempt: bosses, event and raid units, stationary kinds and disguised mimics (`CanDespawn` :198). | ✅ |
-| F3 | Dusk bosses at dawn | Night bosses leave at day. | `UpdateBossesAtDawn` (:235). | ✅ |
-| F4 | Night creatures at dawn | Zombies and eyes wander off at day (`EncourageDespawn`, `DespawnEncouragement_AIStyle3_*`). | None: night spawns stay until killed or far away. | ❌ |
-| F5 | Bosses leave after the player dies | Yes. | `BossesLeaveOnPlayerDeath`, after 3 s (:253). | ✅ |
+| ID | Feature | Terraria | Rimtera | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| F1 | Far despawn | `CheckActive` IL: outside a box of `activeRangeX/Y` (about 2.1 screens), `timeLeft` counts down from `activeTime` (750 ticks, about 12.5 s; knowledge for the value). | Beyond 48 tiles for 3 s (`UpdateDespawning` Spawning.cs:203, `CombatTuning.DespawnDistance`). | ◐ | ❌ EN-9 → 0.4.0 |
+| F2 | Exemptions | Bosses, town NPCs and `DoesntDespawnToInactivity` (IL). | Exempt: bosses, event and raid units, stationary kinds and disguised mimics (`CanDespawn` :198). | ✅ | ✅ as audited |
+| F3 | Dusk bosses at dawn | Night bosses leave at day. | `UpdateBossesAtDawn` (:235). | ✅ | ✅ as audited |
+| F4 | Night creatures at dawn | Zombies and eyes wander off at day (`EncourageDespawn`, `DespawnEncouragement_AIStyle3_*`). | None: night spawns stay until killed or far away. | ❌ | ❌ EN-9 → 0.4.0 |
+| F5 | Bosses leave after the player dies | Yes. | `BossesLeaveOnPlayerDeath`, after 3 s (:253). | ✅ | ✅ as audited |
 
 ### G. Drops, banners and the bestiary
 
-| ID | Feature | Terraria | Rimtera | Status |
-|---|---|---|---|---|
-| G1 | Item drops | Rule-based chances, many 1/N (knowledge). | `NpcDropRegistry` gives guaranteed drops (NpcDropRegistry.cs:13) plus `CreditDrop`. Chance drops come from `ArsenalItems.MobDrops` (Gear.cs:382). | ◐ |
-| G2 | Rare-drop granularity | 1/500, 1/1000 and so on. | Whole percents only (`GearRandom.Next(100) < percent`), so nothing below 1%. | ◐ |
-| G3 | Heart and mana pickups | `NPCLoot_DropHeals` (IL, 392 instructions). | None. | ❌ |
-| G4 | Event unit loot | Invasion units drop items. | 48 event kinds have no registry drops: credits, event loot and essence only [probe]. | ◐ |
-| G5 | Boss bags, trophies, relics | Expert bags, a 10% trophy, Master relics. | `BossDropsOrBag`, trophy 10% with luck, relics in Annihilation (PlayerSystems.cs:393–416). | ✅ |
-| G6 | Luck extra drops | Luck nudges some rolls. | Positive luck re-rolls mob drops (`OnCreatureDefeatedPlayerSystems`). | ➕ |
-| G7 | Banner per kills | `CountKillForBannersAndDropThem` IL: 50 kills by default (knowledge). | `KillsPerBanner = 50` for every hostile non-boss kind (`PlayerItems.EarnsBanner`). | ✅ |
-| G8 | Banner bonus | `GetBannerBuffEffect` is data-driven: about +50% damage dealt and some damage-taken reduction (knowledge). Range is the nearby screen area. | +25% dealt and ×0.8 taken within 30 tiles (`BannerDamageBonus`, `BannerDamageTakenFactor`). | ◐ |
-| G9 | Banner item and placement | Every enemy has a banner. | `BannerFor(kind)` gives ids 20000+kind. Placed banners are tracked, and one knocked down drops back (`RefreshBanners`). | ✅ |
-| G10 | Bestiary tiers | Seen, then killed, then drops revealed over kills (knowledge). | Tiers are seen, 1 kill and 10 kills; drops and biomes are logged (`Bestiary.cs`). Sightings come from 24 tiles. | ✅ |
-| G11 | Bestiary screen | Yes. | `OpenBestiary` (GraphicalSandbox.Screens.cs:87). | ✅ |
-| G12 | Kill counts persist | Yes. | `KillCounts` live in the world snapshot. | ✅ |
+| ID | Feature | Terraria | Rimtera | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| G1 | Item drops | Rule-based chances, many 1/N (knowledge). | `NpcDropRegistry` gives guaranteed drops (NpcDropRegistry.cs:13) plus `CreditDrop`. Chance drops come from `ArsenalItems.MobDrops` (Gear.cs:382). | ◐ | ✅ EN-11 0.1.15 |
+| G2 | Rare-drop granularity | 1/500, 1/1000 and so on. | Whole percents only (`GearRandom.Next(100) < percent`), so nothing below 1%. | ◐ | ✅ EN-11 0.1.15 |
+| G3 | Heart and mana pickups | `NPCLoot_DropHeals` (IL, 392 instructions). | None. | ❌ | ✅ EN-10 0.1.15 |
+| G4 | Event unit loot | Invasion units drop items. | 48 event kinds have no registry drops: credits, event loot and essence only [probe]. | ◐ | ✅ EN-11 0.1.15 |
+| G5 | Boss bags, trophies, relics | Expert bags, a 10% trophy, Master relics. | `BossDropsOrBag`, trophy 10% with luck, relics in Annihilation (PlayerSystems.cs:393–416). | ✅ | ✅ as audited |
+| G6 | Luck extra drops | Luck nudges some rolls. | Positive luck re-rolls mob drops (`OnCreatureDefeatedPlayerSystems`). | ➕ | ➕ kept |
+| G7 | Banner per kills | `CountKillForBannersAndDropThem` IL: 50 kills by default (knowledge). | `KillsPerBanner = 50` for every hostile non-boss kind (`PlayerItems.EarnsBanner`). | ✅ | ✅ as audited |
+| G8 | Banner bonus | `GetBannerBuffEffect` is data-driven: about +50% damage dealt and some damage-taken reduction (knowledge). Range is the nearby screen area. | +25% dealt and ×0.8 taken within 30 tiles (`BannerDamageBonus`, `BannerDamageTakenFactor`). | ◐ | ✅ EN-18 0.1.15 |
+| G9 | Banner item and placement | Every enemy has a banner. | `BannerFor(kind)` gives ids 20000+kind. Placed banners are tracked, and one knocked down drops back (`RefreshBanners`). | ✅ | ✅ as audited |
+| G10 | Bestiary tiers | Seen, then killed, then drops revealed over kills (knowledge). | Tiers are seen, 1 kill and 10 kills; drops and biomes are logged (`Bestiary.cs`). Sightings come from 24 tiles. | ✅ | ✅ as audited |
+| G11 | Bestiary screen | Yes. | `OpenBestiary` (GraphicalSandbox.Screens.cs:87). | ✅ | ✅ as audited |
+| G12 | Kill counts persist | Yes. | `KillCounts` live in the world snapshot. | ✅ | ✅ as audited |
 
 ### H. Critters
 
-| ID | Feature | Terraria | Rimtera | Status |
-|---|---|---|---|---|
-| H1 | Roster | About 100 critters including gold variants. | 102 passive kinds, 97 catchable (`ContentCreatures.cs:15`, `ContentFillData.Critters`). | ✅ |
-| H2 | Catching | `ItemCheck_CatchCritters` IL: the net hitbox must intersect the critter. | `SwingBugNet` (GameSimulation.Items.cs:427): within 1.6 tiles of the target and within reach. Every catchable kind has a same-named item [probe 0 missing]. | ✅ |
-| H3 | Release | Yes. | `ReleaseCritter` (:448). | ✅ |
-| H4 | Bait power | Per critter. | `BaitPowerFor` (ContentItems.cs:543) and `FillCritter.BaitPower` feed into `Fishing`. | ✅ |
-| H5 | Gold variants | Rare (about 1 in a few hundred; knowledge), worth 10 gold. | 10 gilded variants and the Golden critter. Their weights are **7%** of the base (`GoldShare`, ContentFillData.cs:19, 67–75), so they are common. Value 600. | ⚠ |
-| H6 | Lava critters | You need a lava-proof net, or you get burnt (`CatchCritters` IL calls `Player.Hurt` and `AddBuff`(24, 300)). | No rule. | ❌ |
-| H7 | Town critters | Towns raise critter spawns (knowledge). | Towns lower them along with hostiles. | ◐ |
+| ID | Feature | Terraria | Rimtera | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| H1 | Roster | About 100 critters including gold variants. | 102 passive kinds, 97 catchable (`ContentCreatures.cs:15`, `ContentFillData.Critters`). | ✅ | ✅ as audited |
+| H2 | Catching | `ItemCheck_CatchCritters` IL: the net hitbox must intersect the critter. | `SwingBugNet` (GameSimulation.Items.cs:427): within 1.6 tiles of the target and within reach. Every catchable kind has a same-named item [probe 0 missing]. | ✅ | ✅ as audited |
+| H3 | Release | Yes. | `ReleaseCritter` (:448). | ✅ | ✅ as audited |
+| H4 | Bait power | Per critter. | `BaitPowerFor` (ContentItems.cs:543) and `FillCritter.BaitPower` feed into `Fishing`. | ✅ | ✅ as audited |
+| H5 | Gold variants | Rare (about 1 in a few hundred; knowledge), worth 10 gold. | 10 gilded variants and the Golden critter. Their weights are **7%** of the base (`GoldShare`, ContentFillData.cs:19, 67–75), so they are common. Value 600. | ⚠ | ❌ EN-15 → 0.4.0 |
+| H6 | Lava critters | You need a lava-proof net, or you get burnt (`CatchCritters` IL calls `Player.Hurt` and `AddBuff`(24, 300)). | No rule. | ❌ | ❌ EN-16 → 0.4.0 |
+| H7 | Town critters | Towns raise critter spawns (knowledge). | Towns lower them along with hostiles. | ◐ | ❌ EN-16 → 0.4.0 |
 
 ### I. Hostile projectiles
 
-| ID | Feature | Terraria | Rimtera | Status |
-|---|---|---|---|---|
-| I1 | Caster bolts | Slow bolt toward the target. | 3 bolts at 4.5 speed, homing at 1.6 rad/s (`UpdateHomingProjectiles` :175). | ✅ |
-| I2 | Boss volleys | Unique per boss. | A fanned volley, faster in phase 2 (`FireBossVolley`). | ✅ |
-| I3 | Trap darts | They hit NPCs too (knowledge). | `ProjectileTeam.Enemy` darts hit the player only (Physics.cs:971). | ◐ |
-| I4 | Projectile variety | Gravity lobs, tile-piercing shots and on-hit debuffs (stinger poison, cursed flames). | Straight or homing only. Shots die on solid tiles. A `DamageKind` adds a wound type, but there are no debuffs on the player. | ◐ |
-| I5 | Projectile art | Sprite per projectile. | Enemy bolts are drawn as a pen line. `SpriteName` (for example `bolt_homing`) is ignored (GraphicalSandbox.cs:~2077). | ◐ |
+| ID | Feature | Terraria | Rimtera | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| I1 | Caster bolts | Slow bolt toward the target. | 3 bolts at 4.5 speed, homing at 1.6 rad/s (`UpdateHomingProjectiles` :175). | ✅ | ✅ as audited |
+| I2 | Boss volleys | Unique per boss. | A fanned volley, faster in phase 2 (`FireBossVolley`). | ✅ | ✅ as audited |
+| I3 | Trap darts | They hit NPCs too (knowledge). | `ProjectileTeam.Enemy` darts hit the player only (Physics.cs:971). | ◐ | ◐ unchanged since the audit |
+| I4 | Projectile variety | Gravity lobs, tile-piercing shots and on-hit debuffs (stinger poison, cursed flames). | Straight or homing only. Shots die on solid tiles. A `DamageKind` adds a wound type, but there are no debuffs on the player. | ◐ | ❌ IC-12 → 0.6.0 |
+| I5 | Projectile art | Sprite per projectile. | Enemy bolts are drawn as a pen line. `SpriteName` (for example `bolt_homing`) is ignored (GraphicalSandbox.cs:~2077). | ◐ | ❌ IC-11 → 0.4.0 |
 
 ### J. Sprites and animations (`UI/SpriteAtlas.cs`, `UI/AnimationCatalog.cs`)
 
-| ID | Feature | Terraria | Rimtera | Status |
-|---|---|---|---|---|
-| J1 | Base sprite, idle, move and attack frames for each creature | Frame sheets. | 462/462 present (`--entity-sprites` checked against `Assets/Sprites` with the atlas prefixes). 5 bosses use hand-made sheets. | ✅ |
-| J2 | Unique art per kind | Yes. | 3 shared pairs: CaveBat with SkyHawk (a hostile bat drawn as a passive hawk), CaveMoth with GeigerBug, Wraith with GlowStalker [probe]. | ◐ |
-| J3 | Attack animation for regular enemies | Yes. | `EnemyFrame` uses `_attack_` frames only while `Telegraphing` (bosses), so regular creatures never show their generated attack frames. | ◐ |
-| J4 | Worm segments | Segment sprites. | Tinted ellipses (`DrawWormBody`, GraphicalSandbox.World.cs:321). | ◐ |
-| J5 | Mimic disguise | Disguise matches the chest type. | Every mimic draws as `furn_cabin_chest` (GraphicalSandbox.cs:2059), including the urn, frozen, junk-pile and lead-box mimics. | ◐ |
-| J6 | Hit flash and health bars | Yes. | `IsFlashing` and `DrawHealthBar`. | ✅ |
-| J7 | Affliction overlay | Debuff dust. | `GraphicalSandbox.PlayerSystems.cs:98`. | ✅ |
+| ID | Feature | Terraria | Rimtera | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| J1 | Base sprite, idle, move and attack frames for each creature | Frame sheets. | 462/462 present (`--entity-sprites` checked against `Assets/Sprites` with the atlas prefixes). 5 bosses use hand-made sheets. | ✅ | ✅ as audited |
+| J2 | Unique art per kind | Yes. | 3 shared pairs: CaveBat with SkyHawk (a hostile bat drawn as a passive hawk), CaveMoth with GeigerBug, Wraith with GlowStalker [probe]. | ◐ | ❌ EN-14 → 0.4.0 |
+| J3 | Attack animation for regular enemies | Yes. | `EnemyFrame` uses `_attack_` frames only while `Telegraphing` (bosses), so regular creatures never show their generated attack frames. | ◐ | ❌ EN-14 → 0.4.0 |
+| J4 | Worm segments | Segment sprites. | Tinted ellipses (`DrawWormBody`, GraphicalSandbox.World.cs:321). | ◐ | ❌ EN-14 → 0.4.0 |
+| J5 | Mimic disguise | Disguise matches the chest type. | Every mimic draws as `furn_cabin_chest` (GraphicalSandbox.cs:2059), including the urn, frozen, junk-pile and lead-box mimics. | ◐ | ❌ EN-13 → 0.4.0 |
+| J6 | Hit flash and health bars | Yes. | `IsFlashing` and `DrawHealthBar`. | ✅ | ✅ as audited |
+| J7 | Affliction overlay | Debuff dust. | `GraphicalSandbox.PlayerSystems.cs:98`. | ✅ | ✅ as audited |
 
 ---
 

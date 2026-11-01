@@ -1,5 +1,7 @@
 # 08 · Town NPCs, housing and the colony: Rimtera vs Terraria
 
+> **0.2.0 status column** (added 2026-11-01, for the 0.2.0 docs pass). ✅ = done, with the release that shipped it; ◐ = partly done; ❌ = open, with the milestone `docs/PLAN.md` now plans it for (parity steps 0.1.10 and 0.1.12 → 0.4.0, 0.1.11 and 0.1.13 → 0.5.0, 0.1.14 → 0.6.0). "As audited" means the row matched Terraria at audit time and was not re-checked. "Unchanged since the audit" means no shipped step targeted the row. The audit text itself is not updated.
+
 Area: every town NPC (move-in, shop, happiness, dialogue, services), housing validity, pylons, the travelling merchant, town pets and town gels, bound survivors, NPC death and respawn, the Station AI guide, and the RimWorld-side colony layer: crew colonists, their needs, moods, skills, jobs and AI, the storyteller and raids, the colony UI, drones and sentries on the HUD, and the "Crew 0" HUD line.
 
 Method: I read the code. Pointers are `file:line` on `main` as of 2026-10-28; other agents are editing UI files, so UI line numbers may drift a little. I ran one scratch probe in a private build (`scratchpad/npc08/NpcProbe.cs`, results quoted as **Probe A–E**). Terraria evidence: CIL dumped from `members-ALL.json` with the evidence scripts (`WorldGen.StartRoomCheck`/`CheckRoom`, `Main.UpdateTime_SpawnTownNPCs`, `ShopHelper.ProcessMood`/`GetNearbyResidentNPCs`/`IsFarFromHome`/`LimitAndRoundMultiplier`). "(knowledge)" marks Terraria behaviour from general knowledge, not from the IL. Terraria is behavioural evidence only.
@@ -57,128 +59,128 @@ Also worth noting:
 
 Catalog: `Systems/TownNpcs.cs:198–321`, `Systems/Content/ContentFillTown.cs:43–56`, `Systems/Content/TownContent.cs:38–62`, `Systems/GameSimulation.Leisure.cs:199`. Unlocks: `GameSimulation.Town.cs:94–123`, `TownContent.cs:136–148`, `ContentFillTown.cs:122–139`, `FreeSurvivor` `GameSimulation.Town.cs:209`.
 
-| # | Rimtera NPC (id) | Terraria analog | Move-in: Terraria vs Rimtera | Shop / service | Status |
-|---|---|---|---|---|---|
-| R1 | Station AI (0) | Guide | T: present from world start, homeless until housed (knowledge). R: always unlocked (`Town.cs:97`); a hologram at the landing site until housed (`Town.cs:178–187`); advice from `GuideAdvisor` (`GameSimulation.Guide.cs:84`) read from the recipe data. | Sells a work bench, torch and rope (the Guide sells nothing) | ✅ |
-| R2 | Quartermaster (1) | Merchant | T: 50 silver carried, piggy bank included (knowledge). R: ≥ 50 credits **in the inventory only** (`Town.cs:98`). | 13 basics, none gated | ◐ |
-| R3 | Medic (2) | Nurse | T: max life > 100 and the Merchant present (knowledge). R: max HP > 120, no merchant check (`Town.cs:101`). Probe A: a fresh player has 100 HP, so this needs 3 life cores rather than 1. | Heal for credits (see T2-S1) | ◐ |
-| R4 | Armorer (3) | Arms Dealer | T: a gun or bullets carried (knowledge). R: any Ranged weapon except the Copper bow (`Town.cs:103–105`), so bows count too. | Ammo and guns, flag-gated | ◐ |
-| R5 | Chief Engineer (4) | Steampunker or Mechanic role | R: after the first boss (`Town.cs:106`). | Wiring, drones, turrets | ➕ |
-| R6 | Astro-Botanist (5) | Dryad / Witch Doctor | T Dryad: after any boss (knowledge). R: after placing hydroponics (`Town.cs:108`). | Purifier gel, planters; no purity report | ◐ |
-| R7 | Head Researcher (6) | Wizard-like | R: after a heart breaks (`Town.cs:110`). | Charge (magic) gear | ➕ |
-| R8 | Trade Consul (7) | (second Travelling Merchant) | R: ≥ 2 residents (`Town.cs:112`); a 1-in-6 chance per daytime hour (`Town.cs:70`); leaves at dusk (`Town.cs:46`). Overlaps with R22. | Mobility and accessory gear | ◐ |
-| R9 | Tide-Warden (8) | Angler | T: found asleep on the beach (knowledge). R: carry anything with fishing power (`Town.cs:114`). | Daily quest fish (`GameSimulation.Fishing.cs:281–329`), rewards that scale with the count, milestone items | ✅ |
-| R10 | Demolitionist (9) | Demolitionist | T: explosives carried and the Merchant present (knowledge). R: a bound survivor in worldgen structures (`GameSimulation.cs:231–237`). | Explosives | ◐ |
-| R11 | Tailor (10) | Clothier / Stylist | T: bound NPCs gated by bosses or biomes (knowledge). R: bound from world start. | Cloth and vanity; no hair or style service | ◐ |
-| R12 | Cartographer (11) | (none) | Bound | Info gear, beacon | ➕ |
-| R13 | Mechanic (12) | Mechanic / Goblin Tinkerer | T: Mechanic bound in the dungeon after Skeletron; Goblin bound after the goblin army (knowledge). R: bound from world start. | Drone parts and turrets; **no reforge** | ◐ |
-| R14 | Pilot (13) | (none) | Bound | Wings and hooks | ➕ |
-| R15 | Cook (14) | (none; food vendor) | Bound | Food and the cooking station | ➕ |
-| R16 | Arborist (15) | (none) | Bound | Cutters and timber | ➕ |
-| R17 | Archivist (16) | (none) | Bound | Glyph blocks, vault core | ➕ |
-| R18 | Isotopist (17) | Cyborg-like | R: after the core-gate boss (`Town.cs:117`) | Hardmode ores and rods | ✅ |
-| R19 | Aeronaut (18) | (wings vendor) | R: after any boss of the hard trio (`Town.cs:119`) | Wings | ✅ |
-| R20 | Relic Warden (19) | (post-Plantera vendor) | R: after the bulb boss (`Town.cs:121`) | Relics | ✅ |
-| R21 | Greenskeeper (120) | Golfer | T: rescued underground in the desert (knowledge). R: after finding a golf ball. | Golf gear and kites. Shares the `npc_colony_worker` sprite (see T2-H11) | ✅ |
-| R22 | Travelling Merchant (140) | Travelling Merchant | T: some mornings, needs ≥ 2 NPCs, leaves at dusk, random stock (knowledge). R: 45 % of days, 6–10 h, ≥ 2 residents, leaves at 18 h, 6 of 20 items seeded by day (`ContentFillTown.cs:14–31`, `97–120`). | Rotating stock. Prices move with happiness (Terraria uses its own price table, `ShopHelper.GetTravelingMerchantPrices`) | ✅ |
-| R23–26 | Town gels ×4 (141–144) | Town slimes | T: each slime has its own discovery condition (knowledge). R: a 34 % roll per hour while the player stands in the gel's biome, once there are ≥ 3 residents (`ContentFillTown.cs:122–139`). | No shop, but the **"Sell held item" option still works on gels** (`GraphicalSandbox.cs:1101–1107`) | ◐ |
-| R27 | Field Zoologist (160) | Zoologist | T: 10 % of the bestiary (knowledge). R: 10 % (`TownContent.cs:140`); rarer stock at 25 %. | Critter goods | ✅ |
-| R28 | Pigment Trader (161) | Dye Trader | T: a dye material carried, plus a boss defeated (knowledge, medium confidence). R: a dye material carried (`TownContent.cs:144`). | Dyes and paintbrush | ◐ |
-| R29 | Party Planner (162) | Party Girl | T: 14 NPCs; parties start at random (knowledge). R: 10 residents (`TownContent.cs:146`); parties on demand with a 24 h cooldown (`TownContent.cs:98–117`). | Party: joy for everyone plus Regeneration for the player, **player-triggered** | ◐ |
-| R30 | Missing Terraria roles | Goblin Tinkerer (reforge), Stylist, Tax Collector, Truffle, Santa, Princess, Pirate, Skeleton Merchant, Tavernkeep | No analog. Reforge is the only one that matters for play. | n/a | ❌ |
+| # | Rimtera NPC (id) | Terraria analog | Move-in: Terraria vs Rimtera | Shop / service | Status | 0.2.0 status |
+|---|---|---|---|---|---|---|
+| R1 | Station AI (0) | Guide | T: present from world start, homeless until housed (knowledge). R: always unlocked (`Town.cs:97`); a hologram at the landing site until housed (`Town.cs:178–187`); advice from `GuideAdvisor` (`GameSimulation.Guide.cs:84`) read from the recipe data. | Sells a work bench, torch and rope (the Guide sells nothing) | ✅ | ✅ as audited |
+| R2 | Quartermaster (1) | Merchant | T: 50 silver carried, piggy bank included (knowledge). R: ≥ 50 credits **in the inventory only** (`Town.cs:98`). | 13 basics, none gated | ◐ | ❌ NC-14 → 0.5.0 |
+| R3 | Medic (2) | Nurse | T: max life > 100 and the Merchant present (knowledge). R: max HP > 120, no merchant check (`Town.cs:101`). Probe A: a fresh player has 100 HP, so this needs 3 life cores rather than 1. | Heal for credits (see T2-S1) | ◐ | ❌ NC-14 → 0.5.0 |
+| R4 | Armorer (3) | Arms Dealer | T: a gun or bullets carried (knowledge). R: any Ranged weapon except the Copper bow (`Town.cs:103–105`), so bows count too. | Ammo and guns, flag-gated | ◐ | ❌ NC-14 → 0.5.0 |
+| R5 | Chief Engineer (4) | Steampunker or Mechanic role | R: after the first boss (`Town.cs:106`). | Wiring, drones, turrets | ➕ | ➕ kept |
+| R6 | Astro-Botanist (5) | Dryad / Witch Doctor | T Dryad: after any boss (knowledge). R: after placing hydroponics (`Town.cs:108`). | Purifier gel, planters; no purity report | ◐ | ❌ NC-14 → 0.5.0 |
+| R7 | Head Researcher (6) | Wizard-like | R: after a heart breaks (`Town.cs:110`). | Charge (magic) gear | ➕ | ➕ kept |
+| R8 | Trade Consul (7) | (second Travelling Merchant) | R: ≥ 2 residents (`Town.cs:112`); a 1-in-6 chance per daytime hour (`Town.cs:70`); leaves at dusk (`Town.cs:46`). Overlaps with R22. | Mobility and accessory gear | ◐ | ❌ NC-14 → 0.5.0 |
+| R9 | Tide-Warden (8) | Angler | T: found asleep on the beach (knowledge). R: carry anything with fishing power (`Town.cs:114`). | Daily quest fish (`GameSimulation.Fishing.cs:281–329`), rewards that scale with the count, milestone items | ✅ | ✅ as audited |
+| R10 | Demolitionist (9) | Demolitionist | T: explosives carried and the Merchant present (knowledge). R: a bound survivor in worldgen structures (`GameSimulation.cs:231–237`). | Explosives | ◐ | ❌ NC-14 → 0.5.0 |
+| R11 | Tailor (10) | Clothier / Stylist | T: bound NPCs gated by bosses or biomes (knowledge). R: bound from world start. | Cloth and vanity; no hair or style service | ◐ | ❌ NC-14 → 0.5.0 |
+| R12 | Cartographer (11) | (none) | Bound | Info gear, beacon | ➕ | ➕ kept |
+| R13 | Mechanic (12) | Mechanic / Goblin Tinkerer | T: Mechanic bound in the dungeon after Skeletron; Goblin bound after the goblin army (knowledge). R: bound from world start. | Drone parts and turrets; **no reforge** | ◐ | ❌ PC-16 → 0.5.0; NC-12 → 0.5.0 |
+| R14 | Pilot (13) | (none) | Bound | Wings and hooks | ➕ | ➕ kept |
+| R15 | Cook (14) | (none; food vendor) | Bound | Food and the cooking station | ➕ | ➕ kept |
+| R16 | Arborist (15) | (none) | Bound | Cutters and timber | ➕ | ➕ kept |
+| R17 | Archivist (16) | (none) | Bound | Glyph blocks, vault core | ➕ | ➕ kept |
+| R18 | Isotopist (17) | Cyborg-like | R: after the core-gate boss (`Town.cs:117`) | Hardmode ores and rods | ✅ | ✅ as audited |
+| R19 | Aeronaut (18) | (wings vendor) | R: after any boss of the hard trio (`Town.cs:119`) | Wings | ✅ | ✅ as audited |
+| R20 | Relic Warden (19) | (post-Plantera vendor) | R: after the bulb boss (`Town.cs:121`) | Relics | ✅ | ✅ as audited |
+| R21 | Greenskeeper (120) | Golfer | T: rescued underground in the desert (knowledge). R: after finding a golf ball. | Golf gear and kites. Shares the `npc_colony_worker` sprite (see T2-H11) | ✅ | ✅ as audited |
+| R22 | Travelling Merchant (140) | Travelling Merchant | T: some mornings, needs ≥ 2 NPCs, leaves at dusk, random stock (knowledge). R: 45 % of days, 6–10 h, ≥ 2 residents, leaves at 18 h, 6 of 20 items seeded by day (`ContentFillTown.cs:14–31`, `97–120`). | Rotating stock. Prices move with happiness (Terraria uses its own price table, `ShopHelper.GetTravelingMerchantPrices`) | ✅ | ✅ as audited |
+| R23–26 | Town gels ×4 (141–144) | Town slimes | T: each slime has its own discovery condition (knowledge). R: a 34 % roll per hour while the player stands in the gel's biome, once there are ≥ 3 residents (`ContentFillTown.cs:122–139`). | No shop, but the **"Sell held item" option still works on gels** (`GraphicalSandbox.cs:1101–1107`) | ◐ | ❌ NC-15 → 0.5.0 |
+| R27 | Field Zoologist (160) | Zoologist | T: 10 % of the bestiary (knowledge). R: 10 % (`TownContent.cs:140`); rarer stock at 25 %. | Critter goods | ✅ | ✅ as audited |
+| R28 | Pigment Trader (161) | Dye Trader | T: a dye material carried, plus a boss defeated (knowledge, medium confidence). R: a dye material carried (`TownContent.cs:144`). | Dyes and paintbrush | ◐ | ❌ NC-14 → 0.5.0 |
+| R29 | Party Planner (162) | Party Girl | T: 14 NPCs; parties start at random (knowledge). R: 10 residents (`TownContent.cs:146`); parties on demand with a 24 h cooldown (`TownContent.cs:98–117`). | Party: joy for everyone plus Regeneration for the player, **player-triggered** | ◐ | ❌ NC-14 → 0.5.0 |
+| R30 | Missing Terraria roles | Goblin Tinkerer (reforge), Stylist, Tax Collector, Truffle, Santa, Princess, Pirate, Skeleton Merchant, Tavernkeep | No analog. Reforge is the only one that matters for play. | n/a | ❌ | ❌ NC-24 → 0.5.0 |
 
 ### T2. Town systems
 
-| # | Feature | Terraria | Rimtera (verified) | Status |
-|---|---|---|---|---|
-| S1 | Medic heal service | Nurse heals life and removes debuffs. Price scales with missing life, debuffs, progression and happiness (knowledge). | `HealAtMedic` (`Town.cs:412–423`): 0.5 credits × missing HP × price multiplier. Heals HP and injuries. Statuses are **not** cleared. Explicit player action. | ◐ |
-| S2 | Angler quest | One fish a day, rewards scale with completions (knowledge). | ✅ as R9 | ✅ |
-| S3 | Party service | Random parties (knowledge) | Player-triggered (R29) | ➕ |
-| S4 | Reforge | Goblin Tinkerer rerolls the prefix for coins (knowledge) | None | ❌ |
-| S5 | Station AI advice | Guide: crafting help and hints | `GuideTips` / `GuideAdvisor` (`GameSimulation.Guide.cs:70–330`) | ✅ |
-| S6 | Pet permit | Licences bought from the Zoologist, used by hand (knowledge) | A licence bought from the Quartermaster (`TownNpcs.cs:211`) is filed automatically every half second while carried (`TownContent.cs:154`); the pet moves into a free house (`GameSimulation.Leisure.cs:510–546`). Petting gives the player 0.5 h Regeneration and joy (explicit action). | ◐ |
-| S7 | Shop gating | Flags, bosses, biome, moon, time, hardmode (knowledge) | Flags only (`Town.cs:362–368`); merchant rotation | ◐ |
-| S8 | Buy | Coins | Credits; price = value × multiplier, rounded up (`Town.cs:356–386`) | ✅ |
-| S9 | Sell price | A fixed 1/5 of value, not affected by happiness (knowledge) | 0.2 × value × calibration ÷ multiplier (`Town.cs:389–392`) | ◐ |
-| S10 | Dialogue | Many conditional lines: night, events, party, other NPCs present (knowledge) | 2–3 lines rotating by day, a mood suffix, the quest fish (`Town.cs:426–437`) | ◐ |
-| S11 | Happiness report | A text report of each factor | One line: "Happiness +x · prices ×y" (`GraphicalSandbox.cs:1119`) | ◐ |
-| H1 | Arrival cadence | Check every 7200 ticks (≈ 2 game hours), daytime only, one NPC per check (IL `Main.UpdateTime_SpawnTownNPCs`, `ldc.i4 7200`) | Hourly, day only, one per check (`Town.cs:37–90`) | ✅ |
-| H2 | Room size | Minimum 60 room tiles (IL `StartRoomCheck`: `numRoomTiles` vs 60); maximum `maxRoomTiles` (750, knowledge) | 60 … 400 cells (`TownNpcs.cs:121`, `RegionMap.cs:55`) | ◐ |
-| H3 | Background walls | Every interior tile needs a player-placed wall; natural walls are unsafe (knowledge) | ≥ 90 % of cells have any wall (`TownNpcs.cs:122`, `169`) | ◐ |
-| H4 | Light, table, chair, door/platform | Required (knowledge, IL `RoomNeeds`) | Required, with reasons (`TownNpcs.cs:140–178`) | ✅ |
-| H5 | One NPC per room | Yes; town pets may share (knowledge) | Town NPC claims enforced (`Town.cs:28`). Pets need an unclaimed room but don't block later NPCs (`Leisure.cs:532–546`). | ✅ |
-| H6 | Crew claim rooms | n/a | **No.** Probe B: the crew member's room still reads "suitable" | ⚠ |
-| H7 | Housing menu | Query a room, list NPCs and their homes, assign and evict, banners (knowledge) | "Check this room" plus a **crew** list (`InventoryUi.cs:535–560`); `P` key check at the cursor (`GraphicalSandbox.cs:472`) | ⚠ |
-| H8 | Homeless NPC behaviour | Wanders near the spawn point | Walks toward the player (`Town.cs:312–316`) | ◐ |
-| H9 | Shelter at night and in events | Go home at night and in invasions (knowledge) | `IsNight || Modifiers.Shelter` (`Town.cs:280`) | ✅ |
-| H10 | NPCs fight back | Town NPCs attack nearby enemies: throw, shoot or cast (knowledge, `AI_007_TownEntities`) | None. NPCs only take contact damage (`Town.cs:242–272`). | ❌ |
-| H11 | Distinct sprites | Each NPC is unique | 4 shared groups: `npc_colony_worker` (Head Researcher, Tide-Warden, Aeronaut, Greenskeeper), `npc_store_clerk` (Quartermaster, Trade Consul), `npc_base_engineer` (Chief Engineer, Isotopist), `npc_archivist` (Archivist, Relic Warden) | ◐ |
-| H12 | Death and respawn | Dies; comes back through a later daytime spawn check (knowledge) | 160 HP, 2 HP/s regen; on death a 10 h respawn flag, then a normal arrival (`Town.cs:224–239`) | ✅ |
-| H13 | Town NPC HP saved | n/a | `TownNpcSnapshot` has no HP, so HP resets to 160 on load (`TownNpcs.cs:104`) | ◐ |
-| H14 | Town calms spawns | Fewer spawns near NPCs (knowledge) | `TownNpcsCalmingSpawns` (`GameSimulation.Spawning.cs:22`) | ✅ |
-| H15 | Unhappy NPC leaves | Never | Leaves at ≤ −5 (`Town.cs:46`); Probe C | ⚠ |
-| H16 | Bound survivors | Rescue by talking; then a normal resident (knowledge) | Talk frees them, they unlock and look for a house (`GameSimulation.Items.cs:594–598`, `Town.cs:209–216`) | ✅ |
-| H17 | Survivor progression gating | Bound NPCs appear after their boss or event (knowledge) | All 8 are placed at worldgen, so they are available from day 1 | ◐ |
-| P1 | Happiness: biome | Love/like/dislike/hate multiply the price (×0.88/×0.94/×1.06/×1.12, knowledge) | Adds ±1/±2 to a score; price = 1 − 0.06·score (`Town.cs:330–353`) | ◐ |
-| P2 | Happiness: neighbours | Within 25 tiles (IL `GetNearbyResidentNPCs`, `ldc.r4 25`), multiplicative | Within 25 tiles ✅, ×0.75 per affection. Uses current positions, not homes. | ◐ |
-| P3 | Crowding / solitude | > 3 neighbours: ×1.05 each; ≤ 2: ×0.95 (IL `ProcessMood`, `1.05`/`0.95`) | Crowding −0.5 per neighbour above 3 ✅; **no solitude bonus** | ◐ |
-| P4 | Homeless / far from home / evil biome | Price to the maximum, clamped to 1.5 (IL `ProcessMood`: 1000; far = 120 tiles) | Homeless −2 (≈ ×1.12); no far-from-home or evil check | ◐ |
-| P5 | Clamp and rounding | 0.75–1.5, rounded to 0.01 (IL `LimitAndRoundMultiplier`) | Clamped 0.75–1.5, not rounded (`Town.cs:353`) | ✅ |
-| P6 | "Not really town NPC" | Pets, slimes and the merchant are excluded from neighbour counts (IL `IsNotReallyTownNPC`) | Gels and the merchant count as neighbours and crowd others | ◐ |
-| P7 | Dead helper | n/a | `Systems/NpcHappiness.cs` (`PriceMultiplier` from biome tags) is never called | ⚠ |
-| Y1 | Pylon source | Sold by an NPC whose happiness gives a price ≤ 0.9, in the matching biome (knowledge) | Crafted at the anvil (`GameSimulation.Travel.cs:173–178`) | ◐ |
-| Y2 | Pylon activation | ≥ 2 NPCs nearby, in its biome, one per type (knowledge) | ≥ 2 housed residents within 40 tiles, biome checked on placement, one per type (`Travel.cs:431–445`) | ✅ |
-| Y3 | Pylon count excludes pets, slimes, merchant | Yes (knowledge, medium confidence) | Gels and the merchant (who has a `HomeCell`) are counted (`Travel.cs:445`, `ContentFillTown.cs:117`) | ◐ |
-| Y4 | Pylon blocked in danger or boss fight | Yes (knowledge) | Only downed or dead blocks it (`Travel.cs:479`) | ❌ |
-| M1 | Merchant prices | A special table (IL `GetTravelingMerchantPrices`) | Happiness multiplier | ◐ |
-| G1 | Gel discovery | Item or location conditions per slime (knowledge) | A biome roll (R23–26) | ◐ |
-| G2 | Gels as residents | Take housing; don't trade (knowledge) | Take housing ✅; tradeable through Sell ⚠ | ⚠ |
-| G3 | Gels and merchant feed crew capacity | n/a | `CrewCapacity` counts every housed resident, so gels and the merchant count (`Town.cs:193–194`) | ◐ |
+| # | Feature | Terraria | Rimtera (verified) | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| S1 | Medic heal service | Nurse heals life and removes debuffs. Price scales with missing life, debuffs, progression and happiness (knowledge). | `HealAtMedic` (`Town.cs:412–423`): 0.5 credits × missing HP × price multiplier. Heals HP and injuries. Statuses are **not** cleared. Explicit player action. | ◐ | ❌ NC-13 → 0.5.0 |
+| S2 | Angler quest | One fish a day, rewards scale with completions (knowledge). | ✅ as R9 | ✅ | ✅ as audited |
+| S3 | Party service | Random parties (knowledge) | Player-triggered (R29) | ➕ | ➕ kept |
+| S4 | Reforge | Goblin Tinkerer rerolls the prefix for coins (knowledge) | None | ❌ | ❌ NC-12 → 0.5.0 |
+| S5 | Station AI advice | Guide: crafting help and hints | `GuideTips` / `GuideAdvisor` (`GameSimulation.Guide.cs:70–330`) | ✅ | ✅ as audited |
+| S6 | Pet permit | Licences bought from the Zoologist, used by hand (knowledge) | A licence bought from the Quartermaster (`TownNpcs.cs:211`) is filed automatically every half second while carried (`TownContent.cs:154`); the pet moves into a free house (`GameSimulation.Leisure.cs:510–546`). Petting gives the player 0.5 h Regeneration and joy (explicit action). | ◐ | ◐ unchanged since the audit |
+| S7 | Shop gating | Flags, bosses, biome, moon, time, hardmode (knowledge) | Flags only (`Town.cs:362–368`); merchant rotation | ◐ | ❌ NC-14 → 0.5.0 |
+| S8 | Buy | Coins | Credits; price = value × multiplier, rounded up (`Town.cs:356–386`) | ✅ | ✅ as audited |
+| S9 | Sell price | A fixed 1/5 of value, not affected by happiness (knowledge) | 0.2 × value × calibration ÷ multiplier (`Town.cs:389–392`) | ◐ | ◐ unchanged since the audit |
+| S10 | Dialogue | Many conditional lines: night, events, party, other NPCs present (knowledge) | 2–3 lines rotating by day, a mood suffix, the quest fish (`Town.cs:426–437`) | ◐ | ❌ NC-23 → 0.5.0 |
+| S11 | Happiness report | A text report of each factor | One line: "Happiness +x · prices ×y" (`GraphicalSandbox.cs:1119`) | ◐ | ❌ NC-10 → 0.5.0 |
+| H1 | Arrival cadence | Check every 7200 ticks (≈ 2 game hours), daytime only, one NPC per check (IL `Main.UpdateTime_SpawnTownNPCs`, `ldc.i4 7200`) | Hourly, day only, one per check (`Town.cs:37–90`) | ✅ | ✅ as audited |
+| H2 | Room size | Minimum 60 room tiles (IL `StartRoomCheck`: `numRoomTiles` vs 60); maximum `maxRoomTiles` (750, knowledge) | 60 … 400 cells (`TownNpcs.cs:121`, `RegionMap.cs:55`) | ◐ | ◐ unchanged since the audit |
+| H3 | Background walls | Every interior tile needs a player-placed wall; natural walls are unsafe (knowledge) | ≥ 90 % of cells have any wall (`TownNpcs.cs:122`, `169`) | ◐ | ◐ unchanged since the audit |
+| H4 | Light, table, chair, door/platform | Required (knowledge, IL `RoomNeeds`) | Required, with reasons (`TownNpcs.cs:140–178`) | ✅ | ✅ as audited |
+| H5 | One NPC per room | Yes; town pets may share (knowledge) | Town NPC claims enforced (`Town.cs:28`). Pets need an unclaimed room but don't block later NPCs (`Leisure.cs:532–546`). | ✅ | ✅ as audited |
+| H6 | Crew claim rooms | n/a | **No.** Probe B: the crew member's room still reads "suitable" | ⚠ | ❌ NC-3 → 0.5.0 |
+| H7 | Housing menu | Query a room, list NPCs and their homes, assign and evict, banners (knowledge) | "Check this room" plus a **crew** list (`InventoryUi.cs:535–560`); `P` key check at the cursor (`GraphicalSandbox.cs:472`) | ⚠ | ◐ NC-8 partly (0.1.9 housing page lists residents) |
+| H8 | Homeless NPC behaviour | Wanders near the spawn point | Walks toward the player (`Town.cs:312–316`) | ◐ | ◐ unchanged since the audit |
+| H9 | Shelter at night and in events | Go home at night and in invasions (knowledge) | `IsNight || Modifiers.Shelter` (`Town.cs:280`) | ✅ | ✅ as audited |
+| H10 | NPCs fight back | Town NPCs attack nearby enemies: throw, shoot or cast (knowledge, `AI_007_TownEntities`) | None. NPCs only take contact damage (`Town.cs:242–272`). | ❌ | ❌ NC-6 → 0.5.0 |
+| H11 | Distinct sprites | Each NPC is unique | 4 shared groups: `npc_colony_worker` (Head Researcher, Tide-Warden, Aeronaut, Greenskeeper), `npc_store_clerk` (Quartermaster, Trade Consul), `npc_base_engineer` (Chief Engineer, Isotopist), `npc_archivist` (Archivist, Relic Warden) | ◐ | ❌ NC-22 → 0.5.0 |
+| H12 | Death and respawn | Dies; comes back through a later daytime spawn check (knowledge) | 160 HP, 2 HP/s regen; on death a 10 h respawn flag, then a normal arrival (`Town.cs:224–239`) | ✅ | ✅ as audited |
+| H13 | Town NPC HP saved | n/a | `TownNpcSnapshot` has no HP, so HP resets to 160 on load (`TownNpcs.cs:104`) | ◐ | ✅ NC-20 0.1.7 |
+| H14 | Town calms spawns | Fewer spawns near NPCs (knowledge) | `TownNpcsCalmingSpawns` (`GameSimulation.Spawning.cs:22`) | ✅ | ✅ as audited |
+| H15 | Unhappy NPC leaves | Never | Leaves at ≤ −5 (`Town.cs:46`); Probe C | ⚠ | ✅ NC-9 0.1.7 |
+| H16 | Bound survivors | Rescue by talking; then a normal resident (knowledge) | Talk frees them, they unlock and look for a house (`GameSimulation.Items.cs:594–598`, `Town.cs:209–216`) | ✅ | ✅ as audited |
+| H17 | Survivor progression gating | Bound NPCs appear after their boss or event (knowledge) | All 8 are placed at worldgen, so they are available from day 1 | ◐ | ❌ PC-20 → 0.5.0; NC-14 → 0.5.0 |
+| P1 | Happiness: biome | Love/like/dislike/hate multiply the price (×0.88/×0.94/×1.06/×1.12, knowledge) | Adds ±1/±2 to a score; price = 1 − 0.06·score (`Town.cs:330–353`) | ◐ | ❌ NC-10 → 0.5.0 |
+| P2 | Happiness: neighbours | Within 25 tiles (IL `GetNearbyResidentNPCs`, `ldc.r4 25`), multiplicative | Within 25 tiles ✅, ×0.75 per affection. Uses current positions, not homes. | ◐ | ❌ NC-10 → 0.5.0 |
+| P3 | Crowding / solitude | > 3 neighbours: ×1.05 each; ≤ 2: ×0.95 (IL `ProcessMood`, `1.05`/`0.95`) | Crowding −0.5 per neighbour above 3 ✅; **no solitude bonus** | ◐ | ❌ NC-10 → 0.5.0 |
+| P4 | Homeless / far from home / evil biome | Price to the maximum, clamped to 1.5 (IL `ProcessMood`: 1000; far = 120 tiles) | Homeless −2 (≈ ×1.12); no far-from-home or evil check | ◐ | ❌ NC-10 → 0.5.0 |
+| P5 | Clamp and rounding | 0.75–1.5, rounded to 0.01 (IL `LimitAndRoundMultiplier`) | Clamped 0.75–1.5, not rounded (`Town.cs:353`) | ✅ | ✅ as audited |
+| P6 | "Not really town NPC" | Pets, slimes and the merchant are excluded from neighbour counts (IL `IsNotReallyTownNPC`) | Gels and the merchant count as neighbours and crowd others | ◐ | ❌ NC-10 → 0.5.0 |
+| P7 | Dead helper | n/a | `Systems/NpcHappiness.cs` (`PriceMultiplier` from biome tags) is never called | ⚠ | ◐ NC-18 partly (0.1.8 storyteller arrivals replace the dead) |
+| Y1 | Pylon source | Sold by an NPC whose happiness gives a price ≤ 0.9, in the matching biome (knowledge) | Crafted at the anvil (`GameSimulation.Travel.cs:173–178`) | ◐ | ❌ NC-11 → 0.5.0 |
+| Y2 | Pylon activation | ≥ 2 NPCs nearby, in its biome, one per type (knowledge) | ≥ 2 housed residents within 40 tiles, biome checked on placement, one per type (`Travel.cs:431–445`) | ✅ | ✅ as audited |
+| Y3 | Pylon count excludes pets, slimes, merchant | Yes (knowledge, medium confidence) | Gels and the merchant (who has a `HomeCell`) are counted (`Travel.cs:445`, `ContentFillTown.cs:117`) | ◐ | ❌ NC-11 → 0.5.0 |
+| Y4 | Pylon blocked in danger or boss fight | Yes (knowledge) | Only downed or dead blocks it (`Travel.cs:479`) | ❌ | ❌ NC-11 → 0.5.0 |
+| M1 | Merchant prices | A special table (IL `GetTravelingMerchantPrices`) | Happiness multiplier | ◐ | ❌ NC-10 → 0.5.0 |
+| G1 | Gel discovery | Item or location conditions per slime (knowledge) | A biome roll (R23–26) | ◐ | ❌ NC-15 → 0.5.0 |
+| G2 | Gels as residents | Take housing; don't trade (knowledge) | Take housing ✅; tradeable through Sell ⚠ | ⚠ | ❌ NC-15 → 0.5.0 |
+| G3 | Gels and merchant feed crew capacity | n/a | `CrewCapacity` counts every housed resident, so gels and the merchant count (`Town.cs:193–194`) | ◐ | ❌ NC-15 → 0.5.0 |
 
 ### T3. Colony systems (RimWorld side)
 
-| # | Feature | Reference | Rimtera (verified) | Status |
-|---|---|---|---|---|
-| C1 | Crew arrival through housing | (RimWorld wanderers) | One crew member per two housed residents, plus one per boss defeated, up to 5, by day into a free house (`Town.cs:80–90`, `193`). | ➕ |
-| C2 | Crew cap counts **total joins** | n/a | `WanderersJoined < 5` (`Town.cs:81`). Dead crew are never replaced after 5 joins. | ◐ |
-| C3 | Crew needs (food, rest, joy, comfort) | RimWorld needs | Drain (`SurvivalBehavior.cs:35–46`); restore at camp (`GameSimulation.cs:1377–1400`). Food comes from "Foraging" out of nothing. | ➕ |
-| C4 | Crew routine | n/a | Follow the player if > 9 tiles away; home drifts to the player (`GameSimulation.cs:1366–1413`). | ⚠ |
-| C5 | Crew jobs / work AI | RimWorld work types | None. "Working around camp" is a label (`GameSimulation.cs:1394–1399`). `ActivityKind` has only Eat, Rest, Mine and Idle (`AI/SurvivalBehavior.cs:11`), and Mine is unused for crew. | ❌ |
-| C6 | Crew combat | Colonists fight | No attack code. Creatures may pick crew as targets (`GameSimulation.PlayerSystems.cs:331–345`, `366–386`). "Alert" is a label only. | ❌ |
-| C7 | Crew death | Permanent in RimWorld | Permanent. Death memories go to relations (`GameSimulation.cs:1571–1581`). No respawn. | ◐ |
-| C8 | Skills | Gain XP by doing | Fixed at creation. **No XP anywhere** (no writes to `SkillLevels`). The UI promises passions (`ColonistSheetState.cs:178`). | ⚠ |
-| C9 | Skills used | n/a | Medical (tend quality), Plants (forage rate) | ◐ |
-| C10 | Moods and thoughts | RimWorld | Memories, situational thoughts, mood easing (`GameSimulation.cs:2004–2117`, `Characters/Thoughts.cs`) | ➕ |
-| C11 | Mental breaks | RimWorld | Thresholds, rolls, states (`Characters/MentalBreaks.cs`). Behaviours in `GameSimulation.cs:1457–1555`. | ➕ |
-| C12 | Break: tantrum | n/a | Damages crafting stations and furniture near the colonist (`GameSimulation.cs:1449–1453`, `1512–1531`) | ⚠ |
-| C13 | Break: food binge | n/a | Eats the **player's** Berries (`GameSimulation.cs:1497–1510`) | ⚠ |
-| C14 | Relations and social | RimWorld | Opinions, interactions, social fights (`Characters/Relations.cs`; `GameSimulation.cs:2055–2059`) | ➕ |
-| C15 | Crew medic tending | RimWorld doctors | Tends crew **and the player** (`GameSimulation.cs:2126–2153`). Probe D did not catch a tend within 1500 ticks, but the code path has no player exclusion. | ⚠ |
-| C16 | Emotes | n/a | Crew and residents emote and wave back (`GameSimulation.PlayerSystems.cs:650–705`) | ✅ |
-| C17 | Colony sheet UI | RimWorld pawn tabs | Overview, Skills, Health, Mood, Social and Crew pages, read-only (`UI/ColonistSheetState.cs:44–79`, `201–235`) | ◐ |
-| C18 | Colony orders | Work priorities, draft, zones | None | ❌ |
-| C19 | "Crew N" HUD | n/a | Always shows "Crew 0", plus "Drones 0/1 · Sentries 0/1" (Probe A: base slots 1) and the player's mood (`GraphicalSandbox.cs:2368–2371`) | ⚠ |
-| C20 | Drones and sentries | Terraria minion and sentry slots | Combat-area feature (see 06); here only the HUD line | ✅ |
-| W1 | Storyteller | RimWorld storyteller | Hourly roll, categories, refire cooldowns, adaptive rest, 72 h opening grace (`Storyteller.cs:81–336`) | ➕ |
-| W2 | Raids | Terraria invasions approach the town (knowledge) | After the first boss; 2–8 biome creatures spawn just off-screen **around the player, wherever they are** (`GameSimulation.cs:2321–2350`) | ◐ |
-| W3 | Raid strength from crew | n/a | +16 points per crew member (`Storyteller.cs:138`), but crew don't fight | ⚠ |
-| W4 | Cold snap, heat wave, fallout, solar flare | n/a | Work. Exposure hurts the player (`GameSimulation.cs:1968–1983`). Cross-area. | ➕ |
-| W5 | Cargo drop | n/a | Free Berries, arrows, bars and a biome shard (`GameSimulation.cs:2352–2376`) | ➕ |
-| W6 | `WandererJoinsIncident` | n/a | Defined but not registered (`Storyteller.cs:107–108`); dead code | ◐ |
+| # | Feature | Reference | Rimtera (verified) | Status | 0.2.0 status |
+|---|---|---|---|---|---|
+| C1 | Crew arrival through housing | (RimWorld wanderers) | One crew member per two housed residents, plus one per boss defeated, up to 5, by day into a free house (`Town.cs:80–90`, `193`). | ➕ | ➕ kept |
+| C2 | Crew cap counts **total joins** | n/a | `WanderersJoined < 5` (`Town.cs:81`). Dead crew are never replaced after 5 joins. | ◐ | ◐ NC-18 partly (0.1.8 storyteller arrivals replace the dead) |
+| C3 | Crew needs (food, rest, joy, comfort) | RimWorld needs | Drain (`SurvivalBehavior.cs:35–46`); restore at camp (`GameSimulation.cs:1377–1400`). Food comes from "Foraging" out of nothing. | ➕ | ➕ kept |
+| C4 | Crew routine | n/a | Follow the player if > 9 tiles away; home drifts to the player (`GameSimulation.cs:1366–1413`). | ⚠ | ❌ NC-3 → 0.5.0 |
+| C5 | Crew jobs / work AI | RimWorld work types | None. "Working around camp" is a label (`GameSimulation.cs:1394–1399`). `ActivityKind` has only Eat, Rest, Mine and Idle (`AI/SurvivalBehavior.cs:11`), and Mine is unused for crew. | ❌ | ❌ NC-4 → 0.5.0 |
+| C6 | Crew combat | Colonists fight | No attack code. Creatures may pick crew as targets (`GameSimulation.PlayerSystems.cs:331–345`, `366–386`). "Alert" is a label only. | ❌ | ❌ NC-5 → 0.5.0 |
+| C7 | Crew death | Permanent in RimWorld | Permanent. Death memories go to relations (`GameSimulation.cs:1571–1581`). No respawn. | ◐ | ◐ 0.1.8: crew die for good, arrivals replace them; NC-18 → 0.5.0 |
+| C8 | Skills | Gain XP by doing | Fixed at creation. **No XP anywhere** (no writes to `SkillLevels`). The UI promises passions (`ColonistSheetState.cs:178`). | ⚠ | ❌ NC-17 → 0.5.0 |
+| C9 | Skills used | n/a | Medical (tend quality), Plants (forage rate) | ◐ | ❌ NC-17 → 0.5.0 |
+| C10 | Moods and thoughts | RimWorld | Memories, situational thoughts, mood easing (`GameSimulation.cs:2004–2117`, `Characters/Thoughts.cs`) | ➕ | ➕ kept |
+| C11 | Mental breaks | RimWorld | Thresholds, rolls, states (`Characters/MentalBreaks.cs`). Behaviours in `GameSimulation.cs:1457–1555`. | ➕ | ➕ kept |
+| C12 | Break: tantrum | n/a | Damages crafting stations and furniture near the colonist (`GameSimulation.cs:1449–1453`, `1512–1531`) | ⚠ | ✅ NC-7 0.1.7 |
+| C13 | Break: food binge | n/a | Eats the **player's** Berries (`GameSimulation.cs:1497–1510`) | ⚠ | ✅ NC-7 0.1.7 |
+| C14 | Relations and social | RimWorld | Opinions, interactions, social fights (`Characters/Relations.cs`; `GameSimulation.cs:2055–2059`) | ➕ | ➕ kept |
+| C15 | Crew medic tending | RimWorld doctors | Tends crew **and the player** (`GameSimulation.cs:2126–2153`). Probe D did not catch a tend within 1500 ticks, but the code path has no player exclusion. | ⚠ | ✅ NC-1 0.1.7 |
+| C16 | Emotes | n/a | Crew and residents emote and wave back (`GameSimulation.PlayerSystems.cs:650–705`) | ✅ | ✅ as audited |
+| C17 | Colony sheet UI | RimWorld pawn tabs | Overview, Skills, Health, Mood, Social and Crew pages, read-only (`UI/ColonistSheetState.cs:44–79`, `201–235`) | ◐ | ◐ unchanged since the audit |
+| C18 | Colony orders | Work priorities, draft, zones | None | ❌ | ❌ NC-25 → 0.5.0 |
+| C19 | "Crew N" HUD | n/a | Always shows "Crew 0", plus "Drones 0/1 · Sentries 0/1" (Probe A: base slots 1) and the player's mood (`GraphicalSandbox.cs:2368–2371`) | ⚠ | ✅ NC-16 0.1.7 |
+| C20 | Drones and sentries | Terraria minion and sentry slots | Combat-area feature (see 06); here only the HUD line | ✅ | ✅ as audited |
+| W1 | Storyteller | RimWorld storyteller | Hourly roll, categories, refire cooldowns, adaptive rest, 72 h opening grace (`Storyteller.cs:81–336`) | ➕ | ➕ kept |
+| W2 | Raids | Terraria invasions approach the town (knowledge) | After the first boss; 2–8 biome creatures spawn just off-screen **around the player, wherever they are** (`GameSimulation.cs:2321–2350`) | ◐ | ❌ NC-19 → 0.5.0 |
+| W3 | Raid strength from crew | n/a | +16 points per crew member (`Storyteller.cs:138`), but crew don't fight | ⚠ | ❌ NC-19 → 0.5.0 |
+| W4 | Cold snap, heat wave, fallout, solar flare | n/a | Work. Exposure hurts the player (`GameSimulation.cs:1968–1983`). Cross-area. | ➕ | ➕ kept |
+| W5 | Cargo drop | n/a | Free Berries, arrows, bars and a biome shard (`GameSimulation.cs:2352–2376`) | ➕ | ➕ kept |
+| W6 | `WandererJoinsIncident` | n/a | Defined but not registered (`Storyteller.cs:107–108`); dead code | ◐ | ◐ NC-18 partly (0.1.8 storyteller arrivals replace the dead) |
 
 ### T4. Player vs colonist automation (the ruling)
 
-| # | Check | Rimtera (verified) | Status |
-|---|---|---|---|
-| A1 | Player auto-eats | Removed: `UpdateAutonomousBehavior` is a no-op (`GameSimulation.cs:1911–1919`); `Player.Brain = null` (`GameSimulation.cs:228`). Eating is manual (`EatSelectedOrBerry`, `:1246`). | ✅ |
-| A2 | Player auto-rests or auto-heals at camp | Removed (same as A1) | ✅ |
-| A3 | Player tended by crew medics | Yes (C15) | ⚠ |
-| A4 | Player needs drain | Food, rest, joy and comfort drain (`GameSimulation.cs:650–653`); comfort drains with cold and rain (`:1968`, `GameSimulation.World.cs:521`) | ⚠ |
-| A5 | Player mood and break risk | Thoughts and mood run for the player; "on the edge" message; at extreme risk × 1.35 cooldowns (`GameSimulation.cs:2024–2033`, `Actors.cs:108–115`). Probe E: mood 10 %, on the edge after 144 h unfed. | ⚠ |
-| A6 | Player loses control in a break | No. The player is skipped (`GameSimulation.cs:2024–2033`). | ✅ |
-| A7 | Party, petting, Medic heal | Each needs a deliberate player action | ✅ |
-| A8 | Natural regeneration | Terraria-style `LifeRegenerationPerHour` (`GameSimulation.cs:661`). Not automation; covered by area 06. | ✅ |
-| A9 | Player stats from colonist skills | Accuracy, melee, shooting and mining multipliers come from the backstory (`Actors.cs:99–101`, `GameSimulation.cs:1229`). Cross-area (06). | ◐ |
+| # | Check | Rimtera (verified) | Status | 0.2.0 status |
+|---|---|---|---|---|
+| A1 | Player auto-eats | Removed: `UpdateAutonomousBehavior` is a no-op (`GameSimulation.cs:1911–1919`); `Player.Brain = null` (`GameSimulation.cs:228`). Eating is manual (`EatSelectedOrBerry`, `:1246`). | ✅ | ✅ as audited |
+| A2 | Player auto-rests or auto-heals at camp | Removed (same as A1) | ✅ | ✅ as audited |
+| A3 | Player tended by crew medics | Yes (C15) | ⚠ | ✅ NC-1 0.1.7 |
+| A4 | Player needs drain | Food, rest, joy and comfort drain (`GameSimulation.cs:650–653`); comfort drains with cold and rain (`:1968`, `GameSimulation.World.cs:521`) | ⚠ | ✅ NC-2 0.1.7 |
+| A5 | Player mood and break risk | Thoughts and mood run for the player; "on the edge" message; at extreme risk × 1.35 cooldowns (`GameSimulation.cs:2024–2033`, `Actors.cs:108–115`). Probe E: mood 10 %, on the edge after 144 h unfed. | ⚠ | ✅ NC-7 0.1.7 |
+| A6 | Player loses control in a break | No. The player is skipped (`GameSimulation.cs:2024–2033`). | ✅ | ✅ as audited |
+| A7 | Party, petting, Medic heal | Each needs a deliberate player action | ✅ | ✅ as audited |
+| A8 | Natural regeneration | Terraria-style `LifeRegenerationPerHour` (`GameSimulation.cs:661`). Not automation; covered by area 06. | ✅ | ✅ as audited |
+| A9 | Player stats from colonist skills | Accuracy, melee, shooting and mining multipliers come from the backstory (`Actors.cs:99–101`, `GameSimulation.cs:1229`). Cross-area (06). | ◐ | ◐ unchanged since the audit |
 
 ---
 
