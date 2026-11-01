@@ -699,6 +699,8 @@ _PLAYER_SYSTEMS = {
     "deco_boss_relic": ("deco_precursor_statue", [("hue", 0.12, 1.3), ("glow", (255, 200, 90))]),
     "item_salvage_cache": ("item_alloy_crate", [("hue", 0.8, 1.2), ("glow", (220, 150, 255))]),
     "item_fortune_tonic": ("item_tech_tonic", [("hue", 0.33, 1.2)]),
+    "item_battle_stim": ("item_endurance_stim", [("hue", 0.0, 1.3)]),
+    "item_calming_stim": ("item_endurance_stim", [("hue", 0.58, 0.8)]),
     "item_clover_circuit": ("item_lucky_charm", [("hue", 0.36, 1.3), ("glow", (120, 255, 140))]),
     "item_beacon_harness": ("item_gunners_harness", [("hue", 0.02, 1.3), ("glow", (255, 120, 80))]),
     "item_shroud_cloak": ("item_ghost_cloak", [("val", 0.6), ("tint", (40, 40, 70), 0.4)]),

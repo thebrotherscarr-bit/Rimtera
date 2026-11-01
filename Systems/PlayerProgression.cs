@@ -25,7 +25,9 @@ public enum StatusId : byte
     // Combat core (0.1.9, append-only): creature-inflicted debuffs on the player (IC-3) and the extra creature
     // afflictions weapons and ammo carry (EN-17): corroded strips defense, the salvage mark adds credits on the kill,
     // and wet puts burning out.
-    Bleeding, Chilled, Slow, Darkness, Weak, BrokenArmor, Silenced, Venom, Frostburn, CursedFire, Corroded, SalvageMark, Wet
+    Bleeding, Chilled, Slow, Darkness, Weak, BrokenArmor, Silenced, Venom, Frostburn, CursedFire, Corroded, SalvageMark, Wet,
+    // Spawn controls (0.3.4, append-only): the battle stim draws more creatures, the calming stim fewer.
+    Battle, Calm
 }
 
 public readonly record struct PlayerStats(
@@ -230,7 +232,9 @@ public sealed class StatusEffectSystem
         // Creature-only afflictions (EN-17); listed so the status system knows them.
         [StatusId.Corroded] = new(StatusId.Corroded, DebuffCapHours),
         [StatusId.SalvageMark] = new(StatusId.SalvageMark, DebuffCapHours),
-        [StatusId.Wet] = new(StatusId.Wet, DebuffCapHours)
+        [StatusId.Wet] = new(StatusId.Wet, DebuffCapHours),
+        [StatusId.Battle] = new(StatusId.Battle, 10f),
+        [StatusId.Calm] = new(StatusId.Calm, 10f)
     };
 
     /// <summary>Longest a creature-inflicted debuff may last on the player: 4 vital hours (50 real seconds).</summary>

@@ -754,32 +754,58 @@ public static class CombatTuning
     public const float DespawnSeconds = 3f;
 
     /// <summary>
-    /// Spawn rate and population-cap multipliers for the player's surroundings: nights, the underground and the
-    /// blight are busier; a populated town and a living boss calm things down.
+    /// Terraria's natural spawn base (0.3.4, EN-8): a 1-in-600 roll every tick at 60 ticks a second (0.1 spawns a second)
+    /// and a population of 5 (<c>NPC.defaultSpawnRate</c>, <c>defaultMaxSpawns</c>).
     /// </summary>
-    public static (float Rate, float Cap) SpawnFactors(bool night, bool underground, bool blight, int townNpcsNearby, bool bossAlive)
+    public const float SpawnsPerSecond = 60f / 600f;
+    public const int BasePopulation = 5;
+
+    /// <summary>
+    /// Spawn rate and population-cap multipliers for the player's surroundings, on Terraria's <c>GetSpawnRate</c> factors
+    /// (0.3.4, EN-8): night on the surface ×1/0.6 rate and ×1.3 cap; underground ×1/0.45 and ×1.8 (Terraria's dirt and
+    /// rock layers use 0.4–0.5 and 1.7–1.9); after the Fracture (hardmode) ×1/0.9 and one more slot; a battle stim ×2
+    /// and ×2 (the battle potion); a calming stim ×1/1.65 and ×0.7 (the calming potion). Rimtera's own: the blight is
+    /// busier, a populated town calms things, and a living boss thins the regular spawns.
+    /// </summary>
+    public static (float Rate, float Cap) SpawnFactors(bool night, bool underground, bool blight, int townNpcsNearby, bool bossAlive,
+        bool hardmode = false, bool battle = false, bool calm = false)
     {
         float rate = 1f, cap = 1f;
         if (night && !underground)
         {
-            rate *= 1.7f;
-            cap *= 1.5f;
+            rate /= 0.6f;
+            cap *= 1.3f;
         }
         if (underground)
         {
-            rate *= 1.45f;
-            cap *= 1.35f;
+            rate /= 0.45f;
+            cap *= 1.8f;
+        }
+        if (hardmode)
+        {
+            rate /= 0.9f;
+            cap *= (BasePopulation + 1f) / BasePopulation;
         }
         if (blight)
         {
             rate *= 1.3f;
             cap *= 1.25f;
         }
+        if (battle)
+        {
+            rate *= 2f;
+            cap *= 2f;
+        }
+        if (calm)
+        {
+            rate /= 1.65f;
+            cap *= 0.7f;
+        }
         if (townNpcsNearby > 0)
         {
-            var calm = townNpcsNearby >= 3 ? 0.12f : 1f / (1f + 0.6f * townNpcsNearby);
-            rate *= calm;
-            cap *= Math.Max(0.3f, calm);
+            var calmTown = townNpcsNearby >= 3 ? 0.12f : 1f / (1f + 0.6f * townNpcsNearby);
+            rate *= calmTown;
+            cap *= Math.Max(0.3f, calmTown);
         }
         if (bossAlive)
         {
@@ -787,5 +813,15 @@ public static class CombatTuning
             cap *= 0.6f;
         }
         return (rate, cap);
+    }
+
+    /// <summary>
+    /// Terraria's ramp (0.3.4, EN-8 C9): spawns come faster while the area is emptier — the rate denominator is ×0.6, 0.7,
+    /// 0.8 or 0.9 while the population is under 20, 40, 60 or 80% of the cap.
+    /// </summary>
+    public static float SpawnRamp(int population, int cap)
+    {
+        var fill = cap <= 0 ? 1f : population / (float)cap;
+        return fill < 0.2f ? 1f / 0.6f : fill < 0.4f ? 1f / 0.7f : fill < 0.6f ? 1f / 0.8f : fill < 0.8f ? 1f / 0.9f : 1f;
     }
 }

@@ -1384,6 +1384,8 @@ public enum ItemId : ushort
     ChargeCellMedium = 9504, ChargeCellLarge = 9505, ChargeCellPeak = 9506,
     // Instant pickups dropped by kills: applied on touch, never enter the inventory.
     HeartPickup = 9507, ChargeOrb = 9508,
+    // ---- Spawn controls (0.3.4, EN-8): Terraria's battle and calming potions ----
+    BattleStim = 9600, CalmingStim = 9601,
 }
 
 public enum ItemUseKind : byte
