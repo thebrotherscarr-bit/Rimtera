@@ -1653,6 +1653,7 @@ public sealed class ItemCatalog
         ToolCombat.Apply(_items); // tools are melee weapons too: tier damage, knockback and the melee class
         ContentItems.ApplySustain(_items); // cooked food heals; the potion-sickness accessory tag (0.1.9 C1)
         ContentItems.ApplyStackSizes(_items); // one stack-size pass: 9999 for every stackable (0.1.9 C5)
+        BuffCurve.Apply(_items); // buff durations on Terraria's scale, in real minutes (0.3.2)
     }
 
     private readonly Dictionary<ItemId, ItemDefinition> _items = new()

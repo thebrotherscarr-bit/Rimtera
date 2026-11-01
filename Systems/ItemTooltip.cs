@@ -470,7 +470,9 @@ public static class ItemTooltip
     private static string Spaced(string identifier) =>
         System.Text.RegularExpressions.Regex.Replace(identifier, "(?<=[a-z0-9])([A-Z])", " $1");
 
-    private static string Duration(float seconds) => seconds >= 60f
-        ? $"{(int)(seconds / 60f)} min{(seconds % 60f >= 1f ? $" {(int)(seconds % 60f)} s" : "")}"
-        : $"{Math.Max(1, (int)seconds)} s";
+    private static string Duration(float seconds)
+    {
+        var whole = Math.Max(1, (int)MathF.Round(seconds)); // 38.4 h / 0.08 is 479.99… in floats: show 8 min, not 7 min 59 s
+        return whole >= 60 ? $"{whole / 60} min{(whole % 60 > 0 ? $" {whole % 60} s" : "")}" : $"{whole} s";
+    }
 }

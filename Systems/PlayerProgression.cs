@@ -262,6 +262,17 @@ public sealed class StatusEffectSystem
         or StatusId.Silenced or StatusId.Venom or StatusId.Frostburn or StatusId.CursedFire or StatusId.Corroded
         or StatusId.SalvageMark or StatusId.Wet;
 
+    /// <summary>
+    /// Buffs (anything not a debuff) may last up to <see cref="BuffCurve.CapHours"/>, so the Terraria-length durations of
+    /// 0.3.2 are not cut short by the shorter caps they were authored with.
+    /// </summary>
+    public StatusEffectSystem()
+    {
+        foreach (var (id, definition) in _definitions.ToArray())
+            if (!IsDebuff(id) && id != StatusId.Phased && definition.MaximumDurationHours < BuffCurve.CapHours)
+                _definitions[id] = definition with { MaximumDurationHours = BuffCurve.CapHours };
+    }
+
     public StatusDefinition this[StatusId id] => _definitions[id];
     public IEnumerable<StatusDefinition> All => _definitions.Values.OrderBy(definition => definition.Id);
 }
