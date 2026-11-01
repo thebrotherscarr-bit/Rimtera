@@ -111,7 +111,9 @@ public sealed class TownNpc : IStationWorker
     internal Vector2 WanderTarget { get; set; }
     internal float WanderTimer { get; set; }
     /// <summary>Residents can be hurt by hostiles; at zero they die and return later (see GameSimulation.Town).</summary>
-    public const float BaseHitPoints = 160f;
+    /// <summary>Terraria's town NPCs (0.4.4 balance): 250 life and 15 defense before any gear.</summary>
+    public const float BaseHitPoints = 250f;
+    public const int BaseDefense = 15;
     /// <summary>Base hit points plus the life their armour and accessories give (0.4.0).</summary>
     public float MaximumHitPoints { get; internal set; } = BaseHitPoints;
     public float HitPoints { get; internal set; } = BaseHitPoints;
