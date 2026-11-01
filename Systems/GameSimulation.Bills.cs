@@ -24,6 +24,14 @@ public sealed partial class GameSimulation
 
     private readonly Dictionary<GridPoint, List<StationBill>> _bills = new();
 
+    /// <summary>
+    /// Who works a station's bills (0.2.5): chem labs brew (Brew crew, on Medical), every other station is Operate crew's
+    /// (on Crafting). Residents work any station.
+    /// </summary>
+    public WorkType BillWork(GridPoint station) => StationAt(station) is CraftingStationId.ChemLab or CraftingStationId.BioLab
+        ? WorkType.Brew
+        : WorkType.Operate;
+
     /// <summary>Whether a tile is a crafting station (bills live on station tiles).</summary>
     public bool IsStation(GridPoint cell) =>
         World.Contains(cell) && Tiles.Contains(World.GetCell(cell).TileId) && Tiles[World.GetCell(cell).TileId].Station != CraftingStationId.None;
@@ -140,7 +148,7 @@ public sealed partial class GameSimulation
     private sealed record BillJob(GridPoint Station, StationBill Bill, RecipeDefinition Recipe, Dictionary<ItemId, int> Plan);
 
     /// <summary>The Operate job giver: store a finished product, else take the first wanted bill that can be made.</summary>
-    private bool TryOperate(IStationWorker agent, Vector2 center, float deltaSeconds, Action<Vector2> move)
+    private bool TryOperate(IStationWorker agent, Vector2 center, float deltaSeconds, Action<Vector2> move, WorkType? work = WorkType.Operate)
     {
         if (!agent.Carried.IsEmpty)
         {
@@ -151,7 +159,7 @@ public sealed partial class GameSimulation
             agent.Carried = default;
         }
 
-        if (FindBillJob(agent) is not { } job)
+        if (FindBillJob(agent, work) is not { } job)
         {
             agent.OperateStation = null;
             agent.OperateProgress = 0f;
@@ -212,7 +220,7 @@ public sealed partial class GameSimulation
         agent.Activity = $"Making {product} at the {StationAt(job.Station).DisplayName()}";
         move(center);
         agent.OperateProgress += deltaSeconds;
-        if (agent.OperateProgress < OperateSeconds(agent.CraftingSpeed))
+        if (agent.OperateProgress < OperateSeconds(agent.SpeedFor(work ?? BillWork(job.Station))))
             return true;
 
         agent.OperateProgress = 0f;
@@ -226,7 +234,7 @@ public sealed partial class GameSimulation
         }
         var output = Items[job.Recipe.Output];
         var made = job.Recipe.OutputCount;
-        if (output.MaxStack > 1 && CraftRandom.NextDouble() < ExtraBatchChance(agent.CraftingLevel))
+        if (output.MaxStack > 1 && CraftRandom.NextDouble() < ExtraBatchChance(agent.LevelFor(work ?? BillWork(job.Station))))
             made += job.Recipe.OutputCount;
         var calibration = output.Calibratable || CalibrationCatalog.IsAccessory(output) ? RollCalibration(output) : Calibration.None;
         agent.Carried = new ItemStack(job.Recipe.Output, made, calibration);
@@ -240,10 +248,10 @@ public sealed partial class GameSimulation
     private static bool Reaches(Vector2 center, GridPoint cell) => DistanceToRect(center, new Vector2(cell.X, cell.Y), Vector2.One) < 1.5f;
 
     /// <summary>The first bill this colonist can work: their own station first, then stations near home nobody else is at.</summary>
-    private BillJob? FindBillJob(IStationWorker agent)
+    private BillJob? FindBillJob(IStationWorker agent, WorkType? work)
     {
         var stations = _bills.Keys
-            .Where(station => Vector2.Distance(new Vector2(station.X + 0.5f, station.Y + 0.5f), agent.HomePosition) <= OperateRadius &&
+            .Where(station => (work is null || BillWork(station) == work) && Vector2.Distance(new Vector2(station.X + 0.5f, station.Y + 0.5f), agent.HomePosition) <= OperateRadius &&
                               !StationWorkers().Any(other => !ReferenceEquals(other, agent) && other.IsAlive && other.OperateStation == station))
             .OrderBy(station => station == agent.OperateStation ? 0 : 1)
             .ThenBy(station => Vector2.DistanceSquared(new Vector2(station.X + 0.5f, station.Y + 0.5f), agent.Motion.Position))

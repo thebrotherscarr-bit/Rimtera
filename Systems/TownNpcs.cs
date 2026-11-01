@@ -111,8 +111,8 @@ public sealed class TownNpc : IStationWorker
     public float OperateProgress { get; set; }
     public Vector2 HomePosition => HomeCell is { } home ? new Vector2(home.X + 0.5f, home.Y + 0.5f) : Motion.Position;
     string IStationWorker.Activity { get => Activity; set => Activity = value; }
-    float IStationWorker.CraftingSpeed => 0.65f + CraftingSkill * 0.035f;
-    int IStationWorker.CraftingLevel => CraftingSkill;
+    float IStationWorker.SpeedFor(WorkType work) => 0.65f + CraftingSkill * 0.035f;
+    int IStationWorker.LevelFor(WorkType work) => CraftingSkill;
 }
 
 /// <summary>A saved resident. <see cref="Hp"/> was appended in 0.2.2 (NC-20); older saves leave it null (full health).</summary>

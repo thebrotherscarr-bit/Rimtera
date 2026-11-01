@@ -35,8 +35,8 @@ public static class WorkCatalog
         new(WorkType.Tend, "Tend", ColonistSkill.Medical, true, "Treat hurt and downed crew and residents."),
         new(WorkType.Haul, "Haul", ColonistSkill.Mining, true, "Carry loose items near home into chests."),
         new(WorkType.Operate, "Operate", ColonistSkill.Crafting, true, "Work station bills: fetch ingredients, craft, store the product."),
-        new(WorkType.Farm, "Farm", ColonistSkill.Plants, false, "Plant and harvest grow zones (coming)."),
-        new(WorkType.Brew, "Brew", ColonistSkill.Medical, false, "Brew potions from bills (coming)."),
+        new(WorkType.Farm, "Farm", ColonistSkill.Plants, true, "Plant and harvest grow zones; store the herbs, keep seeds to replant."),
+        new(WorkType.Brew, "Brew", ColonistSkill.Medical, true, "Work bills at chem labs: brew potions from herbs."),
         new(WorkType.Cook, "Cook", ColonistSkill.Cooking, false, "Cook meals from bills (coming)."),
         new(WorkType.Fish, "Fish", ColonistSkill.Animals, false, "Fish at a fishing spot (coming)."),
         new(WorkType.Build, "Build", ColonistSkill.Construction, false, "Build from placed blueprints (coming)."),
@@ -45,6 +45,20 @@ public static class WorkCatalog
     ];
 
     public static WorkTypeInfo Get(WorkType type) => All[(int)type];
+
+    /// <summary>
+    /// A colonist's speed at a work type: the crafting speed's work factor applied to the work's own skill
+    /// (0.65 + 0.035 a level, so 1 at skill 10). Crafting itself uses the stat as computed.
+    /// </summary>
+    public static float SkillSpeed(ColonistStats stats, WorkType type)
+    {
+        if (type == WorkType.Operate)
+            return stats.CraftingSpeed;
+        if (type == WorkType.Farm)
+            return stats.PlantWorkSpeed;
+        var factor = stats.CraftingSpeed / (0.65f + stats.Level(ColonistSkill.Crafting) * 0.035f);
+        return factor * (0.65f + stats.Level(Get(type).Skill) * 0.035f);
+    }
 }
 
 /// <summary>

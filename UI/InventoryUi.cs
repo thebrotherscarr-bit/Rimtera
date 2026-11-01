@@ -173,7 +173,7 @@ public sealed class InventoryUiState : UiState
     private string? _housingReport;
     private UiTextElement? _guideCaption;
 
-    private enum Tab { Gear, Housing, Emotes, Work, Bills }
+    private enum Tab { Gear, Housing, Emotes, Work, Bills, Farm }
     private int _billStation;
     private int _billRecipe;
 
@@ -526,6 +526,7 @@ public sealed class InventoryUiState : UiState
         Tab("tab-emotes", "Emotes", 5, () => SwitchTab(InventoryUiState.Tab.Emotes), _tab == InventoryUiState.Tab.Emotes);
         Tab("tab-work", "Work", 6, () => SwitchTab(InventoryUiState.Tab.Work), _tab == InventoryUiState.Tab.Work);
         Tab("tab-bills", "Bills", 7, () => SwitchTab(InventoryUiState.Tab.Bills), _tab == InventoryUiState.Tab.Bills);
+        Tab("tab-farm", "Farm", 8, () => SwitchTab(InventoryUiState.Tab.Farm), _tab == InventoryUiState.Tab.Farm);
         for (var i = 0; i < GameSimulation.LoadoutCount; i++)
         {
             var index = i;
@@ -535,7 +536,7 @@ public sealed class InventoryUiState : UiState
                 Rebuild();
             }, $"loadout-{i + 1}", new UiStyle
             {
-                Left = FromRight(258f), Top = UiLength.Px(gearTop + (8 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
+                Left = FromRight(258f), Top = UiLength.Px(gearTop + (9 + i) * 32f), Width = UiLength.Px(116f), Height = UiLength.Px(28f)
             }) { TextScale = 0.75f, Color = game.ActiveLoadout == i ? UiColor.ButtonActive : UiColor.ButtonDefault });
         }
 
@@ -547,6 +548,8 @@ public sealed class InventoryUiState : UiState
             AddWork(game, gearTop);
         else if (_tab == InventoryUiState.Tab.Bills)
             AddBills(game, gearTop);
+        else if (_tab == InventoryUiState.Tab.Farm)
+            AddFarm(game, gearTop);
         else
             AddEquipment(game, gearTop);
     }
@@ -659,38 +662,52 @@ public sealed class InventoryUiState : UiState
             }) { Scale = 0.7f, Color = new UiColor(170, 178, 192) });
         }
         var working = WorkCatalog.All.Where(info => info.HasJobs).ToArray();
+        // A grid, as in RimWorld's work tab: one column per work type (headed by its first letters), then where they stay.
+        const float column = 34f;
+        if (crew.Length > 0)
+        {
+            for (var c = 0; c < working.Length; c++)
+                Add(new UiTextElement(working[c].Label[..Math.Min(5, working[c].Label.Length)], $"work-head-{working[c].Type}", new UiStyle
+                {
+                    Left = UiLength.Mixed(-250f + c * column, 1f), Top = UiLength.Px(top + 24f), Width = UiLength.Px(column), Height = UiLength.Px(14f)
+                }) { Scale = 0.45f, Color = new UiColor(170, 178, 192) });
+            Add(new UiTextElement("Stay", "work-head-follow", new UiStyle
+            {
+                Left = UiLength.Mixed(-250f + working.Length * column, 1f), Top = UiLength.Px(top + 24f), Width = UiLength.Px(column), Height = UiLength.Px(14f)
+            }) { Scale = 0.45f, Color = new UiColor(170, 178, 192) });
+        }
         for (var row = 0; row < crew.Length; row++)
         {
             var agent = crew[row];
-            var y = top + 28f + row * 50f;
+            var y = top + 40f + row * 46f;
             var doing = agent.CurrentWork is { } work ? WorkCatalog.Get(work).Label : agent.Activity;
             Add(new UiTextElement($"{agent.Name} · {doing}", $"work-name-{agent.Id}", new UiStyle
             {
                 Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y), Width = UiLength.Px(240f), Height = UiLength.Px(18f)
             }) { Scale = 0.7f, Color = new UiColor(226, 230, 238) });
-            for (var column = 0; column < working.Length; column++)
+            for (var c = 0; c < working.Length; c++)
             {
-                var info = working[column];
+                var info = working[c];
                 var priority = agent.Work.Priority(info.Type);
-                Add(new UiButtonElement($"{info.Label} {(priority == WorkCatalog.Off ? "–" : priority.ToString())}", () =>
+                Add(new UiButtonElement(priority == WorkCatalog.Off ? "–" : priority.ToString(), () =>
                 {
                     agent.Work.Cycle(info.Type);
                     Rebuild();
                 }, $"work-{agent.Id}-{info.Type}", new UiStyle
                 {
-                    Left = UiLength.Mixed(-250f + column * 50f, 1f), Top = UiLength.Px(y + 20f), Width = UiLength.Px(47f), Height = UiLength.Px(24f)
-                }) { TextScale = 0.5f, Color = priority == WorkCatalog.Off ? UiColor.ButtonDefault : UiColor.ButtonActive });
+                    Left = UiLength.Mixed(-250f + c * column, 1f), Top = UiLength.Px(y + 18f), Width = UiLength.Px(column - 3f), Height = UiLength.Px(22f)
+                }) { TextScale = 0.6f, Color = priority == WorkCatalog.Off ? UiColor.ButtonDefault : UiColor.ButtonActive });
             }
-            Add(new UiButtonElement(agent.FollowsPlayer ? "Follows you" : "Stays home", () =>
+            Add(new UiButtonElement(agent.FollowsPlayer ? "Away" : "Home", () =>
             {
                 agent.FollowsPlayer = !agent.FollowsPlayer;
                 Rebuild();
             }, $"work-{agent.Id}-follow", new UiStyle
             {
-                Left = UiLength.Mixed(-250f + working.Length * 50f, 1f), Top = UiLength.Px(y + 20f), Width = UiLength.Px(47f), Height = UiLength.Px(24f)
+                Left = UiLength.Mixed(-250f + working.Length * column, 1f), Top = UiLength.Px(y + 18f), Width = UiLength.Px(column + 6f), Height = UiLength.Px(22f)
             }) { TextScale = 0.45f });
         }
-        var y2 = crew.Length == 0 ? top + 52f : top + 32f + crew.Length * 50f;
+        var y2 = crew.Length == 0 ? top + 52f : top + 44f + crew.Length * 46f;
         // 0.2.4: housed residents work bills at stations near home by day, beside their shops (on by default).
         foreach (var npc in game.TownNpcs.Where(npc => !npc.IsBound && npc.HomeCell is not null).Take(5))
         {
@@ -709,7 +726,7 @@ public sealed class InventoryUiState : UiState
             }) { TextScale = 0.5f, Color = npc.WorksStations ? UiColor.ButtonActive : UiColor.ButtonDefault });
             y2 += 26f;
         }
-        Add(new UiTextElement("Operate works the bills set in the Bills tab; residents work them by day too. Farm, brew, cook, fish, build, research and trade come later.",
+        Add(new UiTextElement("Operate and Brew work the Bills tab's bills (Brew at chem labs); Farm works the Farm tab's zones. Cook, fish, build, research and trade come later.",
             "work-later", new UiStyle
             {
                 Left = UiLength.Mixed(-250f, 1f), Top = UiLength.Px(y2 + 4f), Width = UiLength.Px(240f), Height = UiLength.Px(32f)
@@ -743,6 +760,47 @@ public sealed class InventoryUiState : UiState
             {
                 Left = UiLength.Px(right - (listed.Count - i) * (width + 2f)), Top = UiLength.Px(chestTop), Width = UiLength.Px(width), Height = UiLength.Px(20f)
             }) { TextScale = 0.45f, Color = (takes & category) != 0 ? UiColor.ButtonActive : UiColor.ButtonDefault });
+        }
+    }
+
+    /// <summary>
+    /// The Farm tab (RimWorld's grow zones, 0.2.5): mark a strip of ground at your feet for a herb (the one the soil suits
+    /// at first); Farm crew plant it from seeds in chests, harvest it in bloom and store the herbs. Each zone can change its
+    /// herb and width, or be removed. Zones show as green outlines in the world.
+    /// </summary>
+    private void AddFarm(GameSimulation game, float top)
+    {
+        UiStyle At(float left, float y, float width, float height = 22f) => new()
+        {
+            Left = UiLength.Mixed(-250f + left, 1f), Top = UiLength.Px(y), Width = UiLength.Px(width), Height = UiLength.Px(height)
+        };
+        void Text(string text, string id, float left, float y, float width, float scale = 0.6f, UiColor? color = null) =>
+            Add(new UiTextElement(text, id, At(left, y, width, 18f)) { Scale = scale, Color = color ?? new UiColor(226, 230, 238) });
+        void Button(string text, string id, float left, float y, float width, Action command) =>
+            Add(new UiButtonElement(text, () => { command(); Rebuild(); }, id, At(left, y, width)) { TextScale = 0.5f });
+
+        Text("Grow zones (Farm crew work them)", "farm-title", 0f, top, 240f, 0.8f, new UiColor(242, 176, 64));
+        Button("Mark a zone here (8 wide)", "farm-add", 0f, top + 26f, 160f, () =>
+            Status(game.AddGrowZoneAtPlayer() is { } zone
+                ? $"Grow zone marked for {game.Items[TilePhysics.HerbFor(zone.Herb)!.Herb].Name}."
+                : game.GrowZones.Count >= GameSimulation.MaxGrowZones ? "No more zones (12 at most)." : "A zone is already there."));
+        var y = top + 54f;
+        var zones = game.GrowZones.ToArray();
+        if (zones.Length == 0)
+            Text("Stand on soil (or by planters) and mark a zone. Herbs need their own soil; planters take any.", "farm-empty", 0f, y, 240f, 0.55f, new UiColor(170, 178, 192));
+        for (var i = 0; i < Math.Min(zones.Length, 8); i++)
+        {
+            var zone = zones[i];
+            var herb = TilePhysics.HerbFor(zone.Herb)!;
+            var growing = zone.Cells.Count(cell => game.World.TileAt(cell.X, cell.Y) == zone.Herb);
+            var plantable = zone.Cells.Count(cell => game.CanPlant(zone, cell) || game.World.TileAt(cell.X, cell.Y) == zone.Herb);
+            Text($"{i + 1}. {game.Items[herb.Herb].Name} at {zone.X},{zone.Y} · {growing} growing, {plantable}/{zone.Width} fit",
+                $"farm-zone-{i}", 0f, y, 240f, 0.55f, plantable == 0 ? new UiColor(150, 160, 172) : null);
+            Button("Herb", $"farm-zone-{i}-herb", 0f, y + 18f, 48f, zone.CycleHerb);
+            Button("-", $"farm-zone-{i}-less", 52f, y + 18f, 22f, () => game.ResizeGrowZone(zone, zone.Width - 1));
+            Button("+", $"farm-zone-{i}-more", 78f, y + 18f, 22f, () => game.ResizeGrowZone(zone, zone.Width + 1));
+            Button("Remove", $"farm-zone-{i}-delete", 104f, y + 18f, 56f, () => game.RemoveGrowZone(zone));
+            y += 44f;
         }
     }
 

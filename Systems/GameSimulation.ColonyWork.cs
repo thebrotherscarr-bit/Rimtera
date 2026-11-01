@@ -26,7 +26,10 @@ public sealed partial class GameSimulation
     /// <summary>Asks each enabled job giver in priority order; true when one gave a job and the colonist worked it.</summary>
     private bool TryColonyWork(ColonistAgent agent, Vector2 center, float deltaSeconds, float elapsedHours)
     {
-        if (agent.Work.Priority(WorkType.Operate) == WorkCatalog.Off && (agent.Held.Count > 0 || agent.OperateStation is not null))
+        if (agent.Work.Priority(WorkType.Farm) == WorkCatalog.Off && (agent.Pouch.Count > 0 || agent.FarmTarget is not null))
+            DropPouch(agent, center); // taken off Farm: seeds and herbs are set down for the haulers
+        if (agent.Work.Priority(WorkType.Operate) == WorkCatalog.Off && agent.Work.Priority(WorkType.Brew) == WorkCatalog.Off &&
+            (agent.Held.Count > 0 || agent.OperateStation is not null))
         {
             agent.OperateStation = null; // taken off Operate: set fetched ingredients down for the haulers
             DropHeld(agent, center);
@@ -38,13 +41,14 @@ public sealed partial class GameSimulation
                 WorkType.Guard => TryGuard(agent, center, deltaSeconds),
                 WorkType.Tend => TryTend(agent, center, deltaSeconds, elapsedHours),
                 WorkType.Haul => TryHaul(agent, center, deltaSeconds),
-                WorkType.Operate => TryOperate(agent, center, deltaSeconds, target => StepColonistToward(agent, center, target, deltaSeconds, 1f)),
+                WorkType.Operate or WorkType.Brew => TryOperate(agent, center, deltaSeconds, target => StepColonistToward(agent, center, target, deltaSeconds, 1f), work),
+                WorkType.Farm => TryFarm(agent, center, deltaSeconds),
                 _ => false // no job giver yet
             };
             if (worked)
             {
                 agent.CurrentWork = work;
-                if (work != WorkType.Operate)
+                if (work is not (WorkType.Operate or WorkType.Brew))
                     agent.OperateStation = null; // free the station for another operator meanwhile
                 return true;
             }
