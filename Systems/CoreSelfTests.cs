@@ -1665,7 +1665,8 @@ public static class CoreSelfTests
         GuardPostSelfTests.Run(Check); // 0.4.1: guard posts, falling back, taking cover
         OutpostSelfTests.Run(Check); // 0.4.2: outposts; arrivals settle at the base first
         RaidSelfTests.Run(Check); // 0.4.3: raids announced ahead, aimed at the base or an outpost
-        BackgroundSelfTests.Run(Check); // 0.5.1: childhoods and adulthoods: skills and what people won't do // 0.4.0: equipping people with Terraria's gear
+        BackgroundSelfTests.Run(Check); // 0.5.1: childhoods and adulthoods: skills and what people won't do
+        SkillGrowthSelfTests.Run(Check); // 0.5.2: skills grow by doing // 0.4.0: equipping people with Terraria's gear
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab

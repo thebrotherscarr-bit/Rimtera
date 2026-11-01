@@ -149,6 +149,25 @@ public sealed class TownNpc : IStationWorker
     public GridPoint? FarmTarget { get; set; }
     public float FarmProgress { get; set; }
 
+    // ---- 0.5.2: practice toward each skill's next level (seconds, after passion) ----
+    private readonly float[] _practice = new float[ColonistCatalog.SkillCount];
+    public float PracticeIn(ColonistSkill skill) => _practice[(int)skill];
+    /// <summary>Adds practice and returns the new total.</summary>
+    internal float AddPractice(ColonistSkill skill, float amount) => _practice[(int)skill] = Math.Max(0f, _practice[(int)skill] + amount);
+    internal float[] CapturePractice() => _practice.ToArray();
+    internal void RestorePractice(float[]? saved)
+    {
+        for (var i = 0; i < Math.Min(_practice.Length, saved?.Length ?? 0); i++)
+            _practice[i] = float.IsFinite(saved![i]) ? Math.Max(0f, saved[i]) : 0f;
+    }
+
+    /// <summary>A skill grew (0.5.2): the person is updated; the work they are doing stays as it is.</summary>
+    internal void GrowSkills(CharacterProfile profile)
+    {
+        Profile = profile;
+        Stats = profile.Stats;
+    }
+
     internal void SetProfile(CharacterProfile profile)
     {
         Profile = profile;
@@ -270,7 +289,9 @@ public sealed record TownNpcSnapshot(TownNpcKind Kind, string Name, float X, flo
     // 0.4.1: an armed guard's post.
     int? PostX = null, int? PostY = null,
     // 0.5.1: their story.
-    string? Childhood = null, string? Adulthood = null);
+    string? Childhood = null, string? Adulthood = null,
+    // 0.5.2: practice toward each skill's next level.
+    float[]? Practice = null);
 
 public readonly record struct ShopOffer(ItemId Item, string Name, int Price);
 

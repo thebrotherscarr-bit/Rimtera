@@ -380,6 +380,7 @@ public sealed partial class GameSimulation
                     if (TryGuard(npc, center, deltaSeconds))
                     {
                         npc.CurrentWork = WorkType.Guard;
+                        Practise(npc, WorkType.Guard, deltaSeconds); // 0.5.2: fighting practises Melee or Shooting
                         continue;
                     }
                     // 0.4.1: an armed guard with a post holds it, day and night, walking a short beat around it.
@@ -681,7 +682,8 @@ public sealed partial class GameSimulation
         npc.Carried.IsEmpty ? null : npc.Carried,
         npc.Profile, npc.Kind == TownNpcKind.Settler ? npc.Look : null,
         npc.Pouch.Count == 0 ? null : npc.Pouch.OrderBy(pair => pair.Key).Select(pair => new ItemStack(pair.Key, pair.Value)).ToArray(),
-        CaptureResidentGear(npc), npc.Post?.X, npc.Post?.Y, npc.Childhood?.Id, npc.Adulthood?.Id)).ToArray();
+        CaptureResidentGear(npc), npc.Post?.X, npc.Post?.Y, npc.Childhood?.Id, npc.Adulthood?.Id,
+        npc.CapturePractice().Any(value => value > 0f) ? npc.CapturePractice() : null)).ToArray();
 
     private void RestoreTownNpcs(TownNpcSnapshot[]? npcs)
     {
@@ -712,6 +714,7 @@ public sealed partial class GameSimulation
             }
             // NC-20: a hurt resident loads as hurt. Saves from before the field (or a bad value) load at full health; a
             // living resident never loads dead.
+            npc.RestorePractice(saved.Practice);
             RestoreResidentGear(npc, saved.Gear); // before the hit points: gear sets the maximum they are clamped to
             if (saved.PostX is { } px && saved.PostY is { } py && World.Contains(px, py) && npc.IsArmed)
                 npc.Post = new GridPoint(px, py);
