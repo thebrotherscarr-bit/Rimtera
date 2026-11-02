@@ -169,7 +169,7 @@ public sealed record WorldEventSnapshot(ActiveEventState[] Active, Dictionary<Wo
 public sealed class WorldEventSystem
 {
     /// <summary>Creatures of an obelisk's own roster that must fall before its shield drops.</summary>
-    public const int ObeliskShieldKills = 20;
+    public const int ObeliskShieldKills = 12; // 0.8.1: 20 → 12, a shorter second ladder
 
     private readonly int _seed;
     private readonly Dictionary<WorldEventKind, WorldEventSpec> _specs;

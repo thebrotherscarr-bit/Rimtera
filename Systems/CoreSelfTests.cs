@@ -823,7 +823,7 @@ public static class CoreSelfTests
         // Boss progression: gate, easy tier, hard tier, then the Astro-God.
         var progression = new GameSimulation(seed: 31337, width: 80, height: 48) { DebugSummonKeyEnabled = true };
         // BO-18 (0.2.2): the key goes through the item refusals, so the run stands in the Irradiated Core (the igniter's
-        // place) and the obelisks are down (the sigil's gate); the bulb boss waits for the whole hard trio.
+        // place) and the obelisks are down (the sigil's gate); the bulb boss waits for two of the hard trio (0.8.1).
         progression.Player.Motion.Position = progression.Player.Motion.Position with { Y = progression.World.Height * 0.85f };
         progression.Flags.Set("obelisks.down");
         Check(progression.TrySummonSentinel() && !progression.TrySummonNextBoss() &&
@@ -843,14 +843,13 @@ public static class CoreSelfTests
             boss.TakeDamage(boss.MaximumHitPoints);
             progression.Tick(new GameInput(new MovementInput(0f)));
         }
-        // BO-18 changed expectation: the bulb boss refuses until the whole trio is down, so the key skips it until then.
-        var refusalOrder = EnemyArchetypes.BossProgression.Where(kind => kind != GameSimulation.BulbBoss && kind != EnemyKind.AstroGod)
-            .Append(GameSimulation.BulbBoss).Append(EnemyKind.AstroGod);
-        Check(summoned.SequenceEqual(refusalOrder) &&
+        // 0.8.1: the bulb boss waits for any HardTrioNeeded of the trio, so the key now runs in the table's own order.
+        var trioDown = summoned.Where(GameSimulation.HardTrio.Contains).Take(GameSimulation.HardTrioNeeded)
+            .Max(kind => summoned.IndexOf(kind));
+        Check(summoned.SequenceEqual(EnemyArchetypes.BossProgression) && summoned.IndexOf(GameSimulation.BulbBoss) > trioDown &&
               summoned.Skip(1).Take(4).All(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Easy) &&
               summoned[5] == GameSimulation.CoreGateBoss && EnemyArchetypes.Get(summoned[5]).Tier == BossTier.Gate &&
               summoned.Skip(6).Take(5).All(kind => EnemyArchetypes.Get(kind).Tier == BossTier.Hard) &&
-              summoned.IndexOf(GameSimulation.BulbBoss) > GameSimulation.HardTrio.Max(kind => summoned.IndexOf(kind)) &&
               summoned[^1] == EnemyKind.AstroGod &&
               progression.DefeatedBosses.Count == EnemyArchetypes.BossProgression.Count &&
               progression.NextBoss == EnemyKind.AstroGod,
@@ -1685,6 +1684,7 @@ public static class CoreSelfTests
         AffinitySelfTests.Run(Check); // 0.7.7: station affinity
         RelayRaidSelfTests.Run(Check); // 0.7.8: raiders hit relays
         GridSelfTests.Run(Check); // 0.7.9: grid feedback and balance
+        PacingSelfTests.Run(Check); // 0.8.1: the Fracture as hardmode, paced
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab

@@ -36,12 +36,12 @@ public sealed partial class GameSimulation
             "The Ore Refinery Mk2."),
         new("fission", "Fission studies", [EnemyKind.FissionTyrant], 5f, [ItemId.AlloyAnvil], [ItemId.FissionSlag],
             "The Alloy Anvil, and recipes using fission slag."),
-        new("essences", "Essence studies", [.. HardTrio], 6f, [ItemId.NanoFabricatorMk2],
+        new("essences", "Essence studies", [.. HardTrio], 4f, [ItemId.NanoFabricatorMk2],
             [ItemId.PrismEssence, ItemId.BlightEssence, ItemId.FlightEssence],
             "The Nano-Fabricator Mk2, and recipes using the prism, blight and flight essences."),
-        new("flora", "Flora core studies", [EnemyKind.MutatedFlora], 7f, [ItemId.VoidForge], [],
+        new("flora", "Flora core studies", [EnemyKind.MutatedFlora], 5f, [ItemId.VoidForge], [],
             "The Void Forge."),
-        new("astral", "Astral studies", [EnemyKind.AstroGod], 8f, [ItemId.AstralAssembler], [],
+        new("astral", "Astral studies", [EnemyKind.AstroGod], 5f, [ItemId.AstralAssembler], [],
             "The Astral Assembler.")
     ];
 
