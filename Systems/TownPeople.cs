@@ -85,11 +85,11 @@ public static class TownPeople
     {
         var work = ColonyWorkSettings.For(stats);
         if (kind == TownNpcKind.StationAi)
-            foreach (var type in Enum.GetValues<WorkType>())
+            foreach (var type in EnumValues<WorkType>.All)
                 if (type is not (WorkType.Operate or WorkType.Research))
                     work.Set(type, WorkCatalog.Off);
         if (TownTrades.Idle(kind))
-            foreach (var type in Enum.GetValues<WorkType>())
+            foreach (var type in EnumValues<WorkType>.All)
                 if (!(kind == TownNpcKind.TradeConsul && type == WorkType.Trade))
                     work.Set(type, WorkCatalog.Off);
         // Only those good at fighting (Melee a best or good skill, or a passion) guard their area; the rest keep working

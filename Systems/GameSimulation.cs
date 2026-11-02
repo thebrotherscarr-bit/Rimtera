@@ -112,6 +112,7 @@ public sealed partial class GameSimulation : IStoryHost
     // Separate stream for mining by-products so loot never shifts spawns or combat rolls.
     private readonly Random _lootRandom;
     private readonly RegionMap _regions;
+    private readonly TableIndex _tables; // 0.8.2: where the tables stand, for the free-house search
     private readonly TemperatureModel _temperature = new();
     private readonly Storyteller _storyteller;
     private readonly Dictionary<RoomInfo, BiomeReading> _roomBiomes = new();
@@ -145,6 +146,24 @@ public sealed partial class GameSimulation : IStoryHost
         // 0.7.8 (bench): a generated world has no travel pylons, so the relay list never needs a world scan mid-game;
         // pylons placed later are tracked as they are placed.
         _pylonsScanned = true;
+        WarmUp();
+    }
+
+    private static bool _tablesWarm;
+
+    /// <summary>
+    /// 0.8.2 (performance pass): work that would otherwise land on a tick mid-game is done while the world loads: the table
+    /// index's first scan, and the lazily built drop and thought tables the first kill used to build (a 30 ms hitch).
+    /// </summary>
+    private void WarmUp()
+    {
+        _ = _tables.Cells;
+        if (_tablesWarm)
+            return;
+        _tablesWarm = true;
+        _ = ArsenalItems.MobDrops;
+        System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(NpcDropRegistry).TypeHandle);
+        System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Rimtera.Characters.ThoughtCatalog).TypeHandle);
     }
 
     /// <summary>A world restored from saved cells and metadata (no generation).</summary>
@@ -203,6 +222,7 @@ public sealed partial class GameSimulation : IStoryHost
         }
         _framing.ReframeAll(World, Tiles);
         _regions = new RegionMap(World, Tiles);
+        _tables = new TableIndex(World);
         _liquids = new ActiveLiquidSimulator(World, Tiles);
         _liquids.WakeMovable();
         _ticker = new WorldTicker(World, Tiles, seed ^ 0x71C4E5) { Blight = Blight };
@@ -568,6 +588,7 @@ public sealed partial class GameSimulation : IStoryHost
         game.RestoreColonySentries(snapshot.ColonySentries); // 0.7.3
         game.SettleLegacyCrew(snapshot); // 0.3.10: crew saved before the merge come back as settlers
         _ = game.Pylons; // 0.7.8 (bench): find a loaded world's relays now, not in the middle of a tick
+        game.WarmUp(); // 0.8.2
         return game;
     }
 
@@ -1928,7 +1949,7 @@ public sealed partial class GameSimulation : IStoryHost
             foreach (var stack in Player.Inventory.Slots)
                 if (!stack.IsEmpty)
                     total += ItemValue(Items[stack.ItemId]) * stack.Count;
-            foreach (var slot in Enum.GetValues<EquipmentSlot>())
+            foreach (var slot in EnumValues<EquipmentSlot>.All)
                 if (Player.Equipment[slot] is { } worn)
                     total += ItemValue(Items[worn]);
             return total;

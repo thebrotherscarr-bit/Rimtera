@@ -617,9 +617,8 @@ public sealed class HealthComponent
         var days = elapsedHours / 24f;
         var restFactor = IsResting ? 1.5f : 1f;
         var bleed = _injuries.Sum(injury => injury.BleedRate);
-        var newInfections = new List<Injury>();
-        var newScars = new List<Injury>();
-        foreach (var injury in _injuries.ToArray())
+        List<Injury>? newInfections = null, newScars = null; // 0.8.2: no garbage on a healthy body's tick
+        foreach (var injury in _injuries.Count == 0 ? [] : _injuries.ToArray())
         {
             var previousAge = injury.AgeHours;
             injury.AgeHours += elapsedHours;
@@ -669,7 +668,7 @@ public sealed class HealthComponent
                             !_injuries.Any(other => other.Kind == ConditionKind.Infection && ReferenceEquals(other.Part, injury.Part)))
                         {
                             var infection = Injury.Create(ConditionKind.Infection, injury.Part, 0.05f, ++_sequence);
-                            newInfections.Add(infection);
+                            (newInfections ??= []).Add(infection);
                         }
                     }
                     if (!injury.ScarRolled && injury.PeakSeverity >= injury.Part.MaxHealth * 0.35f &&
@@ -679,16 +678,19 @@ public sealed class HealthComponent
                         if (_random.NextDouble() < (injury.IsTended ? 0.25f + 0.2f * (1f - injury.TendQuality) : 0.45f))
                         {
                             var scar = Injury.Create(ConditionKind.Scar, injury.Part, injury.PeakSeverity * 0.15f, ++_sequence);
-                            newScars.Add(scar);
+                            (newScars ??= []).Add(scar);
                             injury.SetSeverity(0f);
                         }
                     }
                     break;
             }
         }
-        _injuries.AddRange(newInfections);
-        _injuries.AddRange(newScars);
-        _injuries.RemoveAll(injury => injury.IsHealed && injury.Kind != ConditionKind.BloodLoss);
+        if (newInfections is not null)
+            _injuries.AddRange(newInfections);
+        if (newScars is not null)
+            _injuries.AddRange(newScars);
+        if (_injuries.Count > 0)
+            _injuries.RemoveAll(injury => injury.IsHealed && injury.Kind != ConditionKind.BloodLoss);
 
         // Blood loss rises with bleeding and recovers slowly on its own.
         var recovery = ConditionCatalog.Get(ConditionKind.BloodLoss).HealPerDay * 0.05f * days * restFactor;
@@ -744,15 +746,41 @@ public sealed class HealthComponent
 
     private float AverageIntegrity(BodyPartFunction function, float fallback = 1f)
     {
-        var parts = Root.TraversePreOrder().Where(part => (part.Functions & function) != 0).ToArray();
-        return parts.Length == 0 ? fallback : parts.Average(PartIntegrity);
+        // 0.8.2: walked without iterators (this runs for every resident every tick); same pre-order and double sum as Average.
+        var sum = 0.0;
+        var count = 0;
+        SumIntegrity(Root, function, ref sum, ref count);
+        return count == 0 ? fallback : (float)(sum / count);
     }
+
+    private void SumIntegrity(BodyPart part, BodyPartFunction function, ref double sum, ref int count)
+    {
+        if ((part.Functions & function) != 0)
+        {
+            sum += PartIntegrity(part);
+            count++;
+        }
+        foreach (var child in part.Children)
+            SumIntegrity(child, function, ref sum, ref count);
+    }
+
+    private static void CollectParts(BodyPart part, BodyPartFunction function, List<BodyPart> into)
+    {
+        if ((part.Functions & function) != 0)
+            into.Add(part);
+        foreach (var child in part.Children)
+            CollectParts(child, function, into);
+    }
+
+    private readonly List<BodyPart> _limbScratch = [];
 
     /// <summary>Limb efficiency: each core limb, scaled by its attached segments/digits, averaged over limbs.</summary>
     private float LimbEfficiency(BodyPartFunction core, BodyPartFunction segment, BodyPartFunction digit, float digitWeight)
     {
-        var limbs = Root.TraversePreOrder().Where(part => (part.Functions & core) != 0).ToArray();
-        if (limbs.Length == 0)
+        var limbs = _limbScratch;
+        limbs.Clear();
+        CollectParts(Root, core, limbs);
+        if (limbs.Count == 0)
             return 1f;
         var total = 0f;
         foreach (var limb in limbs)
@@ -763,13 +791,15 @@ public sealed class HealthComponent
                 for (var ancestor = limb.Parent; ancestor is not null; ancestor = ancestor.Parent)
                     if ((ancestor.Functions & segment) != 0)
                         efficiency *= 0.75f + 0.25f * PartIntegrity(ancestor);
-                var digits = limb.TraversePreOrder().Where(part => (part.Functions & digit) != 0).ToArray();
-                if (digits.Length > 0)
-                    efficiency *= 1f - digitWeight + digitWeight * digits.Average(PartIntegrity);
+                var digitSum = 0.0;
+                var digitCount = 0;
+                SumIntegrity(limb, digit, ref digitSum, ref digitCount);
+                if (digitCount > 0)
+                    efficiency *= 1f - digitWeight + digitWeight * (float)(digitSum / digitCount);
             }
             total += efficiency;
         }
-        return total / limbs.Length;
+        return total / limbs.Count;
     }
 
     private void Recalculate()
@@ -783,8 +813,14 @@ public sealed class HealthComponent
         var pumping = AverageIntegrity(BodyPartFunction.BloodPumpingSource);
         var breathing = AverageIntegrity(BodyPartFunction.BreathingSource);
         var filtration = AverageIntegrity(BodyPartFunction.BloodFiltrationSource);
-        var infection = _injuries.Where(injury => injury.Kind == ConditionKind.Infection).Select(injury => injury.Severity)
-            .DefaultIfEmpty(0f).Max();
+        var infection = 0f;
+        var anyInfection = false;
+        foreach (var injury in _injuries)
+            if (injury.Kind == ConditionKind.Infection)
+            {
+                infection = anyInfection ? Math.Max(infection, injury.Severity) : injury.Severity;
+                anyInfection = true;
+            }
         var consciousness = brain * (1 - painPenalty)
                             * (0.3f + 0.7f * pumping)
                             * (0.5f + 0.5f * breathing)

@@ -122,35 +122,44 @@ public static class EngineBenchmark
         compressedJson = null;
         GC.KeepAlive(restored);
         Console.WriteLine($"Memory after load (old world and save text released): {Megabytes()} MiB managed; old world collected: {!oldWorld.IsAlive}");
+        // 0.8.2: the late-game scenario (a colony, outposts and relays, a raid) on a fresh world of the last size.
+        var (lateName, lateWidth, lateHeight) = sizes[^1];
+        var late = new GameSimulation(seed: 20261020, width: lateWidth, height: lateHeight);
+        LateGameBench.Build(late);
+        var lateResult = LateGameBench.Measure(late);
+        Console.WriteLine($"Late game ({lateName}): {lateResult.Residents} residents, {lateResult.Relays} relays, {lateResult.Hostiles} hostiles left; " +
+                          $"{lateResult.TickMs:0.000} ms/tick (worst {lateResult.WorstTickMs:0.0} ms, across an hour), HUD queries {lateResult.FrameQueriesMs:0.000} ms a frame");
         return args.Contains("--budget", StringComparer.OrdinalIgnoreCase)
-            ? Budget(generationSeconds, tickWatch.Elapsed.TotalMilliseconds / ticks, worst, titleMegabytes)
+            ? Budget(generationSeconds, tickWatch.Elapsed.TotalMilliseconds / ticks, worst, titleMegabytes, lateResult)
             : 0;
     }
 
     /// <summary>
     /// The soft performance budgets (roadmap 0.2.0 PE-20, for a Small world): generation 8 s, a tick 5 ms, the worst flood
-    /// tick 50 ms, and 450 MB before any world exists. Every number is reported (and written to the CI step summary);
-    /// only a value past twice its budget fails.
+    /// tick 50 ms, and 450 MB before any world exists; since 0.8.2 also the late-game scenario's rows
+    /// (<see cref="LateGameBench"/>). Every number is reported (and written to the CI step summary); only a value past twice
+    /// its budget fails.
     /// </summary>
-    public static int Budget(double generationSeconds, double tickMilliseconds, double floodWorstMilliseconds, double titleMegabytes)
+    public static int Budget(double generationSeconds, double tickMilliseconds, double floodWorstMilliseconds, double titleMegabytes,
+        LateGameBench.Result? late = null)
     {
         var rows = new (string Name, double Value, double Limit, string Unit)[]
         {
             ("World generation", generationSeconds, 8, "s"), ("Tick", tickMilliseconds, 5, "ms"),
             ("Worst tick in a flood", floodWorstMilliseconds, 50, "ms"), ("Memory before a world", titleMegabytes, 450, "MB")
-        };
+        }.Concat(late is null ? [] : LateGameBench.Rows(late)).ToArray();
         var lines = new List<string> { "| Measure | Value | Budget | |", "|---|---|---|---|" };
         var failed = false;
         foreach (var (name, value, limit, unit) in rows)
         {
             var verdict = value <= limit ? "within" : value <= 2 * limit ? "over (soft)" : "over 2× (fails)";
             failed |= value > 2 * limit;
-            lines.Add($"| {name} | {value:0.00} {unit} | {limit:0} {unit} | {verdict} |");
+            lines.Add($"| {name} | {value:0.00} {unit} | {limit:0.##} {unit} | {verdict} |");
         }
         foreach (var line in lines)
             Console.WriteLine(line);
         if (Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY") is { Length: > 0 } summary)
-            File.AppendAllLines(summary, new[] { "### Engine bench (Small)", "" }.Concat(lines));
+            File.AppendAllLines(summary, new[] { "### Engine bench (Small, and the late game)", "" }.Concat(lines));
         return failed ? 1 : 0;
     }
 

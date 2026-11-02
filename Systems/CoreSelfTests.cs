@@ -1685,6 +1685,7 @@ public static class CoreSelfTests
         RelayRaidSelfTests.Run(Check); // 0.7.8: raiders hit relays
         GridSelfTests.Run(Check); // 0.7.9: grid feedback and balance
         PacingSelfTests.Run(Check); // 0.8.1: the Fracture as hardmode, paced
+        PerformanceSelfTests.Run(Check); // 0.8.2: the performance pass
         TownPeopleSelfTests.Run(Check); // 0.3.10: one kind of character: residents are people; settlers replace the crew
         ColonyWorkSelfTests.Run(Check); // 0.2.1: work priorities, the Guard, Tend and Haul job givers, staying home, the Work tab
         StationBillsSelfTests.Run(Check); // 0.2.3: station bills, the Operate job giver, the Bills tab

@@ -32,7 +32,7 @@ public sealed partial class GameSimulation
         var power = (float)rod.FishingPower;
         if (CurrentBait is { } bait)
             power += Items[bait].BaitPower;
-        foreach (var slot in Enum.GetValues<EquipmentSlot>())
+        foreach (var slot in EnumValues<EquipmentSlot>.All)
             if (Player.Equipment[slot] is { } worn)
                 power += Items[worn].FishingPower;
         power += GearFishingBonus;
@@ -246,7 +246,7 @@ public sealed partial class GameSimulation
         var context = GetFishingContext(ClampCell(RegionMap.CellAt(bobber.Position)), bobber.Liquid, bobber.PoolSize,
             GetFishingPower(Items[bobber.Rod]));
         var preview = new List<(FishingRarity, ItemId)>();
-        foreach (var rarity in Enum.GetValues<FishingRarity>())
+        foreach (var rarity in EnumValues<FishingRarity>.All)
             for (var sample = 0; sample < 6; sample++)
             {
                 var item = FishingTables.Pick(context, rarity, new Random(sample));

@@ -192,7 +192,7 @@ public static class ItemAudit
     {
         var system = new StatusEffectSystem();
         var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var status in Enum.GetValues<StatusId>())
+        foreach (var status in EnumValues<StatusId>.All)
             try
             {
                 if (system[status].BlockedByImmunityTag is { } blocked)

@@ -50,7 +50,7 @@ public static class AssetCheck
         foreach (var mount in TravelContent.Mounts.Values)
             Want("mount", mount.Sprite);
         var tiles = new TileCatalog();
-        foreach (var tile in Enum.GetValues<TileId>())
+        foreach (var tile in EnumValues<TileId>.All)
         {
             // Stations and furniture draw through their own sprites (as the --tile-sprites export lists them).
             if (tile != TileId.Air && tiles.Contains(tile) && tiles[tile].IsSolid && tiles[tile].Station == CraftingStationId.None &&

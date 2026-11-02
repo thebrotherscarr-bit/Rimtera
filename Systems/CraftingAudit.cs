@@ -565,7 +565,7 @@ public static class CraftingAudit
     private static HashSet<EnemyKind> HardKinds()
     {
         var regular = new HashSet<EnemyKind>();
-        foreach (var zone in Enum.GetValues<BiomeZone>())
+        foreach (var zone in EnumValues<BiomeZone>.All)
             regular.UnionWith(BiomeSpawnTables.KindsFor(zone));
         foreach (var slot in new[] { "grass", "under", "cave" })
             regular.UnionWith(BiomeSpawnTables.FillKinds(slot));
@@ -604,7 +604,7 @@ public static class CraftingAudit
         var events = new WorldEventSystem(1).Specs.ToArray();
         var eventOnly = EventOnlyKinds(events);
         var ambient = new HashSet<EnemyKind>();
-        foreach (var zone in Enum.GetValues<BiomeZone>())
+        foreach (var zone in EnumValues<BiomeZone>.All)
             ambient.UnionWith(BiomeSpawnTables.KindsFor(zone));
         foreach (var zone in BiomeSpawnTables.HardZones)
             ambient.UnionWith(BiomeSpawnTables.HardKindsFor(zone));
@@ -784,10 +784,10 @@ public static class CraftingAudit
         var afterFracture = new HashSet<ItemId>();
         var random = new Random(7);
         foreach (var liquid in new[] { LiquidKind.Water, LiquidKind.Acid, LiquidKind.Lava, LiquidKind.Nectar, LiquidKind.Fuel })
-        foreach (var zone in Enum.GetValues<BiomeZone>())
-        foreach (var depth in Enum.GetValues<FishingDepth>())
+        foreach (var zone in EnumValues<BiomeZone>.All)
+        foreach (var depth in EnumValues<FishingDepth>.All)
         foreach (var night in new[] { false, true })
-        foreach (var rarity in Enum.GetValues<FishingRarity>())
+        foreach (var rarity in EnumValues<FishingRarity>.All)
         foreach (var power in new[] { 20f, 80f })
         foreach (var fractured in new[] { false, true })
         {

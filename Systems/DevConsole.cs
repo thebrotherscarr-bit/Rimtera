@@ -500,7 +500,7 @@ public sealed class DevConsole
     private static T Parse<T>(string text, string what) where T : struct, Enum
     {
         var normal = Normal(text);
-        foreach (var value in Enum.GetValues<T>())
+        foreach (var value in EnumValues<T>.All)
             if (Normal(value.ToString()) == normal)
                 return value;
         var close = Enum.GetValues<T>().Select(value => value.ToString()).Where(name => Normal(name).Contains(normal)).Take(6).ToArray();

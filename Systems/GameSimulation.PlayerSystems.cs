@@ -270,7 +270,7 @@ public sealed partial class GameSimulation
         get
         {
             var luck = 0f;
-            foreach (var slot in Enum.GetValues<EquipmentSlot>())
+            foreach (var slot in EnumValues<EquipmentSlot>.All)
                 if (Player.Equipment[slot] is { } item)
                     luck += PlayerSystemsContent.GearLuck(item);
             if (Player.Statuses.IsActive(StatusId.Lucky))
@@ -325,7 +325,7 @@ public sealed partial class GameSimulation
         get
         {
             var aggro = 0;
-            foreach (var slot in Enum.GetValues<EquipmentSlot>())
+            foreach (var slot in EnumValues<EquipmentSlot>.All)
                 if (Player.Equipment[slot] is { } item)
                     aggro += PlayerSystemsContent.GearAggro(item);
             return aggro;
@@ -516,7 +516,7 @@ public sealed partial class GameSimulation
         {
             if (Enum.GetValues<DyeSlot>().Any(slot => DyeIn(slot) is not null) && Player.Inventory.TryConsume(ItemId.DyeSolvent))
             {
-                foreach (var slot in Enum.GetValues<DyeSlot>())
+                foreach (var slot in EnumValues<DyeSlot>.All)
                     Flags.Clear(DyeKey(slot));
                 PostMessage("The solvent washes the dye out of your gear.");
             }
