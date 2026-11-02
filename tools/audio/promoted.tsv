@@ -1135,3 +1135,5 @@ event_meteor_fall_start	Assets/Sounds/event_meteor_fall_start.wav	event_meteor_f
 event_meteor_fall_end	Assets/Sounds/event_meteor_fall_end.wav	event_meteor_fall_end__c1.wav
 boss_spawn	Assets/Sounds/boss_spawn.wav	boss_spawn__c1.wav
 mus_title	Assets/Music/mus_title.ogg	mus_title__c1.wav
+mus_title	Assets/Music/mus_title.ogg	mus_title__c1.wav
+mus_title	Assets/Music/mus_title.ogg	mus_title__c8mix.wav
