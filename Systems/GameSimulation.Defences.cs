@@ -96,18 +96,25 @@ public sealed partial class GameSimulation
 
     private void UpdateMannedTraps(float deltaSeconds)
     {
-        foreach (var key in _trapCooldowns.Keys.ToArray())
-            _trapCooldowns[key] = Math.Max(0f, _trapCooldowns[key] - deltaSeconds);
+        if (_trapCooldowns.Count > 0)
+            foreach (var key in _trapCooldowns.Keys.ToArray())
+                _trapCooldowns[key] = Math.Max(0f, _trapCooldowns[key] - deltaSeconds);
         _trapScanSeconds -= deltaSeconds;
         if (_trapScanSeconds > 0f)
             return;
         _trapScanSeconds = 0.25f;
         if (!_enemies.Any(enemy => enemy.IsAlive && !enemy.IsPassive))
             return;
-        var seen = new HashSet<GridPoint>();
+        HashSet<GridPoint>? seen = null;
         foreach (var npc in ArmedResidents.Where(npc => !npc.FallingBack))
         {
             var center = npc.Motion.Position + npc.Motion.Size / 2f;
+            // 0.8.2: a trap this resident mans lies within MannedRadius and fires along TrapReach, so with no hostile that
+            // close there is nothing to scan for (the scan was the late game's costliest defence step).
+            if (!_enemies.Any(enemy => enemy.IsAlive && !enemy.IsPassive &&
+                    Vector2.Distance(enemy.Motion.Position + enemy.Motion.Size / 2f, center) <= MannedRadius + TrapReach + enemy.Motion.Size.X + 2f))
+                continue;
+            seen ??= [];
             var radius = (int)MannedRadius;
             for (var y = (int)center.Y - radius; y <= (int)center.Y + radius; y++)
             for (var x = (int)center.X - radius; x <= (int)center.X + radius; x++)

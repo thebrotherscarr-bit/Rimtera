@@ -170,7 +170,7 @@ launch you may continue the world, and the story from there is yours.
 | Step | Contents |
 |---|---|
 | 0.8.1 | **The Fracture as Terraria's hardmode.** A shorter second ladder, checked against the 10–14 hour run. *(Done: a pacing model; any two of the hard trio open the bulbs; shorter hardmode research and sieges; 12.4 h modelled.)* |
-| 0.8.2 | **Performance pass (owner):** late-game benches, profiling and fixes, then tighter budgets so the game stays efficient. |
+| 0.8.2 | **Performance pass (owner):** late-game benches, profiling and fixes, then tighter budgets so the game stays efficient. *(Done: a late-game bench in CI with its own budgets; the hourly 60 ms hitch and per-tick garbage removed.)* |
 | 0.8.3 | **Hardmode research tiers and hardmode events,** scheduled by the storyteller. |
 | 0.8.4 | **The zealots.** Cultists raid the base and outposts. They do not convert your people. |
 | 0.8.5 | **The four fuel cores:** siege events at the obelisks. |

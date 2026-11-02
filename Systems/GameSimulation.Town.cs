@@ -145,8 +145,20 @@ public sealed partial class GameSimulation
     private GridPoint? FindFreeHouse()
     {
         _regions.EnsureCurrent();
-        foreach (var room in _regions.Rooms.Where(room => room.CellCount >= HousingValidator.MinimumCells)
-                     .OrderBy(room => Vector2.Distance(room.Centroid, BaseCenter))) // 0.4.2: arrivals settle at the base first
+        // 0.8.2: only a room with a table can be housing, and rooms someone already lives in are taken, so the validator runs
+        // on the few rooms that could pass instead of every cave pocket in the world (this was the hourly hitch).
+        var candidates = new HashSet<RoomInfo>();
+        foreach (var index in _tables.Cells)
+            if (_regions.GetRegion(new GridPoint(index % World.Width, index / World.Width)) is { IsRoom: true } tableRoom)
+                candidates.Add(tableRoom);
+        foreach (var npc in _townNpcs)
+            if (npc.HomeCell is { } home && _regions.GetRegion(home) is { } homeRoom)
+                candidates.Remove(homeRoom);
+        if (candidates.Count == 0)
+            return null;
+        var baseCenter = BaseCenter;
+        foreach (var room in _regions.Rooms.Where(room => room.CellCount >= HousingValidator.MinimumCells && candidates.Contains(room))
+                     .OrderBy(room => Vector2.Distance(room.Centroid, baseCenter))) // 0.4.2: arrivals settle at the base first
         {
             var cell = room.CellIndices.Count > 0
                 ? new GridPoint(room.CellIndices[0] % World.Width, room.CellIndices[0] / World.Width)
@@ -323,9 +335,13 @@ public sealed partial class GameSimulation
         .Where(kind => Flags.IsSet(LostFlag(kind)) && !_townNpcs.Any(npc => npc.Kind == kind));
 
     /// <summary>Hostile creatures touching a resident hurt it; residents heal slowly otherwise.</summary>
+    private readonly List<TownNpc> _townNpcScratch = [], _townNpcStepScratch = [];
+
     private void UpdateTownNpcHealth(float deltaSeconds)
     {
-        foreach (var npc in _townNpcs.ToArray())
+        _townNpcScratch.Clear();
+        _townNpcScratch.AddRange(_townNpcs); // 0.8.2: a reused copy (the loop can remove the dead), not a new array a tick
+        foreach (var npc in _townNpcScratch)
         {
             if (npc.IsBound)
                 continue;
@@ -366,7 +382,9 @@ public sealed partial class GameSimulation
             return;
         UpdateTownNpcHealth(deltaSeconds);
         var shelter = IsNight || _worldEvents.Modifiers.Shelter;
-        foreach (var npc in _townNpcs.ToArray())
+        _townNpcStepScratch.Clear();
+        _townNpcStepScratch.AddRange(_townNpcs); // 0.8.2: reused, not a new array a tick
+        foreach (var npc in _townNpcStepScratch)
         {
             if (!_townNpcs.Contains(npc))
                 continue;

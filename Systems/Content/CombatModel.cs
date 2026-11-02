@@ -347,7 +347,7 @@ public static class CombatStatsCalculator
     {
         float melee = 1f, ranged = 1f, tech = 1f, command = 1f, chargeMax = 0f, chargeRegen = 0f;
         int crit = 0, drones = BaseDroneSlots, sentries = BaseSentrySlots;
-        foreach (var slot in Enum.GetValues<EquipmentSlot>())
+        foreach (var slot in EnumValues<EquipmentSlot>.All)
         {
             // A locked sixth slot counts for nothing (IC-21), as in PlayerStatsCalculator.
             if (loadout[slot] is not { } id || slot == EquipmentSlot.Accessory6 && !loadout.Slot6Open)

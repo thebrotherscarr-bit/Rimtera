@@ -365,6 +365,8 @@ public static class HousingValidator
     public const int MinimumCells = 60;
     public const float MinimumWalledFraction = 0.9f;
 
+    private static readonly (int Dx, int Dy)[] Sides = [(1, 0), (-1, 0), (0, 1), (0, -1)];
+
     public static HousingResult Check(TileGrid world, RegionMap regions, GridPoint cell)
     {
         ArgumentNullException.ThrowIfNull(world);
@@ -398,7 +400,7 @@ public static class HousingValidator
             door |= (traits & TileTraits.OpenDoor) != 0;
             if (!door)
             {
-                foreach (var (dx, dy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+                foreach (var (dx, dy) in Sides) // 0.8.2: a shared array, not a new one for every cell
                 {
                     // Entrances frame the room: a door (shut or open) or a platform in the wall, floor or ceiling.
                     if (world.Contains(x + dx, y + dy) &&

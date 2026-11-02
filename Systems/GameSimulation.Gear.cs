@@ -33,7 +33,7 @@ public sealed partial class GameSimulation
     {
         var prefix = key + ":";
         var total = 0f;
-        foreach (var slot in Enum.GetValues<EquipmentSlot>())
+        foreach (var slot in EnumValues<EquipmentSlot>.All)
             if (Player.Equipment[slot] is { } id && Items.Contains(id) && (slot != EquipmentSlot.Accessory6 || AccessorySlot6Unlocked))
                 total += SumTags(Items[id].ImmunityTags, prefix);
         total += GrowthTagValue(key); // character growth: permanent upgrades

@@ -272,7 +272,7 @@ public sealed partial class GameSimulation
     private void LoadLeisureFromFlags()
     {
         _leisureLoaded = true;
-        foreach (var kind in Enum.GetValues<TownPetKind>())
+        foreach (var kind in EnumValues<TownPetKind>.All)
         {
             var packed = Flags.Get(PetFlag(kind));
             if (packed <= 0 || _pets.Any(pet => pet.Kind == kind))
