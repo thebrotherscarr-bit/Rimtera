@@ -1,0 +1,7 @@
+# Style anchors for tools/comfy/beauty_pass.py: sprites (Assets/Sprites names, one per line) whose look every redrawn
+# sprite should share. They are shown to the model side by side as a style reference (outline, shading, pixel size),
+# not as designs to copy. Swap in your favourites; once some redrawn sprites look right, using them here tightens the
+# whole set further.
+creature_grit_seer
+boss_hoarfrost_behemoth
+critter_shell_crab

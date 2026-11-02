@@ -687,11 +687,13 @@ internal static class SpriteCatalog
     }
 
     /// <summary>Visual scale relative to the collision box; sheet art has margins and limbs.</summary>
-    public static float EnemyDrawScale(EnemyAgent enemy) => enemy.Kind switch
+    public static float EnemyDrawScale(EnemyAgent enemy) => EnemyDrawScale(enemy.Kind, enemy.IsBoss);
+
+    public static float EnemyDrawScale(EnemyKind kind, bool boss) => kind switch
     {
         EnemyKind.StoneSentinel => 1.9f,
         EnemyKind.RockGolem => 1.35f,
-        _ when enemy.IsBoss => 1.25f,
+        _ when boss => 1.25f,
         _ => 1.5f
     };
 

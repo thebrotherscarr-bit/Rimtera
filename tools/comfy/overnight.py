@@ -1,17 +1,19 @@
 """Overnight art run: everything still to generate, in order, resumable. Start it and leave it.
 
-    python tools/comfy/overnight.py [--pause SECONDS]
+    python tools/comfy/overnight.py [--only beauty,textures,env] [--restricted] [--pause SECONDS] [--limit N]
 
---pause rests the GPU that long after every image so other programs (video, games) stay smooth; it is
-passed to the generator scripts as RIMTERA_COMFY_PAUSE.
+A night has one focus, art or audio, never both. A focused night (the default) gets the machine: the ComfyUI server
+runs at normal priority with 1.5 GB of VRAM left free. --restricted leaves 4 GB free at below-normal priority so the
+PC stays usable. --pause rests the GPU that long after every image (RIMTERA_COMFY_PAUSE).
 
-1. Block textures not yet regenerated (gen_textures.py; refreshes tools/comfy/tile_textures.tsv first so newly
-   themed tiles such as the irradiated core are included).
-2. Environment art: sky bodies and clouds, weather particles, parallax backgrounds, flora (gen_env.py).
-3. Character animations for every actor without frames (gen_anim.py; refreshes anim_entities.tsv first).
+1. Beauty and size pass (beauty_pass.py): every character redrawn in one style at one pixel density, then
+   re-animated from its new art, then every item icon. Refreshes anim_entities.tsv and item_sprites.tsv first.
+2. Block textures not yet regenerated (gen_textures.py; refreshes tile_textures.tsv first).
+3. Environment art: sky bodies and clouds, weather particles, parallax backgrounds, flora (gen_env.py).
 
-Each step skips work already done, so stopping and re-running continues where it left off. Afterwards rebuild or
-publish the game so the new art is copied to the output folder.
+--only runs some of these; --limit caps each beauty lane (sheets or characters) for a short run. Each step skips
+work already done, so stopping and re-running continues where it left off. Afterwards rebuild or publish the game so
+the new art is copied to the output folder.
 """
 import os
 import subprocess
@@ -37,14 +39,24 @@ def step(name: str, script: str, *args: str):
 
 
 def main():
-    if "--pause" in sys.argv[1:-1]:
-        os.environ["RIMTERA_COMFY_PAUSE"] = sys.argv[sys.argv.index("--pause") + 1]
-    export("--tile-sprites", "tile_textures.tsv")
-    export("--entity-sprites", "anim_entities.tsv")
-    export("--flora-sprites", "flora.tsv")
-    step("Block textures", "gen_textures.py")
-    step("Environment art", "gen_env.py")
-    step("Animations", "gen_anim.py")
+    argv = sys.argv[1:]
+    restricted = "--restricted" in argv
+    os.environ["RIMTERA_VRAM_FREE_GB"] = "4" if restricted else "1.5"
+    os.environ["RIMTERA_PRIORITY"] = "below" if restricted else "normal"
+    if "--pause" in argv[:-1]:
+        os.environ["RIMTERA_COMFY_PAUSE"] = argv[argv.index("--pause") + 1]
+    limit = ["--limit", argv[argv.index("--limit") + 1]] if "--limit" in argv[:-1] else []
+    only = argv[argv.index("--only") + 1].split(",") if "--only" in argv[:-1] else ["beauty", "textures", "env"]
+    if "beauty" in only:
+        export("--entity-sprites", "anim_entities.tsv")
+        export("--item-sprites", "item_sprites.tsv")
+        step("Beauty and size pass", "beauty_pass.py", *limit)
+    if "textures" in only:
+        export("--tile-sprites", "tile_textures.tsv")
+        step("Block textures", "gen_textures.py")
+    if "env" in only:
+        export("--flora-sprites", "flora.tsv")
+        step("Environment art", "gen_env.py")
     print("Overnight run finished. Rebuild or publish to pick up the new art.", flush=True)
 
 
