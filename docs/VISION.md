@@ -163,7 +163,7 @@ launch you may continue the world, and the story from there is yours.
 | 0.7.6 | **Pylons are relays:** 2 residents protect each, each holds its own charge, and fuelled it gives powered bonuses and travel. Dry, it goes offline until you recharge it in person. Raiders can damage relays; a base can be lost. *(Done.)* |
 | 0.7.7 | **Station affinity.** Powered stations work faster, and the worker's skills sometimes give higher rolls or more output. *(Done.)* |
 | 0.7.8 | **Raiders hit relays.** Relays can be damaged and destroyed; whole bases can be lost. *(Done.)* |
-| 0.7.9 | **Grid feedback and balance.** Low-charge warnings, charge on the HUD and in History, and a tuning pass. |
+| 0.7.9 | **Grid feedback and balance.** Low-charge warnings, charge on the HUD and in History, and a tuning pass. *(Done.)* |
 
 ### 4.5 0.8.0: The Fracture and the zealots
 

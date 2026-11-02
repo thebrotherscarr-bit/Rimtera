@@ -60,6 +60,14 @@ public sealed partial class GameSimulation
                           (outpost.Guards == 0 ? "unguarded" : $"{outpost.Guards} armed") +
                           (_colonySentries.Count(sentry => Vector2.Distance(sentry.Position, outpost.Center) <= OutpostSpread) is > 0 and var sentries
                               ? $", {sentries} sentr{(sentries == 1 ? "y" : "ies")}" : "")));
+        // 0.7.9: the power grid: the station AI and each relay.
+        lines.Add(new("Power grid", Heading: true));
+        lines.Add(new(StationAiOnline ? $"Station AI: power {StationPower}/{MaxPower}, tier {StationPowerTier}" : "Station AI: down (machines run unpowered)"));
+        var relays = Pylons;
+        if (relays.Count == 0)
+            lines.Add(new("No relays yet: a pylon is a relay once two people live around it."));
+        foreach (var relay in relays)
+            lines.Add(new($"{PylonPlace(relay)} · {RelayStatus(relay.Cell)}"));
         lines.Add(new("Chronicle, newest first", Heading: true));
         if (_chronicle.Count == 0)
             lines.Add(new("Nothing has happened yet."));

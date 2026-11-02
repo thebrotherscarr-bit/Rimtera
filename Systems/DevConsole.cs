@@ -99,6 +99,7 @@ public sealed class DevConsole
         new("act", "act", "Shows the run's act and what it asks of you.", false, _ => [$"Act {(int)_game.Act}: {GameSimulation.ActName(_game.Act)}. {GameSimulation.ActGoal(_game.Act)}"]),
         new("incident", "incident [id]", "Lists the storyteller's incidents, or fires one now if it can happen.", true, Incident),
         new("relay", "relay | relay set <charge> | relay tier <0-5>", "Lists the relays, or sets the nearest one's charge or tier.", true, Relay),
+        new("grid", "grid", "Shows the power grid: the station AI and the relays.", false, _ => [_game.GridSummary]),
         new("threat", "threat", "Shows the threat budget: what the next threat is built from, the dial and the ease after losses.", false, _ => Threat()),
         new("letters", "letters | letters clear | letters send <text>", "Lists the letters waiting, puts them all away, or sends one.", true, Letters),
         new("storyteller", "storyteller [steady|chaotic|builder] [threat 0.5-2]", "Shows the storyteller, or changes its personality and threat dial.", true, Teller),
