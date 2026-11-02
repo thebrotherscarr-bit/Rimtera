@@ -91,8 +91,14 @@ public sealed partial class GameSimulation
     /// <summary>True when the player stands in the Irradiated Core (the bottom band of liquid uranium).</summary>
     public bool InIrradiatedCore => CurrentBiome.Zone == BiomeZone.MoltenChasm || PlayerCenter.Y >= World.Height * 0.8f;
 
-    /// <summary>All three hard-tier bosses have fallen.</summary>
-    public bool HardTrioDefeated => HardTrio.All(_defeatedBosses.Contains);
+    /// <summary>
+    /// 0.8.1 (a shorter second ladder): how many of the three hard-tier bosses open the canopy bulbs. Any two will do; the
+    /// third stays a challenge of its own.
+    /// </summary>
+    public const int HardTrioNeeded = 2;
+
+    /// <summary>Enough of the hard trio has fallen (<see cref="HardTrioNeeded"/> of the three).</summary>
+    public bool HardTrioDefeated => HardTrio.Count(_defeatedBosses.Contains) >= HardTrioNeeded;
 
     /// <summary>Tool capability carried by the core breaker and every drill or demolisher crafted after it (G4).</summary>
     public const string AltarBreakerCapability = "altar-breaker";
@@ -243,7 +249,7 @@ public sealed partial class GameSimulation
         if (!enemy.IsBoss)
             TryDropEssence(enemy);
         if (HardTrio.Contains(enemy.Kind) && HardTrioDefeated && Flags.Set("hardmode.trio.down"))
-            PostMessage("All three hard-tier threats are scrap. Something swells in the canopy's roots...");
+            PostMessage("The hard-tier threats are breaking. Something swells in the canopy's roots...");
         if (enemy.Kind == EnemyKind.VaultColossus && Flags.Set("ritual.ready"))
             PostMessage("Hooded figures gather at the dungeon gate. Their chant carries on the wind.");
         if (enemy.Kind == RitualBoss)
