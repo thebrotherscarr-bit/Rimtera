@@ -480,7 +480,7 @@ public static class SoundCatalog
     /// </summary>
     private static readonly (string Theme, int Bpm, string Key, int Meter, string Card, bool Surface, bool Underground)[] MusicThemes =
     [
-        ("title", 76, "E minor", 4, "lonely pan flute solo over baroque harpsichord continuo and slow strings, space-frontier western at dusk, warm analog synth pads, distant twangy guitar, soft breakbeat swell, wistful and vast", false, false),
+        ("title", 76, "E minor", 4, "lonely pan flute solo over baroque harpsichord continuo and slow strings, space-frontier western at dusk, warm analog synth pads, distant twangy guitar, soft breakbeat swell, wistful and vast, one continuous arc that keeps building, steady momentum, no breakdowns or pauses", false, false),
         ("grassland", 126, "A major", 4, "upbeat space-frontier funk, slap bass, clavinet, bright strings, optimistic exploration", true, true),
         ("forest", 112, "C# minor", 4, "laid-back funk groove, muted guitar, warm electric piano, curious and green", true, false),
         ("canopy", 136, "B major", 4, "driving baroque strings over tribal percussion, Vivaldi-like runs, lush jungle", true, true),
@@ -505,13 +505,16 @@ public static class SoundCatalog
     private static void AddMusic(Action<SoundCue> add)
     {
         // The Rimtera sound, after the tracks the user picked (meteor fall, final and easy boss, underground, overgrowth night).
-        const string music = "Rimtera sound: driving techno pulse and drum and bass breakbeats under funky classical strings and baroque runs, " +
-                             "MIDI synth-pop leads, upbeat, classical with a semi-modern edge. " +
-                             "instrumental video game soundtrack in a MIDI style: General MIDI sound-module instruments (synth leads, sampled strings, brass, choir pads, a drum kit), 16-bit era like a classic sandbox game soundtrack, loopable, no vocals";
+        const string sound = "Rimtera sound: driving techno pulse and drum and bass breakbeats under funky classical strings and baroque runs, " +
+                             "MIDI synth-pop leads, upbeat, classical with a semi-modern edge. ";
+        const string music = sound + "instrumental video game soundtrack in a MIDI style: General MIDI sound-module instruments (synth leads, sampled strings, brass, choir pads, a drum kit), 16-bit era like a classic sandbox game soundtrack, loopable, no vocals";
+        // The title theme sings: a hummed, wordless monk choir in an invented language (gen_music.py holds its chant).
+        const string choir = sound + "epic post-apocalyptic, very deep basso profundo male monk choir, slow sustained low chanting with long held vowels, Gregorian-style, invented words only. " +
+                             "video game title theme in a MIDI style: General MIDI sound-module instruments (synth leads, sampled strings, brass, a drum kit), 16-bit era like a classic sandbox game soundtrack, loopable";
         foreach (var (theme, bpm, key, meter, card, surface, underground) in MusicThemes)
         {
             var slot = surface ? $"mus_{theme}_day" : $"mus_{theme}";
-            add(new(slot, "music", surface ? $"{theme}, daytime" : theme, 1, 150f, $"{card}. {music}", "", Loop: true, Offset: -4f, Bpm: bpm, Key: key, Meter: meter));
+            add(new(slot, "music", surface ? $"{theme}, daytime" : theme, 1, 150f, $"{card}. {(theme == "title" ? choir : music)}", "", Loop: true, Offset: -4f, Bpm: bpm, Key: key, Meter: meter));
             if (surface)
                 add(new($"mus_{theme}_night", "music", $"{theme}, at night", 1, 150f, $"{card}, nocturnal, softer and sparser, slower. {music}", slot,
                     Loop: true, Offset: -4f, Bpm: (int)(bpm * 0.94f), Key: key, Meter: meter));

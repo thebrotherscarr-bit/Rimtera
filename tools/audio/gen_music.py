@@ -17,6 +17,23 @@ import urllib.request
 from audio_common import ROOT, existing_takes, load_needs, raw_path, seed
 from audio_client import AceStep
 
+# Song plans, sent to ACE-Step in the lyrics field: section tags give a track a shape (with "[Instrumental]" alone it
+# improvises the form and builds, drops and wanders). The title is sung: a slow, low monk choir holding variations of
+# "Rim-te-ra" and "Rim-ta-ra", no real words; long held syllables and sparse lines keep the chant slow. Its shape is
+# take 5's long slow opening, then take 6's quicker build and second rise. Slots without a plan stay "[Instrumental]".
+PLANS = {
+    "mus_title": (
+        "[Intro - lone pan flute over harpsichord, slow and wide]\n[Instrumental]\n\n"
+        "[Verse - deep monks hum, slow and low]\nMmmmm... riiim...\nRiiim... teee... raaa...\n\n"
+        "[Build - drums and bass enter, the low chant holds]\nRiiim-te-raaa...\nRiiim-ta-raaa...\nOhhh... riiim-te-raaa...\n\n"
+        "[Theme - full band and pan flute, slow deep chant underneath]\nRiiim... teee... raaa...\nRim-ta-raaa... rim-te-raaa...\nRaaa... te... riiim...\n\n"
+        "[Interlude - pan flute alone over the beat, monks hum]\nMmmmm... riiim-ta-raaa...\n\n"
+        "[Build - rising strings, the choir grows deeper]\nRiiim-te-raaa... riiim-te-raaa...\nRiiim-ta-raaa... ohhh...\n\n"
+        "[Climax - drum and bass, full low choir and soaring strings]\nRIIIM... TEEE... RAAA...\nRIIIM-TA-RAAA... RIIIM-TE-RAAA...\nOhhh... riiim-te-raaa...\n\n"
+        "[Theme - full band, monks hum under the pan flute]\nMmmmm... rim-te-raaa...\nMmmmm... rim-ta-raaa..."
+    ),
+}
+
 
 def server_up(url="http://127.0.0.1:8188") -> bool:
     try:
@@ -72,7 +89,8 @@ def main():
         out.parent.mkdir(parents=True, exist_ok=True)
         started = time.time()
         kwargs = dict(seconds=args.seconds or float(row["seconds"]), bpm=int(row["bpm"]), key=row["key"],
-                      time_signature=row["meter"], seed=seed(row["cue"], take))
+                      time_signature=row["meter"], seed=seed(row["cue"], take),
+                      lyrics=PLANS.get(row["cue"], "[Instrumental]"))
         for attempt in (1, 2):
             try:
                 out.write_bytes(ace.track(row["prompt"], **kwargs))
