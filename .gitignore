@@ -19,6 +19,9 @@ tools/moss-venv/
 rea/
 tools/rea/
 
+# Raw recordings and Audacity projects stay on this PC only
+Assets/Sounds/raw/
+
 # Large raw evidence dumps (kept local; one file exceeds GitHub's 100 MB limit)
 docs/terraria-evidence/
 docs/rimworld-evidence/
