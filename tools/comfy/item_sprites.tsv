@@ -1,0 +1,1969 @@
+item_hull_panel	Hull panel	placeable	WoodBlock	own
+tool_survey_drill	Survey drill	tool: pickaxe	WoodenPickaxe	own
+mining_pack	Ferrite drill	tool: pickaxe	CopperPickaxe	own
+weapon_shock_baton	Shock baton	weapon: broadsword	WoodenSword	own
+laser_rifle	Laser rifle	weapon: gun	CopperBow	own
+ammo_energy_cell	Energy cell	ammo	Arrow	own
+nano_banana	Nano-banana	food	Berry	own
+nano_fabricator	Nano-Fabricator	placeable	WorkbenchBlock	own
+hab_lava	Ore Refinery	placeable	FurnaceBlock	own
+magma_brazier	Power Forge	placeable	AnvilBlock	own
+metal_alloy	Metal alloy	material	CopperBar	own
+tile_icy_soil	Ice block	placeable	SnowBlock	own
+tile_scrap_heap	Dune block	placeable	DesertGlassBlock	own
+tile_obsidian	Irradiated core rock	placeable	EmberStoneBlock	own
+tile_caustic_crystal	Void rock	placeable	GloamRockBlock	own
+tile_radiated_soil	Rift soil	placeable	RiftSoilBlock	own
+wall_cracked	Derelict plating	placeable	AncientBrickBlock	own
+void_helmet	Void-proof helmet	armor: head	Trailcap	own
+heavy_astro_suit	Heavy astro-suit	armor: body	Trailcoat	own
+scout_boots	Scout boots	armor: legs	Trailboots	own
+swarm_gloves	Cyber-swarm gloves	accessory	HearthCharm	own
+banana_uniform	Nano-banana uniform	vanity	FestivalMask	own
+luminous_spores	Luminous spore tonic	potion/buff	RestorativeTonic	own
+item_crystal_tonic	Crystal tonic	potion/buff	ManaTonic	own
+energy_cutlass	Energy cutlass	weapon: broadsword	CopperSword	own
+energy_crystals	Energy crystal	material	EnergyCrystal	own
+plasma_pistol	Plasma pistol	weapon: gun	PlasmaPistol	own
+sniper_rifle	Sniper rifle	weapon: gun	SniperRifle	own
+grenade_launcher	Grenade launcher	weapon: launcher	GrenadeLauncher	own
+rocket_launcher	Rocket launcher	weapon: launcher	RocketLauncher	own
+mini_turret	Mini-turret	placeable	MiniTurret	own
+hydroponics_tray	Hydroponics tray	placeable	HydroponicsTray	own
+solar_panel	Solar panel	placeable	SolarPanel	own
+oxygen_unit	Oxygen unit	placeable	OxygenUnit	own
+glacial_ore	Glacial ore	material	GlacialOre	own
+uranium_ore	Uranium ore	material	UraniumOre	own
+pyrocite_ore	Pyrocite ore	material	PyrociteOre	own
+scrap_iron_ore	Scrap-iron ore	material	ScrapIronOre	own
+frost_crystal	Frost crystal	material	FrostCrystal	own
+caustic_shard	Caustic shard	material	CausticShard	own
+obsidian_shard	Vitrified shard	material	ObsidianShard	own
+oxidized_shard	Oxidized shard	material	OxidizedShard	own
+armor_insulated_suit	Insulated suit	armor: body	InsulatedSuit	own
+item_heat_ward	Vitrified heat ward	accessory	HeatWard	own
+armor_rad_filter_mask	Rad-filter mask	armor: head	RadFilterMask	own
+purifier_sprayer	Purifier sprayer	weapon: gun	PurifierSprayer	own
+purifier_gel	Purifier gel	ammo	PurifierGel	own
+hab_frozen	Purifier beacon	placeable	PurifierBeacon	own
+crystalline_flora	Life core	consumable	LifeCore	own
+tile_ash	Core crust	placeable	AshBlock	own
+item_credits	Credit chip	material	Credits	own
+item_ferrite_bar	Ferrite bar	material	FerriteBar	own
+item_cobalt_bar	Cobalt bar	material	CobaltBar	own
+item_glacial_bar	Glacial bar	material	GlacialBar	own
+item_pyrocite_bar	Pyrocite bar	material	PyrociteBar	own
+item_uranium_rod	Uranium rod	material	UraniumRod	own
+item_viridium_bar	Viridium bar	material	ViridiumBar	own
+item_lumenite_bar	Lumenite bar	material	LumeniteBar	own
+item_voidsteel_bar	Voidsteel bar	material	VoidsteelBar	own
+item_astral_bar	Astral bar	material	AstralBar	own
+item_meteorite_bar	Meteorite bar	material	MeteoriteBar	own
+item_lumenite_ore	Lumenite ore	material	LumeniteOre	own
+item_voidsteel_ore	Voidsteel ore	material	VoidsteelOre	own
+item_meteorite_ore	Meteorite ore	material	MeteoriteOre	own
+item_astral_ore	Astral ore	material	AstralOre	own
+item_ruby_shard	Ruby shard	material	RubyShard	own
+item_sapphire_shard	Sapphire shard	material	SapphireShard	own
+item_emerald_shard	Emerald shard	material	EmeraldShard	own
+item_amethyst_shard	Amethyst shard	material	AmethystShard	own
+item_topaz_shard	Topaz shard	material	TopazShard	own
+item_diamond_shard	Diamond shard	material	DiamondShard	own
+item_power_cell	Power cell	material	PowerCell	own
+item_bio_gel	Bio-gel	material	BioGel	own
+item_overseer_circuit	Overseer circuit	material	OverseerCircuit	own
+item_heart_fragment	Blight heart fragment	material	HeartFragment	own
+item_vault_key	Precursor vault key	material	VaultKey	own
+cmd_drone_spare_parts	Drone spare parts	material	DroneSpareParts	own
+item_silk_thread	Mite silk thread	material	SilkThread	own
+item_cloth_roll	Cloth roll	material	ClothRoll	own
+item_coral_shard	Coral shard	material	CoralShard	own
+item_glow_spore	Glow spore	material	GlowSpore	own
+item_prism_shard	Prism shard	material	PrismShard	own
+item_void_essence	Void essence	material	VoidEssence	own
+tool_rope_coil	Rope coil	material	RopeCoil	own
+tool_wire_tool	Wire tool	utility	WireTool	own
+weapon_ferrite_shiv	Ferrite shiv	weapon: shortsword	FerriteShiv	own
+weapon_scrap_cleaver	Scrap cleaver	weapon: broadsword	ScrapCleaver	own
+weapon_bone_club	Bone club	weapon: broadsword	BoneClub	own
+weapon_return_boomerang	Return boomerang	weapon: boomerang	ReturnBoomerang	own
+weapon_scrap_pistol	Scrap pistol	weapon: gun	ScrapPistol	own
+weapon_ferrite_revolver	Ferrite revolver	weapon: gun	FerriteRevolver	own
+weapon_dart_blower	Dart blower	weapon: gun	DartBlower	own
+tech_spark_emitter	Spark emitter	weapon: staff	SparkEmitter	own
+cmd_scout_drone_remote	Scout drone remote	weapon: summonstaff	ScoutDroneRemote	own
+weapon_cobalt_saber	Cobalt saber	weapon: broadsword	CobaltSaber	own
+weapon_chain_flail	Chain flail	weapon: flail	ChainFlail	own
+weapon_shock_spear	Shock spear	weapon: spear	ShockSpear	own
+weapon_tether_whip	Tether whip	weapon: whip	TetherWhip	own
+weapon_throwing_disc	Throwing disc	weapon: boomerang	ThrowingDisc	own
+weapon_yoyo_drone	Yo-yo drone	weapon: yoyo	YoyoDrone	own
+weapon_laser_scalpel	Laser scalpel	weapon: shortsword	LaserScalpel	own
+item_energy_cutlass_mk2	Energy cutlass Mk2	weapon: broadsword	EnergyCutlassMk2	own
+weapon_cobalt_carbine	Cobalt carbine	weapon: gun	CobaltCarbine	own
+weapon_nail_gun	Nail gun	weapon: gun	NailGun	own
+tech_arc_glove	Arc glove	weapon: staff	ArcGlove	own
+tech_datapad_flare	Datapad: Flare	weapon: staff	DatapadFlare	own
+tech_datapad_sonic	Datapad: Sonic	weapon: tome	DatapadSonic	own
+cmd_hornet_drone_remote	Hornet drone remote	weapon: summonstaff	HornetDroneRemote	own
+cmd_repair_drone_remote	Repair drone remote	weapon: summonstaff	RepairDroneRemote	own
+cmd_mech_companion_key	Mech companion key	weapon: summonstaff	MechCompanionKey	own
+cmd_signal_whip_chain	Signal whip: Chain	weapon: whip	SignalWhipChain	own
+cmd_turret_autogun	Autogun turret kit	weapon: sentrystaff	TurretAutogun	own
+weapon_frostbite_edge	Frostbite edge	weapon: broadsword	FrostbiteEdge	own
+weapon_pyrocite_maul	Pyrocite maul	weapon: broadsword	PyrociteMaul	own
+weapon_uranium_glaive	Uranium glaive	weapon: spear	UraniumGlaive	own
+weapon_mushroom_mace	Mushroom mace	weapon: broadsword	MushroomMace	own
+weapon_coral_trident	Coral trident	weapon: spear	CoralTrident	own
+weapon_spiked_chain	Spiked chain	weapon: flail	SpikedChain	own
+weapon_glacial_crossbow	Glacial crossbow	weapon: bow	GlacialCrossbow	own
+weapon_pyrocite_flamer	Pyrocite flamer	weapon: gun	PyrociteFlamer	own
+weapon_pump_scattergun	Pump scattergun	weapon: shotgun	PumpScattergun	own
+weapon_harpoon_gun	Harpoon gun	weapon: gun	HarpoonGun	own
+weapon_uranium_railgun	Uranium railgun	weapon: gun	UraniumRailgun	own
+tech_frost_projector	Frost projector	weapon: staff	FrostProjector	own
+tech_ember_rod	Ember rod	weapon: staff	EmberRod	own
+tech_rad_beam_rod	Rad beam rod	weapon: beam	RadBeamRod	own
+tech_coral_wand	Coral wand	weapon: staff	CoralWand	own
+tech_spore_censer	Spore censer	weapon: tome	SporeCenser	own
+tech_datapad_seeker	Datapad: Seeker	weapon: staff	DatapadSeeker	own
+cmd_frost_drone_remote	Frost drone remote	weapon: summonstaff	FrostDroneRemote	own
+cmd_ember_drone_remote	Ember drone remote	weapon: summonstaff	EmberDroneRemote	own
+cmd_rad_swarm_hive	Rad swarm hive	weapon: summonstaff	RadSwarmHive	own
+cmd_coral_jelly_familiar	Coral jelly familiar	weapon: summonstaff	CoralJellyFamiliar	own
+cmd_spore_familiar	Spore familiar	weapon: summonstaff	SporeFamiliar	own
+cmd_turret_flame	Flame turret kit	weapon: sentrystaff	TurretFlame	own
+weapon_viridium_katana	Viridium katana	weapon: broadsword	ViridiumKatana	own
+weapon_chainsaw_sword	Chainsaw sword	weapon: broadsword	ChainsawSword	own
+weapon_hive_stinger_rapier	Hive stinger rapier	weapon: shortsword	HiveStingerRapier	own
+weapon_viridium_minigun	Viridium minigun	weapon: gun	ViridiumMinigun	own
+weapon_rad_minigun	Rad minigun	weapon: gun	RadMinigun	own
+weapon_mortar_tube	Mortar tube	weapon: launcher	MortarTube	own
+tech_datapad_chain_lightning	Datapad: Chain lightning	weapon: staff	DatapadChainLightning	own
+tech_datapad_tesla	Datapad: Tesla	weapon: tome	DatapadTesla	own
+cmd_hive_familiar	Hive familiar	weapon: summonstaff	HiveFamiliar	own
+item_drone_controller	Drone controller	accessory	DroneController	own
+cmd_signal_whip_mark	Signal whip: Mark	weapon: whip	SignalWhipMark	own
+cmd_turret_mortar	Mortar turret kit	weapon: sentrystaff	TurretMortar	own
+weapon_lumenite_greatsword	Lumenite greatsword	weapon: broadsword	LumeniteGreatsword	own
+weapon_power_fist	Power fist	weapon: broadsword	PowerFist	own
+weapon_lumenite_longbow	Lumenite longbow	weapon: bow	LumeniteLongbow	own
+item_magnetic_carbine	Magnetic carbine	weapon: gun	MagneticCarbine	own
+tech_prism_lens_staff	Prism lens staff	weapon: staff	PrismLensStaff	own
+tech_crystal_shard_wand	Crystal shard wand	weapon: tome	CrystalShardWand	own
+tech_datapad_storm	Datapad: Storm	weapon: tome	DatapadStorm	own
+tech_meteor_caller	Meteor caller	weapon: staff	MeteorCaller	own
+cmd_lumenite_sprite_beacon	Lumenite sprite beacon	weapon: summonstaff	LumeniteSpriteBeacon	own
+cmd_swarm_controller	Swarm controller	weapon: summonstaff	SwarmController	own
+cmd_turret_tesla	Tesla turret kit	weapon: sentrystaff	TurretTesla	own
+weapon_voidsteel_scythe	Voidsteel scythe	weapon: broadsword	VoidsteelScythe	own
+weapon_plasma_pike	Plasma pike	weapon: spear	PlasmaPike	own
+weapon_voidsteel_sniper	Voidsteel sniper	weapon: gun	VoidsteelSniper	own
+item_charge_rifle	Charge rifle	weapon: gun	ChargeRifle	own
+tech_void_orb_focus	Void orb focus	weapon: staff	VoidOrbFocus	own
+tech_datapad_gravity_well	Datapad: Gravity well	weapon: staff	DatapadGravityWell	own
+tech_datapad_swarm_missiles	Datapad: Swarm missiles	weapon: tome	DatapadSwarmMissiles	own
+cmd_void_familiar_core	Void familiar core	weapon: summonstaff	VoidFamiliarCore	own
+cmd_signal_whip_overdrive	Signal whip: Overdrive	weapon: whip	SignalWhipOverdrive	own
+weapon_astral_blade	Astral blade	weapon: broadsword	AstralBlade	own
+weapon_astral_repeater	Astral repeater	weapon: bow	AstralRepeater	own
+tech_astral_conductor	Astral conductor	weapon: staff	AstralConductor	own
+tech_datapad_nova	Datapad: Nova	weapon: tome	DatapadNova	own
+cmd_astral_guardian_core	Astral guardian core	weapon: summonstaff	AstralGuardianCore	own
+ammo_slug_rounds	Slug rounds	ammo	SlugRounds	own
+ammo_shotgun_shells	Shotgun shells	ammo	ShotgunShells	own
+ammo_toxic_darts	Toxic darts	ammo	ToxicDarts	own
+ammo_cryo_rounds	Cryo rounds	ammo	CryoRounds	own
+ammo_fuel_canister	Fuel canister	ammo	FuelCanister	own
+ammo_mini_rocket	Mini rocket	ammo	MiniRocket	own
+ammo_explosive_charge	Explosive charge	ammo	ExplosiveCharge	own
+tech_focus_lens_crystal	Focus lens crystal	accessory	FocusLensCrystal	own
+tech_overcharge_capacitor	Overcharge capacitor	accessory	OverchargeCapacitor	own
+cmd_command_visor	Command visor	accessory	CommandVisor	own
+cmd_drone_battery	Drone battery	accessory	DroneBattery	own
+item_reinforced_armor_suit	Reinforced armor suit	accessory	ReinforcedArmorSuit	own
+tech_charge_cell_small	Small charge cell	consumable	ChargeCellSmall	own
+item_med_stim	Med stim	consumable	MedStim	own
+item_charge_stim	Charge stim	potion/buff	ChargeStim	own
+item_speed_stim	Speed stim	potion/buff	SpeedStim	own
+item_armor_stim	Armor stim	potion/buff	ArmorStim	own
+item_regen_patch	Regen patch	potion/buff	RegenPatch	own
+item_spelunker_spray	Spelunker spray	potion/buff	SpelunkerSpray	own
+item_ration_bar	Ration bar	food	RationBar	own
+item_jet_boots	Jet boots	accessory	JetBoots	own
+item_energy_shield_emitter	Energy shield emitter	accessory	EnergyShieldEmitter	own
+item_night_vision_goggles	Night-vision goggles	accessory	NightVisionGoggles	own
+item_magnet_ring	Magnet ring	accessory	MagnetRing	own
+item_melee_module	Close-quarters module	accessory	MeleeModule	own
+item_ballistics_module	Ballistics module	accessory	BallisticsModule	own
+item_tech_module	Tech module	accessory	TechModule	own
+item_command_module	Command module	accessory	CommandModule	own
+item_tide_fish	Tide fish	food	TideFish	own
+tool_ferrite_drill	Ferrite rock drill	tool: drill	FerriteDrill	own
+tool_cobalt_drill	Cobalt drill	tool: drill	CobaltDrill	own
+tool_glacial_drill	Glacial drill	tool: drill	GlacialDrill	own
+tool_viridium_drill	Viridium drill	tool: drill	ViridiumDrill	own
+tool_lumenite_drill	Lumenite drill	tool: drill	LumeniteDrill	own
+tool_voidsteel_drill	Voidsteel drill	tool: drill	VoidsteelDrill	own
+tool_astral_drill	Astral drill	tool: drill	AstralDrill	own
+tool_ferrite_cutter	Ferrite cutter	cutter	FerriteCutter	own
+tool_cobalt_cutter	Cobalt cutter	cutter	CobaltCutter	own
+tool_glacial_cutter	Glacial cutter	cutter	GlacialCutter	own
+tool_viridium_cutter	Viridium cutter	cutter	ViridiumCutter	own
+tool_lumenite_cutter	Lumenite cutter	cutter	LumeniteCutter	own
+tool_voidsteel_cutter	Voidsteel cutter	cutter	VoidsteelCutter	own
+tool_astral_cutter	Astral cutter	cutter	AstralCutter	own
+tool_ferrite_demolisher	Ferrite demolisher	demolisher	FerriteDemolisher	own
+tool_cobalt_demolisher	Cobalt demolisher	demolisher	CobaltDemolisher	own
+tool_glacial_demolisher	Glacial demolisher	demolisher	GlacialDemolisher	own
+tool_viridium_demolisher	Viridium demolisher	demolisher	ViridiumDemolisher	own
+tool_lumenite_demolisher	Lumenite demolisher	demolisher	LumeniteDemolisher	own
+tool_voidsteel_demolisher	Voidsteel demolisher	demolisher	VoidsteelDemolisher	own
+tool_astral_demolisher	Astral demolisher	demolisher	AstralDemolisher	own
+tool_bug_net	Bug net	bugnet	BugNet	own
+tool_fishing_rod	Fishing rod	utility	FishingRod	own
+item_empty_bucket	Empty bucket	utility	EmptyBucket	own
+tool_bucket_water	Water bucket	utility	BucketWater	own
+tool_bucket_lava	Liquid uranium canister	utility	BucketLava	own
+tool_paint_sprayer	Plating sprayer	utility	PaintSprayer	own
+armor_scav_helmet	Scav helmet	armor: head	ScavHelmet	own
+armor_scav_chest	Scav chestplate	armor: body	ScavChest	own
+armor_scav_legs	Scav greaves	armor: legs	ScavLegs	own
+armor_cobalt_trooper_helmet	Cobalt trooper helmet	armor: head	CobaltTrooperHelmet	own
+armor_cobalt_trooper_chest	Cobalt trooper chestplate	armor: body	CobaltTrooperChest	own
+armor_cobalt_trooper_legs	Cobalt trooper greaves	armor: legs	CobaltTrooperLegs	own
+armor_pyrocite_bulwark_helmet	Pyrocite bulwark helmet	armor: head	PyrociteBulwarkHelmet	own
+armor_pyrocite_bulwark_chest	Pyrocite bulwark chestplate	armor: body	PyrociteBulwarkChest	own
+armor_pyrocite_bulwark_legs	Pyrocite bulwark greaves	armor: legs	PyrociteBulwarkLegs	own
+armor_glacial_ranger_helmet	Glacial ranger helmet	armor: head	GlacialRangerHelmet	own
+armor_glacial_ranger_chest	Glacial ranger chestplate	armor: body	GlacialRangerChest	own
+armor_glacial_ranger_legs	Glacial ranger greaves	armor: legs	GlacialRangerLegs	own
+armor_uranium_hazmat_helmet	Uranium hazmat helmet	armor: head	UraniumHazmatHelmet	own
+armor_uranium_hazmat_chest	Uranium hazmat chestplate	armor: body	UraniumHazmatChest	own
+armor_uranium_hazmat_legs	Uranium hazmat greaves	armor: legs	UraniumHazmatLegs	own
+armor_glacial_handler_helmet	Glacial handler helmet	armor: head	GlacialHandlerHelmet	own
+armor_glacial_handler_chest	Glacial handler chestplate	armor: body	GlacialHandlerChest	own
+armor_glacial_handler_legs	Glacial handler greaves	armor: legs	GlacialHandlerLegs	own
+armor_viridium_warden_helmet	Viridium warden helmet	armor: head	ViridiumWardenHelmet	own
+armor_viridium_warden_chest	Viridium warden chestplate	armor: body	ViridiumWardenChest	own
+armor_viridium_warden_legs	Viridium warden greaves	armor: legs	ViridiumWardenLegs	own
+armor_viridium_stalker_helmet	Viridium stalker helmet	armor: head	ViridiumStalkerHelmet	own
+armor_viridium_stalker_chest	Viridium stalker chestplate	armor: body	ViridiumStalkerChest	own
+armor_viridium_stalker_legs	Viridium stalker greaves	armor: legs	ViridiumStalkerLegs	own
+armor_viridium_sage_helmet	Viridium sage helmet	armor: head	ViridiumSageHelmet	own
+armor_viridium_sage_chest	Viridium sage chestplate	armor: body	ViridiumSageChest	own
+armor_viridium_sage_legs	Viridium sage greaves	armor: legs	ViridiumSageLegs	own
+armor_viridium_handler_helmet	Viridium handler helmet	armor: head	ViridiumHandlerHelmet	own
+armor_viridium_handler_chest	Viridium handler chestplate	armor: body	ViridiumHandlerChest	own
+armor_viridium_handler_legs	Viridium handler greaves	armor: legs	ViridiumHandlerLegs	own
+armor_lumenite_paladin_helmet	Lumenite paladin helmet	armor: head	LumenitePaladinHelmet	own
+armor_lumenite_paladin_chest	Lumenite paladin chestplate	armor: body	LumenitePaladinChest	own
+armor_lumenite_paladin_legs	Lumenite paladin greaves	armor: legs	LumenitePaladinLegs	own
+armor_lumenite_marksman_helmet	Lumenite marksman helmet	armor: head	LumeniteMarksmanHelmet	own
+armor_lumenite_marksman_chest	Lumenite marksman chestplate	armor: body	LumeniteMarksmanChest	own
+armor_lumenite_marksman_legs	Lumenite marksman greaves	armor: legs	LumeniteMarksmanLegs	own
+armor_lumenite_sage_helmet	Lumenite sage helmet	armor: head	LumeniteSageHelmet	own
+armor_lumenite_sage_chest	Lumenite sage chestplate	armor: body	LumeniteSageChest	own
+armor_lumenite_sage_legs	Lumenite sage greaves	armor: legs	LumeniteSageLegs	own
+armor_lumenite_handler_helmet	Lumenite handler helmet	armor: head	LumeniteHandlerHelmet	own
+armor_lumenite_handler_chest	Lumenite handler chestplate	armor: body	LumeniteHandlerChest	own
+armor_lumenite_handler_legs	Lumenite handler greaves	armor: legs	LumeniteHandlerLegs	own
+armor_voidsteel_reaver_helmet	Voidsteel reaver helmet	armor: head	VoidsteelReaverHelmet	own
+armor_voidsteel_reaver_chest	Voidsteel reaver chestplate	armor: body	VoidsteelReaverChest	own
+armor_voidsteel_reaver_legs	Voidsteel reaver greaves	armor: legs	VoidsteelReaverLegs	own
+armor_voidsteel_marksman_helmet	Voidsteel marksman helmet	armor: head	VoidsteelMarksmanHelmet	own
+armor_voidsteel_marksman_chest	Voidsteel marksman chestplate	armor: body	VoidsteelMarksmanChest	own
+armor_voidsteel_marksman_legs	Voidsteel marksman greaves	armor: legs	VoidsteelMarksmanLegs	own
+armor_voidsteel_wraith_helmet	Voidsteel wraith helmet	armor: head	VoidsteelWraithHelmet	own
+armor_voidsteel_wraith_chest	Voidsteel wraith chestplate	armor: body	VoidsteelWraithChest	own
+armor_voidsteel_wraith_legs	Voidsteel wraith greaves	armor: legs	VoidsteelWraithLegs	own
+armor_voidsteel_handler_helmet	Voidsteel handler helmet	armor: head	VoidsteelHandlerHelmet	own
+armor_voidsteel_handler_chest	Voidsteel handler chestplate	armor: body	VoidsteelHandlerChest	own
+armor_voidsteel_handler_legs	Voidsteel handler greaves	armor: legs	VoidsteelHandlerLegs	own
+armor_astral_warden_helmet	Astral warden helmet	armor: head	AstralWardenHelmet	own
+armor_astral_warden_chest	Astral warden chestplate	armor: body	AstralWardenChest	own
+armor_astral_warden_legs	Astral warden greaves	armor: legs	AstralWardenLegs	own
+armor_astral_marksman_helmet	Astral marksman helmet	armor: head	AstralMarksmanHelmet	own
+armor_astral_marksman_chest	Astral marksman chestplate	armor: body	AstralMarksmanChest	own
+armor_astral_marksman_legs	Astral marksman greaves	armor: legs	AstralMarksmanLegs	own
+armor_astral_sage_helmet	Astral sage helmet	armor: head	AstralSageHelmet	own
+armor_astral_sage_chest	Astral sage chestplate	armor: body	AstralSageChest	own
+armor_astral_sage_legs	Astral sage greaves	armor: legs	AstralSageLegs	own
+armor_astral_handler_helmet	Astral handler helmet	armor: head	AstralHandlerHelmet	own
+armor_astral_handler_chest	Astral handler chestplate	armor: body	AstralHandlerChest	own
+armor_astral_handler_legs	Astral handler greaves	armor: legs	AstralHandlerLegs	own
+station_field_workbench	Field workbench	placeable	FieldWorkbench	own
+station_nano_fabricator_mk2	Nano-Fabricator Mk2	placeable	NanoFabricatorMk2	own
+station_power_forge_mk2	Power Forge Mk2	placeable	PowerForgeMk2	own
+station_alloy_anvil	Alloy anvil	placeable	AlloyAnvil	own
+station_void_forge	Void forge	placeable	VoidForge	own
+station_astral_assembler	Astral assembler	placeable	AstralAssembler	own
+station_chem_lab	Chem lab	placeable	ChemLab	own
+station_bio_lab	Bio lab	placeable	BioLab	own
+station_loom	Loom	placeable	Loom	own
+station_sawmill	Sawmill	placeable	Sawmill	own
+station_kiln	Kiln	placeable	Kiln	own
+station_cooking_station	Cooking station	placeable	CookingStation	own
+station_tinker_bench	Tinker bench	placeable	TinkerBench	own
+station_drone_bay	Drone bay	placeable	DroneBay	own
+station_ammo_press	Ammo press	placeable	AmmoPress	own
+station_charge_reactor	Charge reactor	placeable	ChargeReactor	own
+station_research_terminal	Research terminal	placeable	ResearchTerminal	own
+item_summon_reactor_key	Reactor key	consumable	SummonReactorKey	own
+item_summon_swarm_pheromone	Swarm pheromone	consumable	SummonSwarmPheromone	own
+item_summon_faulty_mining_chip	Faulty mining chip	consumable	SummonFaultyMiningChip	own
+item_summon_rotting_seed	Rotting seed	consumable	SummonRottingSeed	own
+item_summon_scout_beacon	Scout beacon	consumable	SummonScoutBeacon	own
+item_swarm_resonator	Swarm resonator	consumable	SwarmResonator	own
+item_renegade_credentials	Renegade credentials	consumable	RenegadeCredentials	own
+item_mutagen_bloom	Mutagen bloom	consumable	MutagenBloom	own
+item_tainted_tissue	Tainted tissue	consumable	TaintedTissue	own
+item_warship_transponder	Warship transponder	consumable	WarshipTransponder	own
+item_sunspot_lens	Sunspot lens	consumable	SunspotLens	own
+item_void_lure	Void lure	consumable	VoidLure	own
+item_claim_marker	Claim marker	consumable	ClaimMarker	own
+item_bounty_notice	Bounty notice	consumable	BountyNotice	own
+item_summon_astral_sigil	Astral sigil	consumable	SummonAstralSigil	own
+item_spore_crown	Spore crown	consumable	SporeCrown	own
+item_royal_nectar	Royal nectar	consumable	RoyalNectar	own
+item_scrap_beacon	Scrap beacon	consumable	ScrapBeacon	own
+item_summon_pirate_transmitter	Pirate transmitter	consumable	SummonPirateTransmitter	own
+item_summon_signal_core	Signal core	consumable	SummonSignalCore	own
+item_festival_flare	Festival flare	consumable	FestivalFlare	own
+critter_glow_grub	Glow grub	critter	GlowGrub	own
+critter_sand_skitterer	Sand skitterer	critter	SandSkitterer	own
+critter_scavenger_beetle	Scavenger beetle	critter	ScavengerBeetle	own
+critter_sky_flier	Sky flier	critter	SkyFlier	own
+critter_terra_rat	Terra rat	critter	TerraRat	own
+critter_snow_hare	Snow hare	critter	SnowHare	own
+critter_scrap_rat	Scrap rat	critter	ScrapRat	own
+critter_ember_newt	Ember newt	critter	EmberNewt	own
+critter_glow_firefly	Glow firefly	critter	GlowFirefly	own
+critter_pebble_beetle	Pebble beetle	critter	PebbleBeetle	own
+critter_golden_critter	Golden critter	critter	GoldenCritter	own
+tile_mud	Mud	placeable	MudBlock	own
+tile_clay	Clay	placeable	ClayBlock	own
+tile_gravel	Gravel	placeable	GravelBlock	own
+tile_silt	Silt	placeable	SiltBlock	own
+tile_salt_crust	Salt crust	placeable	SaltCrustBlock	own
+tile_acid_sand	Acid sand	placeable	AcidSandBlock	own
+tile_shell_sand	Shell sand	placeable	ShellSandBlock	own
+tile_coral_reef	Coral reef	placeable	CoralReefBlock	own
+tile_slate	Slate	placeable	SlateBlock	own
+tile_alabaster	Alabaster	placeable	AlabasterBlock	own
+tile_basalt_column	Basalt column	placeable	BasaltColumnBlock	own
+tile_hive_comb	Hive comb	placeable	HiveCombBlock	own
+tile_nectar	Nectar	placeable	NectarBlock	own
+tile_pearl_stone	Pearl stone	placeable	PearlStoneBlock	own
+tile_thin_ice	Thin ice	placeable	ThinIceBlock	own
+tile_ferrite_brick	Ferrite brick	placeable	FerriteBrickBlock	own
+tile_cobalt_brick	Cobalt brick	placeable	CobaltBrickBlock	own
+tile_viridium_brick	Viridium brick	placeable	ViridiumBrickBlock	own
+tile_lumenite_brick	Lumenite brick	placeable	LumeniteBrickBlock	own
+tile_voidsteel_brick	Voidsteel brick	placeable	VoidsteelBrickBlock	own
+tile_astral_brick	Astral brick	placeable	AstralBrickBlock	own
+tile_slate_brick	Slate brick	placeable	SlateBrickBlock	own
+tile_alabaster_brick	Alabaster brick	placeable	AlabasterBrickBlock	own
+tile_basalt_brick	Basalt brick	placeable	BasaltBrickBlock	own
+tile_pearl_brick	Pearl brick	placeable	PearlBrickBlock	own
+tile_hive_brick	Hive brick	placeable	HiveBrickBlock	own
+tile_coral_brick	Coral brick	placeable	CoralBrickBlock	own
+tile_glass	Glass	placeable	GlassBlock	own
+tile_reinforced_glass	Reinforced glass	placeable	ReinforcedGlassBlock	own
+tile_hull_plating_grey	Grey hull plating	placeable	HullPlatingGreyBlock	own
+tile_hull_plating_blue	Blue hull plating	placeable	HullPlatingBlueBlock	own
+tile_hull_plating_green	Green hull plating	placeable	HullPlatingGreenBlock	own
+tile_hull_plating_red	Red hull plating	placeable	HullPlatingRedBlock	own
+tile_hull_plating_hazard	Hazard-striped plating	placeable	HullPlatingHazardBlock	own
+tile_astro_timber_planks	Astro-timber planks	placeable	AstroTimberPlanksBlock	own
+tile_charred_planks	Charred planks	placeable	CharredPlanksBlock	own
+tile_crystal_block	Crystal block	placeable	CrystalBlockBlock	own
+tile_circuit_panel	Circuit panel	placeable	CircuitPanelBlock	own
+tile_conveyor	Conveyor	placeable	ConveyorBlock	own
+tile_grate	Grate	placeable	GrateBlock	own
+tile_plate	Steel plate	placeable	PlateBlock	own
+tile_vent	Vent block	placeable	VentBlock	own
+furn_plank_door	Plank door	placeable	PlankDoor	own
+furn_hull_door	Hull door	placeable	HullDoor	own
+furn_trapdoor	Trapdoor	placeable	Trapdoor	own
+tile_vent_door	Vent door	placeable	VentDoor	own
+furn_plank_chair	Plank chair	placeable	PlankChair	own
+furn_hull_chair	Hull chair	placeable	HullChair	own
+furn_stool	Stool	placeable	Stool	own
+furn_armchair	Armchair	placeable	Armchair	own
+furn_sofa	Sofa	placeable	Sofa	own
+furn_observation_chair	Observation chair	placeable	ObservationChair	own
+furn_plank_table	Plank table	placeable	PlankTable	own
+furn_hull_table	Hull table	placeable	HullTable	own
+furn_dining_table	Dining table	placeable	DiningTable	own
+furn_coffee_table	Coffee table	placeable	CoffeeTable	own
+furn_bunk_bed	Bunk bed	placeable	BunkBed	own
+furn_bunk_bed_metal	Metal bunk bed	placeable	BunkBedMetal	own
+furn_modular_bed	Modular bed	placeable	ModularBed	own
+furn_cryo_pod_bed	Cryo-pod bed	placeable	CryoPodBed	own
+furn_storage_crate	Storage crate	placeable	StorageCrate	own
+furn_wardrobe_locker	Wardrobe locker	placeable	WardrobeLocker	own
+furn_shelving	Shelving	placeable	Shelving	own
+furn_shelf_jars	Jar shelf	placeable	ShelfJars	own
+struct_storage_container	Storage container	placeable	StorageContainer	own
+station_food_locker	Food locker	placeable	FoodLocker	own
+furn_wall_torch	Wall torch	placeable	WallTorch	own
+furn_desk_lamp	Desk lamp	placeable	DeskLamp	own
+furn_floor_lamp	Floor lamp	placeable	FloorLamp	own
+furn_ceiling_light	Ceiling light	placeable	CeilingLight	own
+furn_standing_floodlight	Standing floodlight	placeable	StandingFloodlight	own
+furn_glow_lamp_amber	Amber glow-lamp	placeable	GlowLampAmber	own
+furn_glow_lamp_cyan	Cyan glow-lamp	placeable	GlowLampCyan	own
+furn_glow_lamp_violet	Violet glow-lamp	placeable	GlowLampViolet	own
+furn_colony_banner	Colony banner	placeable	ColonyBanner	own
+furn_sign_post	Sign post	placeable	SignPost	own
+furn_painting_planet	Planet painting	placeable	PaintingPlanet	own
+furn_plant_pot	Plant pot	placeable	PlantPot	own
+furn_herb_planter	Herb planter	placeable	HerbPlanter	own
+furn_display_panel	Display panel	placeable	DisplayPanel	own
+furn_control_console	Control console	placeable	ControlConsole	own
+furn_power_hub	Power hub	placeable	PowerHub	own
+furn_battery_charger	Battery charger	placeable	BatteryCharger	own
+furn_chemical_analyzer	Chemical analyzer	placeable	ChemicalAnalyzer	own
+furn_food_synthesizer	Food synthesizer	placeable	FoodSynthesizer	own
+furn_water_purifier	Water purifier	placeable	WaterPurifier	own
+furn_advanced_fabricator	Advanced fabricator	placeable	AdvancedFabricator	own
+furn_crafting_bench	Crafting bench	placeable	CraftingBench	own
+furn_metal_furnace	Metal furnace	placeable	MetalFurnace	own
+furn_research_lab	Research lab	placeable	ResearchLab	own
+wall_plank	Plank wall	wall	PlankWall	own
+wall_plating_grey	Grey plating wall	wall	PlatingGreyWall	own
+wall_plating_blue	Blue plating wall	wall	PlatingBlueWall	own
+wall_glass	Glass wall	wall	GlassWall	own
+wall_brick_ferrite	Ferrite brick wall	wall	FerriteBrickWall	own
+wall_brick_alabaster	Alabaster brick wall	wall	AlabasterBrickWall	own
+wall_lattice	Lattice wall	wall	LatticeWall	own
+wall_circuit	Circuit wall	wall	CircuitWall	own
+wall_pearl	Pearl wall	wall	PearlWall	own
+wall_hive	Hive wall	wall	HiveWall	own
+wall_coral	Coral wall	wall	CoralWall	own
+wall_basalt	Basalt wall	wall	BasaltWall	own
+wall_mud	Mud wall	wall	MudWall	own
+wall_panel	Panel wall	wall	PanelWall	own
+wall_window	Window wall	wall	WindowWall	own
+wall_blast	Blast wall	wall	BlastWall	own
+wall_lead	Lead-lined wall	wall	LeadWall	own
+item_ancient_power_cell	Ancient power cell	material	AncientPowerCell	own
+item_precursor_relic	Precursor relic	material	PrecursorRelic	own
+item_circuit_board	Circuit board	material	CircuitBoard	own
+item_rocket_pack	Rocket pack	accessory	RocketPack	own
+item_glider_pack	Glider wings	accessory: wings	GliderWings	own
+item_grapple_hook	Grapple hook	accessory	GrappleHook	own
+item_double_jump_canister	Double-jump canister	accessory	DoubleJumpCanister	own
+item_climbing_claws	Climbing claws	accessory	ClimbingClaws	own
+item_life_monitor	Life monitor	accessory	LifeMonitor	own
+item_depth_meter	Depth meter	accessory	DepthMeter	own
+item_compass_chip	Compass chip	accessory	CompassChip	own
+item_regen_implant	Regen implant	accessory	RegenImplant	own
+item_rebreather_mask	Rebreather mask	accessory	RebreatherMask	own
+item_lava_wader_boots	Core wader boots	accessory	LavaWaderBoots	own
+item_frost_grip_gloves	Frost-grip gloves	accessory	FrostGripGloves	own
+item_lucky_charm	Lucky charm	accessory	LuckyCharm	own
+item_thorn_plating	Thorn plating	accessory	ThornPlating	own
+item_astral_halo	Astral halo	accessory	AstralHalo	own
+item_night_owl_drops	Night-owl drops	potion/buff	NightOwlDrops	own
+item_hunter_lens	Hunter lens	potion/buff	HunterLens	own
+item_featherfall_pill	Featherfall pill	potion/buff	FeatherfallPill	own
+item_water_breath_capsule	Water-breath capsule	potion/buff	WaterBreathCapsule	own
+item_snow_wolf_steak	Snow-wolf steak	food	SnowWolfSteak	own
+item_mushroom_stew	Mushroom stew	food	MushroomStew	own
+item_nectar_tea	Nectar tea	food	NectarTea	own
+item_coral_sushi	Coral sushi	food	CoralSushi	own
+item_nano_banana_split	Nano-banana split	food	NanoBananaSplit	own
+tool_glow_sticks	Glow sticks	utility	GlowSticks	own
+tool_teleport_beacon	Teleport beacon	utility	TeleportBeacon	own
+tile_shell_beach	Shell beach	placeable	ShellBeachBlock	own
+tile_mycelium_stone	Mycelium stone	placeable	MyceliumStoneBlock	own
+tile_spore_block	Spore block	placeable	SporeBlockBlock	own
+tile_mushroom_cap	Mushroom cap	placeable	MushroomCapBlock	own
+tile_crystal_spire	Crystal spire	placeable	CrystalSpireBlock	own
+tile_pearl_sand	Pearl sand	placeable	PearlSandBlock	own
+tile_precursor_brick	Precursor brick	placeable	PrecursorBrickBlock	own
+tile_precursor_glyph	Precursor glyph	placeable	PrecursorGlyphBlock	own
+tile_geode_cyan	Cyan geode	placeable	GeodeCyanBlock	own
+tile_geode_magenta	Magenta geode	placeable	GeodeMagentaBlock	own
+item_prism_catalyst	Prism catalyst	consumable	PrismCatalyst	own
+item_vault_core	Vault core	consumable	VaultCore	own
+item_moon_eater_lure	Rusted lure	consumable	MoonEaterLure	own
+item_eclipse_orb	Eclipse orb	consumable	EclipseOrb	own
+item_warlord_banner	Warlord banner	consumable	WarlordBanner	own
+item_dreadnought_flag	Dreadnought flag	consumable	DreadnoughtFlag	own
+item_protocol_key	Protocol key	consumable	ProtocolKey	own
+item_mothership_beacon	Mothership beacon	consumable	MothershipBeacon	own
+critter_shell_crab	Shell crab	critter	ShellCrab	own
+critter_glow_jelly	Glow jelly	critter	GlowJelly	own
+critter_beach_skitter	Beach skitter	critter	BeachSkitter	own
+critter_sea_bird	Sea bird	critter	SeaBird	own
+critter_glow_snail	Glow snail	critter	GlowSnail	own
+critter_spore_moth	Spore moth	critter	SporeMoth	own
+critter_cave_frog	Cave frog	critter	CaveFrog	own
+critter_truffle_mite	Truffle mite	critter	TruffleMite	own
+critter_prism_butterfly	Prism butterfly	critter	PrismButterfly	own
+critter_light_wisp_bird	Light-wisp bird	critter	LightWispBird	own
+critter_crystal_bunny	Crystal bunny	critter	CrystalBunny	own
+critter_halo_snail	Halo snail	critter	HaloSnail	own
+critter_canopy_parrot	Canopy parrot	critter	CanopyParrot	own
+critter_leaf_frog	Leaf frog	critter	LeafFrog	own
+critter_pollen_bee	Pollen bee	critter	PollenBee	own
+critter_vine_snake	Vine snake	critter	VineSnake	own
+critter_hop_bunny	Hop bunny	critter	HopBunny	own
+critter_grass_snake	Grass snake	critter	GrassSnake	own
+critter_penguin_drone	Penguin drone	critter	PenguinDrone	own
+critter_dune_lizard	Dune lizard	critter	DuneLizard	own
+critter_worm	Burrow worm	critter	Worm	own
+critter_butterfly_blue	Blue wingflit	critter	ButterflyBlue	own
+critter_butterfly_gold	Gold wingflit	critter	ButterflyGold	own
+critter_dragonfly	Glassfly	critter	Dragonfly	own
+critter_squirrel_bot	Squirrel bot	critter	SquirrelBot	own
+critter_owl	Night owl	critter	Owl	own
+critter_duck	Pond duck	critter	Duck	own
+critter_fish_silver	Silver fish	critter	FishSilver	own
+critter_fish_glow	Glow fish	critter	FishGlow	own
+critter_crab_small	Little crab	critter	CrabSmall	own
+critter_snail	Garden snail	critter	Snail	own
+critter_ladybug_bot	Ladybug bot	critter	LadybugBot	own
+critter_frog	Pond frog	critter	Frog	own
+tool_ferrite_fishing_rod	Ferrite fishing rod	utility	FerriteFishingRod	own
+tool_cobalt_fishing_rod	Cobalt fishing rod	utility	CobaltFishingRod	own
+tool_glacial_fishing_rod	Glacial fishing rod	utility	GlacialFishingRod	own
+tool_viridium_fishing_rod	Viridium fishing rod	utility	ViridiumFishingRod	own
+tool_lumenite_fishing_rod	Lumenite fishing rod	utility	LumeniteFishingRod	own
+tool_voidsteel_fishing_rod	Voidsteel fishing rod	utility	VoidsteelFishingRod	own
+tool_astral_fishing_rod	Astral fishing rod	utility	AstralFishingRod	own
+tool_acid_fishing_rod	Acid-etched rod	utility	AcidFishingRod	own
+tool_magma_fishing_rod	Fission rod	utility	MagmaFishingRod	own
+item_fishing_line	Braided fishing line	accessory	FishingLine	own
+item_fishing_lure	Shimmer lure	accessory	FishingLure	own
+item_acid_wader	Acid wader	accessory	AcidWader	own
+item_lava_lure	Uranium lure	accessory	LavaLure	own
+item_catch_scanner	Catch scanner	accessory	CatchScanner	own
+item_abyss_bait	Abyss bait	material	AbyssBait	own
+item_frost_cod	Frost cod	food	FrostCod	own
+item_ember_koi	Glowscale koi	food	EmberKoi	own
+item_acid_eel	Slick eel	food	AcidEel	own
+item_reef_snapper	Reef snapper	food	ReefSnapper	own
+item_nectar_minnow	Nectar minnow	food	NectarMinnow	own
+item_blight_carp	Blight carp	food	BlightCarp	own
+item_prism_trout	Prism trout	food	PrismTrout	own
+item_spore_guppy	Spore guppy	food	SporeGuppy	own
+item_mud_skipper	Mud skipper	food	MudSkipper	own
+item_cave_blindfish	Cave blindfish	food	CaveBlindfish	own
+item_cooked_fish	Cooked fish	food	CookedFish	own
+item_cooked_eel	Smoked eel	food	CookedEel	own
+item_grilled_koi	Grilled koi	food	GrilledKoi	own
+item_fish_fillet	Fish fillet	food	FishFillet	own
+item_rusted_can	Rusted can	material	RustedCan	own
+item_tangled_wire	Tangled wire	material	TangledWire	own
+item_soggy_datapad	Soggy datapad	material	SoggyDatapad	own
+item_scrap_crate	Scrap crate	consumable	ScrapCrate	own
+item_alloy_crate	Alloy crate	consumable	AlloyCrate	own
+item_astral_crate	Astral crate	consumable	AstralCrate	own
+item_coast_crate	Tidal crate	consumable	CoastCrate	own
+item_frozen_crate	Frost-rimed crate	consumable	FrozenCrate	own
+item_junk_crate	Salvager's crate	consumable	JunkCrate	own
+item_fungal_crate	Mycelium crate	consumable	FungalCrate	own
+item_canopy_crate	Vine-wrapped crate	consumable	CanopyCrate	own
+item_crystal_crate	Prismatic crate	consumable	CrystalCrate	own
+item_blight_crate	Tainted crate	consumable	BlightCrate	own
+item_molten_crate	Reactor crate	consumable	MoltenCrate	own
+item_spiny_rustback	Spiny rustback	material	SpinyRustback	own
+item_lantern_eel	Lantern eel	material	LanternEel	own
+item_glass_pike	Glass pike	material	GlassPike	own
+item_twin_tail_snapper	Twin-tail snapper	material	TwinTailSnapper	own
+item_mottled_grouper	Mottled grouper	material	MottledGrouper	own
+item_hexscale	Hexscale	material	Hexscale	own
+item_bubble_ray	Bubble ray	material	BubbleRay	own
+item_crowned_tetra	Crowned tetra	material	CrownedTetra	own
+item_void_angler	Void angler	material	VoidAngler	own
+item_starfall_minnow	Starfall minnow	material	StarfallMinnow	own
+timber	Timber	material	Timber	own
+deco_sapling	Sapling	placeable	Sapling	own
+item_cactus_chunk	Cactus chunk	material	CactusChunk	own
+item_plank_platform	Plank platform	placeable	PlankPlatform	own
+item_metal_platform	Metal platform	placeable	MetalPlatform	own
+item_climbing_rope	Climbing rope	placeable	ClimbingRope	own
+item_ladder	Ladder	placeable	Ladder	own
+tool_shaping_hammer	Shaping hammer	utility	ShapingHammer	own
+item_sunpetal_herb	Sunpetal	material	SunpetalHerb	own
+item_moonglow_herb	Moonglow	material	MoonglowHerb	own
+item_rainreed_herb	Rainreed	material	RainreedHerb	own
+item_frostbell_herb	Frostbell	material	FrostbellHerb	own
+item_emberroot_herb	Emberroot	material	EmberrootHerb	own
+item_sporecap_herb	Sporecap	material	SporecapHerb	own
+item_sunpetal_seeds	Sunpetal seeds	placeable	SunpetalSeeds	own
+item_moonglow_seeds	Moonglow seeds	placeable	MoonglowSeeds	own
+item_rainreed_seeds	Rainreed seeds	placeable	RainreedSeeds	own
+item_frostbell_seeds	Frostbell seeds	placeable	FrostbellSeeds	own
+item_emberroot_seeds	Emberroot seeds	placeable	EmberrootSeeds	own
+item_sporecap_seeds	Sporecap seeds	placeable	SporecapSeeds	own
+item_wire_spool	Wire spool	material	WireSpool	own
+tool_wire_cutter	Wire cutter	utility	WireCutter	own
+item_actuator	Actuator	utility	Actuator	own
+item_switch	Switch	placeable	Switch	own
+item_lever	Lever	placeable	Lever	own
+item_pressure_plate	Pressure plate	placeable	PressurePlate	own
+item_timer_1s	One-second timer	placeable	Timer1s	own
+item_timer_3s	Three-second timer	placeable	Timer3s	own
+item_timer_5s	Five-second timer	placeable	Timer5s	own
+item_gate_and	AND gate	placeable	GateAnd	own
+item_gate_or	OR gate	placeable	GateOr	own
+item_gate_not	NOT gate	placeable	GateNot	own
+item_gate_xor	XOR gate	placeable	GateXor	own
+tile_dart_trap	Dart trap	placeable	DartTrap	own
+tile_explosive_trap	Explosive trap	placeable	ExplosiveTrap	own
+station_teleporter_pad	Teleporter pad	placeable	TeleporterPad	own
+item_bomb	Bomb	utility	Bomb	own
+item_dynamite	Dynamite	utility	Dynamite	own
+item_sticky_bomb	Sticky bomb	utility	StickyBomb	own
+furn_standing_torch	Standing torch	placeable	StandingTorch	own
+tile_dungeon_brick_precursor	Precursor dungeon brick	placeable	PrecursorDungeonBrick	own
+weapon_shrine_blade	Shrine blade	weapon: broadsword	ShrineBlade	own
+item_living_wood	Living wood	placeable	LivingWood	own
+dye_petals	Dye petals	material	DyePetals	own
+item_charge_crystal	Charge crystal	consumable	ChargeCrystal	own
+item_cargo_pod	Cargo pod	utility	CargoPod	own
+station_cargo_pod_station	Cargo pod station	placeable	CargoPodStation	own
+item_pet_drone_chip	Pocket drone chip	utility	PetDroneChip	own
+item_pet_crab_shell	Pebble-crab shell	utility	PetCrabShell	own
+item_light_pet_wisp	Lumen wisp jar	utility	LightPetWisp	own
+item_light_pet_lantern	Lantern bot	utility	LightPetLantern	own
+item_hover_bike_key	Hover-bike key	utility	HoverBikeKey	own
+item_recall_capsule	Recall capsule	utility	RecallCapsule	own
+item_phase_rod	Phase rod	utility	PhaseRod	own
+item_memorial_marker	Memorial marker	placeable	MemorialMarker	own
+weapon_ferrite_longblade	Ferrite longblade	weapon: broadsword	FerriteLongblade	own
+weapon_cobalt_longblade	Cobalt longblade	weapon: broadsword	CobaltLongblade	own
+weapon_glacial_longblade	Glacial longblade	weapon: broadsword	GlacialLongblade	own
+weapon_pyrocite_longblade	Pyrocite longblade	weapon: broadsword	PyrociteLongblade	own
+weapon_uranium_longblade	Uranium longblade	weapon: broadsword	UraniumLongblade	own
+weapon_viridium_longblade	Viridium longblade	weapon: broadsword	ViridiumLongblade	own
+weapon_lumenite_longblade	Lumenite longblade	weapon: broadsword	LumeniteLongblade	own
+weapon_voidsteel_longblade	Voidsteel longblade	weapon: broadsword	VoidsteelLongblade	own
+weapon_astral_longblade	Astral longblade	weapon: broadsword	AstralLongblade	own
+weapon_ferrite_greatblade	Ferrite greatblade	weapon: broadsword	FerriteGreatblade	own
+weapon_cobalt_greatblade	Cobalt greatblade	weapon: broadsword	CobaltGreatblade	own
+weapon_glacial_greatblade	Glacial greatblade	weapon: broadsword	GlacialGreatblade	own
+weapon_pyrocite_greatblade	Pyrocite greatblade	weapon: broadsword	PyrociteGreatblade	own
+weapon_uranium_greatblade	Uranium greatblade	weapon: broadsword	UraniumGreatblade	own
+weapon_viridium_greatblade	Viridium greatblade	weapon: broadsword	ViridiumGreatblade	own
+weapon_lumenite_greatblade	Lumenite greatblade	weapon: broadsword	LumeniteGreatblade	own
+weapon_voidsteel_greatblade	Voidsteel greatblade	weapon: broadsword	VoidsteelGreatblade	own
+weapon_astral_greatblade	Astral greatblade	weapon: broadsword	AstralGreatblade	own
+weapon_ferrite_arc_saber	Ferrite arc-saber	weapon: broadsword	FerriteArcSaber	own
+weapon_cobalt_arc_saber	Cobalt arc-saber	weapon: broadsword	CobaltArcSaber	own
+weapon_glacial_arc_saber	Glacial arc-saber	weapon: broadsword	GlacialArcSaber	own
+weapon_pyrocite_arc_saber	Pyrocite arc-saber	weapon: broadsword	PyrociteArcSaber	own
+weapon_uranium_arc_saber	Uranium arc-saber	weapon: broadsword	UraniumArcSaber	own
+weapon_viridium_arc_saber	Viridium arc-saber	weapon: broadsword	ViridiumArcSaber	own
+weapon_lumenite_arc_saber	Lumenite arc-saber	weapon: broadsword	LumeniteArcSaber	own
+weapon_voidsteel_arc_saber	Voidsteel arc-saber	weapon: broadsword	VoidsteelArcSaber	own
+weapon_astral_arc_saber	Astral arc-saber	weapon: broadsword	AstralArcSaber	own
+weapon_rustfang_cleaver	Rustfang cleaver	weapon: broadsword	RustfangCleaver	own
+weapon_sentinel_edge	Sentinel's edge	weapon: broadsword	SentinelEdge	own
+weapon_skitterscale_sword	Skitterscale sword	weapon: broadsword	SkitterscaleSword	own
+weapon_thornvine_blade	Thornvine blade	weapon: broadsword	ThornvineBlade	own
+weapon_rimeheart_blade	Rimeheart blade	weapon: broadsword	RimeheartBlade	own
+weapon_magma_brand	Fission brand	weapon: broadsword	MagmaBrand	own
+weapon_mycelium_greatblade	Mycelium greatblade	weapon: broadsword	MyceliumGreatblade	own
+weapon_warlords_headsman	Warlord's headsman	weapon: broadsword	WarlordsHeadsman	own
+weapon_hivequeen_carver	Hive-queen's carver	weapon: broadsword	HivequeenCarver	own
+weapon_prism_razor	Prism razor	weapon: broadsword	PrismRazor	own
+weapon_eclipse_reaver	Eclipse reaver	weapon: broadsword	EclipseReaver	own
+weapon_vaultbreaker	Vaultbreaker	weapon: broadsword	Vaultbreaker	own
+weapon_starforged_claymore	Starforged claymore	weapon: broadsword	StarforgedClaymore	own
+weapon_ferrite_stiletto	Ferrite stiletto	weapon: shortsword	FerriteStiletto	own
+weapon_cobalt_stiletto	Cobalt stiletto	weapon: shortsword	CobaltStiletto	own
+weapon_pyrocite_stiletto	Pyrocite stiletto	weapon: shortsword	PyrociteStiletto	own
+weapon_viridium_stiletto	Viridium stiletto	weapon: shortsword	ViridiumStiletto	own
+weapon_lumenite_stiletto	Lumenite stiletto	weapon: shortsword	LumeniteStiletto	own
+weapon_voidsteel_stiletto	Voidsteel stiletto	weapon: shortsword	VoidsteelStiletto	own
+weapon_astral_stiletto	Astral stiletto	weapon: shortsword	AstralStiletto	own
+weapon_coral_fang	Coral fang	weapon: shortsword	CoralFang	own
+weapon_splice_needle	Splice needle	weapon: shortsword	SpliceNeedle	own
+weapon_phase_dirk	Phase dirk	weapon: shortsword	PhaseDirk	own
+weapon_ferrite_arc_spear	Ferrite arc-spear	weapon: spear	FerriteArcSpear	own
+weapon_cobalt_arc_spear	Cobalt arc-spear	weapon: spear	CobaltArcSpear	own
+weapon_glacial_arc_spear	Glacial arc-spear	weapon: spear	GlacialArcSpear	own
+weapon_pyrocite_arc_spear	Pyrocite arc-spear	weapon: spear	PyrociteArcSpear	own
+weapon_uranium_arc_spear	Uranium arc-spear	weapon: spear	UraniumArcSpear	own
+weapon_viridium_arc_spear	Viridium arc-spear	weapon: spear	ViridiumArcSpear	own
+weapon_lumenite_arc_spear	Lumenite arc-spear	weapon: spear	LumeniteArcSpear	own
+weapon_voidsteel_arc_spear	Voidsteel arc-spear	weapon: spear	VoidsteelArcSpear	own
+weapon_astral_arc_spear	Astral arc-spear	weapon: spear	AstralArcSpear	own
+weapon_harpoon_lance	Harpoon lance	weapon: spear	HarpoonLance	own
+weapon_scoutmech_pike	Scout-mech pike	weapon: spear	ScoutmechPike	own
+weapon_overseer_halberd	Overseer halberd	weapon: spear	OverseerHalberd	own
+weapon_solar_partisan	Solar partisan	weapon: spear	SolarPartisan	own
+weapon_protocol_glaive	Protocol glaive	weapon: spear	ProtocolGlaive	own
+weapon_leviathan_tine	Leviathan's tine	weapon: spear	LeviathanTine	own
+weapon_ferrite_spinner	Ferrite spinner	weapon: yoyo	FerriteSpinner	own
+weapon_cobalt_spinner	Cobalt spinner	weapon: yoyo	CobaltSpinner	own
+weapon_glacial_spinner	Glacial spinner	weapon: yoyo	GlacialSpinner	own
+weapon_pyrocite_spinner	Pyrocite spinner	weapon: yoyo	PyrociteSpinner	own
+weapon_uranium_spinner	Uranium spinner	weapon: yoyo	UraniumSpinner	own
+weapon_meteorite_spinner	Meteorite spinner	weapon: yoyo	MeteoriteSpinner	own
+weapon_viridium_spinner	Viridium spinner	weapon: yoyo	ViridiumSpinner	own
+weapon_lumenite_spinner	Lumenite spinner	weapon: yoyo	LumeniteSpinner	own
+weapon_voidsteel_spinner	Voidsteel spinner	weapon: yoyo	VoidsteelSpinner	own
+weapon_astral_spinner	Astral spinner	weapon: yoyo	AstralSpinner	own
+weapon_silkspool	Silkspool	weapon: yoyo	Silkspool	own
+weapon_geode_gyro	Geode gyro	weapon: yoyo	GeodeGyro	own
+weapon_sporepuff_gyro	Spore-puff gyro	weapon: yoyo	SporepuffGyro	own
+weapon_swarm_gyro	Swarm gyro	weapon: yoyo	SwarmGyro	own
+weapon_flora_gyre	Flora gyre	weapon: yoyo	FloraGyre	own
+weapon_halo_gyre	Halo gyre	weapon: yoyo	HaloGyre	own
+weapon_corsair_top	Corsair's top	weapon: yoyo	CorsairTop	own
+weapon_singularity_spinner	Singularity spinner	weapon: yoyo	SingularitySpinner	own
+weapon_ferrite_glaive_disc	Ferrite glaive-disc	weapon: boomerang	FerriteGlaiveDisc	own
+weapon_cobalt_glaive_disc	Cobalt glaive-disc	weapon: boomerang	CobaltGlaiveDisc	own
+weapon_pyrocite_glaive_disc	Pyrocite glaive-disc	weapon: boomerang	PyrociteGlaiveDisc	own
+weapon_viridium_glaive_disc	Viridium glaive-disc	weapon: boomerang	ViridiumGlaiveDisc	own
+weapon_lumenite_glaive_disc	Lumenite glaive-disc	weapon: boomerang	LumeniteGlaiveDisc	own
+weapon_voidsteel_glaive_disc	Voidsteel glaive-disc	weapon: boomerang	VoidsteelGlaiveDisc	own
+weapon_astral_glaive_disc	Astral glaive-disc	weapon: boomerang	AstralGlaiveDisc	own
+weapon_scrap_chakram	Scrap chakram	weapon: boomerang	ScrapChakram	own
+weapon_frost_crescent	Frost crescent	weapon: boomerang	FrostCrescent	own
+weapon_aurora_ring	Aurora ring	weapon: boomerang	AuroraRing	own
+weapon_ferrite_chain_mace	Ferrite chain-mace	weapon: flail	FerriteChainMace	own
+weapon_cobalt_chain_mace	Cobalt chain-mace	weapon: flail	CobaltChainMace	own
+weapon_glacial_chain_mace	Glacial chain-mace	weapon: flail	GlacialChainMace	own
+weapon_pyrocite_chain_mace	Pyrocite chain-mace	weapon: flail	PyrociteChainMace	own
+weapon_uranium_chain_mace	Uranium chain-mace	weapon: flail	UraniumChainMace	own
+weapon_viridium_chain_mace	Viridium chain-mace	weapon: flail	ViridiumChainMace	own
+weapon_lumenite_chain_mace	Lumenite chain-mace	weapon: flail	LumeniteChainMace	own
+weapon_voidsteel_chain_mace	Voidsteel chain-mace	weapon: flail	VoidsteelChainMace	own
+weapon_astral_chain_mace	Astral chain-mace	weapon: flail	AstralChainMace	own
+weapon_wrecking_orb	Wrecking orb	weapon: flail	WreckingOrb	own
+weapon_magma_flail	Isotope flail	weapon: flail	MagmaFlail	own
+weapon_meteor_chain	Meteor chain	weapon: flail	MeteorChain	own
+weapon_ferrite_signal_lash	Ferrite signal lash	weapon: whip	FerriteSignalLash	own
+weapon_cobalt_signal_lash	Cobalt signal lash	weapon: whip	CobaltSignalLash	own
+weapon_glacial_signal_lash	Glacial signal lash	weapon: whip	GlacialSignalLash	own
+weapon_pyrocite_signal_lash	Pyrocite signal lash	weapon: whip	PyrociteSignalLash	own
+weapon_uranium_signal_lash	Uranium signal lash	weapon: whip	UraniumSignalLash	own
+weapon_viridium_signal_lash	Viridium signal lash	weapon: whip	ViridiumSignalLash	own
+weapon_lumenite_signal_lash	Lumenite signal lash	weapon: whip	LumeniteSignalLash	own
+weapon_voidsteel_signal_lash	Voidsteel signal lash	weapon: whip	VoidsteelSignalLash	own
+weapon_astral_signal_lash	Astral signal lash	weapon: whip	AstralSignalLash	own
+weapon_vine_lash	Vine lash	weapon: whip	VineLash	own
+weapon_spore_tendril	Spore tendril	weapon: whip	SporeTendril	own
+weapon_hive_lash	Hive lash	weapon: whip	HiveLash	own
+weapon_prism_ribbon	Prism ribbon	weapon: whip	PrismRibbon	own
+weapon_void_tether	Void tether	weapon: whip	VoidTether	own
+weapon_starlash	Starlash	weapon: whip	Starlash	own
+weapon_ferrite_rail_bow	Ferrite rail-bow	weapon: bow	FerriteRailBow	own
+weapon_cobalt_rail_bow	Cobalt rail-bow	weapon: bow	CobaltRailBow	own
+weapon_glacial_rail_bow	Glacial rail-bow	weapon: bow	GlacialRailBow	own
+weapon_pyrocite_rail_bow	Pyrocite rail-bow	weapon: bow	PyrociteRailBow	own
+weapon_uranium_rail_bow	Uranium rail-bow	weapon: bow	UraniumRailBow	own
+weapon_viridium_rail_bow	Viridium rail-bow	weapon: bow	ViridiumRailBow	own
+weapon_lumenite_rail_bow	Lumenite rail-bow	weapon: bow	LumeniteRailBow	own
+weapon_voidsteel_rail_bow	Voidsteel rail-bow	weapon: bow	VoidsteelRailBow	own
+weapon_astral_rail_bow	Astral rail-bow	weapon: bow	AstralRailBow	own
+weapon_ferrite_pulse_repeater	Ferrite pulse repeater	weapon: bow	FerritePulseRepeater	own
+weapon_cobalt_pulse_repeater	Cobalt pulse repeater	weapon: bow	CobaltPulseRepeater	own
+weapon_glacial_pulse_repeater	Glacial pulse repeater	weapon: bow	GlacialPulseRepeater	own
+weapon_pyrocite_pulse_repeater	Pyrocite pulse repeater	weapon: bow	PyrocitePulseRepeater	own
+weapon_uranium_pulse_repeater	Uranium pulse repeater	weapon: bow	UraniumPulseRepeater	own
+weapon_viridium_pulse_repeater	Viridium pulse repeater	weapon: bow	ViridiumPulseRepeater	own
+weapon_lumenite_pulse_repeater	Lumenite pulse repeater	weapon: bow	LumenitePulseRepeater	own
+weapon_voidsteel_pulse_repeater	Voidsteel pulse repeater	weapon: bow	VoidsteelPulseRepeater	own
+weapon_astral_pulse_repeater	Astral pulse repeater	weapon: bow	AstralPulseRepeater	own
+weapon_hunters_recurve	Hunter's recurve	weapon: bow	HuntersRecurve	own
+weapon_thornshot	Thornshot	weapon: bow	Thornshot	own
+weapon_frostbite_longbow	Frostbite longbow	weapon: bow	FrostbiteLongbow	own
+weapon_cinder_repeater	Cinder repeater	weapon: bow	CinderRepeater	own
+weapon_stinger_bow	Stinger bow	weapon: bow	StingerBow	own
+weapon_canopy_longbow	Canopy longbow	weapon: bow	CanopyLongbow	own
+weapon_crystal_harpbow	Crystal harp-bow	weapon: bow	CrystalHarpbow	own
+weapon_storm_repeater	Storm repeater	weapon: bow	StormRepeater	own
+weapon_corsair_crossbow	Corsair crossbow	weapon: bow	CorsairCrossbow	own
+weapon_eclipse_longbow	Eclipse longbow	weapon: bow	EclipseLongbow	own
+weapon_vault_ballista	Vault ballista	weapon: bow	VaultBallista	own
+weapon_nova_arc	Nova arc	weapon: bow	NovaArc	own
+weapon_ferrite_sidearm	Ferrite sidearm	weapon: gun	FerriteSidearm	own
+weapon_cobalt_sidearm	Cobalt sidearm	weapon: gun	CobaltSidearm	own
+weapon_glacial_sidearm	Glacial sidearm	weapon: gun	GlacialSidearm	own
+weapon_pyrocite_sidearm	Pyrocite sidearm	weapon: gun	PyrociteSidearm	own
+weapon_uranium_sidearm	Uranium sidearm	weapon: gun	UraniumSidearm	own
+weapon_viridium_sidearm	Viridium sidearm	weapon: gun	ViridiumSidearm	own
+weapon_lumenite_sidearm	Lumenite sidearm	weapon: gun	LumeniteSidearm	own
+weapon_voidsteel_sidearm	Voidsteel sidearm	weapon: gun	VoidsteelSidearm	own
+weapon_astral_sidearm	Astral sidearm	weapon: gun	AstralSidearm	own
+weapon_ferrite_battle_rifle	Ferrite battle rifle	weapon: gun	FerriteBattleRifle	own
+weapon_cobalt_battle_rifle	Cobalt battle rifle	weapon: gun	CobaltBattleRifle	own
+weapon_pyrocite_battle_rifle	Pyrocite battle rifle	weapon: gun	PyrociteBattleRifle	own
+weapon_viridium_battle_rifle	Viridium battle rifle	weapon: gun	ViridiumBattleRifle	own
+weapon_lumenite_battle_rifle	Lumenite battle rifle	weapon: gun	LumeniteBattleRifle	own
+weapon_voidsteel_battle_rifle	Voidsteel battle rifle	weapon: gun	VoidsteelBattleRifle	own
+weapon_astral_battle_rifle	Astral battle rifle	weapon: gun	AstralBattleRifle	own
+weapon_sentinel_handcannon	Sentinel hand-cannon	weapon: gun	SentinelHandcannon	own
+weapon_scout_autopistol	Scout autopistol	weapon: gun	ScoutAutopistol	own
+weapon_geiger_rifle	Geiger rifle	weapon: gun	GeigerRifle	own
+weapon_overseer_pistol	Overseer's service pistol	weapon: gun	OverseerPistol	own
+weapon_captains_blaster	Captain's blaster	weapon: gun	CaptainsBlaster	own
+weapon_mothership_railcannon	Mothership railcannon	weapon: gun	MothershipRailcannon	own
+weapon_cobalt_scattergun	Cobalt scattergun	weapon: shotgun	CobaltScattergun	own
+weapon_pyrocite_scattergun	Pyrocite scattergun	weapon: shotgun	PyrociteScattergun	own
+weapon_viridium_scattergun	Viridium scattergun	weapon: shotgun	ViridiumScattergun	own
+weapon_voidsteel_scattergun	Voidsteel scattergun	weapon: shotgun	VoidsteelScattergun	own
+weapon_astral_scattergun	Astral scattergun	weapon: shotgun	AstralScattergun	own
+weapon_swarmbuster	Swarmbuster	weapon: shotgun	Swarmbuster	own
+weapon_boarding_blunderbuss	Boarding blunderbuss	weapon: shotgun	BoardingBlunderbuss	own
+weapon_abomination_maw	Abomination's maw	weapon: shotgun	AbominationMaw	own
+weapon_cobalt_launcher	Cobalt launcher	weapon: launcher	CobaltLauncher	own
+weapon_pyrocite_launcher	Pyrocite launcher	weapon: launcher	PyrociteLauncher	own
+weapon_meteorite_launcher	Meteorite launcher	weapon: launcher	MeteoriteLauncher	own
+weapon_viridium_launcher	Viridium launcher	weapon: launcher	ViridiumLauncher	own
+weapon_lumenite_launcher	Lumenite launcher	weapon: launcher	LumeniteLauncher	own
+weapon_voidsteel_launcher	Voidsteel launcher	weapon: launcher	VoidsteelLauncher	own
+weapon_astral_launcher	Astral launcher	weapon: launcher	AstralLauncher	own
+weapon_demolition_tube	Demolition tube	weapon: launcher	DemolitionTube	own
+weapon_warship_cannon	Warship cannon	weapon: launcher	WarshipCannon	own
+weapon_miners_blaster	Miner's blaster	weapon: launcher	MinersBlaster	own
+weapon_dreadnought_broadside	Dreadnought broadside	weapon: launcher	DreadnoughtBroadside	own
+weapon_starfall_launcher	Starfall launcher	weapon: launcher	StarfallLauncher	own
+weapon_ferrite_throwing_knife	Ferrite throwing knife	weapon: thrown	FerriteThrowingKnife	own
+weapon_cobalt_throwing_knife	Cobalt throwing knife	weapon: thrown	CobaltThrowingKnife	own
+weapon_glacial_throwing_knife	Glacial throwing knife	weapon: thrown	GlacialThrowingKnife	own
+weapon_pyrocite_throwing_knife	Pyrocite throwing knife	weapon: thrown	PyrociteThrowingKnife	own
+weapon_uranium_throwing_knife	Uranium throwing knife	weapon: thrown	UraniumThrowingKnife	own
+weapon_viridium_throwing_knife	Viridium throwing knife	weapon: thrown	ViridiumThrowingKnife	own
+weapon_lumenite_throwing_knife	Lumenite throwing knife	weapon: thrown	LumeniteThrowingKnife	own
+weapon_voidsteel_throwing_knife	Voidsteel throwing knife	weapon: thrown	VoidsteelThrowingKnife	own
+weapon_astral_throwing_knife	Astral throwing knife	weapon: thrown	AstralThrowingKnife	own
+weapon_ferrite_javelin	Ferrite javelin	weapon: thrown	FerriteJavelin	own
+weapon_cobalt_javelin	Cobalt javelin	weapon: thrown	CobaltJavelin	own
+weapon_glacial_javelin	Glacial javelin	weapon: thrown	GlacialJavelin	own
+weapon_pyrocite_javelin	Pyrocite javelin	weapon: thrown	PyrociteJavelin	own
+weapon_uranium_javelin	Uranium javelin	weapon: thrown	UraniumJavelin	own
+weapon_viridium_javelin	Viridium javelin	weapon: thrown	ViridiumJavelin	own
+weapon_lumenite_javelin	Lumenite javelin	weapon: thrown	LumeniteJavelin	own
+weapon_voidsteel_javelin	Voidsteel javelin	weapon: thrown	VoidsteelJavelin	own
+weapon_astral_javelin	Astral javelin	weapon: thrown	AstralJavelin	own
+weapon_frag_grenade	Frag grenade	weapon: thrown	FragGrenade	own
+weapon_razor_star	Razor star	weapon: thrown	RazorStar	own
+weapon_emp_charge	EMP charge	weapon: thrown	EmpCharge	own
+weapon_acid_flask	Acid flask	weapon: thrown	AcidFlask	own
+weapon_sticky_mine	Sticky mine	weapon: thrown	StickyMine	own
+weapon_cryo_grenade	Cryo grenade	weapon: thrown	CryoGrenade	own
+weapon_incendiary_grenade	Incendiary grenade	weapon: thrown	IncendiaryGrenade	own
+weapon_spore_bomb	Spore bomb	weapon: thrown	SporeBomb	own
+weapon_plasma_grenade	Plasma grenade	weapon: thrown	PlasmaGrenade	own
+weapon_shard_caltrops	Shard caltrops	weapon: thrown	ShardCaltrops	own
+weapon_void_grenade	Void grenade	weapon: thrown	VoidGrenade	own
+weapon_star_shuriken	Star shuriken	weapon: thrown	StarShuriken	own
+tech_ferrite_emitter_staff	Ferrite emitter staff	weapon: staff	FerriteEmitterStaff	own
+tech_cobalt_emitter_staff	Cobalt emitter staff	weapon: staff	CobaltEmitterStaff	own
+tech_glacial_emitter_staff	Glacial emitter staff	weapon: staff	GlacialEmitterStaff	own
+tech_pyrocite_emitter_staff	Pyrocite emitter staff	weapon: staff	PyrociteEmitterStaff	own
+tech_uranium_emitter_staff	Uranium emitter staff	weapon: staff	UraniumEmitterStaff	own
+tech_meteorite_emitter_staff	Meteorite emitter staff	weapon: staff	MeteoriteEmitterStaff	own
+tech_viridium_emitter_staff	Viridium emitter staff	weapon: staff	ViridiumEmitterStaff	own
+tech_lumenite_emitter_staff	Lumenite emitter staff	weapon: staff	LumeniteEmitterStaff	own
+tech_voidsteel_emitter_staff	Voidsteel emitter staff	weapon: staff	VoidsteelEmitterStaff	own
+tech_astral_emitter_staff	Astral emitter staff	weapon: staff	AstralEmitterStaff	own
+tech_ferrite_focus_rod	Ferrite focus rod	weapon: staff	FerriteFocusRod	own
+tech_cobalt_focus_rod	Cobalt focus rod	weapon: staff	CobaltFocusRod	own
+tech_glacial_focus_rod	Glacial focus rod	weapon: staff	GlacialFocusRod	own
+tech_pyrocite_focus_rod	Pyrocite focus rod	weapon: staff	PyrociteFocusRod	own
+tech_uranium_focus_rod	Uranium focus rod	weapon: staff	UraniumFocusRod	own
+tech_meteorite_focus_rod	Meteorite focus rod	weapon: staff	MeteoriteFocusRod	own
+tech_viridium_focus_rod	Viridium focus rod	weapon: staff	ViridiumFocusRod	own
+tech_lumenite_focus_rod	Lumenite focus rod	weapon: staff	LumeniteFocusRod	own
+tech_voidsteel_focus_rod	Voidsteel focus rod	weapon: staff	VoidsteelFocusRod	own
+tech_astral_focus_rod	Astral focus rod	weapon: staff	AstralFocusRod	own
+tech_sentinel_sceptre	Sentinel's sceptre	weapon: staff	SentinelSceptre	own
+tech_overgrowth_staff	Overgrowth staff	weapon: staff	OvergrowthStaff	own
+tech_drillcore_rod	Drill-core rod	weapon: staff	DrillcoreRod	own
+tech_cryolance_staff	Cryolance staff	weapon: staff	CryolanceStaff	own
+tech_mycelium_staff	Mycelium staff	weapon: staff	MyceliumStaff	own
+tech_scrap_tesla_rod	Scrap tesla rod	weapon: staff	ScrapTeslaRod	own
+tech_swarm_sceptre	Swarm sceptre	weapon: staff	SwarmSceptre	own
+tech_mooneater_staff	Moon-eater staff	weapon: staff	MooneaterStaff	own
+tech_bloom_wand	Bloom wand	weapon: staff	BloomWand	own
+tech_solar_sceptre	Solar sceptre	weapon: staff	SolarSceptre	own
+tech_warp_staff	Warp staff	weapon: staff	WarpStaff	own
+tech_protocol_staff	Protocol staff	weapon: staff	ProtocolStaff	own
+tech_wisp_staff	Wisp staff	weapon: staff	WispStaff	own
+tech_vault_resonator	Vault resonator	weapon: staff	VaultResonator	own
+tech_cosmos_staff	Cosmos staff	weapon: staff	CosmosStaff	own
+tech_ferrite_codex	Ferrite codex	weapon: tome	FerriteCodex	own
+tech_cobalt_codex	Cobalt codex	weapon: tome	CobaltCodex	own
+tech_pyrocite_codex	Pyrocite codex	weapon: tome	PyrociteCodex	own
+tech_viridium_codex	Viridium codex	weapon: tome	ViridiumCodex	own
+tech_lumenite_codex	Lumenite codex	weapon: tome	LumeniteCodex	own
+tech_voidsteel_codex	Voidsteel codex	weapon: tome	VoidsteelCodex	own
+tech_astral_codex	Astral codex	weapon: tome	AstralCodex	own
+tech_codex_frost_nova	Codex: Frost nova	weapon: tome	CodexFrostNova	own
+tech_codex_ember_swarm	Codex: Ember swarm	weapon: tome	CodexEmberSwarm	own
+tech_codex_toxic_cloud	Codex: Toxic cloud	weapon: tome	CodexToxicCloud	own
+tech_codex_tidal_surge	Codex: Tidal surge	weapon: tome	CodexTidalSurge	own
+tech_codex_shard_storm	Codex: Shard storm	weapon: tome	CodexShardStorm	own
+tech_codex_precursor	Codex: Precursor	weapon: tome	CodexPrecursor	own
+tech_codex_event_horizon	Codex: Event horizon	weapon: tome	CodexEventHorizon	own
+tech_codex_supernova	Codex: Supernova	weapon: tome	CodexSupernova	own
+tech_cobalt_beam_projector	Cobalt beam projector	weapon: beam	CobaltBeamProjector	own
+tech_pyrocite_beam_projector	Pyrocite beam projector	weapon: beam	PyrociteBeamProjector	own
+tech_viridium_beam_projector	Viridium beam projector	weapon: beam	ViridiumBeamProjector	own
+tech_lumenite_beam_projector	Lumenite beam projector	weapon: beam	LumeniteBeamProjector	own
+tech_voidsteel_beam_projector	Voidsteel beam projector	weapon: beam	VoidsteelBeamProjector	own
+tech_astral_beam_projector	Astral beam projector	weapon: beam	AstralBeamProjector	own
+tech_gamma_ray	Gamma ray	weapon: beam	GammaRay	own
+tech_prism_lance	Prism lance	weapon: beam	PrismLance	own
+tech_solar_ray	Solar ray	weapon: beam	SolarRay	own
+tech_mothership_lance	Mothership lance	weapon: beam	MothershipLance	own
+cmd_ferrite_drone_uplink	Ferrite drone uplink	weapon: summonstaff	FerriteDroneUplink	own
+cmd_cobalt_drone_uplink	Cobalt drone uplink	weapon: summonstaff	CobaltDroneUplink	own
+cmd_glacial_drone_uplink	Glacial drone uplink	weapon: summonstaff	GlacialDroneUplink	own
+cmd_pyrocite_drone_uplink	Pyrocite drone uplink	weapon: summonstaff	PyrociteDroneUplink	own
+cmd_uranium_drone_uplink	Uranium drone uplink	weapon: summonstaff	UraniumDroneUplink	own
+cmd_viridium_drone_uplink	Viridium drone uplink	weapon: summonstaff	ViridiumDroneUplink	own
+cmd_lumenite_drone_uplink	Lumenite drone uplink	weapon: summonstaff	LumeniteDroneUplink	own
+cmd_voidsteel_drone_uplink	Voidsteel drone uplink	weapon: summonstaff	VoidsteelDroneUplink	own
+cmd_astral_drone_uplink	Astral drone uplink	weapon: summonstaff	AstralDroneUplink	own
+cmd_ferrite_familiar_core	Ferrite familiar core	weapon: summonstaff	FerriteFamiliarCore	own
+cmd_cobalt_familiar_core	Cobalt familiar core	weapon: summonstaff	CobaltFamiliarCore	own
+cmd_glacial_familiar_core	Glacial familiar core	weapon: summonstaff	GlacialFamiliarCore	own
+cmd_pyrocite_familiar_core	Pyrocite familiar core	weapon: summonstaff	PyrociteFamiliarCore	own
+cmd_uranium_familiar_core	Uranium familiar core	weapon: summonstaff	UraniumFamiliarCore	own
+cmd_viridium_familiar_core	Viridium familiar core	weapon: summonstaff	ViridiumFamiliarCore	own
+cmd_lumenite_familiar_core	Lumenite familiar core	weapon: summonstaff	LumeniteFamiliarCore	own
+cmd_voidsteel_familiar_core	Voidsteel familiar core	weapon: summonstaff	VoidsteelFamiliarCore	own
+cmd_astral_familiar_core	Astral familiar core	weapon: summonstaff	AstralFamiliarCore	own
+cmd_coral_bell	Coral jelly bell	weapon: summonstaff	CoralBell	own
+cmd_spore_lantern	Spore lantern	weapon: summonstaff	SporeLantern	own
+cmd_hive_scepter	Hive scepter	weapon: summonstaff	HiveScepter	own
+cmd_swarm_crown	Swarm crown	weapon: summonstaff	SwarmCrown	own
+cmd_corsair_drone_deck	Corsair drone deck	weapon: summonstaff	CorsairDroneDeck	own
+cmd_prism_lantern	Prism lantern	weapon: summonstaff	PrismLantern	own
+cmd_guardian_array	Guardian array	weapon: summonstaff	GuardianArray	own
+cmd_cobalt_sentry_kit	Cobalt sentry kit	weapon: sentrystaff	CobaltSentryKit	own
+cmd_pyrocite_sentry_kit	Pyrocite sentry kit	weapon: sentrystaff	PyrociteSentryKit	own
+cmd_viridium_sentry_kit	Viridium sentry kit	weapon: sentrystaff	ViridiumSentryKit	own
+cmd_lumenite_sentry_kit	Lumenite sentry kit	weapon: sentrystaff	LumeniteSentryKit	own
+cmd_voidsteel_sentry_kit	Voidsteel sentry kit	weapon: sentrystaff	VoidsteelSentryKit	own
+cmd_astral_sentry_kit	Astral sentry kit	weapon: sentrystaff	AstralSentryKit	own
+cmd_furnace_sentry_kit	Furnace sentry kit	weapon: sentrystaff	FurnaceSentryKit	own
+cmd_overseer_watchtower	Overseer watchtower	weapon: sentrystaff	OverseerWatchtower	own
+cmd_warship_flak_kit	Warship flak kit	weapon: sentrystaff	WarshipFlakKit	own
+cmd_mothership_pylon	Mothership pylon	weapon: sentrystaff	MothershipPylon	own
+tool_ferrite_pick	Ferrite pick	tool: pickaxe	FerritePick	own
+tool_cobalt_pick	Cobalt pick	tool: pickaxe	CobaltPick	own
+tool_glacial_pick	Glacial pick	tool: pickaxe	GlacialPick	own
+tool_pyrocite_pick	Pyrocite pick	tool: pickaxe	PyrocitePick	own
+tool_uranium_pick	Uranium pick	tool: pickaxe	UraniumPick	own
+tool_meteorite_pick	Meteorite pick	tool: pickaxe	MeteoritePick	own
+tool_viridium_pick	Viridium pick	tool: pickaxe	ViridiumPick	own
+tool_lumenite_pick	Lumenite pick	tool: pickaxe	LumenitePick	own
+tool_voidsteel_pick	Voidsteel pick	tool: pickaxe	VoidsteelPick	own
+tool_astral_pick	Astral pick	tool: pickaxe	AstralPick	own
+tool_prospector_pick	Prospector's pick	tool: pickaxe	ProspectorPick	own
+tool_dronecore_drill	Drone-core drill	tool: drill	DronecoreDrill	own
+tool_coral_pick	Coral pick	tool: pickaxe	CoralPick	own
+tool_claimjumper_drill	Claim-jumper drill	tool: drill	ClaimjumperDrill	own
+tool_prism_bore	Prism bore	tool: pickaxe	PrismBore	own
+tool_void_auger	Void auger	tool: pickaxe	VoidAuger	own
+tool_ferrite_hatchet	Ferrite hatchet	cutter	FerriteHatchet	own
+tool_cobalt_hatchet	Cobalt hatchet	cutter	CobaltHatchet	own
+tool_glacial_hatchet	Glacial hatchet	cutter	GlacialHatchet	own
+tool_pyrocite_hatchet	Pyrocite hatchet	cutter	PyrociteHatchet	own
+tool_uranium_hatchet	Uranium hatchet	cutter	UraniumHatchet	own
+tool_meteorite_hatchet	Meteorite hatchet	cutter	MeteoriteHatchet	own
+tool_viridium_hatchet	Viridium hatchet	cutter	ViridiumHatchet	own
+tool_lumenite_hatchet	Lumenite hatchet	cutter	LumeniteHatchet	own
+tool_voidsteel_hatchet	Voidsteel hatchet	cutter	VoidsteelHatchet	own
+tool_astral_hatchet	Astral hatchet	cutter	AstralHatchet	own
+tool_overgrowth_reaper	Overgrowth reaper	cutter	OvergrowthReaper	own
+tool_chain_cutter	Chain cutter	cutter	ChainCutter	own
+tool_plasma_saw	Plasma saw	cutter	PlasmaSaw	own
+tool_glacial_breaker	Glacial breaker	demolisher	GlacialBreaker	own
+tool_pyrocite_breaker	Pyrocite breaker	demolisher	PyrociteBreaker	own
+tool_uranium_breaker	Uranium breaker	demolisher	UraniumBreaker	own
+tool_meteorite_breaker	Meteorite breaker	demolisher	MeteoriteBreaker	own
+tool_wreckers_maul	Wrecker's maul	demolisher	WreckersMaul	own
+tool_seismic_hammer	Seismic hammer	demolisher	SeismicHammer	own
+tool_gravity_breaker	Gravity breaker	demolisher	GravityBreaker	own
+tool_astral_sledge	Astral sledge	demolisher	AstralSledge	own
+ammo_ferrite_bolts	Ferrite bolts	ammo	FerriteBolts	own
+ammo_cobalt_bolts	Cobalt bolts	ammo	CobaltBolts	own
+ammo_glacial_bolts	Glacial bolts	ammo	GlacialBolts	own
+ammo_pyrocite_bolts	Pyrocite bolts	ammo	PyrociteBolts	own
+ammo_uranium_bolts	Uranium bolts	ammo	UraniumBolts	own
+ammo_seeker_bolts	Seeker bolts	ammo	SeekerBolts	own
+ammo_viridium_bolts	Viridium bolts	ammo	ViridiumBolts	own
+ammo_shard_bolts	Shard bolts	ammo	ShardBolts	own
+ammo_lumenite_bolts	Lumenite bolts	ammo	LumeniteBolts	own
+ammo_voidsteel_bolts	Voidsteel bolts	ammo	VoidsteelBolts	own
+ammo_astral_bolts	Astral bolts	ammo	AstralBolts	own
+ammo_tracer_rounds	Tracer rounds	ammo	TracerRounds	own
+ammo_cobalt_rounds	Cobalt rounds	ammo	CobaltRounds	own
+ammo_hollow_point_rounds	Hollow-point rounds	ammo	HollowPointRounds	own
+ammo_incendiary_rounds	Incendiary rounds	ammo	IncendiaryRounds	own
+ammo_venom_rounds	Venom rounds	ammo	VenomRounds	own
+ammo_meteorite_rounds	Meteorite rounds	ammo	MeteoriteRounds	own
+ammo_purifier_rounds	Purifier rounds	ammo	PurifierRounds	own
+ammo_viridium_rounds	Viridium rounds	ammo	ViridiumRounds	own
+ammo_flechette_rounds	Flechette rounds	ammo	FlechetteRounds	own
+ammo_lumenite_rounds	Lumenite rounds	ammo	LumeniteRounds	own
+ammo_explosive_rounds	Explosive rounds	ammo	ExplosiveRounds	own
+ammo_seeker_rounds	Seeker rounds	ammo	SeekerRounds	own
+ammo_voidsteel_rounds	Voidsteel rounds	ammo	VoidsteelRounds	own
+ammo_astral_rounds	Astral rounds	ammo	AstralRounds	own
+ammo_cryo_slugs	Cryo slugs	ammo	CryoSlugs	own
+ammo_frag_rocket	Frag rocket	ammo	FragRocket	own
+ammo_incendiary_rocket	Incendiary rocket	ammo	IncendiaryRocket	own
+ammo_cryo_rocket	Cryo rocket	ammo	CryoRocket	own
+ammo_cluster_rocket	Cluster rocket	ammo	ClusterRocket	own
+ammo_breacher_rocket	Breacher rocket	ammo	BreacherRocket	own
+ammo_void_rocket	Void rocket	ammo	VoidRocket	own
+ammo_astral_rocket	Astral rocket	ammo	AstralRocket	own
+ammo_barbed_darts	Barbed darts	ammo	BarbedDarts	own
+ammo_cryo_darts	Cryo darts	ammo	CryoDarts	own
+ammo_ember_darts	Ember darts	ammo	EmberDarts	own
+ammo_venom_darts	Venom darts	ammo	VenomDarts	own
+ammo_crystal_darts	Crystal darts	ammo	CrystalDarts	own
+ammo_void_darts	Void darts	ammo	VoidDarts	own
+ammo_gel_fuel	Gel fuel	ammo	GelFuel	own
+ammo_pyro_gel	Pyro gel	ammo	PyroGel	own
+ammo_cryo_coolant	Cryo coolant	ammo	CryoCoolant	own
+ammo_plasma_fuel	Plasma fuel	ammo	PlasmaFuel	own
+ammo_void_fuel	Void fuel	ammo	VoidFuel	own
+ammo_astral_fuel	Astral fuel	ammo	AstralFuel	own
+ammo_overcharged_cell	Overcharged cell	ammo	OverchargedCell	own
+ammo_prism_cell	Prism cell	ammo	PrismCell	own
+armor_scrap_salvager_mask	Scrap salvager mask	armor: head	ScrapSalvagerMask	own
+armor_scrap_salvager_suit	Scrap salvager suit	armor: body	ScrapSalvagerSuit	own
+armor_scrap_salvager_boots	Scrap salvager boots	armor: legs	ScrapSalvagerBoots	own
+armor_ferrite_brawler_helm	Ferrite brawler helm	armor: head	FerriteBrawlerHelm	own
+armor_ferrite_brawler_cuirass	Ferrite brawler cuirass	armor: body	FerriteBrawlerCuirass	own
+armor_ferrite_brawler_greaves	Ferrite brawler greaves	armor: legs	FerriteBrawlerGreaves	own
+armor_ferrite_gunner_visor	Ferrite gunner visor	armor: head	FerriteGunnerVisor	own
+armor_ferrite_gunner_vest	Ferrite gunner flak vest	armor: body	FerriteGunnerVest	own
+armor_ferrite_gunner_leggings	Ferrite gunner leggings	armor: legs	FerriteGunnerLeggings	own
+armor_ferrite_tinker_hood	Ferrite tinker hood	armor: head	FerriteTinkerHood	own
+armor_ferrite_tinker_coat	Ferrite tinker coat	armor: body	FerriteTinkerCoat	own
+armor_ferrite_tinker_treads	Ferrite tinker treads	armor: legs	FerriteTinkerTreads	own
+armor_ferrite_wrangler_headset	Ferrite wrangler headset	armor: head	FerriteWranglerHeadset	own
+armor_ferrite_wrangler_mantle	Ferrite wrangler mantle	armor: body	FerriteWranglerMantle	own
+armor_ferrite_wrangler_boots	Ferrite wrangler boots	armor: legs	FerriteWranglerBoots	own
+armor_cobalt_vanguard_helm	Cobalt vanguard helm	armor: head	CobaltVanguardHelm	own
+armor_cobalt_vanguard_cuirass	Cobalt vanguard cuirass	armor: body	CobaltVanguardCuirass	own
+armor_cobalt_vanguard_greaves	Cobalt vanguard greaves	armor: legs	CobaltVanguardGreaves	own
+armor_cobalt_sharpshooter_visor	Cobalt sharpshooter visor	armor: head	CobaltSharpshooterVisor	own
+armor_cobalt_sharpshooter_vest	Cobalt sharpshooter flak vest	armor: body	CobaltSharpshooterVest	own
+armor_cobalt_sharpshooter_leggings	Cobalt sharpshooter leggings	armor: legs	CobaltSharpshooterLeggings	own
+armor_cobalt_arcanist_hood	Cobalt arcanist hood	armor: head	CobaltArcanistHood	own
+armor_cobalt_arcanist_coat	Cobalt arcanist coat	armor: body	CobaltArcanistCoat	own
+armor_cobalt_arcanist_treads	Cobalt arcanist treads	armor: legs	CobaltArcanistTreads	own
+armor_cobalt_conductor_headset	Cobalt conductor headset	armor: head	CobaltConductorHeadset	own
+armor_cobalt_conductor_mantle	Cobalt conductor mantle	armor: body	CobaltConductorMantle	own
+armor_cobalt_conductor_boots	Cobalt conductor boots	armor: legs	CobaltConductorBoots	own
+armor_coral_diver_mask	Coral diver mask	armor: head	CoralDiverMask	own
+armor_coral_diver_suit	Coral diver suit	armor: body	CoralDiverSuit	own
+armor_coral_diver_boots	Coral diver boots	armor: legs	CoralDiverBoots	own
+armor_meteorite_striker_helm	Meteorite striker helm	armor: head	MeteoriteStrikerHelm	own
+armor_meteorite_striker_cuirass	Meteorite striker cuirass	armor: body	MeteoriteStrikerCuirass	own
+armor_meteorite_striker_greaves	Meteorite striker greaves	armor: legs	MeteoriteStrikerGreaves	own
+armor_pyrocite_gunslinger_visor	Pyrocite gunslinger visor	armor: head	PyrociteGunslingerVisor	own
+armor_pyrocite_gunslinger_vest	Pyrocite gunslinger flak vest	armor: body	PyrociteGunslingerVest	own
+armor_pyrocite_gunslinger_leggings	Pyrocite gunslinger leggings	armor: legs	PyrociteGunslingerLeggings	own
+armor_glacial_cryomancer_hood	Glacial cryomancer hood	armor: head	GlacialCryomancerHood	own
+armor_glacial_cryomancer_coat	Glacial cryomancer coat	armor: body	GlacialCryomancerCoat	own
+armor_glacial_cryomancer_treads	Glacial cryomancer treads	armor: legs	GlacialCryomancerTreads	own
+armor_uranium_swarmlord_headset	Uranium swarmlord headset	armor: head	UraniumSwarmlordHeadset	own
+armor_uranium_swarmlord_mantle	Uranium swarmlord mantle	armor: body	UraniumSwarmlordMantle	own
+armor_uranium_swarmlord_boots	Uranium swarmlord boots	armor: legs	UraniumSwarmlordBoots	own
+armor_hive_sentinel_helm	Hive sentinel helm	armor: head	HiveSentinelHelm	own
+armor_hive_sentinel_cuirass	Hive sentinel cuirass	armor: body	HiveSentinelCuirass	own
+armor_hive_sentinel_greaves	Hive sentinel greaves	armor: legs	HiveSentinelGreaves	own
+armor_canopy_stalker_visor	Canopy stalker visor	armor: head	CanopyStalkerVisor	own
+armor_canopy_stalker_vest	Canopy stalker flak vest	armor: body	CanopyStalkerVest	own
+armor_canopy_stalker_leggings	Canopy stalker leggings	armor: legs	CanopyStalkerLeggings	own
+armor_spore_mystic_hood	Spore mystic hood	armor: head	SporeMysticHood	own
+armor_spore_mystic_coat	Spore mystic coat	armor: body	SporeMysticCoat	own
+armor_spore_mystic_treads	Spore mystic treads	armor: legs	SporeMysticTreads	own
+armor_coral_tidecaller_headset	Coral tidecaller headset	armor: head	CoralTidecallerHeadset	own
+armor_coral_tidecaller_mantle	Coral tidecaller mantle	armor: body	CoralTidecallerMantle	own
+armor_coral_tidecaller_boots	Coral tidecaller boots	armor: legs	CoralTidecallerBoots	own
+armor_prism_knight_helm	Prism knight helm	armor: head	PrismKnightHelm	own
+armor_prism_knight_cuirass	Prism knight cuirass	armor: body	PrismKnightCuirass	own
+armor_prism_knight_greaves	Prism knight greaves	armor: legs	PrismKnightGreaves	own
+armor_crystal_deadeye_visor	Crystal deadeye visor	armor: head	CrystalDeadeyeVisor	own
+armor_crystal_deadeye_vest	Crystal deadeye flak vest	armor: body	CrystalDeadeyeVest	own
+armor_crystal_deadeye_leggings	Crystal deadeye leggings	armor: legs	CrystalDeadeyeLeggings	own
+armor_solar_adept_hood	Solar adept hood	armor: head	SolarAdeptHood	own
+armor_solar_adept_coat	Solar adept coat	armor: body	SolarAdeptCoat	own
+armor_solar_adept_treads	Solar adept treads	armor: legs	SolarAdeptTreads	own
+armor_storm_marshal_headset	Storm marshal headset	armor: head	StormMarshalHeadset	own
+armor_storm_marshal_mantle	Storm marshal mantle	armor: body	StormMarshalMantle	own
+armor_storm_marshal_boots	Storm marshal boots	armor: legs	StormMarshalBoots	own
+armor_eclipse_revenant_helm	Eclipse revenant helm	armor: head	EclipseRevenantHelm	own
+armor_eclipse_revenant_cuirass	Eclipse revenant cuirass	armor: body	EclipseRevenantCuirass	own
+armor_eclipse_revenant_greaves	Eclipse revenant greaves	armor: legs	EclipseRevenantGreaves	own
+armor_dreadnought_corsair_visor	Dreadnought corsair visor	armor: head	DreadnoughtCorsairVisor	own
+armor_dreadnought_corsair_vest	Dreadnought corsair flak vest	armor: body	DreadnoughtCorsairVest	own
+armor_dreadnought_corsair_leggings	Dreadnought corsair leggings	armor: legs	DreadnoughtCorsairLeggings	own
+armor_rift_oracle_hood	Rift oracle hood	armor: head	RiftOracleHood	own
+armor_rift_oracle_coat	Rift oracle coat	armor: body	RiftOracleCoat	own
+armor_rift_oracle_treads	Rift oracle treads	armor: legs	RiftOracleTreads	own
+armor_mothership_overseer_headset	Mothership overseer headset	armor: head	MothershipOverseerHeadset	own
+armor_mothership_overseer_mantle	Mothership overseer mantle	armor: body	MothershipOverseerMantle	own
+armor_mothership_overseer_boots	Mothership overseer boots	armor: legs	MothershipOverseerBoots	own
+armor_astral_paragon_mask	Astral paragon mask	armor: head	AstralParagonMask	own
+armor_astral_paragon_suit	Astral paragon suit	armor: body	AstralParagonSuit	own
+armor_astral_paragon_boots	Astral paragon boots	armor: legs	AstralParagonBoots	own
+item_close_quarters_emblem_mk_i	Close-quarters emblem Mk I	accessory	CloseQuartersEmblemMkI	own
+item_close_quarters_emblem_mk_ii	Close-quarters emblem Mk II	accessory	CloseQuartersEmblemMkII	own
+item_close_quarters_emblem_mk_iii	Close-quarters emblem Mk III	accessory	CloseQuartersEmblemMkIII	own
+item_ballistics_emblem_mk_i	Ballistics emblem Mk I	accessory	BallisticsEmblemMkI	own
+item_ballistics_emblem_mk_ii	Ballistics emblem Mk II	accessory	BallisticsEmblemMkII	own
+item_ballistics_emblem_mk_iii	Ballistics emblem Mk III	accessory	BallisticsEmblemMkIII	own
+item_tech_emblem_mk_i	Tech emblem Mk I	accessory	TechEmblemMkI	own
+item_tech_emblem_mk_ii	Tech emblem Mk II	accessory	TechEmblemMkII	own
+item_tech_emblem_mk_iii	Tech emblem Mk III	accessory	TechEmblemMkIII	own
+item_command_emblem_mk_i	Command emblem Mk I	accessory	CommandEmblemMkI	own
+item_command_emblem_mk_ii	Command emblem Mk II	accessory	CommandEmblemMkII	own
+item_command_emblem_mk_iii	Command emblem Mk III	accessory	CommandEmblemMkIII	own
+item_targeting_lens_mk_i	Targeting lens Mk I	accessory	TargetingLensMkI	own
+item_targeting_lens_mk_ii	Targeting lens Mk II	accessory	TargetingLensMkII	own
+item_targeting_lens_mk_iii	Targeting lens Mk III	accessory	TargetingLensMkIII	own
+item_kinetic_plate_mk_i	Kinetic plate Mk I	accessory	KineticPlateMkI	own
+item_kinetic_plate_mk_ii	Kinetic plate Mk II	accessory	KineticPlateMkII	own
+item_kinetic_plate_mk_iii	Kinetic plate Mk III	accessory	KineticPlateMkIII	own
+item_sprint_servos_mk_i	Sprint servos Mk I	accessory	SprintServosMkI	own
+item_sprint_servos_mk_ii	Sprint servos Mk II	accessory	SprintServosMkII	own
+item_sprint_servos_mk_iii	Sprint servos Mk III	accessory	SprintServosMkIII	own
+item_extender_arm	Extender arm	accessory	ExtenderArm	own
+item_telescopic_arm	Telescopic arm	accessory	TelescopicArm	own
+item_miners_gauntlet	Miner's gauntlet	accessory	MinersGauntlet	own
+item_excavator_rig	Excavator rig	accessory	ExcavatorRig	own
+item_headlamp	Headlamp	accessory	Headlamp	own
+item_flood_visor	Flood visor	accessory	FloodVisor	own
+item_lumen_halo	Lumen halo	accessory	LumenHalo	own
+item_grav_anchor	Grav anchor	accessory	GravAnchor	own
+item_bulwark_core	Bulwark core	accessory	BulwarkCore	own
+item_thermal_sleeve	Thermal sleeve	accessory	ThermalSleeve	own
+item_magma_skin	Core-plated skin	accessory	MagmaSkin	own
+item_hydro_skimmers	Hydro skimmers	accessory	HydroSkimmers	own
+item_gill_implant	Gill implant	accessory	GillImplant	own
+item_blink_module	Blink module	accessory	BlinkModule	own
+item_phase_cloak	Phase cloak	accessory	PhaseCloak	own
+item_barb_mesh	Barb mesh	accessory	BarbMesh	own
+item_spike_lattice	Spike lattice	accessory	SpikeLattice	own
+item_leech_coil	Leech coil	accessory	LeechCoil	own
+item_vampiric_chip	Vampiric chip	accessory	VampiricChip	own
+item_siphon_coil	Siphon coil	accessory	SiphonCoil	own
+item_capacitor_tap	Capacitor tap	accessory	CapacitorTap	own
+item_geo_scanner	Geo-scanner	accessory	GeoScanner	own
+item_threat_radar	Threat radar	accessory	ThreatRadar	own
+item_power_glove	Power glove	accessory	PowerGlove	own
+item_servo_grip	Servo grip	accessory	ServoGrip	own
+item_nano_mender	Nano-mender	accessory	NanoMender	own
+item_bio_weave	Bio-weave	accessory	BioWeave	own
+item_capacitor_bank	Capacitor bank	accessory	CapacitorBank	own
+item_charge_condenser	Charge condenser	accessory	ChargeCondenser	own
+item_arc_battery	Arc battery	accessory	ArcBattery	own
+item_uplink_antenna	Uplink antenna	accessory	UplinkAntenna	own
+item_sentry_beacon	Sentry beacon	accessory	SentryBeacon	own
+item_swarm_processor	Swarm processor	accessory	SwarmProcessor	own
+item_vital_booster	Vital booster	accessory	VitalBooster	own
+item_heart_pump	Heart pump	accessory	HeartPump	own
+item_ablative_core	Ablative core	accessory	AblativeCore	own
+item_shock_absorber	Shock absorber	accessory	ShockAbsorber	own
+item_grav_damper	Grav damper	accessory	GravDamper	own
+item_oxygen_tank	Oxygen tank	accessory	OxygenTank	own
+item_thermal_regulator	Thermal regulator	accessory	ThermalRegulator	own
+item_filter_implant	Filter implant	accessory	FilterImplant	own
+item_tractor_coil	Tractor coil	accessory	TractorCoil	own
+item_anglers_visor	Angler's visor	accessory	AnglersVisor	own
+item_tackle_kit	Tackle kit	accessory	TackleKit	own
+item_reflex_chip	Reflex chip	accessory	ReflexChip	own
+item_berserker_rig	Berserker rig	accessory	BerserkerRig	own
+item_duelist_harness	Duelist harness	accessory	DuelistHarness	own
+item_gunners_harness	Gunner's harness	accessory	GunnersHarness	own
+item_sniper_scope_rig	Sniper scope rig	accessory	SniperScopeRig	own
+item_arcanists_circlet	Arcanist's circlet	accessory	ArcanistsCirclet	own
+item_overload_matrix	Overload matrix	accessory	OverloadMatrix	own
+item_wardens_uplink	Warden's uplink	accessory	WardensUplink	own
+item_hivemind_processor	Hivemind processor	accessory	HivemindProcessor	own
+item_pathfinder_boots	Pathfinder boots	accessory	PathfinderBoots	own
+item_inferno_treads	Inferno treads	accessory	InfernoTreads	own
+item_bulwark_aegis	Bulwark aegis	accessory	BulwarkAegis	own
+item_paladins_ward	Paladin's ward	accessory	PaladinsWard	own
+item_survey_suite	Survey suite	accessory	SurveySuite	own
+item_miners_helmet_rig	Miner's helmet rig	accessory	MinersHelmetRig	own
+item_excavation_suite	Excavation suite	accessory	ExcavationSuite	own
+item_architects_frame	Architect's frame	accessory	ArchitectsFrame	own
+item_sanguine_reactor	Sanguine reactor	accessory	SanguineReactor	own
+item_storm_capacitor	Storm capacitor	accessory	StormCapacitor	own
+item_ghost_cloak	Ghost cloak	accessory	GhostCloak	own
+item_retribution_mesh	Retribution mesh	accessory	RetributionMesh	own
+item_divers_kit	Diver's kit	accessory	DiversKit	own
+item_environmental_suit	Environmental suit	accessory	EnvironmentalSuit	own
+item_vital_core	Vital core	accessory	VitalCore	own
+item_mobility_rig	Mobility rig	accessory	MobilityRig	own
+item_hunters_eye	Hunter's eye	accessory	HuntersEye	own
+item_fortune_matrix	Fortune matrix	accessory	FortuneMatrix	own
+item_omni_emblem	Omni-emblem	accessory	OmniEmblem	own
+item_master_tackle_kit	Master tackle kit	accessory	MasterTackleKit	own
+item_juggernaut_core	Juggernaut core	accessory	JuggernautCore	own
+item_nova_heart	Nova heart	accessory	NovaHeart	own
+item_cryo_heart	Cryo heart	accessory	CryoHeart	own
+item_ember_heart	Reactor heart	accessory	EmberHeart	own
+item_rad_battery	Rad battery	accessory	RadBattery	own
+item_coral_pendant	Coral pendant	accessory	CoralPendant	own
+item_spore_sac	Spore sac	accessory	SporeSac	own
+item_hivecomb_amulet	Hivecomb amulet	accessory	HivecombAmulet	own
+item_prism_brooch	Prism brooch	accessory	PrismBrooch	own
+item_void_eye	Void eye	accessory	VoidEye	own
+item_astral_compass	Astral compass	accessory	AstralCompass	own
+item_warlords_medal	Warlord's medal	accessory	WarlordsMedal	own
+item_pirates_spyglass	Pirate's spyglass	accessory	PiratesSpyglass	own
+item_overseers_monocle	Overseer's monocle	accessory	OverseersMonocle	own
+item_mooneater_fang	Moon-eater fang	accessory	MooneaterFang	own
+item_eclipse_sigil	Eclipse sigil	accessory	EclipseSigil	own
+item_leviathan_scale	Leviathan scale	accessory	LeviathanScale	own
+item_protocol_shard	Protocol shard	accessory	ProtocolShard	own
+item_mothership_chip	Mothership chip	accessory	MothershipChip	own
+item_empress_tiara	Empress tiara	accessory	EmpressTiara	own
+item_ferrite_wingpack	Ferrite wingpack	accessory: wings	FerriteWingpack	own
+item_cobalt_wingpack	Cobalt wingpack	accessory: wings	CobaltWingpack	own
+item_glacial_wingpack	Glacial wingpack	accessory: wings	GlacialWingpack	own
+item_pyrocite_wingpack	Pyrocite wingpack	accessory: wings	PyrociteWingpack	own
+item_uranium_wingpack	Uranium wingpack	accessory: wings	UraniumWingpack	own
+item_meteorite_wingpack	Meteorite wingpack	accessory: wings	MeteoriteWingpack	own
+item_viridium_wingpack	Viridium wingpack	accessory: wings	ViridiumWingpack	own
+item_lumenite_wingpack	Lumenite wingpack	accessory: wings	LumeniteWingpack	own
+item_voidsteel_wingpack	Voidsteel wingpack	accessory: wings	VoidsteelWingpack	own
+item_astral_wingpack	Astral wingpack	accessory: wings	AstralWingpack	own
+item_mothsilk_wings	Moth-silk wings	accessory: wings	MothsilkWings	own
+item_scrap_wings	Scrap wings	accessory: wings	ScrapWings	own
+item_leaf_wings	Leaf wings	accessory: wings	LeafWings	own
+item_batsail_wings	Bat-sail wings	accessory: wings	BatsailWings	own
+item_frostfeather_wings	Frost-feather wings	accessory: wings	FrostfeatherWings	own
+item_ember_wings	Ember wings	accessory: wings	EmberWings	own
+item_spore_wings	Spore wings	accessory: wings	SporeWings	own
+item_coral_fin_wings	Coral fin wings	accessory: wings	CoralFinWings	own
+item_skyray_wings	Sky-ray wings	accessory: wings	SkyrayWings	own
+item_hive_wings	Hive wings	accessory: wings	HiveWings	own
+item_prism_wings	Prism wings	accessory: wings	PrismWings	own
+item_solar_wings	Solar wings	accessory: wings	SolarWings	own
+item_storm_wings	Storm wings	accessory: wings	StormWings	own
+item_void_wings	Void wings	accessory: wings	VoidWings	own
+item_eclipse_wings	Eclipse wings	accessory: wings	EclipseWings	own
+item_dreadnought_wings	Dreadnought wings	accessory: wings	DreadnoughtWings	own
+item_protocol_wings	Protocol wings	accessory: wings	ProtocolWings	own
+item_mothership_wings	Mothership wings	accessory: wings	MothershipWings	own
+item_nova_wings	Nova wings	accessory: wings	NovaWings	own
+item_close_quarters_tonic	Close-quarters tonic	potion/buff	CloseQuartersTonic	own
+item_ballistics_tonic	Ballistics tonic	potion/buff	BallisticsTonic	own
+item_tech_tonic	Tech tonic	potion/buff	TechTonic	own
+item_command_tonic	Command tonic	potion/buff	CommandTonic	own
+item_precision_draught	Precision draught	potion/buff	PrecisionDraught	own
+item_fortify_stim	Fortify stim	potion/buff	FortifyStim	own
+item_vitality_serum	Vitality serum	potion/buff	VitalitySerum	own
+item_rejuvenation_gel	Rejuvenation gel	potion/buff	RejuvenationGel	own
+item_sprint_stim	Sprint stim	potion/buff	SprintStim	own
+item_miners_draught	Miner's draught	potion/buff	MinersDraught	own
+item_glow_draught	Glow draught	potion/buff	GlowDraught	own
+item_anglers_brew	Angler's brew	potion/buff	AnglersBrew	own
+item_surface_tension_serum	Surface-tension serum	potion/buff	SurfaceTensionSerum	own
+item_thornskin_serum	Thornskin serum	potion/buff	ThornskinSerum	own
+item_endurance_stim	Endurance stim	potion/buff	EnduranceStim	own
+item_ammo_reserve_tonic	Ammo-reserve tonic	potion/buff	AmmoReserveTonic	own
+item_wrath_draught	Wrath draught	potion/buff	WrathDraught	own
+item_drone_link_stim	Drone-link stim	potion/buff	DroneLinkStim	own
+item_sentry_link_stim	Sentry-link stim	potion/buff	SentryLinkStim	own
+item_overcharge_cell	Overcharge cell	potion/buff	OverchargeCell	own
+item_builders_brew	Builder's brew	potion/buff	BuildersBrew	own
+item_magnetism_tonic	Magnetism tonic	potion/buff	MagnetismTonic	own
+item_fireproof_salve	Fireproof salve	potion/buff	FireproofSalve	own
+item_danger_sense_drops	Danger-sense drops	potion/buff	DangerSenseDrops	own
+item_lifeforce_serum	Lifeforce serum	potion/buff	LifeforceSerum	own
+item_inertia_stim	Inertia stim	potion/buff	InertiaStim	own
+item_evasion_serum	Evasion serum	potion/buff	EvasionSerum	own
+item_night_sight_drops	Night-sight drops	potion/buff	NightSightDrops	own
+item_gill_draught	Gill draught	potion/buff	GillDraught	own
+item_deep_scan_vapor	Deep-scan vapor	potion/buff	DeepScanVapor	own
+item_greater_close_quarters_tonic	Greater close-quarters tonic	potion/buff	GreaterCloseQuartersTonic	own
+item_greater_ballistics_tonic	Greater ballistics tonic	potion/buff	GreaterBallisticsTonic	own
+item_greater_tech_tonic	Greater tech tonic	potion/buff	GreaterTechTonic	own
+item_greater_command_tonic	Greater command tonic	potion/buff	GreaterCommandTonic	own
+item_heavy_fortify_stim	Heavy fortify stim	potion/buff	HeavyFortifyStim	own
+item_marathon_stim	Marathon stim	potion/buff	MarathonStim	own
+item_hunters_focus	Hunter's focus	potion/buff	HuntersFocus	own
+item_featherfall_mist	Featherfall mist	potion/buff	FeatherfallMist	own
+item_guard_serum	Guard serum	potion/buff	GuardSerum	own
+item_grilled_skitter_leg	Grilled skitter leg	food	GrilledSkitterLeg	own
+item_spore_bread	Spore bread	food	SporeBread	own
+item_root_stew	Root stew	food	RootStew	own
+item_protein_ration	Protein ration	food	ProteinRation	own
+item_glowshroom_skewer	Glowshroom skewer	food	GlowshroomSkewer	own
+item_cactus_jerky	Cactus jerky	food	CactusJerky	own
+item_frostberry_pie	Frostberry pie	food	FrostberryPie	own
+item_ember_chili	Ember chili	food	EmberChili	own
+item_coral_chowder	Coral chowder	food	CoralChowder	own
+item_nectar_dumplings	Nectar dumplings	food	NectarDumplings	own
+item_hive_honeycake	Hive honeycake	food	HiveHoneycake	own
+item_frost_cod_fillet	Frost-cod fillet	food	FrostCodFillet	own
+item_astro_burger	Astro-burger	food	AstroBurger	own
+item_void_noodles	Void noodles	food	VoidNoodles	own
+item_prism_sorbet	Prism sorbet	food	PrismSorbet	own
+item_koi_flambe	Koi flambe	food	KoiFlambe	own
+item_starfruit_tart	Starfruit tart	food	StarfruitTart	own
+item_colony_feast	Colony feast	food	ColonyFeast	own
+tool_bucket_fuel	Fuel bucket	utility	BucketFuel	own
+weapon_regent_scythe	Regent's scythe	weapon: broadsword	RegentScythe	own
+tech_ember_lantern_staff	Ember-lantern staff	weapon: staff	EmberLanternStaff	own
+weapon_seraph_icicle_bow	Seraph's icicle bow	weapon: bow	SeraphIcicleBow	own
+tech_frost_choir_staff	Frost-choir staff	weapon: staff	FrostChoirStaff	own
+weapon_behemoth_maul	Behemoth's maul	weapon: flail	BehemothMaul	own
+weapon_hoarfrost_fang	Hoarfrost fang	weapon: spear	HoarfrostFang	own
+weapon_sovereign_gyro	Sovereign gyro	weapon: yoyo	SovereignGyro	own
+weapon_gelburst_launcher	Gelburst launcher	weapon: launcher	GelburstLauncher	own
+weapon_paladin_warhammer	Paladin's warhammer	weapon: flail	PaladinWarhammer	own
+weapon_colossus_frostlance	Colossus frostlance	weapon: spear	ColossusFrostlance	own
+tech_grit_storm_rod	Grit-storm rod	weapon: staff	GritStormRod	own
+weapon_nautilus_harpoon_gun	Nautilus harpoon-gun	weapon: gun	NautilusHarpoonGun	own
+tech_hexer_sceptre	Hexer's sceptre	weapon: staff	HexerSceptre	own
+weapon_lancer_joust	Hollow lancer's joust	weapon: spear	LancerJoust	own
+tech_rootwalker_branch	Rootwalker branch	weapon: staff	RootwalkerBranch	own
+weapon_pine_needle_repeater	Pine-needle repeater	weapon: gun	PineNeedleRepeater	own
+weapon_cryo_tank_cannon	Cryo-tank cannon	weapon: launcher	CryoTankCannon	own
+tool_core_breaker	Core breaker	tool: pickaxe	CoreBreaker	own
+item_core_igniter	Core igniter	consumable	CoreIgniter	own
+item_prism_essence	Prism essence	material	PrismEssence	own
+item_blight_essence	Blight essence	material	BlightEssence	own
+item_flight_essence	Flight essence	material	FlightEssence	own
+item_void_hymnal	Void hymnal	consumable	VoidHymnal	own
+item_glide_walk	Glide-walk	placeable	GlideWalk	own
+item_express_walk	Express glide-walk	placeable	ExpressWalk	own
+item_colony_pylon	Colony pylon	placeable	ColonyPylon	own
+item_frost_pylon	Frost pylon	placeable	FrostPylon	own
+item_scrap_pylon	Scrap pylon	placeable	ScrapPylon	own
+item_canopy_pylon	Canopy pylon	placeable	CanopyPylon	own
+item_cavern_pylon	Cavern pylon	placeable	CavernPylon	own
+item_coast_pylon	Coast pylon	placeable	CoastPylon	own
+item_strider_whistle	Strider whistle	utility	StriderWhistle	own
+item_rotor_skiff_key	Rotor-skiff key	utility	RotorSkiffKey	own
+item_tide_ray_charm	Tide-ray charm	utility	TideRayCharm	own
+item_burrower_key	Burrower key	utility	BurrowerKey	own
+item_spring_hopper_key	Spring-hopper key	utility	SpringHopperKey	own
+station_sifter	Sediment sifter	placeable	Sifter	own
+station_dye_vat	Dye vat	placeable	DyeVat	own
+item_fortune_tonic	Fortune tonic	potion/buff	FortuneTonic	own
+item_clover_circuit	Clover circuit	accessory	CloverCircuit	own
+item_beacon_harness	Beacon harness	accessory	BeaconHarness	own
+item_shroud_cloak	Shroud cloak	accessory	ShroudCloak	own
+item_crimson_dye	Crimson dye	utility	CrimsonDye	own
+item_azure_dye	Azure dye	utility	AzureDye	own
+item_verdant_dye	Verdant dye	utility	VerdantDye	own
+item_amber_dye	Amber dye	utility	AmberDye	own
+item_violet_dye	Violet dye	utility	VioletDye	own
+item_teal_dye	Teal dye	utility	TealDye	own
+item_shadow_dye	Shadow dye	utility	ShadowDye	own
+item_prismatic_dye	Prismatic dye	utility	PrismaticDye	own
+item_dye_solvent	Dye solvent	utility	DyeSolvent	own
+item_salvage_cache_stone_sentinel	Overseer mech salvage cache	utility	8240	own
+item_salvage_cache_alpha_skitter	Alpha Skitter salvage cache	utility	8241	own
+item_salvage_cache_damaged_mining_drone	Damaged Mining Drone salvage cache	utility	8242	own
+item_salvage_cache_plant_overgrowth	Plant Overgrowth salvage cache	utility	8243	own
+item_salvage_cache_scout_mech	Scout Mech salvage cache	utility	8244	own
+item_salvage_cache_cyber_swarm_leader	Cyber-Swarm Leader salvage cache	utility	8245	own
+item_salvage_cache_renegade_overseer	Renegade Overseer salvage cache	utility	8246	own
+item_salvage_cache_mutated_flora	Mutated Flora salvage cache	utility	8247	own
+item_salvage_cache_abomination	Abomination salvage cache	utility	8248	own
+item_salvage_cache_warship_core	Warship Core salvage cache	utility	8249	own
+item_salvage_cache_solar_flare_entity	Solar Flare Entity salvage cache	utility	8250	own
+item_salvage_cache_void_stalker	Void Stalker salvage cache	utility	8251	own
+item_salvage_cache_asteroid_miner_mech	Asteroid Miner Mech salvage cache	utility	8252	own
+item_salvage_cache_cyber_pirate_captain	Cyber-Pirate Captain salvage cache	utility	8253	own
+item_salvage_cache_astro_god	Astro-God salvage cache	utility	8254	own
+item_salvage_cache_spore_monarch	Spore Monarch salvage cache	utility	8255	own
+item_salvage_cache_prism_empress	Prism Empress salvage cache	utility	8256	own
+item_salvage_cache_bloom_matriarch	Bloom Matriarch salvage cache	utility	8257	own
+item_salvage_cache_vault_colossus	Vault Colossus salvage cache	utility	8258	own
+item_salvage_cache_moon_eater	Moon Eater salvage cache	utility	8259	own
+item_salvage_cache_eclipse_lord	Eclipse Lord salvage cache	utility	8260	own
+item_salvage_cache_scavenger_warlord	Scavenger Warlord salvage cache	utility	8261	own
+item_salvage_cache_pirate_dreadnought	Pirate Dreadnought salvage cache	utility	8262	own
+item_salvage_cache_protocol_dragon	Protocol Dragon salvage cache	utility	8263	own
+item_salvage_cache_mothership_core	Mothership Core salvage cache	utility	8264	own
+item_salvage_cache_abyss_leviathan	Abyss Leviathan salvage cache	utility	8265	own
+item_salvage_cache_fission_tyrant	Fission Tyrant salvage cache	utility	8266	own
+item_salvage_cache_void_cantor	Void Cantor salvage cache	utility	8267	own
+item_salvage_cache_fallout_hivemind	Fallout Hive-mind salvage cache	utility	8268	own
+item_salvage_cache_hollow_regent	Hollow Regent salvage cache	utility	8269	own
+item_salvage_cache_rime_seraph	Rime Seraph salvage cache	utility	8270	own
+item_salvage_cache_hoarfrost_behemoth	Hoarfrost Behemoth salvage cache	utility	8271	own
+item_salvage_cache_gel_sovereign	Gel Sovereign salvage cache	utility	8272	own
+item_trophy_stone_sentinel	Overseer mech trophy	placeable	8280	own
+item_trophy_alpha_skitter	Alpha Skitter trophy	placeable	8281	own
+item_trophy_damaged_mining_drone	Damaged Mining Drone trophy	placeable	8282	own
+item_trophy_plant_overgrowth	Plant Overgrowth trophy	placeable	8283	own
+item_trophy_scout_mech	Scout Mech trophy	placeable	8284	own
+item_trophy_cyber_swarm_leader	Cyber-Swarm Leader trophy	placeable	8285	own
+item_trophy_renegade_overseer	Renegade Overseer trophy	placeable	8286	own
+item_trophy_mutated_flora	Mutated Flora trophy	placeable	8287	own
+item_trophy_abomination	Abomination trophy	placeable	8288	own
+item_trophy_warship_core	Warship Core trophy	placeable	8289	own
+item_trophy_solar_flare_entity	Solar Flare Entity trophy	placeable	8290	own
+item_trophy_void_stalker	Void Stalker trophy	placeable	8291	own
+item_trophy_asteroid_miner_mech	Asteroid Miner Mech trophy	placeable	8292	own
+item_trophy_cyber_pirate_captain	Cyber-Pirate Captain trophy	placeable	8293	own
+item_trophy_astro_god	Astro-God trophy	placeable	8294	own
+item_trophy_spore_monarch	Spore Monarch trophy	placeable	8295	own
+item_trophy_prism_empress	Prism Empress trophy	placeable	8296	own
+item_trophy_bloom_matriarch	Bloom Matriarch trophy	placeable	8297	own
+item_trophy_vault_colossus	Vault Colossus trophy	placeable	8298	own
+item_trophy_moon_eater	Moon Eater trophy	placeable	8299	own
+item_trophy_eclipse_lord	Eclipse Lord trophy	placeable	8300	own
+item_trophy_scavenger_warlord	Scavenger Warlord trophy	placeable	8301	own
+item_trophy_pirate_dreadnought	Pirate Dreadnought trophy	placeable	8302	own
+item_trophy_protocol_dragon	Protocol Dragon trophy	placeable	8303	own
+item_trophy_mothership_core	Mothership Core trophy	placeable	8304	own
+item_trophy_abyss_leviathan	Abyss Leviathan trophy	placeable	8305	own
+item_trophy_fission_tyrant	Fission Tyrant trophy	placeable	8306	own
+item_trophy_void_cantor	Void Cantor trophy	placeable	8307	own
+item_trophy_fallout_hivemind	Fallout Hive-mind trophy	placeable	8308	own
+item_trophy_hollow_regent	Hollow Regent trophy	placeable	8309	own
+item_trophy_rime_seraph	Rime Seraph trophy	placeable	8310	own
+item_trophy_hoarfrost_behemoth	Hoarfrost Behemoth trophy	placeable	8311	own
+item_trophy_gel_sovereign	Gel Sovereign trophy	placeable	8312	own
+item_relic_stone_sentinel	Overseer mech relic	placeable	8320	own
+item_relic_alpha_skitter	Alpha Skitter relic	placeable	8321	own
+item_relic_damaged_mining_drone	Damaged Mining Drone relic	placeable	8322	own
+item_relic_plant_overgrowth	Plant Overgrowth relic	placeable	8323	own
+item_relic_scout_mech	Scout Mech relic	placeable	8324	own
+item_relic_cyber_swarm_leader	Cyber-Swarm Leader relic	placeable	8325	own
+item_relic_renegade_overseer	Renegade Overseer relic	placeable	8326	own
+item_relic_mutated_flora	Mutated Flora relic	placeable	8327	own
+item_relic_abomination	Abomination relic	placeable	8328	own
+item_relic_warship_core	Warship Core relic	placeable	8329	own
+item_relic_solar_flare_entity	Solar Flare Entity relic	placeable	8330	own
+item_relic_void_stalker	Void Stalker relic	placeable	8331	own
+item_relic_asteroid_miner_mech	Asteroid Miner Mech relic	placeable	8332	own
+item_relic_cyber_pirate_captain	Cyber-Pirate Captain relic	placeable	8333	own
+item_relic_astro_god	Astro-God relic	placeable	8334	own
+item_relic_spore_monarch	Spore Monarch relic	placeable	8335	own
+item_relic_prism_empress	Prism Empress relic	placeable	8336	own
+item_relic_bloom_matriarch	Bloom Matriarch relic	placeable	8337	own
+item_relic_vault_colossus	Vault Colossus relic	placeable	8338	own
+item_relic_moon_eater	Moon Eater relic	placeable	8339	own
+item_relic_eclipse_lord	Eclipse Lord relic	placeable	8340	own
+item_relic_scavenger_warlord	Scavenger Warlord relic	placeable	8341	own
+item_relic_pirate_dreadnought	Pirate Dreadnought relic	placeable	8342	own
+item_relic_protocol_dragon	Protocol Dragon relic	placeable	8343	own
+item_relic_mothership_core	Mothership Core relic	placeable	8344	own
+item_relic_abyss_leviathan	Abyss Leviathan relic	placeable	8345	own
+item_relic_fission_tyrant	Fission Tyrant relic	placeable	8346	own
+item_relic_void_cantor	Void Cantor relic	placeable	8347	own
+item_relic_fallout_hivemind	Fallout Hive-mind relic	placeable	8348	own
+item_relic_hollow_regent	Hollow Regent relic	placeable	8349	own
+item_relic_rime_seraph	Rime Seraph relic	placeable	8350	own
+item_relic_hoarfrost_behemoth	Hoarfrost Behemoth relic	placeable	8351	own
+item_relic_gel_sovereign	Gel Sovereign relic	placeable	8352	own
+item_core_chip_stone_sentinel	Overseer mech core-chip	accessory	8360	own
+item_core_chip_alpha_skitter	Alpha Skitter core-chip	accessory	8361	own
+item_core_chip_damaged_mining_drone	Damaged Mining Drone core-chip	accessory	8362	own
+item_core_chip_plant_overgrowth	Plant Overgrowth core-chip	accessory	8363	own
+item_core_chip_scout_mech	Scout Mech core-chip	accessory	8364	own
+item_core_chip_cyber_swarm_leader	Cyber-Swarm Leader core-chip	accessory	8365	own
+item_core_chip_renegade_overseer	Renegade Overseer core-chip	accessory	8366	own
+item_core_chip_mutated_flora	Mutated Flora core-chip	accessory	8367	own
+item_core_chip_abomination	Abomination core-chip	accessory	8368	own
+item_core_chip_warship_core	Warship Core core-chip	accessory	8369	own
+item_core_chip_solar_flare_entity	Solar Flare Entity core-chip	accessory	8370	own
+item_core_chip_void_stalker	Void Stalker core-chip	accessory	8371	own
+item_core_chip_asteroid_miner_mech	Asteroid Miner Mech core-chip	accessory	8372	own
+item_core_chip_cyber_pirate_captain	Cyber-Pirate Captain core-chip	accessory	8373	own
+item_core_chip_astro_god	Astro-God core-chip	accessory	8374	own
+item_core_chip_spore_monarch	Spore Monarch core-chip	accessory	8375	own
+item_core_chip_prism_empress	Prism Empress core-chip	accessory	8376	own
+item_core_chip_bloom_matriarch	Bloom Matriarch core-chip	accessory	8377	own
+item_core_chip_vault_colossus	Vault Colossus core-chip	accessory	8378	own
+item_core_chip_moon_eater	Moon Eater core-chip	accessory	8379	own
+item_core_chip_eclipse_lord	Eclipse Lord core-chip	accessory	8380	own
+item_core_chip_scavenger_warlord	Scavenger Warlord core-chip	accessory	8381	own
+item_core_chip_pirate_dreadnought	Pirate Dreadnought core-chip	accessory	8382	own
+item_core_chip_protocol_dragon	Protocol Dragon core-chip	accessory	8383	own
+item_core_chip_mothership_core	Mothership Core core-chip	accessory	8384	own
+item_core_chip_abyss_leviathan	Abyss Leviathan core-chip	accessory	8385	own
+item_core_chip_fission_tyrant	Fission Tyrant core-chip	accessory	8386	own
+item_core_chip_void_cantor	Void Cantor core-chip	accessory	8387	own
+item_core_chip_fallout_hivemind	Fallout Hive-mind core-chip	accessory	8388	own
+item_core_chip_hollow_regent	Hollow Regent core-chip	accessory	8389	own
+item_core_chip_rime_seraph	Rime Seraph core-chip	accessory	8390	own
+item_core_chip_hoarfrost_behemoth	Hoarfrost Behemoth core-chip	accessory	8391	own
+item_core_chip_gel_sovereign	Gel Sovereign core-chip	accessory	8392	own
+item_hollow_lantern	Hollow lantern	consumable	HollowLantern	own
+item_rime_beacon	Rime beacon	consumable	RimeBeacon	own
+item_cryo_orders	Cryo brigade orders	consumable	CryoOrders	own
+item_hollow_ember	Hollow ember	material	HollowEmber	own
+item_rime_shard	Rime shard	material	RimeShard	own
+item_delta_kite	Delta kite	utility	DeltaKite	own
+item_box_kite	Box kite	utility	BoxKite	own
+item_ribbon_kite	Ribbon kite	utility	RibbonKite	own
+item_purrbot_permit	Purrbot permit	utility	PurrbotPermit	own
+item_rover_permit	Rover permit	utility	RoverPermit	own
+item_hopling_permit	Hopling permit	utility	HoplingPermit	own
+item_golf_ball	Golf ball	utility	GolfBall	own
+tool_golf_putter	Putter	utility	GolfPutter	own
+tool_golf_iron	Approach iron	utility	GolfIron	own
+tool_golf_driver	Long driver	utility	GolfDriver	own
+item_golf_tee	Golf tee	placeable	GolfTee	own
+item_golf_cup	Golf cup	placeable	GolfCup	own
+item_paint_signal_red	Signal red paint	material	PaintSignalRed	own
+item_paint_hazard_orange	Hazard orange paint	material	PaintHazardOrange	own
+item_paint_solar_yellow	Solar yellow paint	material	PaintSolarYellow	own
+item_paint_moss_lime	Moss lime paint	material	PaintMossLime	own
+item_paint_canopy_green	Canopy green paint	material	PaintCanopyGreen	own
+item_paint_coolant_teal	Coolant teal paint	material	PaintCoolantTeal	own
+item_paint_ion_cyan	Ion cyan paint	material	PaintIonCyan	own
+item_paint_sky_blue	Sky blue paint	material	PaintSkyBlue	own
+item_paint_deep_blue	Deep blue paint	material	PaintDeepBlue	own
+item_paint_void_violet	Void violet paint	material	PaintVoidViolet	own
+item_paint_neon_pink	Neon pink paint	material	PaintNeonPink	own
+item_paint_shadow_black	Shadow black paint	material	PaintShadowBlack	own
+tool_paintbrush	Paintbrush	utility	Paintbrush	own
+tool_paint_roller	Paint roller	utility	PaintRoller	own
+tool_paint_scraper	Paint scraper	utility	PaintScraper	own
+item_glow_coating	Glow coating	utility	GlowCoating	own
+item_audio_deck	Blank audio deck	material	AudioDeck	own
+item_deck_grassland	Audio deck (grassland)	placeable	DeckGrassland	own
+item_deck_underground	Audio deck (underground)	placeable	DeckUnderground	own
+item_deck_frozen	Audio deck (frozen)	placeable	DeckFrozen	own
+item_deck_junk	Audio deck (junk)	placeable	DeckJunk	own
+item_deck_molten	Audio deck (molten)	placeable	DeckMolten	own
+item_deck_radiated	Audio deck (radiated)	placeable	DeckRadiated	own
+item_deck_overgrowth	Audio deck (overgrowth)	placeable	DeckOvergrowth	own
+item_deck_fungal	Audio deck (fungal)	placeable	DeckFungal	own
+item_deck_crystal	Audio deck (crystal)	placeable	DeckCrystal	own
+item_deck_canopy	Audio deck (canopy)	placeable	DeckCanopy	own
+item_deck_coast	Audio deck (coast)	placeable	DeckCoast	own
+item_deck_boss	Audio deck (boss)	placeable	DeckBoss	own
+critter_regolith_vole	Regolith vole	critter	RegolithVole	own
+critter_sunbeam_moth	Sunbeam moth	critter	SunbeamMoth	own
+critter_thistle_finch	Thistle finch	critter	ThistleFinch	own
+critter_meadow_cricket	Meadow cricket	critter	MeadowCricket	own
+critter_puffball_tortoise	Puffball tortoise	critter	PuffballTortoise	own
+critter_dusk_glider	Dusk glider	critter	DuskGlider	own
+critter_lamp_worm	Lamp worm	critter	LampWorm	own
+critter_moonhop_toad	Moonhop toad	critter	MoonhopToad	own
+critter_star_moth	Star moth	critter	StarMoth	own
+critter_pond_minnow	Pond minnow	critter	PondMinnow	own
+critter_bubble_tadpole	Bubble tadpole	critter	BubbleTadpole	own
+critter_burrow_mole	Burrow mole	critter	BurrowMole	own
+critter_root_grub	Root grub	critter	RootGrub	own
+critter_gravel_snail	Gravel snail	critter	GravelSnail	own
+critter_gem_tick	Gem tick	critter	GemTick	own
+critter_echo_flitter	Echo flitter	critter	EchoFlitter	own
+critter_blind_cavefish	Blind cavefish	critter	BlindCavefish	own
+critter_cave_salamander	Cave salamander	critter	CaveSalamander	own
+critter_glow_slug	Glow slug	critter	GlowSlug	own
+critter_frost_vole	Frost vole	critter	FrostVole	own
+critter_icicle_beetle	Icicle beetle	critter	IcicleBeetle	own
+critter_snow_owlet	Snow owlet	critter	SnowOwlet	own
+critter_rime_fish	Rime fish	critter	RimeFish	own
+critter_rust_scarab	Rust scarab	critter	RustScarab	own
+critter_wire_mouse	Wire mouse	critter	WireMouse	own
+critter_sprocket_fly	Sprocket fly	critter	SprocketFly	own
+critter_tide_flea	Tide flea	critter	TideFlea	own
+critter_hermit_bot	Hermit crab-bot	critter	HermitBot	own
+critter_fuel_seahorse	Fuel seahorse	critter	FuelSeahorse	own
+critter_reef_star	Reef star	critter	ReefStar	own
+critter_canopy_gecko	Canopy gecko	critter	CanopyGecko	own
+critter_leafback_beetle	Leafback beetle	critter	LeafbackBeetle	own
+critter_orchid_moth	Orchid moth	critter	OrchidMoth	own
+critter_mire_skipper	Mire skipper	critter	MireSkipper	own
+critter_puffcap_hopper	Puffcap hopper	critter	PuffcapHopper	own
+critter_mycelium_worm	Mycelium worm	critter	MyceliumWorm	own
+critter_spore_firefly	Spore firefly	critter	SporeFirefly	own
+critter_shard_moth	Shard moth	critter	ShardMoth	own
+critter_lumen_fish	Lumen fish	critter	LumenFish	own
+critter_mutant_roach	Mutant roach	critter	MutantRoach	own
+critter_glow_toad	Glow toad	critter	GlowToad	own
+critter_rootworm	Rootworm	critter	Rootworm	own
+critter_isotope_beetle	Isotope beetle	critter	IsotopeBeetle	own
+critter_fission_moth	Fission moth	critter	FissionMoth	own
+critter_gilded_vole	Gilded vole	critter	GildedVole	own
+critter_gilded_cricket	Gilded cricket	critter	GildedCricket	own
+critter_gilded_finch	Gilded finch	critter	GildedFinch	own
+critter_gilded_minnow	Gilded minnow	critter	GildedMinnow	own
+critter_gilded_gecko	Gilded gecko	critter	GildedGecko	own
+critter_gilded_scarab	Gilded scarab	critter	GildedScarab	own
+critter_gilded_hop_bunny	Gilded hop bunny	critter	GildedHopBunny	own
+critter_gilded_squirrel_bot	Gilded squirrel bot	critter	GildedSquirrelBot	own
+critter_gilded_frog	Gilded frog	critter	GildedFrog	own
+item_vinewood	Vinewood log	material	Vinewood	own
+item_palmwood	Fuel-palm log	material	Palmwood	own
+item_stalkwood	Shroom stalk	material	Stalkwood	own
+item_prismwood	Prismwood log	material	Prismwood	own
+item_blightwood	Blightwood log	material	Blightwood	own
+item_gemwood	Geode bark	material	Gemwood	own
+item_plant_fiber	Plant fiber	material	PlantFiber	own
+item_frost_lichen	Frost lichen	material	FrostLichen	own
+item_scrap_thistle	Scrap thistle	material	ScrapThistle	own
+item_sea_fennel	Sea fennel	material	SeaFennel	own
+item_canopy_pod	Canopy pod	material	CanopyPod	own
+item_glowcap_cluster	Glowcap cluster	material	GlowcapCluster	own
+item_prism_bloom	Prism bloom	material	PrismBloom	own
+item_blight_bulb	Blight bulb	material	BlightBulb	own
+item_fission_slag	Fission slag	material	FissionSlag	own
+item_fallout_hive_cell	Fallout hive cell	consumable	FalloutHiveCell	own
+item_lifebloom_pod	Lifebloom pod	consumable	LifebloomPod	own
+item_auxiliary_socket	Auxiliary socket	consumable	AuxiliarySocket	own
+item_nanite_marrow	Nanite marrow	consumable	NaniteMarrow	own
+item_coolant_pearl	Coolant pearl	consumable	CoolantPearl	own
+item_fortune_lattice	Fortune lattice	consumable	FortuneLattice	own
+item_bait_gland	Bait gland	consumable	BaitGland	own
+item_servo_grease	Servo grease	consumable	ServoGrease	own
+item_fabricator_manual	Fabricator manual	consumable	FabricatorManual	own
+item_lumen_accord	Lumen accord	consumable	LumenAccord	own
+item_salvaged_thruster_fins	Salvaged thruster fins	accessory	SalvagedThrusterFins	own
+item_scrap_tether	Scrap tether	accessory	ScrapTether	own
+item_twin_lash	Twin lash	accessory	TwinLash	own
+item_phase_tether	Phase tether	accessory	PhaseTether	own
+item_companion_permit	Companion permit	utility	CompanionPermit	own
+item_frostbitten_lure	Frostbitten lure	consumable	FrostbittenLure	own
+item_prism_gel_lattice	Prism gel lattice	consumable	PrismGelLattice	own
+item_regent_wick	Regent's wick	consumable	RegentWick	own
+item_seraph_frost_core	Seraph frost-core	consumable	SeraphFrostCore	own
+item_corroded_flare	Corroded flare	consumable	CorrodedFlare	own
+item_umbral_lens	Umbral lens	consumable	UmbralLens	own
+item_banner_moss_slime	Swarm bug banner	utility	20000	own
+item_banner_cave_moth	Moth-ray banner	utility	20001	own
+item_banner_cave_bat	Spore bat banner	utility	20002	own
+item_banner_rock_golem	Security droid banner	utility	20003	own
+item_banner_wraith	Void wisp banner	utility	20004	own
+item_banner_rock_mite	Rock mite banner	utility	20006	own
+item_banner_sky_ray	Sky-ray banner	utility	20007	own
+item_banner_spore_rat	Spore rat banner	utility	20008	own
+item_banner_astro_beast	Astro-beast banner	utility	20009	own
+item_banner_snow_wolf	Snow-wolf banner	utility	20024	own
+item_banner_cryopterous	Cryopterous banner	utility	20025	own
+item_banner_snow_mite	Snow-mite banner	utility	20026	own
+item_banner_glacial_golem	Glacial golem banner	utility	20027	own
+item_banner_rad_skitter	Rad-skitter banner	utility	20028	own
+item_banner_mutant_rat	Mutant rat banner	utility	20029	own
+item_banner_geiger_bug	Geiger bug banner	utility	20030	own
+item_banner_glow_stalker	Glow-stalker banner	utility	20031	own
+item_banner_rad_leech	Rad-leech banner	utility	20032	own
+item_banner_pyro_skitter	Pyro-skitter banner	utility	20033	own
+item_banner_magma_turtle	Magma turtle banner	utility	20034	own
+item_banner_lava_leech	Lava-leech banner	utility	20035	own
+item_banner_ember_rat	Ember rat banner	utility	20036	own
+item_banner_basalt_golem	Basalt golem banner	utility	20037	own
+item_banner_junk_skitter	Junk-skitter banner	utility	20038	own
+item_banner_scavenger_crab	Scavenger crab banner	utility	20039	own
+item_banner_salvage_drone	Salvage drone banner	utility	20040	own
+item_banner_scrap_mite	Scrap-mite banner	utility	20041	own
+item_banner_wasteland_beast	Wasteland beast banner	utility	20042	own
+item_banner_acid_skitterer	Brine skitterer banner	utility	20090	own
+item_banner_neo_terra_reaver	Neo-Terra reaver banner	utility	20091	own
+item_banner_terraformer_drone	Terraformer drone banner	utility	20092	own
+item_banner_acid_shark	Saltjaw shark banner	utility	20093	own
+item_banner_tide_leech	Tide leech banner	utility	20094	own
+item_banner_reef_crawler	Reef crawler banner	utility	20095	own
+item_banner_brine_golem	Brine golem banner	utility	20096	own
+item_banner_spitting_barnacle	Spitting barnacle banner	utility	20097	own
+item_banner_storm_ray	Storm ray banner	utility	20098	own
+item_banner_drowned_diver	Drowned diver banner	utility	20099	own
+item_banner_coral_sentinel	Coral sentinel banner	utility	20100	own
+item_banner_spore_zombie	Spore husk banner	utility	20101	own
+item_banner_fungal_crawler	Fungal crawler banner	utility	20102	own
+item_banner_puff_drifter	Puff drifter banner	utility	20103	own
+item_banner_mycelid_shaman	Mycelid shaman banner	utility	20104	own
+item_banner_shroom_stalker	Shroom stalker banner	utility	20105	own
+item_banner_cap_turtle	Cap turtle banner	utility	20106	own
+item_banner_lantern_bat	Lantern bat banner	utility	20107	own
+item_banner_spore_golem	Spore golem banner	utility	20108	own
+item_banner_prism_knight	Prism knight banner	utility	20109	own
+item_banner_shard_unicorn	Shard strider banner	utility	20110	own
+item_banner_light_mimic	Light mimic banner	utility	20111	own
+item_banner_crystal_wraith	Crystal wraith banner	utility	20112	own
+item_banner_refractor_turret	Refractor turret banner	utility	20113	own
+item_banner_halo_bat	Halo bat banner	utility	20114	own
+item_banner_pearl_golem	Pearl golem banner	utility	20115	own
+item_banner_spire_dragonfly	Spire glassfly banner	utility	20116	own
+item_banner_pollen_drone_swarm	Pollen drone swarm banner	utility	20117	own
+item_banner_thorn_lurker	Thorn lurker banner	utility	20118	own
+item_banner_canopy_ape	Canopy ape banner	utility	20119	own
+item_banner_snapjaw_plant	Snapjaw plant banner	utility	20120	own
+item_banner_hive_guard	Hive guard banner	utility	20121	own
+item_banner_mud_crawler	Mud crawler banner	utility	20122	own
+item_banner_spitting_orchid	Spitting orchid banner	utility	20123	own
+item_banner_jungle_stalker	Jungle stalker banner	utility	20124	own
+item_banner_vault_sentinel	Vault sentinel banner	utility	20125	own
+item_banner_glyph_drone	Glyph drone banner	utility	20126	own
+item_banner_ancient_guardian	Ancient guardian banner	utility	20127	own
+item_banner_geode_crab	Geode crab banner	utility	20128	own
+item_banner_alabaster_hoplite	Alabaster hoplite banner	utility	20129	own
+item_banner_mite_broodmother	Mite broodmother banner	utility	20130	own
+item_banner_silk_spider_mite	Silk spider-mite banner	utility	20131	own
+item_banner_event_grunt	Raider grunt banner	utility	20132	own
+item_banner_event_scout	Raider scout banner	utility	20133	own
+item_banner_event_marksman	Raider marksman banner	utility	20134	own
+item_banner_event_brute	Raider brute banner	utility	20135	own
+item_banner_event_commander	Raider commander banner	utility	20136	own
+item_banner_event_drone	Strike drone banner	utility	20137	own
+item_banner_event_swarmer	Swarmer banner	utility	20138	own
+item_banner_event_energy_vortex	Energy vortex banner	utility	20139	own
+item_banner_event_rogue_terraformer	Rogue terraformer banner	utility	20140	own
+item_banner_event_void_siphon	Void siphon banner	utility	20141	own
+item_banner_event_corrupted_survivor	Corrupted survivor banner	utility	20142	own
+item_banner_event_abomination	Lesser abomination banner	utility	20143	own
+item_banner_event_husk	Rust husk banner	utility	20144	own
+item_banner_event_rust_wraith	Rust wraith banner	utility	20145	own
+item_banner_event_rust_hound	Rust hound banner	utility	20146	own
+item_banner_event_eye_drone	Eye drone banner	utility	20147	own
+item_banner_event_corroded_mech	Corroded mech banner	utility	20148	own
+item_banner_event_swarm_queen	Swarm queen banner	utility	20149	own
+item_banner_event_dust_devil	Dust devil banner	utility	20150	own
+item_banner_event_sand_ray	Sand ray banner	utility	20151	own
+item_banner_event_scrap_elemental	Scrap elemental banner	utility	20152	own
+item_banner_event_dust_raider	Dust raider banner	utility	20153	own
+item_banner_event_acid_slime	Acid slime banner	utility	20154	own
+item_banner_event_acid_bird	Acid bird banner	utility	20155	own
+item_banner_event_toxic_cloud	Toxic cloud banner	utility	20156	own
+item_banner_event_meteor_head	Meteor head banner	utility	20159	own
+item_banner_event_meteor_crawler	Meteor crawler banner	utility	20160	own
+item_banner_event_eclipse_shade	Eclipse shade banner	utility	20161	own
+item_banner_event_eclipse_reaper	Eclipse reaper banner	utility	20162	own
+item_banner_event_eclipse_moth_mech	Eclipse moth-mech banner	utility	20163	own
+item_banner_event_scavenger_grunt	Scavenger grunt banner	utility	20164	own
+item_banner_event_scavenger_brute	Scavenger brute banner	utility	20165	own
+item_banner_event_scavenger_sniper	Scavenger sniper banner	utility	20166	own
+item_banner_event_scavenger_rigger	Scavenger rigger banner	utility	20167	own
+item_banner_event_pirate_deckhand	Pirate deckhand banner	utility	20168	own
+item_banner_event_pirate_gunner	Pirate gunner banner	utility	20169	own
+item_banner_event_pirate_parrot_drone	Parrot drone banner	utility	20170	own
+item_banner_event_pirate_cannon	Boarding cannon banner	utility	20171	own
+item_banner_event_protocol_grunt	Protocol grunt banner	utility	20172	own
+item_banner_event_protocol_shieldbearer	Protocol shieldbearer banner	utility	20173	own
+item_banner_event_protocol_wyvern	Protocol wyvern banner	utility	20174	own
+item_banner_event_protocol_ogre	Protocol ogre banner	utility	20175	own
+item_banner_event_protocol_mage	Protocol mage banner	utility	20176	own
+item_banner_event_precursor_probe	Precursor probe banner	utility	20177	own
+item_banner_event_probe_gunner	Probe gunner banner	utility	20178	own
+item_banner_event_probe_tesla_walker	Tesla walker banner	utility	20179	own
+item_banner_event_probe_brain_drone	Brain drone banner	utility	20180	own
+item_banner_bloodfin_ambusher	Bloodfin ambusher banner	utility	20191	own
+item_banner_vengeful_wisp	Vengeful wisp banner	utility	20193	own
+item_banner_tunnel_wyrm	Tunnel wyrm banner	utility	20194	own
+item_banner_dune_borer	Dune borer banner	utility	20195	own
+item_banner_rift_caster	Rift caster banner	utility	20196	own
+item_banner_dive_kite	Dive kite banner	utility	20197	own
+item_banner_cache_mimic	Cache mimic banner	utility	20198	own
+item_banner_gel_hopper	Gel hopper banner	utility	20199	own
+item_banner_boulder_hopper	Boulder hopper banner	utility	20200	own
+item_banner_flea_hopper	Flea hopper banner	utility	20201	own
+item_banner_dungeon_guardian	Dungeon Guardian banner	utility	20202	own
+item_banner_core_husk	Irradiated husk banner	utility	20203	own
+item_banner_fission_wisp	Fission wisp banner	utility	20204	own
+item_banner_ember_obelisk	Ember obelisk banner	utility	20207	own
+item_banner_rift_obelisk	Rift obelisk banner	utility	20208	own
+item_banner_gale_obelisk	Gale obelisk banner	utility	20209	own
+item_banner_shard_obelisk	Shard obelisk banner	utility	20210	own
+item_banner_thistle_boar	Thistle boar banner	utility	21100	own
+item_banner_meadow_gel	Meadow gel banner	utility	21101	own
+item_banner_hornet_drone	Hornet drone banner	utility	21102	own
+item_banner_bore_beetle	Bore beetle banner	utility	21103	own
+item_banner_dusk_prowler	Dusk prowler banner	utility	21104	own
+item_banner_umbral_gel	Umbral gel banner	utility	21105	own
+item_banner_gloom_kite	Gloom kite banner	utility	21106	own
+item_banner_grave_husk	Grave husk banner	utility	21107	own
+item_banner_drifting_eye	Drifting eye banner	utility	21108	own
+item_banner_thorn_behemoth	Thorn behemoth banner	utility	21109	own
+item_banner_storm_harrier	Storm harrier banner	utility	21110	own
+item_banner_night_revenant	Night revenant banner	utility	21111	own
+item_banner_shock_gel	Shock gel banner	utility	21112	own
+item_banner_sky_lancer	Sky lancer banner	utility	21113	own
+item_banner_tunnel_rat	Tunnel rat banner	utility	21114	own
+item_banner_burrow_spider	Burrow spider banner	utility	21115	own
+item_banner_clay_golem	Clay golem banner	utility	21116	own
+item_banner_grub_worm	Grub worm banner	utility	21117	own
+item_banner_mud_gel	Mud gel banner	utility	21118	own
+item_banner_drill_mite	Drill mite banner	utility	21119	own
+item_banner_bedrock_crusher	Bedrock crusher banner	utility	21120	own
+item_banner_delve_wyrm	Delve wyrm banner	utility	21121	own
+item_banner_shade_caster	Shade caster banner	utility	21122	own
+item_banner_gem_crawler	Gem crawler banner	utility	21123	own
+item_banner_cave_lurker	Cave lurker banner	utility	21124	own
+item_banner_slate_gel	Slate gel banner	utility	21125	own
+item_banner_echo_caster	Echo caster banner	utility	21126	own
+item_banner_crystal_borer	Crystal borer banner	utility	21127	own
+item_banner_hollow_bat	Hollow bat banner	utility	21128	own
+item_banner_urn_mimic	Urn mimic banner	utility	21129	own
+item_banner_geode_titan	Geode titan banner	utility	21130	own
+item_banner_void_mantis	Void mantis banner	utility	21131	own
+item_banner_runic_caster	Runic caster banner	utility	21132	own
+item_banner_armored_delver	Armored delver banner	utility	21133	own
+item_banner_strongbox_mimic	Strongbox mimic banner	utility	21134	own
+item_banner_rime_gel	Rime gel banner	utility	21135	own
+item_banner_frost_flitter	Frost flitter banner	utility	21136	own
+item_banner_tundra_brute	Tundra brute banner	utility	21137	own
+item_banner_drift_leaper	Drift leaper banner	utility	21138	own
+item_banner_cryo_caster	Cryo caster banner	utility	21139	own
+item_banner_permafrost_borer	Permafrost borer banner	utility	21140	own
+item_banner_glacier_titan	Glacier titan banner	utility	21141	own
+item_banner_blizzard_wraith	Blizzard wraith banner	utility	21142	own
+item_banner_frozen_mimic	Frozen mimic banner	utility	21143	own
+item_banner_rime_diver	Rime diver banner	utility	21144	own
+item_banner_rust_gel	Rust gel banner	utility	21145	own
+item_banner_scrap_hound	Scrap hound banner	utility	21146	own
+item_banner_bolt_drone	Bolt drone banner	utility	21147	own
+item_banner_dune_phantom	Dune phantom banner	utility	21148	own
+item_banner_junk_tinker	Junk tinker banner	utility	21149	own
+item_banner_slag_borer	Slag borer banner	utility	21150	own
+item_banner_junk_pile_mimic	Junk-pile mimic banner	utility	21151	own
+item_banner_scrap_colossus	Scrap colossus banner	utility	21152	own
+item_banner_rust_reaper	Rust reaper banner	utility	21153	own
+item_banner_dune_devourer	Dune devourer banner	utility	21154	own
+item_banner_fuel_gel	Fuel gel banner	utility	21155	own
+item_banner_pincer_crab	Pincer crab banner	utility	21156	own
+item_banner_gull_diver	Gull diver banner	utility	21157	own
+item_banner_fuel_eel	Fuel eel banner	utility	21158	own
+item_banner_barb_ray	Barb ray banner	utility	21159	own
+item_banner_ink_squid	Ink squid banner	utility	21160	own
+item_banner_deep_maw	Deep maw banner	utility	21161	own
+item_banner_reef_horror	Reef horror banner	utility	21162	own
+item_banner_tide_caller	Tide caller banner	utility	21163	own
+item_banner_vine_gel	Vine gel banner	utility	21164	own
+item_banner_horn_beetle	Horn beetle banner	utility	21165	own
+item_banner_canopy_bat	Canopy bat banner	utility	21166	own
+item_banner_spear_frog	Spear frog banner	utility	21167	own
+item_banner_root_lasher	Root lasher banner	utility	21168	own
+item_banner_dart_lizard	Dart lizard banner	utility	21169	own
+item_banner_thorn_chanter	Thorn chanter banner	utility	21170	own
+item_banner_moss_hornet	Moss hornet banner	utility	21171	own
+item_banner_canopy_wyrm	Canopy wyrm banner	utility	21172	own
+item_banner_strangler_bloom	Strangler bloom banner	utility	21173	own
+item_banner_silverback_brute	Silverback brute banner	utility	21174	own
+item_banner_comb_gel	Comb gel banner	utility	21175	own
+item_banner_brood_larva	Brood larva banner	utility	21176	own
+item_banner_hive_warden	Hive warden banner	utility	21177	own
+item_banner_spore_gel	Spore gel banner	utility	21178	own
+item_banner_toadstool_leaper	Toadstool leaper banner	utility	21179	own
+item_banner_mycelium_borer	Mycelium borer banner	utility	21180	own
+item_banner_glowcap_mite	Glowcap mite banner	utility	21181	own
+item_banner_cap_sentinel	Cap sentinel banner	utility	21182	own
+item_banner_mycelid_hulk	Mycelid hulk banner	utility	21183	own
+item_banner_spore_phantom	Spore phantom banner	utility	21184	own
+item_banner_puff_bomber	Puff bomber banner	utility	21185	own
+item_banner_prism_gel	Prism gel banner	utility	21186	own
+item_banner_shard_leaper	Shard leaper banner	utility	21187	own
+item_banner_lumen_caster	Lumen caster banner	utility	21188	own
+item_banner_pearl_wyrm	Pearl wyrm banner	utility	21189	own
+item_banner_glass_kite	Glass kite banner	utility	21190	own
+item_banner_prism_colossus	Prism colossus banner	utility	21191	own
+item_banner_halo_seraph	Halo seraph banner	utility	21192	own
+item_banner_chroma_serpent	Chroma serpent banner	utility	21193	own
+item_banner_isotope_gel	Isotope gel banner	utility	21194	own
+item_banner_fallout_hound	Fallout hound banner	utility	21195	own
+item_banner_rad_moth	Rad moth banner	utility	21196	own
+item_banner_fallout_seer	Fallout seer banner	utility	21197	own
+item_banner_sludge_worm	Sludge worm banner	utility	21198	own
+item_banner_rad_behemoth	Rad behemoth banner	utility	21199	own
+item_banner_isotope_wraith	Isotope wraith banner	utility	21200	own
+item_banner_lead_box_mimic	Lead-box mimic banner	utility	21201	own
+item_banner_root_gel	Root gel banner	utility	21202	own
+item_banner_blight_crawler	Blight crawler banner	utility	21203	own
+item_banner_thorn_bat	Thorn bat banner	utility	21204	own
+item_banner_root_wyrm	Root wyrm banner	utility	21205	own
+item_banner_blight_hulk	Blight hulk banner	utility	21206	own
+item_banner_rot_chanter	Rot chanter banner	utility	21207	own
+item_banner_vine_reaper	Vine reaper banner	utility	21208	own
+item_banner_slag_gel	Slag gel banner	utility	21209	own
+item_banner_fission_hound	Fission hound banner	utility	21210	own
+item_banner_core_borer	Core borer banner	utility	21211	own
+item_banner_isotope_imp	Isotope imp banner	utility	21212	own
+item_banner_reactor_bat	Reactor bat banner	utility	21213	own
+item_banner_meltdown_golem	Meltdown golem banner	utility	21214	own
+item_banner_critical_wisp	Critical wisp banner	utility	21215	own
+item_banner_web_lurker	Web lurker banner	utility	21216	own
+item_banner_brood_tyrant	Brood tyrant banner	utility	21217	own
+item_banner_glyph_caster	Glyph caster banner	utility	21218	own
+item_banner_vault_lancer	Vault lancer banner	utility	21219	own
+item_banner_crypt_hoplite	Crypt hoplite banner	utility	21220	own
+item_banner_void_scribe	Void scribe banner	utility	21221	own
+item_banner_crypt_flitter	Crypt flitter banner	utility	21222	own
+item_banner_stratos_raptor	Stratos raptor banner	utility	21400	own
+item_banner_ion_skate	Ion skate banner	utility	21401	own
+item_banner_stratos_wyvern	Stratos wyvern banner	utility	21402	own
+item_banner_cirrus_sentinel	Cirrus sentinel banner	utility	21403	own
+item_banner_pit_charger	Pit charger banner	utility	21404	own
+item_banner_pit_swarmer	Pit swarmer banner	utility	21405	own
+item_banner_tomb_borer	Tomb borer banner	utility	21406	own
+item_banner_dust_ghoul	Dust ghoul banner	utility	21407	own
+item_banner_rust_basilisk	Rust basilisk banner	utility	21408	own
+item_banner_grit_seer	Grit seer banner	utility	21409	own
+item_banner_icicle_bat	Icicle bat banner	utility	21410	own
+item_banner_frostbound_delver	Frostbound delver banner	utility	21411	own
+item_banner_hoarfrost_elemental	Hoarfrost elemental banner	utility	21412	own
+item_banner_glacier_tortoise	Glacier tortoise banner	utility	21413	own
+item_banner_grave_wisp	Grave wisp banner	utility	21414	own
+item_banner_carrion_drone	Carrion drone banner	utility	21415	own
+item_banner_tomb_husk	Tomb husk banner	utility	21416	own
+item_banner_mourning_shade	Mourning shade banner	utility	21417	own
+item_banner_crypt_knight	Crypt knight banner	utility	21418	own
+item_banner_hex_necrotech	Hex necrotech banner	utility	21419	own
+item_banner_crypt_marksman	Crypt marksman banner	utility	21420	own
+item_banner_crypt_spirit	Crypt spirit banner	utility	21421	own
+item_banner_crypt_paladin	Crypt paladin banner	utility	21422	own
+item_banner_venom_recluse	Venom recluse banner	utility	21423	own
+item_banner_royal_comb_guard	Royal comb-guard banner	utility	21424	own
+item_banner_drizzle_gel	Drizzle gel banner	utility	21425	own
+item_banner_rain_skipper	Rain skipper banner	utility	21426	own
+item_banner_slicker_husk	Slicker husk banner	utility	21427	own
+item_banner_thunderhead	Thunderhead banner	utility	21428	own
+item_banner_whiteout_wisp	Whiteout wisp banner	utility	21429	own
+item_banner_drift_stalker	Drift stalker banner	utility	21430	own
+item_banner_blizzard_colossus	Blizzard colossus banner	utility	21431	own
+item_banner_dune_razorfin	Dune razorfin banner	utility	21432	own
+item_banner_grit_elemental	Grit elemental banner	utility	21433	own
+item_banner_thistledown_drifter	Thistledown drifter banner	utility	21434	own
+item_banner_gust_mite	Gust mite banner	utility	21435	own
+item_banner_rust_jester	Rust jester banner	utility	21436	own
+item_banner_corrosion_nautilus	Corrosion nautilus banner	utility	21437	own
+item_banner_eclipse_slasher	Eclipse slasher banner	utility	21438	own
+item_banner_eclipse_sphere	Eclipse sphere banner	utility	21439	own
+item_banner_scavenger_hexer	Scavenger hexer banner	utility	21440	own
+item_banner_hollow_effigy	Hollow effigy banner	utility	21441	own
+item_banner_ember_splinter	Ember splinter banner	utility	21442	own
+item_banner_cinder_hound	Cinder hound banner	utility	21443	own
+item_banner_static_poltergeist	Static poltergeist banner	utility	21444	own
+item_banner_hollow_lancer	Hollow lancer banner	utility	21445	own
+item_banner_ember_rootwalker	Ember rootwalker banner	utility	21446	own
+item_banner_frost_sapper	Frost sapper banner	utility	21448	own
+item_banner_shellcracker	Shellcracker banner	utility	21449	own
+item_banner_flurry_flake	Flurry flake banner	utility	21450	own
+item_banner_cargo_mimic	Cargo mimic banner	utility	21451	own
+item_banner_snow_hulk	Snow hulk banner	utility	21452	own
+item_banner_frostspire_pine	Frostspire pine banner	utility	21453	own
+item_banner_cryo_tank	Cryo tank banner	utility	21454	own
+item_banner_brigade_trooper	Brigade trooper banner	utility	21456	own
+item_banner_brigade_shiv	Brigade shiv banner	utility	21457	own
+item_banner_brigade_lobber	Brigade lobber banner	utility	21458	own
+item_banner_cinder_imp	Cinder imp banner	utility	21459	own
+item_banner_slag_centipede	Slag centipede banner	utility	21460	own
+item_banner_pyre_lancer	Pyre lancer banner	utility	21461	own
+item_banner_gale_diver	Gale diver banner	utility	21462	own
+item_banner_squall_hornet	Squall hornet banner	utility	21463	own
+item_banner_tempest_larva	Tempest larva banner	utility	21464	own
+item_banner_rift_seer	Rift seer banner	utility	21465	own
+item_banner_mind_leech	Mind leech banner	utility	21466	own
+item_banner_rift_floater	Rift floater banner	utility	21467	own
+item_banner_star_cell	Star-cell banner	utility	21468	own
+item_banner_lattice_weaver	Lattice weaver banner	utility	21469	own
+item_banner_shard_invader	Shard invader banner	utility	21470	own
+item_banner_lumen_flare	Lumen flare banner	utility	21471	own
+item_banner_glare_mote	Glare mote banner	utility	21472	own
+item_banner_armored_swarmer	Armored swarmer banner	utility	21475	own
+item_banner_prism_swarmer	Prism swarmer banner	utility	21476	own

@@ -1,6 +1,7 @@
 """Overnight audio run: every sound the game still needs, resumable. Start it and leave it.
 
     python tools/audio/overnight_audio.py [--only effects|music|ambience] [--pause SECONDS] [--limit N] [--no-fill] [--restricted] [--quick]
+                                    [--takes N] [--cues mus_title,...]
 
 A night has one focus, art or audio, never both. An audio night runs:
 1. Refreshes tools/audio/audio_needs.tsv from the game (dotnet run -- --sound-cues).
@@ -16,7 +17,8 @@ A night has one focus, art or audio, never both. An audio night runs:
 VRAM and 80% of the CPU threads. --restricted leaves 4 GB of VRAM free instead (below-normal priority, 10 s rests) so
 the PC stays usable.
 --quick is a dry run of every step in minutes (one short take per step, nothing promoted). --pause overrides the
-rest after every clip or track. --limit caps the cues per step. Each step skips
+rest after every clip or track. --limit caps the cues per step. --takes N tops music slots up to N takes and --cues
+limits music to the named slots (for extra iterations once every slot has one). Each step skips
 work already done, so stopping and re-running continues where it left off. ComfyUI unloads its models before MOSS
 loads. Afterwards rebuild or publish the game so new files are copied to the output folder.
 """
@@ -62,6 +64,10 @@ def main():
     quick = "--quick" in argv
     sfx_extra = ["--limit", "1", "--takes", "1", "--max-seconds", "4"] if quick else limit
     music_extra = ["--limit", "1", "--seconds", "20"] if quick else limit
+    if "--takes" in argv[:-1]:
+        music_extra = [*music_extra, "--takes", argv[argv.index("--takes") + 1]]
+    if "--cues" in argv[:-1]:
+        music_extra = [*music_extra, "--cues", argv[argv.index("--cues") + 1]]
     only = argv[argv.index("--only") + 1] if "--only" in argv[:-1] else None
     if only is not None and only not in LANES:
         sys.exit(f"--only must be one of {', '.join(LANES)}")

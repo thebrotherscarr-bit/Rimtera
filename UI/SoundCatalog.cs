@@ -480,7 +480,7 @@ public static class SoundCatalog
     /// </summary>
     private static readonly (string Theme, int Bpm, string Key, int Meter, string Card, bool Surface, bool Underground)[] MusicThemes =
     [
-        ("title", 112, "G major", 4, "heroic retro synth-pop overture, warm analog synths, gated drums, orchestral strings, sense of adventure", false, false),
+        ("title", 76, "E minor", 4, "lonely pan flute solo over baroque harpsichord continuo and slow strings, space-frontier western at dusk, warm analog synth pads, distant twangy guitar, soft breakbeat swell, wistful and vast", false, false),
         ("grassland", 126, "A major", 4, "upbeat space-frontier funk, slap bass, clavinet, bright strings, optimistic exploration", true, true),
         ("forest", 112, "C# minor", 4, "laid-back funk groove, muted guitar, warm electric piano, curious and green", true, false),
         ("canopy", 136, "B major", 4, "driving baroque strings over tribal percussion, Vivaldi-like runs, lush jungle", true, true),
@@ -504,7 +504,10 @@ public static class SoundCatalog
 
     private static void AddMusic(Action<SoundCue> add)
     {
-        const string music = "instrumental video game soundtrack in a MIDI style: General MIDI sound-module instruments (synth leads, sampled strings, brass, choir pads, a drum kit), 16-bit era like a classic sandbox game soundtrack, loopable, no vocals";
+        // The Rimtera sound, after the tracks the user picked (meteor fall, final and easy boss, underground, overgrowth night).
+        const string music = "Rimtera sound: driving techno pulse and drum and bass breakbeats under funky classical strings and baroque runs, " +
+                             "MIDI synth-pop leads, upbeat, classical with a semi-modern edge. " +
+                             "instrumental video game soundtrack in a MIDI style: General MIDI sound-module instruments (synth leads, sampled strings, brass, choir pads, a drum kit), 16-bit era like a classic sandbox game soundtrack, loopable, no vocals";
         foreach (var (theme, bpm, key, meter, card, surface, underground) in MusicThemes)
         {
             var slot = surface ? $"mus_{theme}_day" : $"mus_{theme}";

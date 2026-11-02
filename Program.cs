@@ -57,6 +57,9 @@ if (args.Contains("--sound-cues", StringComparer.OrdinalIgnoreCase))
 if (args.Contains("--entity-sprites", StringComparer.OrdinalIgnoreCase))
     return AnimationCatalog.Print();
 
+if (args.Contains("--item-sprites", StringComparer.OrdinalIgnoreCase))
+    return AnimationCatalog.PrintItems();
+
 if (args.Contains("--balance", StringComparer.OrdinalIgnoreCase))
     return ItemCensus.Balance();
 

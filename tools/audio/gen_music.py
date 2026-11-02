@@ -1,11 +1,12 @@
 """Generates a track for every music slot in audio_needs.tsv with ACE-Step 1.5 in ComfyUI (audio_client.py).
 
-    python tools/audio/gen_music.py [--limit N] [--takes N] [--seconds S] [--redo]
+    python tools/audio/gen_music.py [--limit N] [--takes N] [--seconds S] [--redo] [--cues mus_title,...]
 
 Each slot's style card (prompt, tempo, key, meter) comes from the needs map. Tracks land in
 tools/audio/raw/music/<slot>__c<n>.flac. Starts ComfyUI (tools/comfy/start_comfy.ps1) if it is not running and restarts
 it once if the connection drops. Slots that already have a track in Assets/Music, or a generated take, are skipped.
-RIMTERA_AUDIO_PAUSE rests the GPU between tracks.
+RIMTERA_AUDIO_PAUSE rests the GPU between tracks. --takes N tops every slot up to N takes (c1 … cN); --cues limits
+the run to the named slots.
 """
 import argparse
 import os
@@ -43,10 +44,14 @@ def main():
     parser.add_argument("--takes", type=int, default=1)
     parser.add_argument("--seconds", type=float, help="override every track's length (for a quick test)")
     parser.add_argument("--redo", action="store_true")
+    parser.add_argument("--cues", help="comma-separated slots to generate (default: all)")
     args = parser.parse_args()
 
     jobs = []
+    cues = set(args.cues.split(",")) if args.cues else None
     for row in load_needs(["music"]):
+        if cues and row["cue"] not in cues:
+            continue
         if not args.redo and existing_takes(row["cue"], "music"):
             continue
         for take in range(1, args.takes + 1):

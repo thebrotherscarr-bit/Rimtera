@@ -1,495 +1,495 @@
-enemy	swarm_bug	walk	-	melee
-enemy	geiger_bug	fly	-	melee
-enemy	sky_hawk	fly	-	melee
-enemy	security_droid	walk	-	melee
-enemy	glow_stalker	fly	-	melee
-boss	overseer_mech	walk	-	ranged
-enemy	rock_mite	walk	-	melee
-enemy	sky_ray	fly	-	melee
-enemy	spore_rat	walk	-	melee
-enemy	astro_beast	walk	-	melee
-boss	alpha_skitter	walk	hand	ranged
-boss	damaged_mining_drone	fly	-	ranged
-boss	plant_overgrowth	walk	-	ranged
-boss	scout_mech	walk	-	ranged
-boss	cyber_swarm_leader	fly	hand	ranged
-boss	renegade_overseer	walk	-	ranged
-boss	mutated_flora	walk	-	ranged
-boss	abomination	walk	hand	ranged
-boss	warship_core	fly	-	ranged
-boss	solar_flare_entity	fly	-	ranged
-boss	void_stalker	fly	hand	ranged
-boss	asteroid_miner_mech	walk	-	ranged
-boss	cyber_pirate_captain	walk	-	ranged
-boss	astro_god	fly	hand	ranged
-enemy	snow_wolf	walk	-	melee
-enemy	cryopterous	hop	-	melee
-enemy	snow_mite	hop	-	melee
-enemy	glacial_golem	walk	-	melee
-enemy	rad_skitter	walk	-	melee
-enemy	mutant_rat	walk	-	melee
-enemy	rad_leech	walk	hand	melee
-enemy	pyro_skitter	walk	-	melee
-enemy	magma_turtle	walk	-	melee
-enemy	lava_leech	walk	-	melee
-enemy	ember_rat	walk	-	melee
-enemy	basalt_golem	walk	-	melee
-enemy	junk_skitter	walk	-	melee
-enemy	scavenger_crab	walk	-	melee
-enemy	salvage_drone	fly	-	melee
-enemy	scrap_mite	hop	-	melee
-enemy	wasteland_beast	walk	-	melee
-critter	neo_terra_deer	walk	-	none
-critter	glow_grub	walk	-	none
-critter	mega_fauna	walk	-	none
-critter	sand_skitterer	walk	-	none
-critter	scavenger_beetle	walk	-	none
-critter	sky_flier	fly	-	none
-critter	terra_rat	walk	-	none
-critter	snow_hare	hop	-	none
-critter	scrap_rat	walk	-	none
-critter	ember_newt	walk	-	none
-critter	glow_firefly	fly	-	none
-critter	pebble_beetle	walk	-	none
-critter	golden_critter	hop	-	none
-critter	shell_crab	walk	-	none
-critter	glow_jelly	fly	-	none
-critter	beach_skitter	walk	-	none
-critter	sea_bird	fly	-	none
-critter	glow_snail	walk	-	none
-critter	spore_moth	fly	-	none
-critter	cave_frog	walk	-	none
-critter	truffle_mite	walk	-	none
-critter	prism_butterfly	fly	-	none
-critter	light_wisp_bird	fly	-	none
-critter	crystal_bunny	hop	-	none
-critter	halo_snail	walk	-	none
-critter	canopy_parrot	fly	-	none
-critter	leaf_frog	walk	-	none
-critter	pollen_bee	fly	-	none
-critter	vine_snake	walk	-	none
-critter	hop_bunny	hop	-	none
-critter	grass_snake	walk	-	none
-critter	penguin_drone	hop	-	none
-critter	dune_lizard	walk	-	none
-critter	worm	walk	-	none
-critter	butterfly_blue	fly	-	none
-critter	butterfly_gold	fly	-	none
-critter	dragonfly	fly	-	none
-critter	squirrel_bot	hop	-	none
-critter	owl	fly	-	none
-critter	duck	hop	-	none
-critter	fish_silver	fly	-	none
-critter	fish_glow	fly	-	none
-critter	crab_small	walk	-	none
-critter	snail	walk	-	none
-critter	ladybug_bot	walk	-	none
-critter	frog	walk	-	none
-enemy	acid_skitterer	walk	-	melee
-enemy	neo_terra_reaver	walk	-	melee
-enemy	terraformer_drone	fly	-	melee
-enemy	acid_shark	fly	-	melee
-enemy	tide_leech	walk	-	melee
-enemy	reef_crawler	walk	-	melee
-enemy	brine_golem	walk	-	melee
-enemy	spitting_barnacle	walk	-	melee
-enemy	storm_ray	fly	-	melee
-enemy	drowned_diver	walk	-	melee
-enemy	coral_sentinel	walk	-	melee
-enemy	spore_zombie	walk	-	melee
-enemy	fungal_crawler	hop	-	melee
-enemy	puff_drifter	fly	-	melee
-enemy	mycelid_shaman	walk	-	melee
-enemy	shroom_stalker	walk	-	melee
-enemy	cap_turtle	walk	-	melee
-enemy	lantern_bat	fly	-	melee
-enemy	spore_golem	walk	-	melee
-enemy	prism_knight	walk	-	melee
-enemy	shard_unicorn	walk	-	melee
-enemy	light_mimic	walk	-	melee
-enemy	crystal_wraith	fly	-	melee
-enemy	refractor_turret	walk	-	melee
-enemy	halo_bat	fly	-	melee
-enemy	pearl_golem	walk	-	melee
-enemy	spire_dragonfly	fly	-	melee
-enemy	pollen_drone_swarm	fly	-	melee
-enemy	thorn_lurker	walk	-	melee
-enemy	canopy_ape	walk	-	melee
-enemy	snapjaw_plant	walk	-	melee
-enemy	hive_guard	fly	-	melee
-enemy	mud_crawler	walk	-	melee
-enemy	spitting_orchid	walk	-	melee
-enemy	jungle_stalker	walk	-	melee
-enemy	vault_sentinel	walk	-	melee
-enemy	glyph_drone	fly	-	melee
-enemy	ancient_guardian	walk	-	melee
-enemy	geode_crab	walk	-	melee
-enemy	alabaster_hoplite	walk	-	melee
-enemy	mite_broodmother	walk	-	melee
-enemy	silk_spider_mite	walk	-	melee
-enemy	event_grunt	walk	-	melee
-enemy	event_scout	walk	-	melee
-enemy	event_marksman	walk	-	melee
-enemy	event_brute	walk	-	melee
-enemy	event_commander	walk	-	melee
-enemy	event_drone	fly	-	melee
-enemy	event_swarmer	fly	-	melee
-enemy	event_energy_vortex	fly	-	melee
-enemy	event_rogue_terraformer	walk	-	melee
-enemy	event_void_siphon	fly	-	melee
-enemy	event_corrupted_survivor	walk	-	melee
-enemy	event_abomination	walk	-	melee
-enemy	event_husk	walk	-	melee
-enemy	event_rust_wraith	fly	-	melee
-enemy	event_rust_hound	walk	-	melee
-enemy	event_eye_drone	fly	-	melee
-enemy	event_corroded_mech	walk	-	melee
-enemy	event_swarm_queen	fly	-	melee
-enemy	event_dust_devil	fly	-	melee
-enemy	event_sand_ray	fly	-	melee
-enemy	event_scrap_elemental	walk	-	melee
-enemy	event_dust_raider	walk	-	melee
-enemy	event_acid_slime	hop	-	melee
-enemy	event_acid_bird	fly	-	melee
-enemy	event_toxic_cloud	fly	-	melee
-critter	event_aurora_wisp	fly	-	none
-critter	event_festival_balloon_drone	fly	-	none
-enemy	event_meteor_head	fly	-	melee
-enemy	event_meteor_crawler	walk	-	melee
-enemy	event_eclipse_shade	fly	-	melee
-enemy	event_eclipse_reaper	walk	-	melee
-enemy	event_eclipse_moth_mech	fly	-	melee
-enemy	event_scavenger_grunt	walk	-	melee
-enemy	event_scavenger_brute	walk	-	melee
-enemy	event_scavenger_sniper	walk	-	melee
-enemy	event_scavenger_rigger	walk	-	melee
-enemy	event_pirate_deckhand	walk	-	melee
-enemy	event_pirate_gunner	walk	-	melee
-enemy	event_pirate_parrot_drone	fly	-	melee
-enemy	event_pirate_cannon	walk	-	melee
-enemy	event_protocol_grunt	walk	-	melee
-enemy	event_protocol_shieldbearer	walk	-	melee
-enemy	event_protocol_wyvern	fly	-	melee
-enemy	event_protocol_ogre	walk	-	melee
-enemy	event_protocol_mage	walk	-	melee
-enemy	event_precursor_probe	fly	-	melee
-enemy	event_probe_gunner	walk	-	melee
-enemy	event_probe_tesla_walker	walk	-	melee
-enemy	event_probe_brain_drone	fly	-	melee
-boss	spore_monarch	fly	-	ranged
-boss	prism_empress	fly	-	ranged
-boss	bloom_matriarch	fly	-	ranged
-boss	vault_colossus	walk	-	ranged
-boss	moon_eater	fly	-	ranged
-boss	eclipse_lord	fly	-	ranged
-boss	scavenger_warlord	walk	-	ranged
-boss	pirate_dreadnought	fly	-	ranged
-boss	protocol_dragon	fly	-	ranged
-boss	mothership_core	fly	-	ranged
-enemy	bloodfin_ambusher	walk	-	melee
-boss	abyss_leviathan	fly	-	ranged
-enemy	vengeful_wisp	fly	-	melee
-enemy	tunnel_wyrm	walk	-	melee
-enemy	dune_borer	walk	-	melee
-enemy	rift_caster	walk	-	melee
-enemy	dive_kite	fly	-	melee
-enemy	cache_mimic	walk	-	melee
-enemy	gel_hopper	hop	-	melee
-enemy	boulder_hopper	hop	-	melee
-enemy	flea_hopper	hop	-	melee
-enemy	dungeon_guardian	fly	-	melee
-enemy	core_husk	walk	-	melee
-enemy	fission_wisp	fly	-	melee
-boss	fission_tyrant	walk	-	ranged
-boss	void_cantor	fly	-	ranged
-enemy	ember_obelisk	walk	-	melee
-enemy	rift_obelisk	walk	-	melee
-enemy	gale_obelisk	walk	-	melee
-enemy	shard_obelisk	walk	-	melee
-critter	regolith_vole	hop	-	none
-critter	sunbeam_moth	fly	-	none
-critter	thistle_finch	fly	-	none
-critter	meadow_cricket	walk	-	none
-critter	puffball_tortoise	hop	-	none
-critter	dusk_glider	fly	-	none
-critter	lamp_worm	walk	-	none
-critter	moonhop_toad	hop	-	none
-critter	star_moth	fly	-	none
-critter	pond_minnow	fly	-	none
-critter	bubble_tadpole	fly	-	none
-critter	burrow_mole	hop	-	none
-critter	root_grub	walk	-	none
-critter	gravel_snail	walk	-	none
-critter	gem_tick	walk	-	none
-critter	echo_flitter	fly	-	none
-critter	blind_cavefish	fly	-	none
-critter	cave_salamander	walk	-	none
-critter	glow_slug	walk	-	none
-critter	frost_vole	hop	-	none
-critter	icicle_beetle	walk	-	none
-critter	snow_owlet	fly	-	none
-critter	rime_fish	fly	-	none
-critter	rust_scarab	walk	-	none
-critter	wire_mouse	walk	-	none
-critter	sprocket_fly	fly	-	none
-critter	tide_flea	walk	-	none
-critter	hermit_bot	hop	-	none
-critter	fuel_seahorse	fly	-	none
-critter	reef_star	fly	-	none
-critter	canopy_gecko	walk	-	none
-critter	leafback_beetle	walk	-	none
-critter	orchid_moth	fly	-	none
-critter	mire_skipper	fly	-	none
-critter	puffcap_hopper	hop	-	none
-critter	mycelium_worm	walk	-	none
-critter	spore_firefly	fly	-	none
-critter	shard_moth	fly	-	none
-critter	lumen_fish	fly	-	none
-critter	mutant_roach	walk	-	none
-critter	glow_toad	hop	-	none
-critter	rootworm	walk	-	none
-critter	isotope_beetle	walk	-	none
-critter	fission_moth	fly	-	none
-critter	gilded_vole	hop	-	none
-critter	gilded_cricket	walk	-	none
-critter	gilded_finch	fly	-	none
-critter	gilded_minnow	fly	-	none
-critter	gilded_gecko	walk	-	none
-critter	gilded_scarab	walk	-	none
-critter	gilded_hop_bunny	hop	-	none
-critter	gilded_squirrel_bot	hop	-	none
-critter	gilded_frog	walk	-	none
-enemy	thistle_boar	walk	-	melee
-enemy	meadow_gel	hop	-	melee
-enemy	hornet_drone	fly	-	melee
-enemy	bore_beetle	hop	-	melee
-enemy	dusk_prowler	walk	-	melee
-enemy	umbral_gel	hop	-	melee
-enemy	gloom_kite	fly	-	melee
-enemy	grave_husk	walk	-	melee
-enemy	drifting_eye	fly	-	melee
-enemy	thorn_behemoth	walk	-	melee
-enemy	storm_harrier	fly	-	melee
-enemy	night_revenant	walk	-	melee
-enemy	shock_gel	hop	-	melee
-enemy	sky_lancer	fly	-	melee
-enemy	tunnel_rat	walk	-	melee
-enemy	burrow_spider	walk	-	melee
-enemy	clay_golem	walk	-	melee
-enemy	grub_worm	walk	-	melee
-enemy	mud_gel	hop	-	melee
-enemy	drill_mite	hop	-	melee
-enemy	bedrock_crusher	walk	-	melee
-enemy	delve_wyrm	walk	-	melee
-enemy	shade_caster	walk	-	melee
-enemy	gem_crawler	walk	-	melee
-enemy	cave_lurker	fly	-	melee
-enemy	slate_gel	hop	-	melee
-enemy	echo_caster	walk	-	melee
-enemy	crystal_borer	walk	-	melee
-enemy	hollow_bat	fly	-	melee
-enemy	urn_mimic	walk	-	melee
-enemy	geode_titan	walk	-	melee
-enemy	void_mantis	hop	-	melee
-enemy	runic_caster	walk	-	melee
-enemy	armored_delver	walk	-	melee
-enemy	strongbox_mimic	walk	-	melee
-enemy	rime_gel	hop	-	melee
-enemy	frost_flitter	fly	-	melee
-enemy	tundra_brute	walk	-	melee
-enemy	drift_leaper	hop	-	melee
-enemy	cryo_caster	walk	-	melee
-enemy	permafrost_borer	walk	-	melee
-enemy	glacier_titan	walk	-	melee
-enemy	blizzard_wraith	fly	-	melee
-enemy	frozen_mimic	walk	-	melee
-enemy	rime_diver	fly	-	melee
-enemy	rust_gel	hop	-	melee
-enemy	scrap_hound	walk	-	melee
-enemy	bolt_drone	fly	-	melee
-enemy	dune_phantom	fly	-	melee
-enemy	junk_tinker	walk	-	melee
-enemy	slag_borer	walk	-	melee
-enemy	junk_pile_mimic	walk	-	melee
-enemy	scrap_colossus	walk	-	melee
-enemy	rust_reaper	fly	-	melee
-enemy	dune_devourer	walk	-	melee
-enemy	fuel_gel	hop	-	melee
-enemy	pincer_crab	walk	-	melee
-enemy	gull_diver	fly	-	melee
-enemy	fuel_eel	fly	-	melee
-enemy	barb_ray	fly	-	melee
-enemy	ink_squid	fly	-	melee
-enemy	deep_maw	fly	-	melee
-enemy	reef_horror	walk	-	melee
-enemy	tide_caller	walk	-	melee
-enemy	vine_gel	hop	-	melee
-enemy	horn_beetle	walk	-	melee
-enemy	canopy_bat	fly	-	melee
-enemy	spear_frog	hop	-	melee
-enemy	root_lasher	walk	-	melee
-enemy	dart_lizard	hop	-	melee
-enemy	thorn_chanter	walk	-	melee
-enemy	moss_hornet	fly	-	melee
-enemy	canopy_wyrm	walk	-	melee
-enemy	strangler_bloom	walk	-	melee
-enemy	silverback_brute	walk	-	melee
-enemy	comb_gel	hop	-	melee
-enemy	brood_larva	walk	-	melee
-enemy	hive_warden	fly	-	melee
-enemy	spore_gel	hop	-	melee
-enemy	toadstool_leaper	hop	-	melee
-enemy	mycelium_borer	walk	-	melee
-enemy	glowcap_mite	hop	-	melee
-enemy	cap_sentinel	walk	-	melee
-enemy	mycelid_hulk	walk	-	melee
-enemy	spore_phantom	fly	-	melee
-enemy	puff_bomber	fly	-	melee
-enemy	prism_gel	hop	-	melee
-enemy	shard_leaper	hop	-	melee
-enemy	lumen_caster	walk	-	melee
-enemy	pearl_wyrm	walk	-	melee
-enemy	glass_kite	fly	-	melee
-enemy	prism_colossus	walk	-	melee
-enemy	halo_seraph	fly	-	melee
-enemy	chroma_serpent	walk	-	melee
-enemy	isotope_gel	hop	-	melee
-enemy	fallout_hound	walk	-	melee
-enemy	rad_moth	fly	-	melee
-enemy	fallout_seer	walk	-	melee
-enemy	sludge_worm	walk	-	melee
-enemy	rad_behemoth	walk	-	melee
-enemy	isotope_wraith	fly	-	melee
-enemy	lead_box_mimic	walk	-	melee
-enemy	root_gel	hop	-	melee
-enemy	blight_crawler	hop	-	melee
-enemy	thorn_bat	fly	-	melee
-enemy	root_wyrm	walk	-	melee
-enemy	blight_hulk	walk	-	melee
-enemy	rot_chanter	walk	-	melee
-enemy	vine_reaper	fly	-	melee
-enemy	slag_gel	hop	-	melee
-enemy	fission_hound	walk	-	melee
-enemy	core_borer	walk	-	melee
-enemy	isotope_imp	walk	-	melee
-enemy	reactor_bat	fly	-	melee
-enemy	meltdown_golem	walk	-	melee
-enemy	critical_wisp	fly	-	melee
-enemy	web_lurker	walk	-	melee
-enemy	brood_tyrant	walk	-	melee
-enemy	glyph_caster	walk	-	melee
-enemy	vault_lancer	walk	-	melee
-enemy	crypt_hoplite	walk	-	melee
-enemy	void_scribe	walk	-	melee
-enemy	crypt_flitter	fly	-	melee
-boss	fallout_hivemind	fly	-	ranged
-enemy	stratos_raptor	fly	-	melee
-enemy	ion_skate	fly	-	melee
-enemy	stratos_wyvern	fly	-	melee
-enemy	cirrus_sentinel	fly	-	melee
-enemy	pit_charger	walk	-	melee
-enemy	pit_swarmer	fly	-	melee
-enemy	tomb_borer	walk	-	melee
-enemy	dust_ghoul	walk	-	melee
-enemy	rust_basilisk	walk	-	melee
-enemy	grit_seer	walk	-	melee
-enemy	icicle_bat	fly	-	melee
-enemy	frostbound_delver	walk	-	melee
-enemy	hoarfrost_elemental	walk	-	melee
-enemy	glacier_tortoise	walk	-	melee
-enemy	grave_wisp	fly	-	melee
-enemy	carrion_drone	fly	-	melee
-enemy	tomb_husk	walk	-	melee
-enemy	mourning_shade	fly	-	melee
-enemy	crypt_knight	walk	-	melee
-enemy	hex_necrotech	walk	-	melee
-enemy	crypt_marksman	walk	-	melee
-enemy	crypt_spirit	fly	-	melee
-enemy	crypt_paladin	walk	-	melee
-enemy	venom_recluse	walk	-	melee
-enemy	royal_comb_guard	fly	-	melee
-enemy	drizzle_gel	hop	-	melee
-enemy	rain_skipper	fly	-	melee
-enemy	slicker_husk	walk	-	melee
-enemy	thunderhead	fly	-	melee
-enemy	whiteout_wisp	fly	-	melee
-enemy	drift_stalker	walk	-	melee
-enemy	blizzard_colossus	walk	-	melee
-enemy	dune_razorfin	fly	-	melee
-enemy	grit_elemental	fly	-	melee
-enemy	thistledown_drifter	fly	-	melee
-enemy	gust_mite	hop	-	melee
-enemy	rust_jester	walk	-	melee
-enemy	corrosion_nautilus	fly	-	melee
-enemy	eclipse_slasher	walk	-	melee
-enemy	eclipse_sphere	fly	-	melee
-enemy	scavenger_hexer	walk	-	melee
-enemy	hollow_effigy	walk	-	melee
-enemy	ember_splinter	hop	-	melee
-enemy	cinder_hound	walk	-	melee
-enemy	static_poltergeist	fly	-	melee
-enemy	hollow_lancer	walk	-	melee
-enemy	ember_rootwalker	walk	-	melee
-boss	hollow_regent	fly	-	ranged
-enemy	frost_sapper	walk	-	melee
-enemy	shellcracker	walk	-	melee
-enemy	flurry_flake	fly	-	melee
-enemy	cargo_mimic	walk	-	melee
-enemy	snow_hulk	walk	-	melee
-enemy	frostspire_pine	walk	-	melee
-enemy	cryo_tank	walk	-	melee
-boss	rime_seraph	fly	-	ranged
-enemy	brigade_trooper	walk	-	melee
-enemy	brigade_shiv	walk	-	melee
-enemy	brigade_lobber	walk	-	melee
-enemy	cinder_imp	fly	-	melee
-enemy	slag_centipede	walk	-	melee
-enemy	pyre_lancer	walk	-	melee
-enemy	gale_diver	fly	-	melee
-enemy	squall_hornet	fly	-	melee
-enemy	tempest_larva	hop	-	melee
-enemy	rift_seer	walk	-	melee
-enemy	mind_leech	fly	-	melee
-enemy	rift_floater	fly	-	melee
-enemy	star_cell	hop	-	melee
-enemy	lattice_weaver	walk	-	melee
-enemy	shard_invader	fly	-	melee
-enemy	lumen_flare	fly	-	melee
-enemy	glare_mote	fly	-	melee
-boss	hoarfrost_behemoth	walk	-	ranged
-boss	gel_sovereign	walk	-	ranged
-enemy	armored_swarmer	hop	-	melee
-enemy	prism_swarmer	hop	-	melee
-npc	station_ai	walk	-	none
-npc	npc_store_clerk	walk	-	none
-npc	npc_medical_doctor	walk	-	none
-npc	npc_security_guard	walk	-	none
-npc	npc_base_engineer	walk	-	none
-npc	npc_xeno_biologist	walk	-	none
-npc	npc_colony_worker	walk	-	none
-npc	npc_demolitionist	walk	-	none
-npc	npc_tailor	walk	-	none
-npc	npc_cartographer	walk	-	none
-npc	npc_mechanic	walk	-	none
-npc	npc_pilot	walk	-	none
-npc	npc_cook	walk	-	none
-npc	npc_arborist	walk	-	none
-npc	npc_archivist	walk	-	none
-npc	npc_travelling_merchant	walk	-	none
-npc	npc_gel_azure	walk	-	none
-npc	npc_gel_amber	walk	-	none
-npc	npc_gel_rose	walk	-	none
-npc	npc_gel_verdant	walk	-	none
-npc	npc_field_zoologist	walk	-	none
-npc	npc_pigment_trader	walk	-	none
-npc	npc_party_planner	walk	-	none
-npc	npc_bound_survivor	walk	-	none
-crew	head_researcher	walk	-	none
-crew	security_commander	walk	-	none
-crew	astro_botanist	walk	-	none
-crew	chief_engineer	walk	-	none
-crew	trade_consul	walk	-	none
-pet	pet_pocket_drone	float	-	none
-pet	pet_lumen_wisp	float	-	none
-pet	pet_lantern_bot	float	-	none
-pet	pet_pebble_crab	walk	-	none
+enemy	swarm_bug	walk	-	melee	1.35	0.975	Swarm bug
+enemy	geiger_bug	fly	-	melee	1.2	1.05	Moth-ray
+enemy	sky_hawk	fly	-	melee	1.2	0.9	Spore bat
+enemy	security_droid	walk	-	melee	1.62	2.16	Security droid
+enemy	glow_stalker	fly	-	melee	1.35	2.1	Void wisp
+boss	overseer_mech	walk	-	ranged	2.47	3.42	Overseer mech
+enemy	rock_mite	walk	-	melee	1.05	0.75	Rock mite
+enemy	sky_ray	fly	-	melee	1.65	0.9	Sky-ray
+enemy	spore_rat	walk	-	melee	1.2	0.825	Spore rat
+enemy	astro_beast	walk	-	melee	2.4	1.95	Astro-beast
+boss	alpha_skitter	walk	hand	ranged	3.25	2.25	Alpha Skitter
+boss	damaged_mining_drone	fly	-	ranged	2.75	2.5	Damaged Mining Drone
+boss	plant_overgrowth	walk	-	ranged	3.5	3.75	Plant Overgrowth
+boss	scout_mech	walk	-	ranged	2.75	3.5	Scout Mech
+boss	cyber_swarm_leader	fly	hand	ranged	3.25	2.75	Cyber-Swarm Leader
+boss	renegade_overseer	walk	-	ranged	3.25	4.25	Renegade Overseer
+boss	mutated_flora	walk	-	ranged	4	4	Mutated Flora
+boss	abomination	walk	hand	ranged	4.5	3.75	Abomination
+boss	warship_core	fly	-	ranged	5.25	2.75	Warship Core
+boss	solar_flare_entity	fly	-	ranged	3.5	3.5	Solar Flare Entity
+boss	void_stalker	fly	hand	ranged	2.75	4	Void Stalker
+boss	asteroid_miner_mech	walk	-	ranged	3.75	3.75	Asteroid Miner Mech
+boss	cyber_pirate_captain	walk	-	ranged	2.5	3.5	Cyber-Pirate Captain
+boss	astro_god	fly	hand	ranged	6.25	6.25	Astro-God
+enemy	snow_wolf	walk	-	melee	1.95	1.35	Snow-wolf
+enemy	cryopterous	hop	-	melee	1.35	0.9	Cryopterous
+enemy	snow_mite	hop	-	melee	1.05	0.75	Snow-mite
+enemy	glacial_golem	walk	-	melee	2.25	2.85	Glacial golem
+enemy	rad_skitter	walk	-	melee	1.5	0.9	Rad-skitter
+enemy	mutant_rat	walk	-	melee	1.35	0.9	Mutant rat
+enemy	rad_leech	walk	hand	melee	2.1	1.2	Rad-leech
+enemy	pyro_skitter	walk	-	melee	1.5	0.9	Pyro-skitter
+enemy	magma_turtle	walk	-	melee	1.95	1.35	Magma turtle
+enemy	lava_leech	walk	-	melee	1.65	0.9	Lava-leech
+enemy	ember_rat	walk	-	melee	1.2	0.825	Ember rat
+enemy	basalt_golem	walk	-	melee	2.4	3	Basalt golem
+enemy	junk_skitter	walk	-	melee	1.5	0.9	Junk-skitter
+enemy	scavenger_crab	walk	-	melee	1.65	1.05	Scavenger crab
+enemy	salvage_drone	fly	-	melee	1.35	1.05	Salvage drone
+enemy	scrap_mite	hop	-	melee	1.05	0.75	Scrap-mite
+enemy	wasteland_beast	walk	-	melee	2.55	2.1	Wasteland beast
+critter	neo_terra_deer	walk	-	none	1.8	1.8	Neo-Terra deer
+critter	glow_grub	walk	-	none	0.9	0.6	Glow grub
+critter	mega_fauna	walk	-	none	3.6	3	Mega-fauna grazer
+critter	sand_skitterer	walk	-	none	0.9	0.6	Sand skitterer
+critter	scavenger_beetle	walk	-	none	0.9	0.675	Scavenger beetle
+critter	sky_flier	fly	-	none	0.9	0.75	Sky flier
+critter	terra_rat	walk	-	none	0.9	0.675	Terra rat
+critter	snow_hare	hop	-	none	1.05	0.9	Snow hare
+critter	scrap_rat	walk	-	none	0.9	0.675	Scrap rat
+critter	ember_newt	walk	-	none	0.9	0.525	Ember newt
+critter	glow_firefly	fly	-	none	0.6	0.6	Glow firefly
+critter	pebble_beetle	walk	-	none	0.75	0.6	Pebble beetle
+critter	golden_critter	hop	-	none	0.9	0.75	Golden critter
+critter	shell_crab	walk	-	none	0.9	0.675	Shell crab
+critter	glow_jelly	fly	-	none	0.9	0.9	Glow jelly
+critter	beach_skitter	walk	-	none	0.75	0.525	Beach skitter
+critter	sea_bird	fly	-	none	1.05	0.75	Sea bird
+critter	glow_snail	walk	-	none	0.75	0.6	Glow snail
+critter	spore_moth	fly	-	none	0.75	0.675	Spore moth
+critter	cave_frog	walk	-	none	0.75	0.6	Cave frog
+critter	truffle_mite	walk	-	none	0.675	0.525	Truffle mite
+critter	prism_butterfly	fly	-	none	0.675	0.675	Prism butterfly
+critter	light_wisp_bird	fly	-	none	0.9	0.75	Light-wisp bird
+critter	crystal_bunny	hop	-	none	0.9	0.825	Crystal bunny
+critter	halo_snail	walk	-	none	0.75	0.675	Halo snail
+critter	canopy_parrot	fly	-	none	0.9	0.825	Canopy parrot
+critter	leaf_frog	walk	-	none	0.75	0.6	Leaf frog
+critter	pollen_bee	fly	-	none	0.6	0.6	Pollen bee
+critter	vine_snake	walk	-	none	1.35	0.525	Vine snake
+critter	hop_bunny	hop	-	none	0.9	0.825	Hop bunny
+critter	grass_snake	walk	-	none	1.35	0.45	Grass snake
+critter	penguin_drone	hop	-	none	0.9	1.05	Penguin drone
+critter	dune_lizard	walk	-	none	1.2	0.525	Dune lizard
+critter	worm	walk	-	none	0.9	0.375	Burrow worm
+critter	butterfly_blue	fly	-	none	0.675	0.675	Blue wingflit
+critter	butterfly_gold	fly	-	none	0.675	0.675	Gold wingflit
+critter	dragonfly	fly	-	none	0.9	0.525	Glassfly
+critter	squirrel_bot	hop	-	none	0.9	0.825	Squirrel bot
+critter	owl	fly	-	none	0.9	0.9	Night owl
+critter	duck	hop	-	none	0.9	0.825	Pond duck
+critter	fish_silver	fly	-	none	0.9	0.525	Silver fish
+critter	fish_glow	fly	-	none	0.9	0.525	Glow fish
+critter	crab_small	walk	-	none	0.75	0.525	Little crab
+critter	snail	walk	-	none	0.75	0.6	Garden snail
+critter	ladybug_bot	walk	-	none	0.675	0.525	Ladybug bot
+critter	frog	walk	-	none	0.75	0.6	Pond frog
+enemy	acid_skitterer	walk	-	melee	1.35	0.9	Brine skitterer
+enemy	neo_terra_reaver	walk	-	melee	2.1	2.7	Neo-Terra reaver
+enemy	terraformer_drone	fly	-	melee	1.8	1.5	Terraformer drone
+enemy	acid_shark	fly	-	melee	2.7	1.2	Saltjaw shark
+enemy	tide_leech	walk	-	melee	1.5	0.75	Tide leech
+enemy	reef_crawler	walk	-	melee	1.65	1.05	Reef crawler
+enemy	brine_golem	walk	-	melee	2.25	2.85	Brine golem
+enemy	spitting_barnacle	walk	-	melee	1.35	1.35	Spitting barnacle
+enemy	storm_ray	fly	-	melee	2.1	0.9	Storm ray
+enemy	drowned_diver	walk	-	melee	1.35	2.55	Drowned diver
+enemy	coral_sentinel	walk	-	melee	1.8	2.4	Coral sentinel
+enemy	spore_zombie	walk	-	melee	1.35	2.55	Spore husk
+enemy	fungal_crawler	hop	-	melee	1.5	0.9	Fungal crawler
+enemy	puff_drifter	fly	-	melee	1.35	1.35	Puff drifter
+enemy	mycelid_shaman	walk	-	melee	1.35	2.4	Mycelid shaman
+enemy	shroom_stalker	walk	-	melee	1.5	2.7	Shroom stalker
+enemy	cap_turtle	walk	-	melee	1.95	1.35	Cap turtle
+enemy	lantern_bat	fly	-	melee	1.2	0.9	Lantern bat
+enemy	spore_golem	walk	-	melee	2.4	3	Spore golem
+enemy	prism_knight	walk	-	melee	1.5	2.7	Prism knight
+enemy	shard_unicorn	walk	-	melee	2.7	2.25	Shard strider
+enemy	light_mimic	walk	-	melee	1.5	1.5	Light mimic
+enemy	crystal_wraith	fly	-	melee	1.5	2.25	Crystal wraith
+enemy	refractor_turret	walk	-	melee	1.5	1.8	Refractor turret
+enemy	halo_bat	fly	-	melee	1.2	0.9	Halo bat
+enemy	pearl_golem	walk	-	melee	2.4	3	Pearl golem
+enemy	spire_dragonfly	fly	-	melee	1.65	0.75	Spire glassfly
+enemy	pollen_drone_swarm	fly	-	melee	1.35	1.05	Pollen drone swarm
+enemy	thorn_lurker	walk	-	melee	1.65	1.5	Thorn lurker
+enemy	canopy_ape	walk	-	melee	2.1	2.4	Canopy ape
+enemy	snapjaw_plant	walk	-	melee	1.5	2.1	Snapjaw plant
+enemy	hive_guard	fly	-	melee	1.5	1.35	Hive guard
+enemy	mud_crawler	walk	-	melee	1.65	0.9	Mud crawler
+enemy	spitting_orchid	walk	-	melee	1.35	1.8	Spitting orchid
+enemy	jungle_stalker	walk	-	melee	1.8	1.8	Jungle stalker
+enemy	vault_sentinel	walk	-	melee	1.8	3	Vault sentinel
+enemy	glyph_drone	fly	-	melee	1.35	1.35	Glyph drone
+enemy	ancient_guardian	walk	-	melee	2.4	3.6	Ancient guardian
+enemy	geode_crab	walk	-	melee	1.65	1.2	Geode crab
+enemy	alabaster_hoplite	walk	-	melee	1.5	2.7	Alabaster hoplite
+enemy	mite_broodmother	walk	-	melee	2.7	1.8	Mite broodmother
+enemy	silk_spider_mite	walk	-	melee	1.5	0.9	Silk spider-mite
+enemy	event_grunt	walk	-	melee	1.35	2.55	Raider grunt
+enemy	event_scout	walk	-	melee	1.2	2.4	Raider scout
+enemy	event_marksman	walk	-	melee	1.35	2.55	Raider marksman
+enemy	event_brute	walk	-	melee	1.95	3	Raider brute
+enemy	event_commander	walk	-	melee	1.5	2.85	Raider commander
+enemy	event_drone	fly	-	melee	1.2	1.05	Strike drone
+enemy	event_swarmer	fly	-	melee	1.05	0.75	Swarmer
+enemy	event_energy_vortex	fly	-	melee	1.5	1.5	Energy vortex
+enemy	event_rogue_terraformer	walk	-	melee	2.25	2.4	Rogue terraformer
+enemy	event_void_siphon	fly	-	melee	1.5	2.1	Void siphon
+enemy	event_corrupted_survivor	walk	-	melee	1.35	2.55	Corrupted survivor
+enemy	event_abomination	walk	-	melee	2.4	2.4	Lesser abomination
+enemy	event_husk	walk	-	melee	1.35	2.55	Rust husk
+enemy	event_rust_wraith	fly	-	melee	1.35	2.1	Rust wraith
+enemy	event_rust_hound	walk	-	melee	1.95	1.35	Rust hound
+enemy	event_eye_drone	fly	-	melee	1.2	1.2	Eye drone
+enemy	event_corroded_mech	walk	-	melee	2.25	3	Corroded mech
+enemy	event_swarm_queen	fly	-	melee	2.4	1.8	Swarm queen
+enemy	event_dust_devil	fly	-	melee	1.5	2.4	Dust devil
+enemy	event_sand_ray	fly	-	melee	1.95	0.9	Sand ray
+enemy	event_scrap_elemental	walk	-	melee	2.1	2.7	Scrap elemental
+enemy	event_dust_raider	walk	-	melee	1.35	2.55	Dust raider
+enemy	event_acid_slime	hop	-	melee	1.35	1.05	Acid slime
+enemy	event_acid_bird	fly	-	melee	1.05	0.75	Acid bird
+enemy	event_toxic_cloud	fly	-	melee	1.8	1.5	Toxic cloud
+critter	event_aurora_wisp	fly	-	none	1.05	1.05	Aurora wisp
+critter	event_festival_balloon_drone	fly	-	none	1.2	1.5	Festival balloon drone
+enemy	event_meteor_head	fly	-	melee	1.5	1.5	Meteor head
+enemy	event_meteor_crawler	walk	-	melee	1.5	0.9	Meteor crawler
+enemy	event_eclipse_shade	fly	-	melee	1.35	2.4	Eclipse shade
+enemy	event_eclipse_reaper	walk	-	melee	1.8	3	Eclipse reaper
+enemy	event_eclipse_moth_mech	fly	-	melee	2.4	1.8	Eclipse moth-mech
+enemy	event_scavenger_grunt	walk	-	melee	1.35	2.55	Scavenger grunt
+enemy	event_scavenger_brute	walk	-	melee	1.95	3	Scavenger brute
+enemy	event_scavenger_sniper	walk	-	melee	1.35	2.55	Scavenger sniper
+enemy	event_scavenger_rigger	walk	-	melee	1.35	2.55	Scavenger rigger
+enemy	event_pirate_deckhand	walk	-	melee	1.35	2.55	Pirate deckhand
+enemy	event_pirate_gunner	walk	-	melee	1.35	2.55	Pirate gunner
+enemy	event_pirate_parrot_drone	fly	-	melee	1.05	0.9	Parrot drone
+enemy	event_pirate_cannon	walk	-	melee	2.1	1.8	Boarding cannon
+enemy	event_protocol_grunt	walk	-	melee	1.35	2.55	Protocol grunt
+enemy	event_protocol_shieldbearer	walk	-	melee	1.65	2.85	Protocol shieldbearer
+enemy	event_protocol_wyvern	fly	-	melee	2.4	1.5	Protocol wyvern
+enemy	event_protocol_ogre	walk	-	melee	2.7	3.6	Protocol ogre
+enemy	event_protocol_mage	walk	-	melee	1.35	2.55	Protocol mage
+enemy	event_precursor_probe	fly	-	melee	1.5	1.2	Precursor probe
+enemy	event_probe_gunner	walk	-	melee	1.5	2.7	Probe gunner
+enemy	event_probe_tesla_walker	walk	-	melee	2.4	3.3	Tesla walker
+enemy	event_probe_brain_drone	fly	-	melee	1.5	1.5	Brain drone
+boss	spore_monarch	fly	-	ranged	3.25	3.25	Spore Monarch
+boss	prism_empress	fly	-	ranged	3.25	4	Prism Empress
+boss	bloom_matriarch	fly	-	ranged	3.5	3	Bloom Matriarch
+boss	vault_colossus	walk	-	ranged	4.5	5.25	Vault Colossus
+boss	moon_eater	fly	-	ranged	4	3	Moon Eater
+boss	eclipse_lord	fly	-	ranged	3.25	4.25	Eclipse Lord
+boss	scavenger_warlord	walk	-	ranged	2.25	3.25	Scavenger Warlord
+boss	pirate_dreadnought	fly	-	ranged	5.5	3.25	Pirate Dreadnought
+boss	protocol_dragon	fly	-	ranged	5	3	Protocol Dragon
+boss	mothership_core	fly	-	ranged	5.75	3.75	Mothership Core
+enemy	bloodfin_ambusher	walk	-	melee	1.95	1.35	Bloodfin ambusher
+boss	abyss_leviathan	fly	-	ranged	6.5	2.75	Abyss Leviathan
+enemy	vengeful_wisp	fly	-	melee	1.35	1.8	Vengeful wisp
+enemy	tunnel_wyrm	walk	-	melee	1.65	1.65	Tunnel wyrm
+enemy	dune_borer	walk	-	melee	1.2	1.2	Dune borer
+enemy	rift_caster	walk	-	melee	1.35	2.55	Rift caster
+enemy	dive_kite	fly	-	melee	1.5	0.9	Dive kite
+enemy	cache_mimic	walk	-	melee	1.5	1.5	Cache mimic
+enemy	gel_hopper	hop	-	melee	1.35	0.975	Gel hopper
+enemy	boulder_hopper	hop	-	melee	1.8	1.5	Boulder hopper
+enemy	flea_hopper	hop	-	melee	0.75	0.6	Flea hopper
+enemy	dungeon_guardian	fly	-	melee	3.3	3.3	Dungeon Guardian
+enemy	core_husk	walk	-	melee	1.8	3	Irradiated husk
+enemy	fission_wisp	fly	-	melee	1.35	1.35	Fission wisp
+boss	fission_tyrant	walk	-	ranged	3.75	4.25	Fission Tyrant
+boss	void_cantor	fly	-	ranged	2.5	3.75	Void Cantor
+enemy	ember_obelisk	walk	-	melee	3.3	7.5	Ember obelisk
+enemy	rift_obelisk	walk	-	melee	3.3	7.5	Rift obelisk
+enemy	gale_obelisk	walk	-	melee	3.3	7.5	Gale obelisk
+enemy	shard_obelisk	walk	-	melee	3.3	7.5	Shard obelisk
+critter	regolith_vole	hop	-	none	0.9	0.675	Regolith vole
+critter	sunbeam_moth	fly	-	none	0.675	0.6	Sunbeam moth
+critter	thistle_finch	fly	-	none	0.75	0.6	Thistle finch
+critter	meadow_cricket	walk	-	none	0.675	0.525	Meadow cricket
+critter	puffball_tortoise	hop	-	none	1.05	0.75	Puffball tortoise
+critter	dusk_glider	fly	-	none	0.9	0.675	Dusk glider
+critter	lamp_worm	walk	-	none	0.75	0.375	Lamp worm
+critter	moonhop_toad	hop	-	none	0.75	0.675	Moonhop toad
+critter	star_moth	fly	-	none	0.675	0.675	Star moth
+critter	pond_minnow	fly	-	none	0.675	0.45	Pond minnow
+critter	bubble_tadpole	fly	-	none	0.6	0.375	Bubble tadpole
+critter	burrow_mole	hop	-	none	0.9	0.675	Burrow mole
+critter	root_grub	walk	-	none	0.75	0.525	Root grub
+critter	gravel_snail	walk	-	none	0.75	0.6	Gravel snail
+critter	gem_tick	walk	-	none	0.675	0.525	Gem tick
+critter	echo_flitter	fly	-	none	0.75	0.6	Echo flitter
+critter	blind_cavefish	fly	-	none	0.75	0.45	Blind cavefish
+critter	cave_salamander	walk	-	none	1.05	0.45	Cave salamander
+critter	glow_slug	walk	-	none	0.825	0.45	Glow slug
+critter	frost_vole	hop	-	none	0.9	0.675	Frost vole
+critter	icicle_beetle	walk	-	none	0.675	0.525	Icicle beetle
+critter	snow_owlet	fly	-	none	0.75	0.75	Snow owlet
+critter	rime_fish	fly	-	none	0.75	0.45	Rime fish
+critter	rust_scarab	walk	-	none	0.75	0.6	Rust scarab
+critter	wire_mouse	walk	-	none	0.75	0.6	Wire mouse
+critter	sprocket_fly	fly	-	none	0.6	0.525	Sprocket fly
+critter	tide_flea	walk	-	none	0.6	0.45	Tide flea
+critter	hermit_bot	hop	-	none	0.825	0.675	Hermit crab-bot
+critter	fuel_seahorse	fly	-	none	0.6	0.825	Fuel seahorse
+critter	reef_star	fly	-	none	0.75	0.45	Reef star
+critter	canopy_gecko	walk	-	none	1.05	0.45	Canopy gecko
+critter	leafback_beetle	walk	-	none	0.675	0.525	Leafback beetle
+critter	orchid_moth	fly	-	none	0.675	0.675	Orchid moth
+critter	mire_skipper	fly	-	none	0.75	0.45	Mire skipper
+critter	puffcap_hopper	hop	-	none	0.75	0.675	Puffcap hopper
+critter	mycelium_worm	walk	-	none	0.75	0.375	Mycelium worm
+critter	spore_firefly	fly	-	none	0.6	0.6	Spore firefly
+critter	shard_moth	fly	-	none	0.675	0.675	Shard moth
+critter	lumen_fish	fly	-	none	0.75	0.45	Lumen fish
+critter	mutant_roach	walk	-	none	0.75	0.525	Mutant roach
+critter	glow_toad	hop	-	none	0.75	0.675	Glow toad
+critter	rootworm	walk	-	none	0.825	0.375	Rootworm
+critter	isotope_beetle	walk	-	none	0.75	0.6	Isotope beetle
+critter	fission_moth	fly	-	none	0.675	0.675	Fission moth
+critter	gilded_vole	hop	-	none	0.9	0.675	Gilded vole
+critter	gilded_cricket	walk	-	none	0.675	0.525	Gilded cricket
+critter	gilded_finch	fly	-	none	0.75	0.6	Gilded finch
+critter	gilded_minnow	fly	-	none	0.675	0.45	Gilded minnow
+critter	gilded_gecko	walk	-	none	1.05	0.45	Gilded gecko
+critter	gilded_scarab	walk	-	none	0.75	0.6	Gilded scarab
+critter	gilded_hop_bunny	hop	-	none	0.9	0.825	Gilded hop bunny
+critter	gilded_squirrel_bot	hop	-	none	0.9	0.825	Gilded squirrel bot
+critter	gilded_frog	walk	-	none	0.75	0.6	Gilded frog
+enemy	thistle_boar	walk	-	melee	1.95	1.35	Thistle boar
+enemy	meadow_gel	hop	-	melee	1.35	0.975	Meadow gel
+enemy	hornet_drone	fly	-	melee	1.05	0.9	Hornet drone
+enemy	bore_beetle	hop	-	melee	1.2	0.75	Bore beetle
+enemy	dusk_prowler	walk	-	melee	1.8	1.5	Dusk prowler
+enemy	umbral_gel	hop	-	melee	1.35	0.975	Umbral gel
+enemy	gloom_kite	fly	-	melee	1.5	0.9	Gloom kite
+enemy	grave_husk	walk	-	melee	1.35	2.55	Grave husk
+enemy	drifting_eye	fly	-	melee	1.2	1.2	Drifting eye
+enemy	thorn_behemoth	walk	-	melee	2.7	2.4	Thorn behemoth
+enemy	storm_harrier	fly	-	melee	2.1	0.9	Storm harrier
+enemy	night_revenant	walk	-	melee	1.5	2.7	Night revenant
+enemy	shock_gel	hop	-	melee	1.8	1.5	Shock gel
+enemy	sky_lancer	fly	-	melee	1.8	1.5	Sky lancer
+enemy	tunnel_rat	walk	-	melee	1.2	0.825	Tunnel rat
+enemy	burrow_spider	walk	-	melee	1.5	0.9	Burrow spider
+enemy	clay_golem	walk	-	melee	1.8	2.4	Clay golem
+enemy	grub_worm	walk	-	melee	1.2	1.2	Grub worm
+enemy	mud_gel	hop	-	melee	1.35	0.975	Mud gel
+enemy	drill_mite	hop	-	melee	1.05	0.75	Drill mite
+enemy	bedrock_crusher	walk	-	melee	2.4	3	Bedrock crusher
+enemy	delve_wyrm	walk	-	melee	1.65	1.65	Delve wyrm
+enemy	shade_caster	walk	-	melee	1.35	2.55	Shade caster
+enemy	gem_crawler	walk	-	melee	1.65	1.2	Gem crawler
+enemy	cave_lurker	fly	-	melee	1.2	0.9	Cave lurker
+enemy	slate_gel	hop	-	melee	1.35	0.975	Slate gel
+enemy	echo_caster	walk	-	melee	1.35	2.55	Echo caster
+enemy	crystal_borer	walk	-	melee	1.35	1.35	Crystal borer
+enemy	hollow_bat	fly	-	melee	1.2	0.9	Hollow bat
+enemy	urn_mimic	walk	-	melee	1.5	1.5	Urn mimic
+enemy	geode_titan	walk	-	melee	2.55	3.15	Geode titan
+enemy	void_mantis	hop	-	melee	1.8	1.8	Void mantis
+enemy	runic_caster	walk	-	melee	1.35	2.4	Runic caster
+enemy	armored_delver	walk	-	melee	2.25	3	Armored delver
+enemy	strongbox_mimic	walk	-	melee	1.5	1.5	Strongbox mimic
+enemy	rime_gel	hop	-	melee	1.35	0.975	Rime gel
+enemy	frost_flitter	fly	-	melee	1.2	0.9	Frost flitter
+enemy	tundra_brute	walk	-	melee	2.4	2.25	Tundra brute
+enemy	drift_leaper	hop	-	melee	1.8	1.5	Drift leaper
+enemy	cryo_caster	walk	-	melee	1.35	2.55	Cryo caster
+enemy	permafrost_borer	walk	-	melee	1.2	1.2	Permafrost borer
+enemy	glacier_titan	walk	-	melee	2.4	3	Glacier titan
+enemy	blizzard_wraith	fly	-	melee	1.5	2.25	Blizzard wraith
+enemy	frozen_mimic	walk	-	melee	1.5	1.5	Frozen mimic
+enemy	rime_diver	fly	-	melee	1.5	0.9	Rime diver
+enemy	rust_gel	hop	-	melee	1.35	0.975	Rust gel
+enemy	scrap_hound	walk	-	melee	1.95	1.35	Scrap hound
+enemy	bolt_drone	fly	-	melee	1.2	1.05	Bolt drone
+enemy	dune_phantom	fly	-	melee	1.5	2.4	Dune phantom
+enemy	junk_tinker	walk	-	melee	1.35	2.55	Junk tinker
+enemy	slag_borer	walk	-	melee	1.35	1.35	Slag borer
+enemy	junk_pile_mimic	walk	-	melee	1.5	1.5	Junk-pile mimic
+enemy	scrap_colossus	walk	-	melee	2.4	3	Scrap colossus
+enemy	rust_reaper	fly	-	melee	1.35	2.1	Rust reaper
+enemy	dune_devourer	walk	-	melee	1.65	1.65	Dune devourer
+enemy	fuel_gel	hop	-	melee	1.35	0.975	Fuel gel
+enemy	pincer_crab	walk	-	melee	1.65	1.05	Pincer crab
+enemy	gull_diver	fly	-	melee	1.2	0.75	Gull diver
+enemy	fuel_eel	fly	-	melee	1.8	0.75	Fuel eel
+enemy	barb_ray	fly	-	melee	1.95	0.75	Barb ray
+enemy	ink_squid	fly	-	melee	1.2	1.2	Ink squid
+enemy	deep_maw	fly	-	melee	3	1.35	Deep maw
+enemy	reef_horror	walk	-	melee	1.95	2.55	Reef horror
+enemy	tide_caller	walk	-	melee	1.35	2.55	Tide caller
+enemy	vine_gel	hop	-	melee	1.35	0.975	Vine gel
+enemy	horn_beetle	walk	-	melee	1.65	1.2	Horn beetle
+enemy	canopy_bat	fly	-	melee	1.2	0.9	Canopy bat
+enemy	spear_frog	hop	-	melee	1.2	1.05	Spear frog
+enemy	root_lasher	walk	-	melee	1.35	1.35	Root lasher
+enemy	dart_lizard	hop	-	melee	1.35	0.6	Dart lizard
+enemy	thorn_chanter	walk	-	melee	1.35	2.4	Thorn chanter
+enemy	moss_hornet	fly	-	melee	1.5	1.35	Moss hornet
+enemy	canopy_wyrm	walk	-	melee	1.65	1.65	Canopy wyrm
+enemy	strangler_bloom	walk	-	melee	1.65	2.25	Strangler bloom
+enemy	silverback_brute	walk	-	melee	2.25	2.55	Silverback brute
+enemy	comb_gel	hop	-	melee	1.35	0.975	Comb gel
+enemy	brood_larva	walk	-	melee	1.5	0.9	Brood larva
+enemy	hive_warden	fly	-	melee	1.65	1.5	Hive warden
+enemy	spore_gel	hop	-	melee	1.35	0.975	Spore gel
+enemy	toadstool_leaper	hop	-	melee	1.5	1.2	Toadstool leaper
+enemy	mycelium_borer	walk	-	melee	1.35	1.35	Mycelium borer
+enemy	glowcap_mite	hop	-	melee	0.9	0.675	Glowcap mite
+enemy	cap_sentinel	walk	-	melee	1.35	1.8	Cap sentinel
+enemy	mycelid_hulk	walk	-	melee	2.4	3	Mycelid hulk
+enemy	spore_phantom	fly	-	melee	1.5	2.25	Spore phantom
+enemy	puff_bomber	fly	-	melee	1.35	1.35	Puff bomber
+enemy	prism_gel	hop	-	melee	1.35	0.975	Prism gel
+enemy	shard_leaper	hop	-	melee	1.8	1.5	Shard leaper
+enemy	lumen_caster	walk	-	melee	1.35	2.55	Lumen caster
+enemy	pearl_wyrm	walk	-	melee	1.5	1.5	Pearl wyrm
+enemy	glass_kite	fly	-	melee	1.5	0.9	Glass kite
+enemy	prism_colossus	walk	-	melee	2.55	3.15	Prism colossus
+enemy	halo_seraph	fly	-	melee	1.8	1.5	Halo seraph
+enemy	chroma_serpent	walk	-	melee	1.65	1.65	Chroma serpent
+enemy	isotope_gel	hop	-	melee	1.35	0.975	Isotope gel
+enemy	fallout_hound	walk	-	melee	1.95	1.35	Fallout hound
+enemy	rad_moth	fly	-	melee	1.2	1.05	Rad moth
+enemy	fallout_seer	walk	-	melee	1.35	2.55	Fallout seer
+enemy	sludge_worm	walk	-	melee	1.35	1.35	Sludge worm
+enemy	rad_behemoth	walk	-	melee	2.4	2.4	Rad behemoth
+enemy	isotope_wraith	fly	-	melee	1.35	2.1	Isotope wraith
+enemy	lead_box_mimic	walk	-	melee	1.5	1.5	Lead-box mimic
+enemy	root_gel	hop	-	melee	1.35	0.975	Root gel
+enemy	blight_crawler	hop	-	melee	1.5	0.9	Blight crawler
+enemy	thorn_bat	fly	-	melee	1.2	0.9	Thorn bat
+enemy	root_wyrm	walk	-	melee	1.5	1.5	Root wyrm
+enemy	blight_hulk	walk	-	melee	2.4	3	Blight hulk
+enemy	rot_chanter	walk	-	melee	1.35	2.4	Rot chanter
+enemy	vine_reaper	fly	-	melee	1.5	0.9	Vine reaper
+enemy	slag_gel	hop	-	melee	1.35	0.975	Slag gel
+enemy	fission_hound	walk	-	melee	1.95	1.35	Fission hound
+enemy	core_borer	walk	-	melee	1.5	1.5	Core borer
+enemy	isotope_imp	walk	-	melee	1.35	2.4	Isotope imp
+enemy	reactor_bat	fly	-	melee	1.2	0.9	Reactor bat
+enemy	meltdown_golem	walk	-	melee	2.4	3.3	Meltdown golem
+enemy	critical_wisp	fly	-	melee	1.35	1.35	Critical wisp
+enemy	web_lurker	walk	-	melee	1.65	1.05	Web lurker
+enemy	brood_tyrant	walk	-	melee	2.7	1.8	Brood tyrant
+enemy	glyph_caster	walk	-	melee	1.35	2.55	Glyph caster
+enemy	vault_lancer	walk	-	melee	1.8	3	Vault lancer
+enemy	crypt_hoplite	walk	-	melee	1.5	2.7	Crypt hoplite
+enemy	void_scribe	walk	-	melee	1.35	2.55	Void scribe
+enemy	crypt_flitter	fly	-	melee	1.2	0.9	Crypt flitter
+boss	fallout_hivemind	fly	-	ranged	3	2.5	Fallout Hive-mind
+enemy	stratos_raptor	fly	-	melee	1.5	1.05	Stratos raptor
+enemy	ion_skate	fly	-	melee	1.8	0.75	Ion skate
+enemy	stratos_wyvern	fly	-	melee	3.9	1.5	Stratos wyvern
+enemy	cirrus_sentinel	fly	-	melee	1.8	1.8	Cirrus sentinel
+enemy	pit_charger	walk	-	melee	1.8	1.2	Pit charger
+enemy	pit_swarmer	fly	-	melee	1.2	0.9	Pit swarmer
+enemy	tomb_borer	walk	-	melee	1.35	1.35	Tomb borer
+enemy	dust_ghoul	walk	-	melee	1.5	2.7	Dust ghoul
+enemy	rust_basilisk	walk	-	melee	2.7	1.65	Rust basilisk
+enemy	grit_seer	walk	-	melee	1.35	2.55	Grit seer
+enemy	icicle_bat	fly	-	melee	1.2	0.9	Icicle bat
+enemy	frostbound_delver	walk	-	melee	1.5	2.7	Frostbound delver
+enemy	hoarfrost_elemental	walk	-	melee	1.5	2.4	Hoarfrost elemental
+enemy	glacier_tortoise	walk	-	melee	2.4	1.65	Glacier tortoise
+enemy	grave_wisp	fly	-	melee	1.2	1.5	Grave wisp
+enemy	carrion_drone	fly	-	melee	1.2	0.75	Carrion drone
+enemy	tomb_husk	walk	-	melee	1.35	2.55	Tomb husk
+enemy	mourning_shade	fly	-	melee	1.5	2.4	Mourning shade
+enemy	crypt_knight	walk	-	melee	1.65	2.85	Crypt knight
+enemy	hex_necrotech	walk	-	melee	1.35	2.55	Hex necrotech
+enemy	crypt_marksman	walk	-	melee	1.35	2.55	Crypt marksman
+enemy	crypt_spirit	fly	-	melee	1.35	1.8	Crypt spirit
+enemy	crypt_paladin	walk	-	melee	2.1	3.45	Crypt paladin
+enemy	venom_recluse	walk	-	melee	1.95	1.2	Venom recluse
+enemy	royal_comb_guard	fly	-	melee	1.5	1.35	Royal comb-guard
+enemy	drizzle_gel	hop	-	melee	1.35	0.975	Drizzle gel
+enemy	rain_skipper	fly	-	melee	1.2	0.75	Rain skipper
+enemy	slicker_husk	walk	-	melee	1.35	2.55	Slicker husk
+enemy	thunderhead	fly	-	melee	2.1	1.5	Thunderhead
+enemy	whiteout_wisp	fly	-	melee	1.2	1.2	Whiteout wisp
+enemy	drift_stalker	walk	-	melee	1.8	1.35	Drift stalker
+enemy	blizzard_colossus	walk	-	melee	3	3.9	Blizzard colossus
+enemy	dune_razorfin	fly	-	melee	2.4	0.9	Dune razorfin
+enemy	grit_elemental	fly	-	melee	2.4	3.3	Grit elemental
+enemy	thistledown_drifter	fly	-	melee	1.2	1.2	Thistledown drifter
+enemy	gust_mite	hop	-	melee	0.9	0.675	Gust mite
+enemy	rust_jester	walk	-	melee	1.5	2.7	Rust jester
+enemy	corrosion_nautilus	fly	-	melee	3.3	2.7	Corrosion nautilus
+enemy	eclipse_slasher	walk	-	melee	1.5	2.7	Eclipse slasher
+enemy	eclipse_sphere	fly	-	melee	1.35	1.35	Eclipse sphere
+enemy	scavenger_hexer	walk	-	melee	1.35	2.7	Scavenger hexer
+enemy	hollow_effigy	walk	-	melee	1.5	2.7	Hollow effigy
+enemy	ember_splinter	hop	-	melee	1.2	1.2	Ember splinter
+enemy	cinder_hound	walk	-	melee	1.95	1.35	Cinder hound
+enemy	static_poltergeist	fly	-	melee	1.35	1.8	Static poltergeist
+enemy	hollow_lancer	walk	-	melee	2.4	3.3	Hollow lancer
+enemy	ember_rootwalker	walk	-	melee	3.3	4.8	Ember rootwalker
+boss	hollow_regent	fly	-	ranged	3.75	3.75	Hollow Regent
+enemy	frost_sapper	walk	-	melee	1.35	2.4	Frost sapper
+enemy	shellcracker	walk	-	melee	1.65	2.85	Shellcracker
+enemy	flurry_flake	fly	-	melee	1.35	1.35	Flurry flake
+enemy	cargo_mimic	walk	-	melee	1.5	1.5	Cargo mimic
+enemy	snow_hulk	walk	-	melee	2.4	3	Snow hulk
+enemy	frostspire_pine	walk	-	melee	3.3	5.4	Frostspire pine
+enemy	cryo_tank	walk	-	melee	3.9	3	Cryo tank
+boss	rime_seraph	fly	-	ranged	3.5	4	Rime Seraph
+enemy	brigade_trooper	walk	-	melee	1.35	2.55	Brigade trooper
+enemy	brigade_shiv	walk	-	melee	1.2	2.25	Brigade shiv
+enemy	brigade_lobber	walk	-	melee	1.5	2.55	Brigade lobber
+enemy	cinder_imp	fly	-	melee	1.35	1.35	Cinder imp
+enemy	slag_centipede	walk	-	melee	1.5	1.5	Slag centipede
+enemy	pyre_lancer	walk	-	melee	1.65	3	Pyre lancer
+enemy	gale_diver	fly	-	melee	1.5	1.05	Gale diver
+enemy	squall_hornet	fly	-	melee	1.35	1.2	Squall hornet
+enemy	tempest_larva	hop	-	melee	1.2	0.9	Tempest larva
+enemy	rift_seer	walk	-	melee	1.35	2.7	Rift seer
+enemy	mind_leech	fly	-	melee	1.2	1.2	Mind leech
+enemy	rift_floater	fly	-	melee	1.65	1.95	Rift floater
+enemy	star_cell	hop	-	melee	1.35	1.35	Star-cell
+enemy	lattice_weaver	walk	-	melee	1.5	1.5	Lattice weaver
+enemy	shard_invader	fly	-	melee	1.5	1.5	Shard invader
+enemy	lumen_flare	fly	-	melee	1.05	1.05	Lumen flare
+enemy	glare_mote	fly	-	melee	0.9	0.9	Glare mote
+boss	hoarfrost_behemoth	walk	-	ranged	4	3.75	Hoarfrost Behemoth
+boss	gel_sovereign	walk	-	ranged	3.75	3.25	Gel Sovereign
+enemy	armored_swarmer	hop	-	melee	1.2	0.9	Armored swarmer
+enemy	prism_swarmer	hop	-	melee	1.35	1.05	Prism swarmer
+npc	station_ai	walk	-	none	1.25	2.625	Station AI, a person
+npc	npc_store_clerk	walk	-	none	1.25	2.625	Quartermaster, a person
+npc	npc_medical_doctor	walk	-	none	1.25	2.625	Medic, a person
+npc	npc_security_guard	walk	-	none	1.25	2.625	Armorer, a person
+npc	npc_base_engineer	walk	-	none	1.25	2.625	Chief Engineer, a person
+npc	npc_xeno_biologist	walk	-	none	1.25	2.625	Astro-Botanist, a person
+npc	npc_colony_worker	walk	-	none	1.25	2.625	Head Researcher, a person
+npc	npc_demolitionist	walk	-	none	1.25	2.625	Demolitionist, a person
+npc	npc_tailor	walk	-	none	1.25	2.625	Tailor, a person
+npc	npc_cartographer	walk	-	none	1.25	2.625	Cartographer, a person
+npc	npc_mechanic	walk	-	none	1.25	2.625	Mechanic, a person
+npc	npc_pilot	walk	-	none	1.25	2.625	Pilot, a person
+npc	npc_cook	walk	-	none	1.25	2.625	Cook, a person
+npc	npc_arborist	walk	-	none	1.25	2.625	Arborist, a person
+npc	npc_archivist	walk	-	none	1.25	2.625	Archivist, a person
+npc	npc_travelling_merchant	walk	-	none	1.25	2.625	Travelling Merchant, a person
+npc	npc_gel_azure	walk	-	none	1.25	2.625	Town gel, a person
+npc	npc_gel_amber	walk	-	none	1.25	2.625	Town gel, a person
+npc	npc_gel_rose	walk	-	none	1.25	2.625	Town gel, a person
+npc	npc_gel_verdant	walk	-	none	1.25	2.625	Town gel, a person
+npc	npc_field_zoologist	walk	-	none	1.25	2.625	Field Zoologist, a person
+npc	npc_pigment_trader	walk	-	none	1.25	2.625	Pigment Trader, a person
+npc	npc_party_planner	walk	-	none	1.25	2.625	Party Planner, a person
+npc	npc_bound_survivor	walk	-	none	1.25	2.625	a survivor tied up in restraints, a person
+crew	head_researcher	walk	-	none	1.25	2.625	head researcher, a person
+crew	security_commander	walk	-	none	1.25	2.625	security commander, a person
+crew	astro_botanist	walk	-	none	1.25	2.625	astro botanist, a person
+crew	chief_engineer	walk	-	none	1.25	2.625	chief engineer, a person
+crew	trade_consul	walk	-	none	1.25	2.625	trade consul, a person
+pet	pet_pocket_drone	float	-	none	0.96	0.84	pocket drone
+pet	pet_lumen_wisp	float	-	none	0.96	0.84	lumen wisp
+pet	pet_lantern_bot	float	-	none	0.96	0.84	lantern bot
+pet	pet_pebble_crab	walk	-	none	0.96	0.84	pebble crab

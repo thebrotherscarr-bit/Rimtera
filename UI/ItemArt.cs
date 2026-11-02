@@ -54,7 +54,7 @@ internal sealed class ItemArt
         return Color.FromArgb(source.A, Mix(source.R, tint.R), Mix(source.G, tint.G), Mix(source.B, tint.B));
     }
 
-    private static string? BaseFor(ItemDefinition item)
+    internal static string? BaseFor(ItemDefinition item)
     {
         var name = item.Id.ToString();
         switch (item.Style)
