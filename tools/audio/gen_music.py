@@ -10,6 +10,7 @@ the run to the named slots.
 """
 import argparse
 import os
+import random
 import subprocess
 import time
 import urllib.request
@@ -20,7 +21,7 @@ from audio_client import AceStep
 # Song plans, sent to ACE-Step in the lyrics field: section tags give a track a shape (with "[Instrumental]" alone it
 # improvises the form and builds, drops and wanders). The title is sung: a slow, low monk choir holding variations of
 # "Rim-te-ra" and "Rim-ta-ra", no real words; long held syllables and sparse lines keep the chant slow. Its shape is
-# take 5's long slow opening, then take 6's quicker build and second rise. Slots without a plan stay "[Instrumental]".
+# take 5's long slow opening, then take 6's quicker build and second rise. Slots without a plan here get a shape (plan()).
 PLANS = {
     "mus_title": (
         "[Intro - lone pan flute over harpsichord, slow and wide]\n[Instrumental]\n\n"
@@ -32,7 +33,50 @@ PLANS = {
         "[Climax - drum and bass, full low choir and soaring strings]\nRIIIM... TEEE... RAAA...\nRIIIM-TA-RAAA... RIIIM-TE-RAAA...\nOhhh... riiim-te-raaa...\n\n"
         "[Theme - full band, monks hum under the pan flute]\nMmmmm... rim-te-raaa...\nMmmmm... rim-ta-raaa..."
     ),
+    # The final boss keeps its fast orchestral-metal fight and adds the title's monks: a low drone under everything and
+    # the same slow Rim-te-ra chant in half time, so the fight answers the title theme.
+    "mus_boss_final": (
+        "[Verse - drum and bass breakbeat and orchestral metal from the first beat, the low drone holds underneath]\nMmmmm... rimterra...\nOhhh... rim ter rah...\n\n"
+        "[Chorus - full choir, slow half-time chant over the driving fight]\nRIM... TER... RAH...\nRIMTERRA... RIM TERRA...\n\n"
+        "[Bridge - strings and synth leads race, monks drone low, drums never stop]\nRim terra... rim terra...\nRiiim... terrr... raaah...\n\n"
+        "[Chorus - overwhelming, full choir and full band]\nRIM... TER... RAH...\nRIMTERRA... RIM TERRA...\nOhhh... rimterra..."
+    ),
 }
+
+# Every other slot sings too, from one of three shapes picked by its pace: calm (night, underground and slow tracks),
+# drive (exploration and events) and fight (bosses and fast fights). The monks' voice for the biome is in the prompt
+# (SoundCatalog.cs); the shape keeps the drone under everything and the chant slow, half time over fast beats. Each slot
+# shuffles its own Rim-te-ra lines (seeded by the cue) so no two tracks sing the same order.
+# Takes are short (80 s) and the game loops 30-40 s of them (loop_cut.py), so the shapes start full, with no lone intro,
+# breakdown or outro: every section has the band, the drone and the chant, and keeps going.
+SHAPES = {
+    "calm": ["[Verse - the music and the low monk drone start together, steady]", "[Chorus - the choir swells, slow held chant, full]",
+             "[Verse - the melody leads, the drone and chant hold underneath, no pause]", "[Chorus - the chant returns, fuller, keeps going]"],
+    "drive": ["[Verse - driving groove from the first beat, the low drone underneath]", "[Chorus - full choir, slow half-time chant over the beat]",
+              "[Bridge - leads race, monks drone low, the beat never stops]", "[Chorus - full band and full choir, keeps driving]"],
+    "fight": ["[Verse - the fight from the first beat, the low drone underneath]", "[Chorus - full choir, slow half-time chant over the driving fight]",
+              "[Bridge - strings and synth leads race, monks drone low, drums never stop]", "[Chorus - overwhelming, full choir and full band]"],
+}
+# The chant, as the user sings it: RIM TER RAH, RIMTERRA, RIM TERRA (held long, so it stays slow).
+LINES = ["Rim... ter... rah...", "Rimterra... rimterra...", "Rim terra... rim terra...", "Riiim... terrr... raaah...",
+         "Rimterraaa...", "Rim ter rah... rim terra...", "Mmmmm... rimterra...", "Ohhh... rim ter rah..."]
+
+
+def plan(row) -> str:
+    """The lyrics field for a slot: its own plan, or a shape with the chant shuffled for this cue."""
+    if row["cue"] in PLANS:
+        return PLANS[row["cue"]]
+    cue, bpm = row["cue"], int(row["bpm"])
+    shape = ("fight" if cue.startswith("mus_boss_") or bpm >= 144
+             else "calm" if cue.endswith(("_night", "_underground")) or bpm <= 110 else "drive")
+    lines = random.Random(seed(cue, 0)).sample(LINES, len(LINES))
+    sections = []
+    for index, tag in enumerate(SHAPES[shape]):
+        sung = [lines[(index * 2 + n) % len(lines)] for n in range(2)]
+        if tag.startswith("[Chorus") and shape != "calm":
+            sung = [line.upper() for line in sung]
+        sections.append("\n".join([tag, *sung]))
+    return "\n\n".join(sections)
 
 
 def server_up(url="http://127.0.0.1:8188") -> bool:
@@ -90,7 +134,7 @@ def main():
         started = time.time()
         kwargs = dict(seconds=args.seconds or float(row["seconds"]), bpm=int(row["bpm"]), key=row["key"],
                       time_signature=row["meter"], seed=seed(row["cue"], take),
-                      lyrics=PLANS.get(row["cue"], "[Instrumental]"))
+                      lyrics=plan(row))
         for attempt in (1, 2):
             try:
                 out.write_bytes(ace.track(row["prompt"], **kwargs))

@@ -9,11 +9,12 @@ A night has one focus, art or audio, never both. An audio night runs:
    bosses and events.
 3. Music (ACE-Step 1.5 in ComfyUI): every biome (day, night, underground), event and boss-tier slot.
 4. Ambience (MOSS-SoundEffect): loops for every biome, weather and spot sound.
-5. Post-processes every new take (audio_post.py), builds the audition page (make_audition.py) and, unless --no-fill,
+5. Post-processes every new take (audio_post.py), cuts a 30-40 s loop from every new music take (loop_cut.py --all),
+   builds the audition page (make_audition.py) and, unless --no-fill,
    promotes the first takes of every cue that has no file at all (promote.py --fill-gaps). Existing files, your
    recordings included, are never replaced.
 
---only runs one lane. A focused night (the default) gets the machine: normal priority, no pause, all but 1.5 GB of the
+--only runs one lane; --only loops generates nothing and only cuts loops from the music takes already made. A focused night (the default) gets the machine: normal priority, no pause, all but 1.5 GB of the
 VRAM and 80% of the CPU threads. --restricted leaves 4 GB of VRAM free instead (below-normal priority, 10 s rests) so
 the PC stays usable.
 --quick is a dry run of every step in minutes (one short take per step, nothing promoted). --pause overrides the
@@ -69,10 +70,10 @@ def main():
     if "--cues" in argv[:-1]:
         music_extra = [*music_extra, "--cues", argv[argv.index("--cues") + 1]]
     only = argv[argv.index("--only") + 1] if "--only" in argv[:-1] else None
-    if only is not None and only not in LANES:
-        sys.exit(f"--only must be one of {', '.join(LANES)}")
+    if only is not None and only not in (*LANES, "loops"):
+        sys.exit(f"--only must be one of {', '.join(LANES)}, loops")
     export_needs()
-    for lane in [only] if only else LANES:
+    for lane in [] if only == "loops" else [only] if only else LANES:
         if lane == "effects":
             free_comfy()
             step("Effects: weapons, tools, tiles, interactions, UI", MOSS_PYTHON, "gen_sfx.py", "--categories", FIRST, *sfx_extra)
@@ -83,6 +84,9 @@ def main():
             free_comfy()
             step("Ambience", MOSS_PYTHON, "gen_sfx.py", "--categories", "ambience", *sfx_extra)
     step("Post-process", MOSS_PYTHON, "audio_post.py")
+    if only in (None, "music", "loops"):
+        free_comfy()  # the stem split (Demucs) runs on the GPU
+        step("Music loops", MOSS_PYTHON, "loop_cut.py", "--all")
     step("Audition page", MOSS_PYTHON, "make_audition.py")
     if "--no-fill" not in argv and not quick:
         step("Fill gaps", MOSS_PYTHON, "promote.py", "--fill-gaps")
