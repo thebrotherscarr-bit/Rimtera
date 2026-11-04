@@ -23,18 +23,59 @@ env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
 jobs:
+  # Which kind of change this is. Game files (code, the project, Assets, tests, workflows) get the full proof on
+  # Windows. Anything else (docs, tools, the agent setup) passes every required check on a quick Linux runner
+  # without building, so small changes clear in seconds. The required check names are the same either way.
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    outputs:
+      game: ${{ steps.diff.outputs.game }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Did any game file change?
+        id: diff
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "workflow_dispatch" ] || [ -z "${BASE:-}" ] || ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            echo "game=true" >> "$GITHUB_OUTPUT"
+            echo "Full proof: nothing to compare against." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          files=$(git diff --name-only "$(git merge-base "$BASE" "$HEAD")" "$HEAD")
+          echo "$files"
+          if echo "$files" | grep -Eq '(\.cs$|\.csproj$|\.props$|\.targets$|^global\.json$|^nuget\.config$|^Assets/|^tests/|^\.github/workflows/|^(Systems|World|Entities|AI|Characters|UI)/)'; then
+            echo "game=true" >> "$GITHUB_OUTPUT"
+            echo "Game files changed: full proof." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "game=false" >> "$GITHUB_OUTPUT"
+            echo "No game files changed (docs, tools or agent setup only): the provers pass without building." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   build:
     name: Build (Release)
-    runs-on: windows-latest
+    needs: changes
+    runs-on: ${{ needs.changes.outputs.game == 'true' && 'windows-latest' || 'ubuntu-latest' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.game == 'true'
 
       - uses: actions/setup-dotnet@v4
+        if: needs.changes.outputs.game == 'true'
         with:
           dotnet-version: 10.0.x
 
       - name: Cache NuGet packages
+        if: needs.changes.outputs.game == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -42,15 +83,17 @@ jobs:
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Restore
+        if: needs.changes.outputs.game == 'true'
         run: dotnet restore Rimtera.csproj
 
       - name: Build
+        if: needs.changes.outputs.game == 'true'
         run: dotnet build Rimtera.csproj -c Release --no-restore
 
   prove:
     name: Prove (${{ matrix.prover }})
-    needs: build
-    runs-on: windows-latest
+    needs: [changes, build]
+    runs-on: ${{ needs.changes.outputs.game == 'true' && 'windows-latest' || 'ubuntu-latest' }}
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -70,12 +113,15 @@ jobs:
             command: --engine-bench --only Small --budget
     steps:
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.game == 'true'
 
       - uses: actions/setup-dotnet@v4
+        if: needs.changes.outputs.game == 'true'
         with:
           dotnet-version: 10.0.x
 
       - name: Cache NuGet packages
+        if: needs.changes.outputs.game == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -83,12 +129,15 @@ jobs:
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Restore
+        if: needs.changes.outputs.game == 'true'
         run: dotnet restore Rimtera.csproj
 
       - name: Build
+        if: needs.changes.outputs.game == 'true'
         run: dotnet build Rimtera.csproj -c Release --no-restore
 
       - name: Run ${{ matrix.prover }}
+        if: needs.changes.outputs.game == 'true'
         shell: pwsh
         run: |
           $log = "proof-${{ matrix.prover }}.log"
@@ -104,7 +153,7 @@ jobs:
           exit $code
 
       - name: Keep the prover log
-        if: always()
+        if: always() && needs.changes.outputs.game == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: proof-${{ matrix.prover }}
@@ -113,17 +162,20 @@ jobs:
 
   determinism:
     name: Prove (determinism)
-    needs: build
-    runs-on: windows-latest
+    needs: [changes, build]
+    runs-on: ${{ needs.changes.outputs.game == 'true' && 'windows-latest' || 'ubuntu-latest' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.game == 'true'
 
       - uses: actions/setup-dotnet@v4
+        if: needs.changes.outputs.game == 'true'
         with:
           dotnet-version: 10.0.x
 
       - name: Cache NuGet packages
+        if: needs.changes.outputs.game == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -131,12 +183,15 @@ jobs:
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Restore
+        if: needs.changes.outputs.game == 'true'
         run: dotnet restore Rimtera.csproj
 
       - name: Build
+        if: needs.changes.outputs.game == 'true'
         run: dotnet build Rimtera.csproj -c Release --no-restore
 
       - name: Run the demo twice and compare
+        if: needs.changes.outputs.game == 'true'
         shell: pwsh
         run: |
           dotnet run --project Rimtera.csproj -c Release --no-build -- --demo *> demo-a.txt
