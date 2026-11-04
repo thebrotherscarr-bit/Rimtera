@@ -477,29 +477,30 @@ public static class SoundCatalog
     /// The music slots, Terraria-shaped: one track per biome for day, night and (where it exists) underground, one per
     /// world event, one per boss tier plus the final boss, and title, town and space. Each style card follows the
     /// procedural theme of the same name (AudioEngine.MusicState) so a generated track and its synth fallback agree.
+    /// Voice is how the monk choir sings in that place (AddMusic).
     /// </summary>
-    private static readonly (string Theme, int Bpm, string Key, int Meter, string Card, bool Surface, bool Underground)[] MusicThemes =
+    private static readonly (string Theme, int Bpm, string Key, int Meter, string Card, string Voice, bool Surface, bool Underground)[] MusicThemes =
     [
-        ("title", 76, "E minor", 4, "lonely pan flute solo over baroque harpsichord continuo and slow strings, space-frontier western at dusk, warm analog synth pads, distant twangy guitar, soft breakbeat swell, wistful and vast, one continuous arc that keeps building, steady momentum, no breakdowns or pauses", false, false),
-        ("grassland", 126, "A major", 4, "upbeat space-frontier funk, slap bass, clavinet, bright strings, optimistic exploration", true, true),
-        ("forest", 112, "C# minor", 4, "laid-back funk groove, muted guitar, warm electric piano, curious and green", true, false),
-        ("canopy", 136, "B major", 4, "driving baroque strings over tribal percussion, Vivaldi-like runs, lush jungle", true, true),
-        ("coast", 112, "C major", 3, "romantic waltz, sweeping strings, harp, gentle waves, airy shimmer", true, false),
-        ("frozen", 120, "D major", 4, "crystalline baroque counterpoint, harpsichord and bells, cold airy shimmer, half-time beat", true, true),
-        ("junk", 124, "A minor", 4, "gritty breakbeat funk, wah guitar, scrapyard metal percussion, swagger", true, true),
-        ("radiated", 134, "D minor", 4, "tense baroque fugue over breakbeats, harmonic minor, synth strings, danger", true, true),
-        ("overgrowth", 104, "F minor", 4, "dark slinky funk, swung beat, eerie pads, creeping blight", true, true),
-        ("crystal", 130, "E major", 4, "sparkling baroque arpeggios, glassy bells, breakbeat, wonder", true, true),
-        ("fungal", 104, "Bb minor", 3, "dreamy glowing waltz, music box, soft strings, mysterious", false, true),
-        ("hives", 120, "G minor", 4, "buzzing pizzicato strings, nervous rhythms, warm drones", false, true),
-        ("warrens", 116, "E minor", 4, "skittering staccato strings, tense pulses, cobweb atmosphere", false, true),
-        ("vault", 96, "C minor", 4, "ancient precursor ambience, deep choir pads, slow synth pulses, awe", false, true),
-        ("underground", 118, "G minor", 4, "brooding baroque cave music, half-time drums, cello and harpsichord, echoing", false, true),
-        ("molten", 144, "E minor", 4, "furious rock and Vivaldi strings, distorted guitars, phrygian dominant, heat", false, true),
-        ("core", 144, "E minor", 4, "relentless industrial rock, distorted guitars, throbbing synth bass, radiation", false, true),
-        ("space", 90, "F major", 4, "vast ambient space music, slow synth pads, distant bells, weightless", false, false),
-        ("town", 100, "D major", 4, "cozy frontier settlement theme, acoustic guitar, warm strings, light funk", false, false),
-        ("ocean", 108, "C major", 3, "underwater waltz, slow strings and harp, muffled shimmer", false, false)
+        ("title", 76, "E minor", 4, "lonely pan flute solo over baroque harpsichord continuo and slow strings, space-frontier western at dusk, warm analog synth pads, distant twangy guitar, soft breakbeat swell, wistful and vast, one continuous arc that keeps building, steady momentum, no breakdowns or pauses", "", false, false),
+        ("grassland", 126, "A major", 4, "upbeat space-frontier funk, slap bass, clavinet, bright strings, optimistic exploration", "warm hopeful monk hum in unison, open-air and bright", true, true),
+        ("forest", 112, "C# minor", 4, "laid-back funk groove, muted guitar, warm electric piano, curious and green", "soft close hummed chant, woody call and response", true, false),
+        ("canopy", 136, "B major", 4, "driving baroque strings over tribal percussion, Vivaldi-like runs, lush jungle", "tribal monk chanting, rhythmic call and response over the drums", true, true),
+        ("coast", 112, "C major", 3, "romantic waltz, sweeping strings, harp, gentle waves, airy shimmer", "airy distant choir like voices across the sea, swaying", true, false),
+        ("frozen", 120, "D major", 4, "crystalline baroque counterpoint, harpsichord and bells, cold airy shimmer, half-time beat", "cold hollow monks, breathy held vowels, icy reverb", true, true),
+        ("junk", 124, "A minor", 4, "gritty breakbeat funk, wah guitar, scrapyard metal percussion, swagger", "gritty grunted work-song chant with swagger", true, true),
+        ("radiated", 134, "D minor", 4, "tense baroque fugue over breakbeats, harmonic minor, synth strings, danger", "dissonant uneasy monks in tight clusters, warped and tense", true, true),
+        ("overgrowth", 104, "F minor", 4, "dark slinky funk, swung beat, eerie pads, creeping blight", "creeping whispered monk murmurs, slinky and eerie", true, true),
+        ("crystal", 130, "E major", 4, "sparkling baroque arpeggios, glassy bells, breakbeat, wonder", "shimmering choir with ringing overtones, glassy and bright", true, true),
+        ("fungal", 104, "Bb minor", 3, "dreamy glowing waltz, music box, soft strings, mysterious", "dreamy slow lullaby hum, soft and glowing", false, true),
+        ("hives", 120, "G minor", 4, "buzzing pizzicato strings, nervous rhythms, warm drones", "buzzing throat-singing drone, nervous pulsing syllables", false, true),
+        ("warrens", 116, "E minor", 4, "skittering staccato strings, tense pulses, cobweb atmosphere", "skittering whispered syllables, staccato chant", false, true),
+        ("vault", 96, "C minor", 4, "ancient precursor ambience, deep choir pads, slow synth pulses, awe", "vast ancient cathedral choir, the deepest drone, awe", false, true),
+        ("underground", 118, "G minor", 4, "brooding baroque cave music, half-time drums, cello and harpsichord, echoing", "echoing cave monks, deep drone, slow and brooding", false, true),
+        ("molten", 144, "E minor", 4, "furious rock and Vivaldi strings, distorted guitars, phrygian dominant, heat", "furious roaring war chant, heavy and hot", false, true),
+        ("core", 144, "E minor", 4, "relentless industrial rock, distorted guitars, throbbing synth bass, radiation", "mechanical relentless chant over a distorted drone, industrial", false, true),
+        ("space", 90, "F major", 4, "vast ambient space music, slow synth pads, distant bells, weightless", "weightless distant choir, slow drifting drone", false, false),
+        ("town", 100, "D major", 4, "cozy frontier settlement theme, acoustic guitar, warm strings, light funk", "cozy warm hum around a fire, friendly", false, false),
+        ("ocean", 108, "C major", 3, "underwater waltz, slow strings and harp, muffled shimmer", "muffled underwater choir, slow swaying drone", false, false)
     ];
 
     private static void AddMusic(Action<SoundCue> add)
@@ -507,45 +508,49 @@ public static class SoundCatalog
         // The Rimtera sound, after the tracks the user picked (meteor fall, final and easy boss, underground, overgrowth night).
         const string sound = "Rimtera sound: driving techno pulse and drum and bass breakbeats under funky classical strings and baroque runs, " +
                              "MIDI synth-pop leads, upbeat, classical with a semi-modern edge. ";
-        const string music = sound + "instrumental video game soundtrack in a MIDI style: General MIDI sound-module instruments (synth leads, sampled strings, brass, choir pads, a drum kit), 16-bit era like a classic sandbox game soundtrack, loopable, no vocals";
-        // The title theme sings: a hummed, wordless monk choir in an invented language (gen_music.py holds its chant).
-        const string choir = sound + "epic post-apocalyptic, very deep basso profundo male monk choir, slow sustained low chanting with long held vowels, Gregorian-style, invented words only. " +
-                             "video game title theme in a MIDI style: General MIDI sound-module instruments (synth leads, sampled strings, brass, a drum kit), 16-bit era like a classic sandbox game soundtrack, loopable";
-        foreach (var (theme, bpm, key, meter, card, surface, underground) in MusicThemes)
+        // Every track sings: a hummed, wordless monk choir and its low drone in an invented language (gen_music.py holds the
+        // Rim-te-ra chants). The chant is the same everywhere; each biome, event and boss gives the monks their own voice.
+        const string chant = sound + "epic post-apocalyptic, very deep basso profundo male monk choir, slow sustained low chanting with long held vowels, Gregorian-style, invented words only. ";
+        const string midi = "in a MIDI style: General MIDI sound-module instruments (synth leads, sampled strings, brass, a drum kit), 16-bit era like a classic sandbox game soundtrack, loopable";
+        const string choir = chant + "video game title theme " + midi;
+        // The game loops 30-40 s of each track (loop_cut.py), so a take only needs room for one good stretch.
+        const float length = 80f;
+        static string Sung(string voice, string what) => $"{chant}{voice}, with a low droning hum underneath. video game {what} {midi}";
+        foreach (var (theme, bpm, key, meter, card, voice, surface, underground) in MusicThemes)
         {
             var slot = surface ? $"mus_{theme}_day" : $"mus_{theme}";
-            add(new(slot, "music", surface ? $"{theme}, daytime" : theme, 1, 150f, $"{card}. {(theme == "title" ? choir : music)}", "", Loop: true, Offset: -4f, Bpm: bpm, Key: key, Meter: meter));
+            add(new(slot, "music", surface ? $"{theme}, daytime" : theme, 1, length,$"{card}. {(theme == "title" ? choir : Sung(voice, $"{theme} biome music"))}", "", Loop: true, Offset: -4f, Bpm: bpm, Key: key, Meter: meter));
             if (surface)
-                add(new($"mus_{theme}_night", "music", $"{theme}, at night", 1, 150f, $"{card}, nocturnal, softer and sparser, slower. {music}", slot,
+                add(new($"mus_{theme}_night", "music", $"{theme}, at night", 1, length,$"{card}, nocturnal, softer and sparser, slower. {Sung($"{voice}, hushed and sparse", $"{theme} biome night music")}", slot,
                     Loop: true, Offset: -4f, Bpm: (int)(bpm * 0.94f), Key: key, Meter: meter));
             if (surface && underground)
-                add(new($"mus_{theme}_underground", "music", $"{theme}, underground", 1, 150f, $"{card}, deeper and darker, cavernous reverb. {music}", "mus_underground",
+                add(new($"mus_{theme}_underground", "music", $"{theme}, underground", 1, length,$"{card}, deeper and darker, cavernous reverb. {Sung($"{voice}, echoing deep in the dark", $"{theme} caverns music")}", "mus_underground",
                     Loop: true, Offset: -4f, Bpm: (int)(bpm * 0.92f), Key: key, Meter: meter));
         }
         foreach (var spec in new WorldEventSystem(1).Specs)
         {
-            var (bpm, key, card) = spec.Category switch
+            var (bpm, key, card, voice) = spec.Category switch
             {
-                WorldEventCategory.Invasion => (150, "C minor", "urgent battle music, pounding drums, brass stabs, alarm synths"),
-                WorldEventCategory.Night => (128, "D minor", "sinister night siege music, eerie choir pads, driving strings"),
-                WorldEventCategory.Weather => (110, "A minor", "stormy atmospheric music, rolling timpani, swirling strings"),
-                WorldEventCategory.Party => (120, "F major", "festive celebration music, funky brass and claps"),
-                WorldEventCategory.Calm => (90, "E major", "serene glowing music, soft bells and pads"),
-                _ => (132, "E minor", "dramatic event music, rising strings and percussion")
+                WorldEventCategory.Invasion => (150, "C minor", "urgent battle music, pounding drums, brass stabs, alarm synths", "shouted war chant, urgent and rhythmic"),
+                WorldEventCategory.Night => (128, "D minor", "sinister night siege music, eerie choir pads, driving strings", "sinister low monks, ominous and creeping"),
+                WorldEventCategory.Weather => (110, "A minor", "stormy atmospheric music, rolling timpani, swirling strings", "wind-blown choir rising and falling with the storm"),
+                WorldEventCategory.Party => (120, "F major", "festive celebration music, funky brass and claps", "joyful rowdy monks chanting together, clapping along"),
+                WorldEventCategory.Calm => (90, "E major", "serene glowing music, soft bells and pads", "serene glowing hum, gentle and wide"),
+                _ => (132, "E minor", "dramatic event music, rising strings and percussion", "dramatic rising choir, swelling and epic")
             };
-            add(new($"mus_event_{Snake(spec.Kind.ToString())}", "music", $"during {spec.Name}", 1, 150f, $"{card}, theme for the {spec.Name} event. {music}", "",
+            add(new($"mus_event_{Snake(spec.Kind.ToString())}", "music", $"during {spec.Name}", 1, length,$"{card}, theme for the {spec.Name} event. {Sung(voice, "event music")}", "",
                 Loop: true, Offset: -3f, Bpm: bpm, Key: key, Meter: 4));
         }
-        (BossTier Tier, int Bpm, string Key, string Card)[] bosses =
+        (BossTier Tier, int Bpm, string Key, string Card, string Voice)[] bosses =
         [
-            (BossTier.Gate, 150, "D minor", "first boss battle, aggressive rock and strings"),
-            (BossTier.Easy, 156, "E minor", "intense boss battle, driving rock, Vivaldi strings, brass"),
-            (BossTier.Hard, 164, "C# minor", "hardmode boss battle, heavy industrial metal, epic choir"),
-            (BossTier.Event, 160, "F# minor", "event boss battle, frantic percussion and synth leads"),
-            (BossTier.Final, 170, "B minor", "final boss battle, epic orchestral metal, choir, overwhelming")
+            (BossTier.Gate, 150, "D minor", "first boss battle, aggressive rock and strings", "stern guardian chant, heavy and steady"),
+            (BossTier.Easy, 156, "E minor", "intense boss battle, driving rock, Vivaldi strings, brass", "driving battle chant, punchy and proud"),
+            (BossTier.Hard, 164, "C# minor", "hardmode boss battle, heavy industrial metal, epic choir", "massive dark choir, grinding and huge"),
+            (BossTier.Event, 160, "F# minor", "event boss battle, frantic percussion and synth leads", "frantic chanting in rapid bursts, wild"),
+            (BossTier.Final, 170, "B minor", "final boss battle, epic orchestral metal, choir, overwhelming", "low droning choir under the fight")
         ];
-        foreach (var (tier, bpm, key, card) in bosses)
-            add(new($"mus_boss_{Snake(tier.ToString())}", "music", $"fighting a {tier} boss", 1, 150f, $"{card}. {music}", tier == BossTier.Gate ? "" : "mus_boss_gate",
+        foreach (var (tier, bpm, key, card, voice) in bosses)
+            add(new($"mus_boss_{Snake(tier.ToString())}", "music", $"fighting a {tier} boss", 1, length,$"{card}. {Sung(voice, tier == BossTier.Final ? "final boss battle theme" : "boss battle theme")}", tier == BossTier.Gate ? "" : "mus_boss_gate",
                 Loop: true, Offset: -2f, Bpm: bpm, Key: key, Meter: 4));
     }
 
