@@ -12,7 +12,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  actions: write
 
 jobs:
   check:
@@ -56,6 +57,7 @@ jobs:
       - name: Create the tag if it is missing
         env:
           VERSION: ${{ needs.check.outputs.version }}
+        id: tag
         run: |
           set -euo pipefail
           tag="v${VERSION}"
@@ -63,6 +65,8 @@ jobs:
           if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
             echo "Tag ${tag} already exists; nothing to do."
             echo "Tag \`${tag}\` already exists." >> "$GITHUB_STEP_SUMMARY"
+            echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+            echo "created=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -72,3 +76,10 @@ jobs:
           git push origin "${tag}"
 
           echo "Created \`${tag}\`; Publish now builds the release." >> "$GITHUB_STEP_SUMMARY"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch Publish workflow
+        if: steps.tag.outputs.created == 'true'
+        run: |
+          gh workflow run publish.yml --ref ${{ steps.tag.outputs.tag }} --repo ${{ github.repository }}
