@@ -36,6 +36,8 @@ hardmode research tiers and hardmode events, scheduled by the storyteller**), th
 - Authorship: every commit, PR, release, comment and file is by **Soda Poppensky** only:
   `git -c user.name="Soda Poppensky" -c user.email=TheBrothersCarr@gmail.com commit ...`. No Co-Authored-By, no
   tool or model attribution anywhere.
+  This checkout's own git identity (`git config --local`) is Soda Poppensky too, so a plain `git commit` is
+  authored correctly; check `git log -1 --format=%an` before pushing all the same.
 - Every asset in the repo is the owner's own; commit and ship everything under `Assets/`.
 - Terraria is behavioural evidence only: match its behaviour, numbers and structure, never copy its code, names or
   assets. `docs/terraria-evidence/` stays local and is never committed.
