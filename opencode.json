@@ -1,29 +1,22 @@
 {
-  "$schema": "https://opencode.ai",
-  "provider": {
-    "ollama": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama Local Engine",
-      "options": {
-        "baseURL": "http://127.0.0.1:11434/v1"
-      },
-      "models": {
-        "qwen3.5:14b": {
-          "name": "Qwen Code Local",
-          "tool_call": true
-        }
-      }
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/deepseek-v4.1-flash-free",
+  "small_model": "ollama/gpt-oss:20b",
+  "default_agent": "producer",
+  "instructions": ["CLAUDE.md", "docs/SODA_TOOLS.md"],
+  "mcp": {
+    "sodaudio": {
+      "type": "local",
+      "command": ["C:\\Users\\novad\\Desktop\\Sodaudio\\.venv\\Scripts\\python.exe", "C:\\Users\\novad\\Desktop\\Sodaudio\\engine\\mcp_server.py"],
+      "environment": { "SODAUDIO_PORT": "8770" },
+      "enabled": true
     }
   },
-  "model": "ollama/qwen3.5:14b",
-  "mcpServers": {
-    "rea-agents": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "rea-agents@latest",
-        "server"
-      ]
+  "agent": {
+    "local": {
+      "description": "Easy, mechanical tasks only: renaming, small single-file edits, listing or summarising files, running a command and reporting its output. Runs on the local gpt-oss model. Never give it game logic, multi-file changes or design work.",
+      "mode": "subagent",
+      "model": "ollama/gpt-oss:20b"
     }
   }
 }
