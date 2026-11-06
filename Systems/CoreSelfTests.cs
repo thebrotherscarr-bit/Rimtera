@@ -1701,6 +1701,7 @@ public static class CoreSelfTests
         SpriteMemorySelfTests.Run(Check); // 0.2.2 (0.1.7 A2, PE-2): lazy sprite loading: an index at load, decoded and scaled LRUs with byte budgets
         MenuParitySelfTests.Run(Check); // 0.2.2 (0.1.8 D3-D7, E1): map preferences and NPC heads, title feats and credits, video rows, screen shake, audio latency
         SaveSafetySelfTests.Run(Check); // 0.2.2 D: save backups and migrations, the 0.1.6 fixture, threaded autosave, any character on any world, the HP-only player, minions, statue spawns (PU-11/12, PU-9, IC-4, IC-7, EN-6)
+        AgentObserverSelfTests.Run(Check); // the AI player's text view: deterministic, read-only, cut to the world's edge (docs/AGENT_PLAY.md)
         BossSelfTests.Run(Check); // 0.2.2 C: boss and event lifecycle (BO-24 suite; PC-1/2/4, BO-6/9/17/18, EV-1/2, EN-7)
         Console.WriteLine($"{passed} checks passed.");
         return 0;

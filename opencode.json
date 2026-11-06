@@ -4,11 +4,27 @@
   "small_model": "ollama/gpt-oss:20b",
   "default_agent": "producer",
   "instructions": ["CLAUDE.md", "docs/SODA_TOOLS.md"],
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": { "baseURL": "http://localhost:11434/v1" },
+      "models": {
+        "steward:1": { "name": "steward:1", "limit": { "context": 32768, "output": 8192 } },
+        "gpt-oss:20b": { "name": "gpt-oss:20b", "limit": { "context": 32768, "output": 8192 } }
+      }
+    }
+  },
   "mcp": {
     "sodaudio": {
       "type": "local",
       "command": ["C:\\Users\\novad\\Desktop\\Sodaudio\\.venv\\Scripts\\python.exe", "C:\\Users\\novad\\Desktop\\Sodaudio\\engine\\mcp_server.py"],
       "environment": { "SODAUDIO_PORT": "8770" },
+      "enabled": true
+    },
+    "rimtera": {
+      "type": "local",
+      "command": ["node", "tools/local-ai/rimtera-mcp/server.mjs"],
       "enabled": true
     }
   },

@@ -36,6 +36,10 @@ Thumbs.db
 desktop.ini
 .DS_Store
 
+# Session artifacts from the AI player (docs/AGENT_PLAY.md): findings are read and acted on, not shipped
+docs/playtests/
+.agent-stop
+
 # Audacity project scratch files (SQLite write-ahead log)
 *.aup4-shm
 *.aup4-wal
