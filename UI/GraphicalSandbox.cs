@@ -997,6 +997,7 @@ public static partial class GraphicalSandbox
 
         private void Advance()
         {
+            AgentBridge.Pump(_game, CaptureCanvasPng); // --agent-play: serve the AI player's requests on this thread (docs/AGENT_PLAY.md)
             UpdateCraftHold();
             if (_game is not null)
             {
@@ -1065,6 +1066,12 @@ public static partial class GraphicalSandbox
                 SyncCanvas();
                 return;
             }
+            // --agent-play: the world waits for the AI player's next command instead of running on without it.
+            if (AgentBridge.Active && !AgentBridge.WantsTick)
+            {
+                SyncCanvas();
+                return;
+            }
 
             var overInterface = _canvas.MousePosition is { } pointer && PointerOverInterface(pointer);
             var mapOpen = _canvas.FullscreenMapOpen;
@@ -1113,12 +1120,12 @@ public static partial class GraphicalSandbox
                 action = PlayerAction.ReplaceSelected;
 
             // 0.3.11: the window only sends player 1's command; the game state changes in Advance (docs/MULTIPLAYER.md).
-            _game.Submit(_localPlayers.For(InputDevice.KeyboardMouse)?.Slot ?? 0, new GameInput(
+            _game.Submit(_localPlayers.For(InputDevice.KeyboardMouse)?.Slot ?? 0, AgentBridge.Filter(_game, new GameInput(
                 new MovementInput(horizontal, JumpPressed: _jump && !mapOpen, DashPressed: _dash && !mapOpen,
                     JumpHeld: !mapOpen && Held("Jump"),
                     Vertical: mapOpen ? 0f : Held("MoveUp") ? -1f : Held("MoveDown") ? 1f : 0f),
                 action,
-                aim));
+                aim)));
             _game.Advance();
             _jump = _dash = _mine = _use = _replace = _eat = _boss = false;
             if (_game.IsOver)

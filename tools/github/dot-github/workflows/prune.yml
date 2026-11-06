@@ -1,0 +1,93 @@
+name: Prune
+
+# Weekly housekeeping. Deletes only what is provably safe, and REPORTS everything else to the owner:
+#   - branches already merged into main (and not protected, and with no open PR) are deleted;
+#   - unmerged branches idle for 30+ days, and PRs idle for 14+ days, are listed in the run summary and one tracking issue;
+#   - workflow runs and artifacts older than 30 days are removed (releases and tags are never touched).
+# AGENTS.md: no force pushes, no deleting or re-pushing tags; branches only when merged. This workflow follows that.
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List what would be deleted without deleting"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: read
+  issues: write
+  actions: write
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merged branches
+        shell: bash
+        run: |
+          set -uo pipefail
+          git fetch origin --prune
+          echo "### Merged branches" >> "$GITHUB_STEP_SUMMARY"
+          for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do
+            b="${ref#origin/}"
+            case "$b" in HEAD|main|gh-pages|release/*) continue;; esac
+            if git merge-base --is-ancestor "$ref" origin/main; then
+              open=$(gh pr list --head "$b" --state open --json number --jq 'length')
+              if [ "$open" = "0" ]; then
+                if [ "$DRY" = "true" ]; then echo "- would delete \`$b\`" >> "$GITHUB_STEP_SUMMARY"
+                else gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$b" && echo "- deleted \`$b\`" >> "$GITHUB_STEP_SUMMARY"; fi
+              fi
+            fi
+          done
+
+      - name: Report stale branches and PRs
+        id: stale
+        shell: bash
+        run: |
+          set -uo pipefail
+          cutoff_b=$(date -d '30 days ago' +%s)
+          {
+            echo "Stale unmerged branches (30+ days idle) and idle PRs (14+ days). Nothing here was deleted."
+            echo
+            echo "**Branches**"
+            for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do
+              b="${ref#origin/}"; case "$b" in HEAD|main|gh-pages) continue;; esac
+              git merge-base --is-ancestor "$ref" origin/main && continue
+              ts=$(git log -1 --format=%ct "$ref")
+              [ "$ts" -lt "$cutoff_b" ] && echo "- \`$b\` last commit $(git log -1 --format=%cs "$ref")"
+            done
+            echo
+            echo "**Open PRs idle 14+ days**"
+            gh pr list --state open --json number,title,updatedAt --jq '.[] | select((now - (.updatedAt|fromdateiso8601)) > 1209600) | "- #\(.number) \(.title) (updated \(.updatedAt[0:10]))"'
+          } | tee report.md >> "$GITHUB_STEP_SUMMARY"
+          if [ "$(wc -l < report.md)" -gt 6 ]; then echo "has_items=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Update the tracking issue
+        if: steps.stale.outputs.has_items == 'true' && env.DRY != 'true'
+        shell: bash
+        run: |
+          n=$(gh issue list --label housekeeping --state open --json number --jq '.[0].number // empty')
+          if [ -n "$n" ]; then gh issue comment "$n" --body-file report.md
+          else gh issue create --title "Housekeeping: stale branches and PRs" --label housekeeping --body-file report.md || gh issue create --title "Housekeeping: stale branches and PRs" --body-file report.md; fi
+
+      - name: Old workflow runs and artifacts
+        if: env.DRY != 'true'
+        shell: bash
+        run: |
+          set -uo pipefail
+          cutoff=$(date -d '30 days ago' +%Y-%m-%d)
+          gh run list --limit 400 --json databaseId,createdAt,status --jq ".[] | select(.status==\"completed\" and .createdAt < \"$cutoff\") | .databaseId" |
+            while read -r id; do gh run delete "$id" >/dev/null 2>&1 && echo "deleted run $id"; done

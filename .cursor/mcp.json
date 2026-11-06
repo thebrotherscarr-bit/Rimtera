@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "rimtera": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/tools/local-ai/rimtera-mcp/server.mjs"
+      ]
+    },
+    "sodaudio": {
+      "command": "C:\\Users\\novad\\Desktop\\Sodaudio\\.venv\\Scripts\\python.exe",
+      "args": [
+        "C:\\Users\\novad\\Desktop\\Sodaudio\\engine\\mcp_server.py"
+      ],
+      "env": {
+        "SODAUDIO_PORT": "8770"
+      }
+    },
+    "jesster-notes": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\novad\\Desktop\\Research\\worlds\\jesster\\notes\\cli.py",
+        "mcp",
+        "--vault",
+        "C:\\Users\\novad\\Desktop\\Research\\worlds\\notes",
+        "--only",
+        "notes"
+      ]
+    }
+  }
+}

@@ -1,0 +1,22 @@
+---
+description: Rimtera working rules for any AI agent in this repo
+alwaysApply: true
+---
+
+Read `CLAUDE.md` and `AGENTS.md` first; they are the authority. In short:
+
+- Authorship: every commit, PR and file is by Soda Poppensky only. Commit with
+  `git -c user.name="Soda Poppensky" -c user.email=TheBrothersCarr@gmail.com commit ...`. No Co-Authored-By,
+  Claude-Session or tool/model attribution anywhere.
+- Work on a branch, never on `main`. Never force-push, rewrite history, or delete tags or branches. Never push or
+  merge unless the owner says so.
+- Build the step `docs/PLAN.md` names as "Next:", from its row in `docs/VISION.md` section 4. Read the source before
+  editing it. Keep changes inside one file or one `GameSimulation.*.cs` partial where you can.
+- The simulation is deterministic: no wall clock, no unseeded `Random`, no unordered iteration that changes results,
+  no WinForms in `Systems/ World/ Entities/ Characters/ AI/`. See `docs/MULTIPLAYER.md` and `docs/adr/`.
+- The player never recovers automatically.
+- Every new mechanic gets dev-console commands and self-tests in the same change.
+- Gate before saying done: use the `rimtera` MCP tool `rimtera_prove` (build, --self-test, --batch-a-test, --demo),
+  and keep `--craft-audit` and `--item-audit` clean (`rimtera_audit`).
+- Do not start GPU jobs (SodaPixel, Sodaudio, large models). Ask the owner. Ollama models share the one 16 GB GPU.
+- Experiments go in a scratch copy outside the repo.

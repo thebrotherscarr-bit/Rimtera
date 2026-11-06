@@ -1,0 +1,46 @@
+{
+  "files.eol": "auto",
+  "files.autoSave": "onFocusChange",
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "publish": true,
+    "rea": true
+  },
+  "search.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "publish": true,
+    "art": true,
+    "rea": true,
+    "tools/comfy-app": true,
+    "tools/moss-venv": true,
+    "tools/rea": true,
+    "tools/rea-local": true,
+    "docs/terraria-evidence": true,
+    "docs/rimworld-evidence": true,
+    "docs/Terraria_Specs/Phase14_ID_Global_Matrices.md": true
+  },
+  "files.watcherExclude": {
+    "**/bin/**": true,
+    "**/obj/**": true,
+    "publish/**": true,
+    "art/**": true,
+    "rea/**": true,
+    "tools/comfy-app/**": true,
+    "tools/moss-venv/**": true,
+    "docs/terraria-evidence/**": true,
+    "docs/rimworld-evidence/**": true
+  },
+  "git.autofetch": true,
+  "git.confirmSync": true,
+  "git.pruneOnFetch": true,
+  "git.fetchOnPull": true,
+  "git.branchProtection": ["main"],
+  "git.branchProtectionPrompt": "alwaysCommitToNewBranch",
+  "telemetry.telemetryLevel": "off",
+  "dotnet.defaultSolution": "Rimtera.csproj",
+  "omnisharp.enableRoslynAnalyzers": true,
+  "[csharp]": { "editor.formatOnSave": false },
+  "cline.mcpMarketplace.enabled": false
+}

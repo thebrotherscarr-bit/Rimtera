@@ -11,7 +11,16 @@ if (args.Contains("--demo", StringComparer.OrdinalIgnoreCase))
     return 0;
 }
 
-if (args.Contains("--quickstart", StringComparer.OrdinalIgnoreCase))
+// --agent-play [--port 8780] [--size Small] [--kit arsenal]: the normal window in a fresh world, driven by an AI player over
+// a loopback HTTP bridge while you watch (docs/AGENT_PLAY.md). The world only advances while the agent sends commands.
+if (args.Contains("--agent-play", StringComparer.OrdinalIgnoreCase))
+{
+    var portIndex = Array.FindIndex(args, arg => string.Equals(arg, "--port", StringComparison.OrdinalIgnoreCase));
+    var port = portIndex >= 0 && portIndex + 1 < args.Length && int.TryParse(args[portIndex + 1], out var parsedPort) ? parsedPort : 8780;
+    AgentBridge.Start(port);
+}
+
+if (args.Contains("--quickstart", StringComparer.OrdinalIgnoreCase) || args.Contains("--agent-play", StringComparer.OrdinalIgnoreCase))
 {
     // --size Tiny|Small|Medium|Large picks the quickstart world size (default: a small 800x300 test world).
     var sizeIndex = Array.FindIndex(args, arg => string.Equals(arg, "--size", StringComparison.OrdinalIgnoreCase));
