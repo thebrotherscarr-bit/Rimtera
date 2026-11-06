@@ -553,6 +553,7 @@ internal static class ContentItems
             Station(ItemId.AlloyAnvil, "Alloy anvil", 4);
             Station(ItemId.VoidForge, "Void forge", 6);
             Station(ItemId.AstralAssembler, "Astral assembler", 7);
+            Station(ItemId.StarWeaver, "Star weaver", 8);
             Station(ItemId.ChemLab, "Chem lab", 1);
             Station(ItemId.BioLab, "Bio lab", 2);
             Station(ItemId.Loom, "Loom", 1);

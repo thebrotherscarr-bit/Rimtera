@@ -42,7 +42,20 @@ public sealed partial class GameSimulation
         new("flora", "Flora core studies", [EnemyKind.MutatedFlora], 5f, [ItemId.VoidForge], [],
             "The Void Forge."),
         new("astral", "Astral studies", [EnemyKind.AstroGod], 5f, [ItemId.AstralAssembler], [],
-            "The Astral Assembler.")
+            "The Astral Assembler."),
+        // 0.8.3: hardmode research tiers following Terraria's ore ladder
+        new("lumenite", "Lumenite studies", [EnemyKind.WarshipCore], 6f, [ItemId.VoidForge],
+            [ItemId.LumeniteBar, ItemId.LumeniteOre, ItemId.PrismEssence],
+            "The Void Forge, and recipes using lumenite and prism essence."),
+        new("voidsteel", "Voidsteel studies", [EnemyKind.MutatedFlora], 7f, [ItemId.AstralAssembler],
+            [ItemId.VoidsteelBar, ItemId.VoidsteelOre, ItemId.BlightEssence],
+            "The Astral Assembler, and recipes using voidsteel and blight essence."),
+        new("astral2", "Astral convergence", [EnemyKind.VoidCantor], 6f, [ItemId.StarWeaver],
+            [ItemId.AstralBar, ItemId.AstralOre, ItemId.FlightEssence],
+            "The Star Weaver, and recipes using astral and flight essence."),
+        new("escape", "Ship systems integration", [EnemyKind.AstroGod], 8f, [],
+            [ItemId.PrecursorRelic, ItemId.AncientPowerCell, ItemId.VoidEssence],
+            "The ship part recipes and the launch sequence.")
     ];
 
     /// <summary>Study points a second the station AI puts in on its own.</summary>

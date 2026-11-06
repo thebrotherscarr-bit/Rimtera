@@ -235,6 +235,7 @@ public static partial class ContentTiles
         Station(TileId.AlloyAnvil, "Alloy anvil", CraftingStationId.AlloyAnvil, 4);
         Station(TileId.VoidForge, "Void forge", CraftingStationId.VoidForge, 6);
         Station(TileId.AstralAssembler, "Astral assembler", CraftingStationId.AstralAssembler, 7);
+        Station(TileId.StarWeaver, "Star weaver", CraftingStationId.StarWeaver, 8);
         Station(TileId.ChemLab, "Chem lab", CraftingStationId.ChemLab, 1);
         Station(TileId.BioLab, "Bio lab", CraftingStationId.BioLab, 2);
         Station(TileId.Loom, "Loom", CraftingStationId.Loom, 1);

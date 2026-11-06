@@ -292,6 +292,7 @@ public enum ItemId : ushort
     AlloyAnvil,
     VoidForge,
     AstralAssembler,
+    StarWeaver,
     ChemLab,
     BioLab,
     Loom,
